@@ -37,7 +37,52 @@ pero es un campo opcional y muchos relojes no lo rellenan: entregan sólo lpm.
 **Si tu Watch 5 no manda RR, el HRV se cae del alcance en vivo.** No es el fin del
 producto, pero sí cambia la demo.
 
-### 🚩 La prueba que hay que correr ahora (15 minutos)
+### ✅ PRUEBA EJECUTADA — resultado confirmado el 14-11-2026
+
+Julio corrió la prueba sobre su WATCH 5. **Funcionó la conexión, y el veredicto es
+definitivo.**
+
+Paquetes recibidos: **2 bytes**, por ejemplo `06 4b`.
+
+```
+flags = 0x06 = 0000 0110
+  bit 0 = 0  ->  FC en 8 bits
+  bit 1 = 1  ->  contacto del sensor DETECTADO
+  bit 2 = 1  ->  contacto del sensor SOPORTADO
+  bit 3 = 0  ->  sin energía gastada
+  bit 4 = 0  ->  SIN INTERVALOS RR
+```
+
+| Resultado | Consecuencia |
+|---|---|
+| 🔴 **No hay intervalos RR** | **No hay HRV en vivo.** Ni RMSSD ni SDNN desde este reloj |
+| ✅ FC a ~1 Hz, limpia (71–79 bpm) | FC y FC en reposo funcionan |
+| 🔥 **Reporta contacto del sensor** | **Ventaja inesperada**, ver abajo |
+
+### 🔥 El premio de consolación es mejor de lo que parece
+
+El reloj informa si **el sensor está en contacto con la piel**. Eso permite
+**marcar como no confiable** cualquier muestra tomada con la correa floja.
+
+🔶 Casi ningún equipo va a tener un indicador de calidad del dato. Encaja exacto con
+nuestro panel de "lo que no sé": *"esta lectura no cuenta, el sensor no hacía contacto."*
+
+### 🔶 Qué hacemos sin HRV en vivo
+
+| Opción | Veredicto |
+|---|---|
+| **Banda pectoral BLE** (Polar H10 y similares) | ✅ **Sí mandan RR.** Es la respuesta de producción. ⚠️ No la conseguimos hoy |
+| **HRV desde los datos sintéticos** | ✅ Para el escenario de 180 días. **Declararlo** |
+| **En vivo: FC, FC en reposo, SpO2 y respiración** | ✅ **Mi recomendación.** Sigue siendo captura real en el escenario |
+
+La frase para la demo: *"el HRV necesita intervalos entre latidos. Este reloj no los
+expone, así que en vivo verán frecuencia cardiaca y saturación reales; el HRV del
+escenario es sintético. Con una banda pectoral saldría del mismo código — ya está
+escrito."*
+
+<details><summary>La prueba original, por si alguien la repite con otro reloj</summary>
+
+### Procedimiento (15 minutos)
 
 1. En el reloj: activar **modo de ahorro de batería** → `Ajustes` → **`Difusión de datos de FC`**
 2. En Chrome **sobre Android** (no iOS), abrir una página con Web Bluetooth
@@ -50,7 +95,9 @@ producto, pero sí cambia la demo.
 | Si… | Entonces |
 |---|---|
 | ✅ Llegan RR | HRV en vivo. El plan sigue completo |
-| 🔴 Sólo llega lpm | HRV **sale de los datos sintéticos** y se dice en la demo. En vivo se enseña FC, SpO2 y respiración |
+| 🔴 Sólo llega lpm | HRV **sale de los datos sintéticos** y se dice en la demo |
+
+</details>
 
 🔶 **Plan B si la difusión falla por completo:** exportar desde Huawei Health e importar
 el archivo. Menos vistoso, y el discurso de "sin red" se sostiene igual.

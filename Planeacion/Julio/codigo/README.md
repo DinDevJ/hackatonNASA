@@ -1,5 +1,15 @@
 # Código verificado
 
+## `telemetry.ts` + `adapters.ts` — **la trama base**
+
+El software no habla con relojes: habla con una trama única que puede producir un
+reloj, un brazalete, un traje instrumentado, el hábitat, la entrada manual o un
+generador. Especificación en [TRAMA-TELEMETRIA.md](TRAMA-TELEMETRIA.md).
+
+Lleva dentro, por diseño, el momento en que ocurrió el dato, su procedencia y su
+calidad. Compila en modo severo y **14 pruebas pasan**.
+
+
 ## `smart_fusion.py` + `validar_smart_fusion.py`
 
 Estimación de frecuencia respiratoria desde el PPG, **implementada y validada contra

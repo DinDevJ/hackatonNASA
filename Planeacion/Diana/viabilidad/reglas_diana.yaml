@@ -1,0 +1,148 @@
+# Reglas de Diana para el motor de EVA, listas para probarse.
+# Origen: investigacion_cientifica_diana_monarcas_eva.md §11.1 (las 4 primeras, sin cambios de lógica)
+# y Tabla_Variables_Diana_Monarcas_EVA.csv (umbrales de V9, V62, A22).
+# Las reglas de orina con densidad vienen de la prueba de Katy (RESULTADOS-viabilidad.md §3).
+# La puerta PHQ-2 viene de la prueba de este folder (RESULTADOS-diana.md).
+#
+# Convenciones del motor (motor_reglas.py):
+#   - "tu_normal": línea base personal = los 14 días anteriores (mínimo 7 con dato).
+#   - robust_z = 0.6745 * (x - mediana) / MAD. Si MAD = 0 no hay z: la regla no dispara.
+#   - origin: [A] astronautas/NASA · [T] Tierra/clínico · tu_normal = contra uno mismo.
+
+rules:
+  - id: PREV-FATIGA-MULTIVAR-01
+    module: "Módulo 2 — Motor de prevención"
+    description: "Cruce de 3 señales: sueño acortado + RHR alta + HRV baja (escenario Ana días 112-114)"
+    conditions:
+      - { variable: "04:A40_sleep_duration_h", operator: below_personal_baseline_by, value: 1.0,
+          consecutive_days: 3, origin: "[A]", source_url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC8919197/" }
+      - { variable: "03:V18_resting_hr_sleep_bpm", operator: robust_z_gte, value: 2.0, origin: tu_normal }
+      - { variable: "03:V17_hrv_rmssd_ms", operator: robust_z_lte, value: -2.0, origin: tu_normal }
+    escalation_level: 1
+    semaphore: AMBER
+    action_protocol: "PROT-FATIGA-01"
+
+  - id: ESC-CONTACT-SURGEON-GI-01
+    module: "Módulo 7 — Criterios Contact Surgeon (JSC-48031 Rev K)"
+    description: "Diarrea aguda con fiebre o sin mejoría en 24 h"
+    conditions:
+      - { variable: "04:A43_diarrhea_present", operator: equals, value: true, origin: "[A]" }
+      - any_of:
+          - { variable: "04:A1_body_temp_c", operator: gte, value: 38.0, origin: "[T]" }
+          - { variable: "04:A43_hours_without_improvement", operator: gte, value: 24, origin: "[A]" }
+    escalation_level: 2
+    semaphore: RED
+    action_protocol: "CONTACT_SURGEON_ASYNC_PACKET"
+
+  - id: ESC-CONTACT-SURGEON-OTO-01
+    module: "Módulo 7 — Criterios Contact Surgeon (JSC-48031 Rev K)"
+    description: "Membrana timpánica roja y abombada, o perforada"
+    conditions:
+      - { variable: "04:A20_otoscopy_finding", operator: in, value: [red_and_bulging, perforated], origin: "[A]",
+          source_url: "http://web.archive.org/web/20170212012224/https://www.nasa.gov/centers/johnson/pdf/177788main_MedicalCklist.pdf" }
+    escalation_level: 2
+    semaphore: RED
+    action_protocol: "CONTACT_SURGEON_ASYNC_PACKET"
+
+  - id: PRIV-MENTAL-SAFETY-OVERRIDE-01
+    module: "Módulo 6 y 8 — Privacidad y Salud Mental"
+    description: "Única excepción al candado privado: ítem 9 del PHQ-9 > 0, sin importar el total"
+    conditions:
+      - { variable: "03:V1_phq9_item9_self_harm", operator: gt, value: 0, origin: "[T]" }
+    escalation_level: 2
+    semaphore: RED
+    privacy_override: [CMO, FLIGHT_SURGEON]
+
+  # ---- Check-in semanal: cuándo abrir el PHQ-9 completo (resultado de cuestionarios.py)
+  - id: CHECKIN-ABRIR-PHQ9-01
+    module: "Módulo 8 — Salud mental"
+    description: "PHQ-2 >= 2 o ítem 9 > 0 abre el PHQ-9 completo (sensibilidad 92 % en NHANES, n = 7942)"
+    conditions:
+      - any_of:
+          - { variable: "03:V2_phq2_total", operator: gte, value: 2, origin: "[T]" }
+          - { variable: "03:V1_phq9_item9_self_harm", operator: gt, value: 0, origin: "[T]" }
+    escalation_level: 0
+    semaphore: INFO
+    action_protocol: "ABRIR_PHQ9"
+
+  - id: PHQ9-ROJA-01
+    module: "Módulo 8 — Salud mental"
+    description: "PHQ-9 >= 15"
+    conditions:
+      - { variable: "03:V1_phq9_total", operator: gte, value: 15, origin: "[T]" }
+    escalation_level: 2
+    semaphore: RED
+
+  - id: PHQ9-AMARILLA-01
+    module: "Módulo 8 — Salud mental"
+    description: "PHQ-9 de 10 a 14"
+    conditions:
+      - { variable: "03:V1_phq9_total", operator: gte, value: 10, origin: "[T]" }
+      - { variable: "03:V1_phq9_total", operator: lt, value: 15, origin: "[T]" }
+    escalation_level: 1
+    semaphore: AMBER
+
+  # ---- 03:V9 estrés 0-100 contra tu normal
+  - id: ESTRES-VAS-ROJO-01
+    module: "Módulo 2 — Motor de prevención"
+    description: "Estrés autoinformado |z| >= 3 sobre tu normal"
+    conditions:
+      - { variable: "03:V9_stress_vas", operator: robust_z_gte, value: 3.0, origin: tu_normal }
+    escalation_level: 2
+    semaphore: RED
+  - id: ESTRES-VAS-AMBAR-01
+    module: "Módulo 2 — Motor de prevención"
+    description: "Estrés autoinformado z de 2 a 3 sobre tu normal"
+    conditions:
+      - { variable: "03:V9_stress_vas", operator: robust_z_gte, value: 2.0, origin: tu_normal }
+      - { variable: "03:V9_stress_vas", operator: robust_z_lt, value: 3.0, origin: tu_normal }
+    escalation_level: 1
+    semaphore: AMBER
+
+  # ---- 03:V62 horas de vigilia continua
+  - id: VIGILIA-ROJA-01
+    module: "Módulo 2 — Motor de prevención"
+    description: ">= 21 h despierto (Misión Phoenix, Barger 2012)"
+    conditions:
+      - { variable: "03:V62_hours_awake", operator: gte, value: 21, origin: "[A]",
+          source_url: "https://pubmed.ncbi.nlm.nih.gov/23024441/" }
+    escalation_level: 2
+    semaphore: RED
+  - id: VIGILIA-AMBAR-01
+    module: "Módulo 2 — Motor de prevención"
+    description: "16 a 21 h despierto"
+    conditions:
+      - { variable: "03:V62_hours_awake", operator: gte, value: 16, origin: "[A]" }
+      - { variable: "03:V62_hours_awake", operator: lt, value: 21, origin: "[A]" }
+    escalation_level: 1
+    semaphore: AMBER
+
+  # ---- 04:A22 tira de orina
+  - id: ORINA-HIDRATACION-01
+    module: "Módulo 2 — Motor de prevención"
+    description: "Densidad >= 1.025: tomar agua"
+    conditions:
+      - { variable: "04:A22h_specific_gravity", operator: gte, value: 1.025, origin: "[T]" }
+    escalation_level: 1
+    semaphore: AMBER
+    action_protocol: "HIDRATACION (>= 32 mL/kg/día) y repetir tira mañana"
+
+  - id: ORINA-PROTEINA-CMO-01
+    module: "Módulo 7 — Escalamiento"
+    description: "Proteína positiva con densidad < 1.025 (no se explica por orina concentrada)"
+    conditions:
+      - { variable: "04:A22d_protein_positive", operator: equals, value: true, origin: "[T]" }
+      - { variable: "04:A22h_specific_gravity", operator: lt, value: 1.025, origin: "[T]" }
+    escalation_level: 2
+    semaphore: RED
+    action_protocol: "AVISAR_CMO"
+
+  - id: ORINA-ITU-01
+    module: "Módulo 7 — Criterios Contact Surgeon"
+    description: "Leucocitos y nitritos positivos"
+    conditions:
+      - { variable: "04:A22a_leukocytes_positive", operator: equals, value: true, origin: "[T]" }
+      - { variable: "04:A22b_nitrites_positive", operator: equals, value: true, origin: "[T]" }
+    escalation_level: 2
+    semaphore: RED
+    action_protocol: "CONTACT_SURGEON_ASYNC_PACKET"

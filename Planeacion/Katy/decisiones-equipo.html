@@ -111,7 +111,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
     <label for="persona">¿Quién eres?</label>
     <select id="persona">
       <option value="">Elige tu nombre</option>
-      <option>Diana</option><option>Fani</option><option>Julio</option>
+      <option>Diana</option><option>Fani</option><option>Iker</option><option>Julio</option>
       <option>Katy</option><option>Leo</option><option>Otra persona</option>
     </select>
     <p class="note">Tu nombre solo sirve para que el equipo sepa quién votó qué. Puedes cambiar tus votos y volver a guardar cuando quieras.</p>
@@ -167,15 +167,15 @@ const DECISIONS = [
    c:"Julio y Katy coinciden: app web instalable que funciona sin conexión, con Python solo como herramienta.",
    o:[{id:"a",t:"PWA en TypeScript + React",r:true},{id:"x",t:"Otra",other:true}]},
   {g:"Técnico", id:"limite", t:"Límite de radiación en la interfaz",
-   c:"Un brief de NASA (OCHMO) da 600 mSv como límite único desde 2022; Julio encontró fuentes en conflicto.",
-   o:[{id:"a",t:"600 mSv con nota “verificar estándar vigente”",r:true},{id:"b",t:"Mostrar 600 mSv y el 3 % REID"},{id:"c",t:"No mostrar el límite"}]},
+   c:"Iker encontró el límite único de 600 mSv en NASA-STD-3001 Vol. 1 Rev C. Propuesta: cerrar esta decisión.",
+   o:[{id:"a",t:"600 mSv como límite oficial [A], con su fuente",r:true},{id:"b",t:"Mostrar 600 mSv y el 3 % REID"},{id:"c",t:"No mostrar el límite"}]},
 
   {g:"Entrega", id:"idioma", t:"Idioma de la interfaz y del video",
    c:"El jurado global evalúa en inglés. ⚠️ Verificar las reglas del evento local.",
    o:[{id:"a",t:"Inglés",r:true},{id:"b",t:"Español"},{id:"c",t:"Interfaz en inglés, pitch local en español"}]},
   {g:"Entrega", id:"presenta", t:"¿Quién presenta el pitch?",
    c:"Vota por quien creas que lo hará mejor (puedes votar por ti).",
-   o:[{id:"diana",t:"Diana"},{id:"fani",t:"Fani"},{id:"julio",t:"Julio"},{id:"katy",t:"Katy"},{id:"leo",t:"Leo"},{id:"x",t:"Otra persona",other:true}]},
+   o:[{id:"diana",t:"Diana"},{id:"fani",t:"Fani"},{id:"iker",t:"Iker"},{id:"julio",t:"Julio"},{id:"katy",t:"Katy"},{id:"leo",t:"Leo"},{id:"x",t:"Otra persona",other:true}]},
   {g:"Entrega", id:"entrega", t:"Hora de entrega interna",
    c:"Regla de Julio: freeze a T−4 y entregar ahí, no a T−0.",
    o:[{id:"a",t:"Entregar a T−4",r:true},{id:"b",t:"Entregar a T−2"},{id:"x",t:"Otra hora",other:true}]},

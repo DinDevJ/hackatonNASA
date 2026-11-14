@@ -1,4 +1,4 @@
-# hackatonNASA
+# (nombre pendiente) --- HACKATON SPACE APPS
 
 Software de monitoreo de salud para astronautas en misiones de larga duración.
 NASA Space Apps Challenge 2026.

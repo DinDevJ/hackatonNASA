@@ -72,6 +72,41 @@ negativas** (hasta −26 min), porque algunas alertas se emiten antes del inicio
 del evento: son predictivas, no reactivas. **No digan "NASA siempre tarda 17 minutos".**
 Digan: *"la mediana fue de 17 minutos, con casos predictivos y casos de horas."*
 
+### ¿Para qué sirve DONKI, y para qué NO?
+
+DONKI es la base de datos de **eventos de clima espacial** de la NASA, alojada por el
+CCMC en Goddard. No mide a un astronauta: **cataloga lo que hizo el Sol**, con su hora,
+los instrumentos que lo detectaron, los eventos ligados entre sí, y las alertas que la
+NASA emitió.
+
+#### ⚠️ Lo que NO da, y es importante no prometerlo
+
+**DONKI no entrega dosis de radiación en mSv.** No sabe cuánta radiación recibió nadie.
+Entrega **eventos y avisos**, no lecturas de dosímetro.
+
+Es decir: los **mSv acumulados de nuestra interfaz siguen siendo simulados**, y hay que
+decirlo. Lo que deja de ser simulado es **cuándo ocurrió el evento, qué instrumento lo
+vio, y cuánto tardó el aviso.**
+
+#### Lo que sí nos da, y es mucho
+
+| Uso | Cómo lo aprovechamos |
+|---|---|
+| **Línea de tiempo real** | El SPE del día 115 deja de ser inventado: es un evento con fecha, hora e instrumento |
+| **Latencia de aviso medida** | Mediana de 17 min entre evento y alerta. Es *nuestro* argumento, con *sus* datos |
+| **Cadena causal** | 43 de 51 eventos están ligados a una fulguración → justifica una lógica de precursor |
+| **Credibilidad instrumental** | Nombres reales en pantalla: `GOES-P: SEISS >10 MeV`, `SOHO: COSTEP` |
+
+#### Endpoints
+
+✅ Verificados respondiendo: **`/DONKI/SEP`** (partículas solares energéticas) y
+**`/DONKI/RBE`** (realce del cinturón de radiación). Mismo esquema de campos.
+
+⚠️ Probé también FLR, CME, GST, IPS, HSS y notifications, pero **todos devolvieron 429
+por cuota, no una respuesta**. Un 429 lo emite la puerta de enlace *antes* de llegar al
+endpoint, así que **eso no confirma que existan**. Son nombres plausibles sin verificar:
+compruébenlos con la llave propia.
+
 ### 🎯 El argumento que sale de estos datos
 
 > NASA tardó una **mediana de 17 minutos** en emitir la alerta tras el evento.

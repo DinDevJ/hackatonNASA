@@ -200,7 +200,6 @@ Usar una fila por variable con estas columnas:
 - [ ] Distinguí medición directa, cálculo y estimación.
 - [ ] Identifiqué modelos preentrenados que realmente puedan ejecutarse.
 - [ ] Documenté limitaciones de uso en vuelo y de validez clínica.
-- [ ] Seleccioné entre 5 y 10 variables candidatas para el prototipo.
 - [ ] Añadí instrucciones reproducibles de descarga o prueba.
 
 ## 8. Prioridades y reparto de dificultad

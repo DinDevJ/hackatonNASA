@@ -20,7 +20,7 @@ curl "https://api.nasa.gov/DONKI/SEP?startDate=2024-04-15&endDate=2024-06-13&api
 |---|---|
 | ✅ Funciona | HTTP 200, devuelve un arreglo JSON |
 | ⚠️ **Máximo 60 días por consulta** | `API Error: Date range cannot exceed 60 days` |
-| ⚠️ `DEMO_KEY` se agota | 429 intermitente: la cuota es por IP y compartida |
+| ⚠️ `DEMO_KEY` se agota | **5 de 8 intentos fallaron con 429 en 6 minutos.** La cuota es por IP y compartida |
 | ✅ Los SEP son raros | **0 eventos** en los últimos 60 días; hay que ir a 2024 |
 
 ### 🚩 Acción inmediata

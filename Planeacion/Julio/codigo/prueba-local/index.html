@@ -99,7 +99,11 @@
       <b>Kokoro</b> es un modelo de síntesis de 82 M de parámetros que corre entero en el navegador:
       un solo modelo trae <b>muchas voces</b>, así que cambiar de personalidad no cuesta otra descarga.</p>
     <div class="row">
-      <button id="b-neu">Descargar modelo de voz</button>
+      <select id="motor" style="width:auto">
+        <option value="kokoro">Kokoro — un modelo, varias voces</option>
+        <option value="piper">Piper — 6 voces en español, sólo CPU</option>
+      </select>
+      <button id="b-neu">Cargar motor</button>
       <select id="dtype" style="width:auto">
         <option value="q8">q8 — más ligero</option>
         <option value="fp32">fp32 — mejor calidad, pide WebGPU</option>
@@ -279,67 +283,102 @@ bPro.onclick = async () => {
 };
 </script>
 <script type="module">
-// ---------- 4. Voz neural local (Kokoro) ----------
-const lg = document.getElementById('log-neu'), pn = document.getElementById('p-neu');
-const selV = document.getElementById('vneu'), bNeu = document.getElementById('b-neu'), bDec = document.getElementById('b-decir');
-const di = (s) => { lg.textContent += '\n' + s; lg.scrollTop = lg.scrollHeight; };
-let tts = null;
+// ---------- 4. Voz neural local: Kokoro en streaming + Piper ----------
+const lg=document.getElementById('log-neu'), pn=document.getElementById('p-neu');
+const selV=document.getElementById('vneu'), bNeu=document.getElementById('b-neu'), bDec=document.getElementById('b-decir');
+const di=s=>{lg.textContent+='\n'+s;lg.scrollTop=lg.scrollHeight};
+let motor=null, tipo=null, kokoro=null;
 
-bNeu.onclick = async () => {
-  bNeu.disabled = true; pn.textContent = 'descargando…'; pn.className = 'pill warn';
-  const dtype = document.getElementById('dtype').value;
-  lg.textContent = `Importando kokoro-js (dtype=${dtype})…`;
-  try {
-    const { KokoroTTS } = await import('https://esm.run/kokoro-js');
-    const device = (dtype === 'fp32' && 'gpu' in navigator) ? 'webgpu' : 'wasm';
-    di(`Dispositivo: ${device}. Descargando el modelo, puede tardar.`);
-    const t0 = performance.now();
-    tts = await KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', { dtype, device });
-    di(`Modelo listo en ${((performance.now() - t0) / 1000).toFixed(1)} s`);
+// Voces en español verificadas en rhasspy/piper-voices.
+// El genero NO esta documentado en las fichas: hay que escucharlas.
+const PIPER_ES=[
+  ['es_MX-claude-high','🇲🇽 claude — alta'],
+  ['es_MX-ald-medium','🇲🇽 ald — media'],
+  ['es_AR-daniela-high','🇦🇷 daniela — alta'],
+  ['es_ES-davefx-medium','🇪🇸 davefx — media'],
+  ['es_ES-sharvard-medium','🇪🇸 sharvard — media (2 hablantes)'],
+  ['es_ES-carlfm-x_low','🇪🇸 carlfm — muy baja, la más rápida'],
+];
 
-    // La API ha cambiado entre versiones: se prueban varias formas y se informa de lo que haya.
-    let voces = null;
-    for (const intento of [() => tts.voices, () => tts.list_voices?.(), () => tts.constructor.voices]) {
-      try { const v = intento(); if (v && (Array.isArray(v) || Object.keys(v).length)) { voces = v; break; } } catch {}
+bNeu.onclick=async()=>{
+  bNeu.disabled=true; pn.textContent='cargando…'; pn.className='pill warn';
+  tipo=document.getElementById('motor').value;
+  lg.textContent=`Motor: ${tipo}`;
+  try{
+    if(tipo==='kokoro'){
+      const dtype=document.getElementById('dtype').value;
+      const mod=await import('https://esm.run/kokoro-js');
+      kokoro=mod;
+      const device=(dtype==='fp32'&&'gpu' in navigator)?'webgpu':'wasm';
+      di(`dispositivo ${device}, precisión ${dtype}. Descargando…`);
+      const t0=performance.now();
+      motor=await mod.KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX',{dtype,device});
+      di(`modelo listo en ${((performance.now()-t0)/1000).toFixed(1)} s`);
+      let voces=null;
+      for(const f of [()=>motor.voices,()=>motor.list_voices?.()]){try{const v=f();if(v&&Object.keys(v).length){voces=v;break}}catch{}}
+      const ids=voces?(Array.isArray(voces)?voces:Object.keys(voces)):[];
+      const es=ids.filter(i=>/^e[fm]_/.test(i));
+      selV.innerHTML='';
+      (es.length?es:ids).forEach(id=>{const o=document.createElement('option');o.value=id;
+        o.textContent=`${/^ef_/.test(id)?'mujer':/^em_/.test(id)?'hombre':'?'} · ${id}`;selV.appendChild(o)});
+      di(`${ids.length} voces en total, ${es.length} en español: ${es.join(', ')||'ninguna'}`);
+      if(es.length<3) di('⚠️ Kokoro trae pocas voces en español. Si necesitas variedad, prueba Piper.');
+    } else {
+      di('Importando piper-tts-web…');
+      let mod=null, err=[];
+      for(const u of ['https://esm.run/@mintplex-labs/piper-tts-web','https://esm.run/piper-tts-web','https://esm.run/@diffusionstudio/piper-tts-web']){
+        try{mod=await import(u);di('cargado desde '+u);break}catch(e){err.push(u.split('/').pop())}
+      }
+      if(!mod){di('No se pudo importar Piper. Probé: '+err.join(', ')+
+        '\nMira https://github.com/Poket-Jony/piper-tts-web para el nombre correcto del paquete.');
+        pn.textContent='FALLÓ';pn.className='pill bad';bNeu.disabled=false;return}
+      motor=mod;
+      selV.innerHTML='';
+      PIPER_ES.forEach(([id,et])=>{const o=document.createElement('option');o.value=id;o.textContent=et;selV.appendChild(o)});
+      di(`${PIPER_ES.length} voces en español. Cada una se descarga la primera vez que se usa (~30–75 MB).`);
+      di('⚠️ El género no está en las fichas del repositorio: hay que escucharlas.');
     }
-    if (!voces) { di('No pude leer la lista de voces. Revisa el README de kokoro-js.'); return; }
-
-    const ids = Array.isArray(voces) ? voces : Object.keys(voces);
-    const meta = (id) => (Array.isArray(voces) ? {} : (voces[id] || {}));
-    selV.innerHTML = '';
-    // Prefijos de kokoro: 1a letra = idioma (e = español), 2a = género (f/m)
-    const etiqueta = (id) => {
-      const m = meta(id);
-      const g = m.gender || (/^[a-z]f_/.test(id) ? 'Female' : /^[a-z]m_/.test(id) ? 'Male' : '?');
-      const es = /^e[fm]_/.test(id);
-      return `${es ? '🇪🇸 ' : ''}${id} — ${g === 'Female' ? 'mujer' : g === 'Male' ? 'hombre' : '?'}${m.language ? ' · ' + m.language : ''}`;
-    };
-    ids.sort((a, b) => (/^e[fm]_/.test(b) - /^e[fm]_/.test(a)) || a.localeCompare(b));
-    ids.forEach(id => { const o = document.createElement('option'); o.value = id; o.textContent = etiqueta(id); selV.appendChild(o); });
-    const esp = ids.filter(i => /^e[fm]_/.test(i));
-    di(`\n${ids.length} voces. En español: ${esp.length ? esp.join(', ') : 'ninguna detectada por prefijo — mira la lista completa'}`);
-    pn.textContent = 'LISTO'; pn.className = 'pill ok';
-    bDec.disabled = false;
-  } catch (e) {
-    pn.textContent = 'FALLÓ'; pn.className = 'pill bad';
-    di('Error: ' + e.message + '\n\nSi es por file://, sirve la carpeta: python -m http.server 8000');
-    bNeu.disabled = false;
-  }
+    pn.textContent='LISTO'; pn.className='pill ok'; bDec.disabled=false;
+  }catch(e){pn.textContent='FALLÓ';pn.className='pill bad';
+    di('Error: '+e.message+'\nSi es por file://, sirve la carpeta: python -m http.server 8000');bNeu.disabled=false}
 };
 
-bDec.onclick = async () => {
-  bDec.disabled = true;
-  const voz = selV.value, texto = document.getElementById('tneu').value;
-  di(`\n--- generando con ${voz} ---`);
-  const t0 = performance.now();
-  try {
-    const audio = await tts.generate(texto, { voice: voz });
-    const seg = (performance.now() - t0) / 1000;
-    const blob = typeof audio.toBlob === 'function' ? audio.toBlob() : audio;
-    new Audio(URL.createObjectURL(blob)).play();
-    di(`Generado en ${seg.toFixed(1)} s. Compara con la voz del sistema de la sección 2.`);
-  } catch (e) { di('Error al generar: ' + e.message); }
-  bDec.disabled = false;
+// Reproduce trozos en orden, sin esperar a que terminen de generarse todos.
+function colaAudio(){
+  let cola=[],sonando=false;
+  const sig=()=>{if(!cola.length){sonando=false;return}sonando=true;
+    const a=new Audio(URL.createObjectURL(cola.shift()));a.onended=sig;a.play().catch(()=>sig())};
+  return{add:b=>{cola.push(b);if(!sonando)sig()}};
+}
+
+bDec.onclick=async()=>{
+  bDec.disabled=true;
+  const voz=selV.value, texto=document.getElementById('tneu').value;
+  di(`\n--- ${voz} ---`);
+  const t0=performance.now(); let tPrimero=null;
+  const cola=colaAudio();
+  try{
+    if(tipo==='kokoro'&&kokoro?.TextSplitterStream){
+      // STREAMING: se empieza a oír en cuanto está la primera frase.
+      const splitter=new kokoro.TextSplitterStream();
+      const stream=motor.stream(splitter,{voice:voz});
+      const leer=(async()=>{for await(const t of stream){
+        if(tPrimero===null){tPrimero=performance.now()-t0;di(`primer audio a los ${(tPrimero/1000).toFixed(2)} s`)}
+        cola.add(t.audio.toBlob());
+      }})();
+      splitter.push(texto); splitter.close(); await leer;
+    } else if(tipo==='kokoro'){
+      const a=await motor.generate(texto,{voice:voz});
+      tPrimero=performance.now()-t0; cola.add(a.toBlob());
+    } else {
+      const wav=await (motor.predict??motor.tts??motor.synthesize).call(motor,{text:texto,voiceId:voz});
+      tPrimero=performance.now()-t0; cola.add(wav instanceof Blob?wav:new Blob([wav],{type:'audio/wav'}));
+    }
+    const tot=(performance.now()-t0)/1000;
+    di(`total ${tot.toFixed(2)} s · primer audio ${(tPrimero/1000).toFixed(2)} s · ${texto.length} caracteres`);
+    di(tPrimero<800?'✅ Latencia buena para conversar.':'⚠️ Lenta. Prueba una voz de menor calidad, o precalcula las frases fijas.');
+  }catch(e){di('Error al generar: '+e.message)}
+  bDec.disabled=false;
 };
 </script>
 </body>

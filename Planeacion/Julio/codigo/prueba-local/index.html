@@ -92,6 +92,30 @@
     </div>
     <pre id="log">Pulsa «Descargar y cargar».</pre>
   </section>
+
+  <section>
+    <h2>4 · Voz neural local <span id="p-neu" class="pill">sin probar</span></h2>
+    <p class="note">Las voces del sistema (sección 2) suenan robóticas porque son las antiguas SAPI.
+      <b>Kokoro</b> es un modelo de síntesis de 82 M de parámetros que corre entero en el navegador:
+      un solo modelo trae <b>muchas voces</b>, así que cambiar de personalidad no cuesta otra descarga.</p>
+    <div class="row">
+      <button id="b-neu">Descargar modelo de voz</button>
+      <select id="dtype" style="width:auto">
+        <option value="q8">q8 — más ligero</option>
+        <option value="fp32">fp32 — mejor calidad, pide WebGPU</option>
+      </select>
+    </div>
+    <label for="vneu">Voz</label>
+    <select id="vneu"><option>— descarga el modelo primero —</option></select>
+    <label for="tneu">Frase</label>
+    <input type="text" id="tneu" value="Día ciento doce. Tres señales se movieron juntas. Ninguna sola dispararía.">
+    <div class="row">
+      <button id="b-decir" class="sec" disabled>Generar y escuchar</button>
+    </div>
+    <pre id="log-neu">Sin probar.</pre>
+    <p class="note">⚠️ Comprobar la <b>licencia</b> de la voz antes de usarla en el producto.
+      Y si el español suena peor que el inglés, probar también <b>Piper</b> (un modelo por voz, ~30–75 MB, sólo CPU).</p>
+  </section>
 </div>
 
 <script>
@@ -252,6 +276,70 @@ bPro.onclick = async () => {
     speechSynthesis.speak(u);
   } catch (e) { di('Error: ' + e.message); }
   bPro.disabled = false;
+};
+</script>
+<script type="module">
+// ---------- 4. Voz neural local (Kokoro) ----------
+const lg = document.getElementById('log-neu'), pn = document.getElementById('p-neu');
+const selV = document.getElementById('vneu'), bNeu = document.getElementById('b-neu'), bDec = document.getElementById('b-decir');
+const di = (s) => { lg.textContent += '\n' + s; lg.scrollTop = lg.scrollHeight; };
+let tts = null;
+
+bNeu.onclick = async () => {
+  bNeu.disabled = true; pn.textContent = 'descargando…'; pn.className = 'pill warn';
+  const dtype = document.getElementById('dtype').value;
+  lg.textContent = `Importando kokoro-js (dtype=${dtype})…`;
+  try {
+    const { KokoroTTS } = await import('https://esm.run/kokoro-js');
+    const device = (dtype === 'fp32' && 'gpu' in navigator) ? 'webgpu' : 'wasm';
+    di(`Dispositivo: ${device}. Descargando el modelo, puede tardar.`);
+    const t0 = performance.now();
+    tts = await KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', { dtype, device });
+    di(`Modelo listo en ${((performance.now() - t0) / 1000).toFixed(1)} s`);
+
+    // La API ha cambiado entre versiones: se prueban varias formas y se informa de lo que haya.
+    let voces = null;
+    for (const intento of [() => tts.voices, () => tts.list_voices?.(), () => tts.constructor.voices]) {
+      try { const v = intento(); if (v && (Array.isArray(v) || Object.keys(v).length)) { voces = v; break; } } catch {}
+    }
+    if (!voces) { di('No pude leer la lista de voces. Revisa el README de kokoro-js.'); return; }
+
+    const ids = Array.isArray(voces) ? voces : Object.keys(voces);
+    const meta = (id) => (Array.isArray(voces) ? {} : (voces[id] || {}));
+    selV.innerHTML = '';
+    // Prefijos de kokoro: 1a letra = idioma (e = español), 2a = género (f/m)
+    const etiqueta = (id) => {
+      const m = meta(id);
+      const g = m.gender || (/^[a-z]f_/.test(id) ? 'Female' : /^[a-z]m_/.test(id) ? 'Male' : '?');
+      const es = /^e[fm]_/.test(id);
+      return `${es ? '🇪🇸 ' : ''}${id} — ${g === 'Female' ? 'mujer' : g === 'Male' ? 'hombre' : '?'}${m.language ? ' · ' + m.language : ''}`;
+    };
+    ids.sort((a, b) => (/^e[fm]_/.test(b) - /^e[fm]_/.test(a)) || a.localeCompare(b));
+    ids.forEach(id => { const o = document.createElement('option'); o.value = id; o.textContent = etiqueta(id); selV.appendChild(o); });
+    const esp = ids.filter(i => /^e[fm]_/.test(i));
+    di(`\n${ids.length} voces. En español: ${esp.length ? esp.join(', ') : 'ninguna detectada por prefijo — mira la lista completa'}`);
+    pn.textContent = 'LISTO'; pn.className = 'pill ok';
+    bDec.disabled = false;
+  } catch (e) {
+    pn.textContent = 'FALLÓ'; pn.className = 'pill bad';
+    di('Error: ' + e.message + '\n\nSi es por file://, sirve la carpeta: python -m http.server 8000');
+    bNeu.disabled = false;
+  }
+};
+
+bDec.onclick = async () => {
+  bDec.disabled = true;
+  const voz = selV.value, texto = document.getElementById('tneu').value;
+  di(`\n--- generando con ${voz} ---`);
+  const t0 = performance.now();
+  try {
+    const audio = await tts.generate(texto, { voice: voz });
+    const seg = (performance.now() - t0) / 1000;
+    const blob = typeof audio.toBlob === 'function' ? audio.toBlob() : audio;
+    new Audio(URL.createObjectURL(blob)).play();
+    di(`Generado en ${seg.toFixed(1)} s. Compara con la voz del sistema de la sección 2.`);
+  } catch (e) { di('Error al generar: ' + e.message); }
+  bDec.disabled = false;
 };
 </script>
 </body>

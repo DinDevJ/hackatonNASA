@@ -25,6 +25,7 @@ conflictos al mezclar ramas.
 | [Motor diagnóstico](Planeacion/Julio/motor-diagnostico.md) | Diferencial probabilístico, priors publicados, bucle de refutación y reglas de honestidad |
 | [Roadmap](Planeacion/Julio/roadmap.md) | Plan por fases, inventario de datos reales y estrategia para Best Use of Data |
 | [Stack y dependencias](Planeacion/Julio/stack-y-dependencias.md) | Decisión de lenguaje, librerías a reutilizar y estado de la API DONKI |
+| [Síntesis del equipo](Planeacion/Julio/sintesis-del-equipo.md) | Análisis de las cinco propuestas: convergencias, choques y qué decidir |
 
 ## Convención de confianza
 

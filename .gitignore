@@ -1,0 +1,15 @@
+# Secretos: la API key de NASA nunca se sube
+.env
+.env.local
+*.key
+
+# Basura de sistema
+.DS_Store
+Thumbs.db
+
+# Dependencias y compilados
+node_modules/
+dist/
+build/
+__pycache__/
+*.pyc

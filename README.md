@@ -26,6 +26,7 @@ conflictos al mezclar ramas.
 | [Roadmap](Planeacion/Julio/roadmap.md) | Plan por fases, inventario de datos reales y estrategia para Best Use of Data |
 | [Stack y dependencias](Planeacion/Julio/stack-y-dependencias.md) | Decisión de lenguaje, librerías a reutilizar y estado de la API DONKI |
 | [Síntesis del equipo](Planeacion/Julio/sintesis-del-equipo.md) | Análisis de las cinco propuestas: convergencias, choques y qué decidir |
+| [Listado de las 77 variables](Planeacion/Julio/listado-77-variables.md) | Tabla completa: número, ID, qué dato es, para qué sirve y de dónde proviene |
 | [Mis variables agrupadas](Planeacion/Julio/mis-variables-agrupadas.md) | Las 77 variables asignadas, en 9 grupos por ruta de investigación |
 | [Checklist G1, G2 y G6](Planeacion/Julio/checklist-G1-G6.md) | Checklist cumplido para wearable, manguito y telemetría, con la escalera de obtención por variable |
 | [Checklist G3–G9](Planeacion/Julio/checklist-G3-G9.md) | Los 54 restantes: pruebas funcionales, escalas, ultrasonido, laboratorio y derivadas |

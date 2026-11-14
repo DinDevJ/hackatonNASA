@@ -15,10 +15,16 @@ Una probabilidad posterior honesta necesita tres cosas:
     P(enfermedad | hallazgos)  ∝  P(enfermedad) × P(hallazgos | enfermedad)
                                    └── prior ──┘   └──── verosimilitud ────┘
 
-- **El prior sí lo tenemos.** Hay epidemiología publicada de eventos médicos en vuelo
-  (ver §1). Es un dato real y citable.
-- **La verosimilitud no la tenemos.** No existe, que yo encuentre, un cuerpo de
-  *likelihood ratios* validados para hallazgos clínicos en microgravedad.
+- **El prior sí lo tenemos, y mejor de lo que creía.** Iker encontró la **Tabla E.2-1
+  de NASA-STD-3001 Vol. 1 Rev C**: 48 condiciones **con su probabilidad** del modelo IMM,
+  en eventos por misión de referencia de la ISS. Eso es la tabla de priors, publicada
+  por NASA. Ver §1.
+- **La verosimilitud sigue sin existir.** No hay un cuerpo de *likelihood ratios*
+  validados para hallazgos clínicos en microgravedad.
+- **Y hay un techo epistémico que Iker documentó y que no se puede ignorar:** casi todos
+  los estudios en vuelo tienen **entre 3 y 14 sujetos**. Sirven para justificar *qué
+  medir*, no para *predecir en un individuo*. Ningún modelo nuestro va a estar calibrado,
+  y hay que decirlo.
 
 **Conclusión:** si inventamos la verosimilitud, el 70 % es teatro. Y un sistema que
 produce confianza falsa es exactamente lo contrario de lo que pediste.
@@ -31,7 +37,19 @@ rastreable en pantalla.
 
 ## 1. ✅ Los priors que sí existen — úsenlos
 
-Esto es lo mejor que encontré hoy. **Hay epidemiología real de eventos médicos en vuelo:**
+**Hay epidemiología real de eventos médicos en vuelo. La primera fila es la fuente
+preferente: es de NASA y trae probabilidades directamente.**
+
+| Fuente | Qué trae |
+|---|---|
+| 🥇 **Tabla E.2-1, NASA-STD-3001 Vol. 1 Rev C** (hallazgo de Iker) | **48 condiciones con su probabilidad** del modelo IMM, en eventos por misión de referencia ISS. Ejemplos: insomnio **13.85**/misión · cefalea por CO2 **2.15** · cefalea tardía **5.25** · absceso dental **0.068** |
+| 🥈 **Tabla E.2-2** del mismo volumen | ~120 condiciones de alta probabilidad o alta consecuencia. Las marcadas con asterisco **deben cubrirse en toda misión** — y la **intolerancia ortostática está en esa lista**, lo que valida el escenario de colapso de nuestra demo |
+
+🔶 **Cambio de plan:** usar **E.2-1 como prior primario** y Crucian 2016 como respaldo y
+contraste. E.2-1 es de NASA, trae la probabilidad ya calculada, y cubre 48 condiciones
+en vez de unas pocas categorías de síntomas.
+
+### Respaldo y contraste
 
 | Fuente | Población | Hallazgo |
 |---|---|---|
@@ -55,7 +73,11 @@ simular el riesgo médico de misiones futuras.
 Eso **no nos quita el proyecto, nos lo valida.** Pero obliga a ser precisos sobre el
 hueco que llenamos:
 
-> 🔶 El IMM, hasta donde entiendo, es un modelo de **planificación en tierra**: estima
+> ✅ **Confirmado por el catálogo de Iker:** las frecuencias del IMM están publicadas en
+> la Tabla E.2-1 como *eventos por misión de referencia*, es decir, planificación
+> agregada de misión.
+>
+> 🔶 El IMM es entonces un modelo de **planificación en tierra**: estima
 > riesgo agregado de misión. Lo nuestro es **en vuelo, en tiempo real y personalizado**
 > con la línea base del individuo. **⚠️ Verificar esta afirmación antes de decirla en el
 > escenario.** Si resulta que el IMM también corre a bordo, hay que reformular — pero
@@ -154,11 +176,23 @@ Pediste que fuera seguro y confiable. Esto es lo que eso significa en concreto:
    médica. Aparece *"orden de revisión según los datos"*.
 4. **La evidencia en contra se muestra igual de grande que la evidencia a favor.** Un
    sistema que sólo enseña lo que apoya su hipótesis es un sistema que engaña.
-5. **El contenido clínico no se inventa.** Marcado como ilustrativo, o con fuente.
-6. **Se muestra lo que el sistema NO sabe.** Un panel de "datos faltantes" que diga
+5. **El contenido clínico no se inventa — y ya no hace falta.** ✅ Iker encontró el
+   **Medical Checklist del Shuttle, JSC-48031 Rev K (2006)**, con **110 instrucciones
+   "Contact Surgeon"** públicas y citables: diarrea con fiebre · "sin mejoría en 24 h" ·
+   ojo rojo con visión borrosa, dolor, fotofobia o pus · síntomas de descompresión que no
+   ceden con oxígeno e hidratación · dolor abdominal con rebote. **Los criterios de
+   escalamiento salen de ahí, con cita.** Lo no urgente: "informar en la próxima PMC".
+6. **Cada umbral va etiquetado [A] o [T]**, siguiendo la convención de los catálogos de
+   Iker: **[A]** = umbral de NASA o validado en astronautas · **[T]** = umbral clínico
+   terrestre. ✅ Iker confirmó que **no existe tabla pública de NASA del tipo "signo
+   vital X > Y → llama al cirujano"**: los estándares remiten a "valores clínicamente
+   aceptados" y a documentos de programa no públicos. Así que casi todos nuestros
+   umbrales de signos vitales son **[T]**, y mentir sobre eso es el error más fácil de
+   detectar.
+7. **Se muestra lo que el sistema NO sabe.** Un panel de "datos faltantes" que diga
    *"sin PA en las últimas 6 h — esto limita la confianza del orden"*.
 
-La regla 6 es la que más va a impresionar. **Casi ningún equipo muestra su propia
+La regla 7 es la que más va a impresionar. **Casi ningún equipo muestra su propia
 ignorancia, y es justo lo que un evaluador científico busca.**
 
 ---

@@ -470,7 +470,7 @@ operaciones levante la ceja.
 
 ## Fuentes
 
-Verificadas el 2026-11-14. Ver también `docs/diccionario-de-datos.md`.
+Verificadas el 2026-11-14. Ver también `Planeacion/Julio/diccionario-de-datos.md`.
 
 - Spacecraft Event Time · SCET, ERT, OWLT: https://en.wikipedia.org/wiki/Spacecraft_Event_Time
 - NAIF/JPL · CHRONOS, conversión entre SCET, ERT y SCLK: https://naif.jpl.nasa.gov/pub/naif/utilities/PC_Windows_64bit/chronos.ug

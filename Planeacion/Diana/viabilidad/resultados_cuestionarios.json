@@ -1,0 +1,112 @@
+{
+  "n": 7942,
+  "por_sexo": {
+    "mujer": 4097,
+    "hombre": 3845
+  },
+  "prevalencia_phq9_ge10_pct": 8.8,
+  "prevalencia_item9_pct": 3.71,
+  "auc_phq2_para_phq9_ge10": 0.938,
+  "puertas": [
+    {
+      "corte_phq2": 1,
+      "sensibilidad_pct": 96.6,
+      "sensibilidad_ic95": [
+        95.1,
+        97.8
+      ],
+      "especificidad_pct": 71.6,
+      "abren_phq9_pct": 34.4,
+      "casos_perdidos": 24,
+      "item9_positivos": 295,
+      "item9_perdidos_por_la_puerta": 15,
+      "item9_perdidos_pct": 5.1
+    },
+    {
+      "corte_phq2": 2,
+      "sensibilidad_pct": 90.8,
+      "sensibilidad_ic95": [
+        88.7,
+        93.0
+      ],
+      "especificidad_pct": 85.6,
+      "abren_phq9_pct": 21.1,
+      "casos_perdidos": 64,
+      "item9_positivos": 295,
+      "item9_perdidos_por_la_puerta": 47,
+      "item9_perdidos_pct": 15.9
+    },
+    {
+      "corte_phq2": 3,
+      "sensibilidad_pct": 68.3,
+      "sensibilidad_ic95": [
+        65.1,
+        71.5
+      ],
+      "especificidad_pct": 95.9,
+      "abren_phq9_pct": 9.7,
+      "casos_perdidos": 221,
+      "item9_positivos": 295,
+      "item9_perdidos_por_la_puerta": 117,
+      "item9_perdidos_pct": 39.7
+    }
+  ],
+  "puerta3_por_sexo": {
+    "hombre": {
+      "corte_phq2": 3,
+      "sensibilidad_pct": 71.4,
+      "sensibilidad_ic95": [
+        65.9,
+        76.9
+      ],
+      "especificidad_pct": 96.1,
+      "abren_phq9_pct": 8.7,
+      "casos_perdidos": 78,
+      "item9_positivos": 150,
+      "item9_perdidos_por_la_puerta": 67,
+      "item9_perdidos_pct": 44.7
+    },
+    "mujer": {
+      "corte_phq2": 3,
+      "sensibilidad_pct": 66.3,
+      "sensibilidad_ic95": [
+        61.8,
+        70.8
+      ],
+      "especificidad_pct": 95.7,
+      "abren_phq9_pct": 10.7,
+      "casos_perdidos": 143,
+      "item9_positivos": 145,
+      "item9_perdidos_por_la_puerta": 50,
+      "item9_perdidos_pct": 34.5
+    }
+  },
+  "puerta_phq2_mas_item9": {
+    "sensibilidad_pct": 73.7,
+    "especificidad_pct": 94.8,
+    "abren_phq9_pct": 11.2,
+    "item9_perdidos": 0
+  },
+  "puerta_phq2ge2_mas_item9": {
+    "sensibilidad_pct": 92.4,
+    "sensibilidad_ic95": [
+      90.4,
+      94.1
+    ],
+    "especificidad_pct": 85.1,
+    "abren_phq9_pct": 21.7,
+    "casos_perdidos": 53,
+    "item9_perdidos": 0,
+    "por_sexo_sensibilidad_pct": {
+      "hombre": 91.9,
+      "mujer": 92.7
+    }
+  },
+  "regla_phq9_niveles_pct": {
+    "verde": 90.08,
+    "amarilla": 4.5,
+    "critica": 3.71,
+    "roja": 1.71
+  },
+  "item9_con_phq9_menor_10_pct": 30.8
+}

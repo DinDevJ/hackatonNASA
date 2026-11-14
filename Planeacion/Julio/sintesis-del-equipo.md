@@ -217,3 +217,87 @@ documentado.
 - Space Apps, guía de envío: https://www.spaceappschallenge.org/resources/project-submission-guide/
 - Space Apps, guía de jurado y premios: https://www.spaceappschallenge.org/resources/judging-awards-guide
 - NASA, retraso de comunicación 4 a 24 min: https://www.nasa.gov/centers-and-facilities/goddard/space-communications-7-things-you-need-to-know/
+
+---
+
+# Apéndice · Lo que llegó después (Iker, y el repo completo)
+
+Añadido tras el `pull` del 14 nov. Cambia bastante.
+
+## A1. 🔥 Iker hizo el trabajo más valioso del repositorio
+
+Cuatro catálogos, **364 variables**, **275 referencias**, con unidad, equipo, cambio en
+vuelo y URL por variable. Y una convención que le faltaba a todo el proyecto:
+
+> **[A]** = umbral de NASA o validado en astronautas · **[T]** = umbral clínico terrestre
+
+### Resuelve casi todos mis `⚠️` abiertos
+
+| Lo que yo dejé en duda | Lo que encontró Iker |
+|---|---|
+| Límite de radiación "en disputa" | ✅ **< 600 mSv de carrera**, todas las edades y sexos. **< 250 mSv por evento solar.** Internacional: ESA/CSA/Roscosmos 1 Sv, JAXA 0,5–1 Sv |
+| Priors para el motor diagnóstico | 🔥 **Tabla E.2-1 del Vol. 1 Rev C: 48 condiciones CON probabilidad** del IMM. Mejor que Crucian 2016 |
+| "El contenido clínico no se inventa" | 🔥 **JSC-48031 Rev K: 110 instrucciones "Contact Surgeon"** públicas y citables |
+| Instrumento de ánimo sin verificar | ✅ **PHQ-9 y GAD-7, de uso libre**, cortes 5/10/15 |
+| Si el IMM es de tierra o de vuelo | ✅ Es de planificación: "eventos por **misión de referencia**" |
+
+**Ya actualicé `motor-diagnostico.md` y `diccionario-de-datos.md` con sus fuentes.**
+
+### Y añade tres restricciones que nadie había considerado
+
+1. **Casi ningún análisis de sangre u orina existe en tiempo real.** En la ISS las
+   muestras se congelan y se analizan al regreso. **NASA declara que ningún sistema mide
+   densidad ósea en vuelo.** Varios módulos propuestos por el equipo son imposibles a
+   bordo, y hay que decirlo en lugar de dibujarlos.
+2. **No existe tabla pública de NASA del tipo "signo vital X > Y → llama al cirujano".**
+   Los estándares remiten a "valores clínicamente aceptados" y a documentos de programa
+   no públicos. **Casi todos nuestros umbrales de signos vitales son [T], no [A].**
+3. 🔴 **El techo epistémico:** *"casi todos los estudios en vuelo tienen entre 3 y 14
+   sujetos. Sirven para justificar qué medir, no para predecir en un individuo."*
+
+   Eso **cierra** la discusión del porcentaje: ningún modelo nuestro va a estar
+   calibrado. El número se muestra con su procedencia, o no se muestra.
+
+### Su sección de fiabilidad es ejemplar
+
+Marca escalas no verificadas, que PubMed bloqueó el acceso directo y varios artículos se
+leyeron solo por resumen, seis referencias cuyo primer autor puso de memoria, tres tablas
+de PDF que quedaron ambiguas, y sus propios umbrales de SpO2 como propuestas no
+oficiales. 🔶 **Ese nivel de autocrítica es exactamente lo que el jurado premia en
+validez. Que no se pierda al pasar a las diapositivas.**
+
+## A2. Estado del resto del repo
+
+- **Katy** renombró de LAZO a **EVA — Evaluación Vital Autónoma**, y montó
+  `decisiones-equipo.html`: una app de votación con **14 decisiones**. Mis
+  recomendaciones aparecen como opción recomendada en 12 de ellas (PWA + React,
+  emergencia solar, entrega a T−4, gate T−9, evento DONKI cercano a la mediana).
+  **Al momento de leerlo: 0 votos de 6 personas.**
+- **Alguien corrió `fetch_donki.py` con llave propia** y bajó **119 eventos SEP de todo
+  2024** (antes teníamos 51). El script funciona en manos de otros.
+- Contexto de demo ya fijado: tránsito a Marte, días 112–115, con Tomás (comandante),
+  Ana (protagonista), Mei (CMO) y Luis (ingeniero).
+
+## A3. 🔴 Cuatro problemas que hay que arreglar ya
+
+1. **Dos nombres de equipo en el repo.** Iker escribe "Equipo **Monarcas**"; Katy, "Equipo
+   **EVA**". Hay que elegir uno hoy — aparece en el envío y en el video.
+2. **La asignación cubre 5 personas, y son 6.** Dice "Persona 5 (nombre pendiente)" y no
+   nombra a Katy ni a Diana. **Alguien no tiene variables asignadas.**
+3. 🔴 **388 variables es inventario de investigación, NO alcance de construcción.** Si
+   alguien intenta implementarlas, no entregamos nada. El alcance de mañana siguen siendo
+   los tres P0 de Katy. **Los catálogos son la credibilidad científica y el respaldo del
+   Q&A, no la lista de tareas.**
+4. **Las 14 decisiones siguen sin votos.** Es el bloqueo real ahora mismo: no es falta de
+   investigación, es falta de decisión.
+
+## A4. Mi asignación
+
+**77 variables** — cardiovascular, signos vitales, ambiente y carga laboral:
+`01:V1–V8` · `01:V9–V18` · `01:V19–V30` · `01:V46–V53` · `03:V21–V29` · `03:V53–V60` ·
+`04:A1–A9` · `04:A23–A35`.
+
+Iker marca como mayor dificultad las imágenes de ultrasonido vascular y las mediciones
+hemodinámicas de astronautas. 🔶 Coincido, y no creo que se consigan hoy: están en el
+mismo hueco de datos humanos que ya documentamos. Lo accesible de mi bloque es signos
+vitales, CO2 de cabina y carga laboral.

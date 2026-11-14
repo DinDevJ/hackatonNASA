@@ -87,7 +87,7 @@ umbrales terrestres. **Pero el número no se muestra solo: se muestra como banda
 
 ---
 
-## 3. G1 · Wearable continuo — 8 variables
+## 3. G1 · Wearable continuo — 7 variables
 
 ### Escalera por variable
 
@@ -98,15 +98,14 @@ umbrales terrestres. **Pero el número no se muestra solo: se muestra como banda
 | `04:A3` | SpO2 | **N0** | PPG de dos longitudes de onda. ⚠️ **No es grado médico** |
 | `01:V29` | Minutos y tipo de ejercicio | **N0** | Acelerómetro + zonas de FC |
 | `01:V48` | Aumento de FC al ponerse de pie | **N0** | FC + acelerómetro detecta el cambio postural. **Es el que mejor sustituye a la prueba de bipedestación sin manguito** |
-| `01:V27` | Frecuencia respiratoria | **N1** | Modulación respiratoria del PPG. **±5,4 rpm** |
-| `04:A2` | Frecuencia respiratoria (catálogo 04) | **N1** | Misma señal que `01:V27`. **Unificar: es una sola medición en dos catálogos** |
+| `04:A2` | Frecuencia respiratoria | **N1** | Modulación respiratoria del PPG. **±5,4 rpm**. ✅ Aquí se fusionó `01:V27` |
 | `01:V23` | Tiempo de tránsito de onda de pulso | **N3** | Necesita dos puntos de medición o ECG de referencia. **Un reloj solo no lo da de forma útil**, y su uso principal (estimar PA) está desaconsejado (§1) |
 
 ### Los ocho puntos
 
 | # | Punto del checklist | Respuesta para G1 |
 |---|---|---|
-| 1 | Revisé mis variables y confirmé su significado | ✅ Hecho. Hallazgo: `01:V27` y `04:A2` **son la misma medición duplicada entre catálogos**. Reportar a Iker |
+| 1 | Revisé mis variables y confirmé su significado | ✅ Hecho. **Y encontré 9 duplicados entre catálogos.** Los 2 que eran enteramente míos ya están fusionados; los otros 7 están reportados en `../variables-diagnostico/DUPLICADOS.md` |
 | 2 | Unidades y método de medición | ✅ lpm · % · rpm · min · ms. Métodos en los catálogos de Iker; no reinvestigados |
 | 3 | Fuentes primarias y criterios de referencia | ⚠️ **Todos son [T], terrestres.** Iker confirmó que no existe tabla pública de NASA de umbrales de signos vitales. Rotularlos así |
 | 4 | Datasets reales y licencias | ✅ **BIDMC PPG and Respiration Dataset** (PhysioNet): PPG + respiración, licencia **Open Data Commons Attribution v1.0**, acceso abierto, DOI `10.13026/C2208R`. ⚠️ **CapnoBase** (42 registros de 8 min, PPG+ECG a 300 Hz) y **PPG-DaLiA** (15 sujetos, PPG de muñeca a 64 Hz): **licencia no confirmada**, hay que abrir su página |
@@ -172,7 +171,7 @@ que la información no está en el cuerpo. Un astronauta no "siente" el formalde
 |---|---|---|
 | ⚠️ Licencia de **CapnoBase** y **PPG-DaLiA** | yo | Si no son abiertas, no se usan. BIDMC ya sirve de respaldo |
 | ⚠️ Verificar las **3 tablas ambiguas** del catálogo 04 (A30–A33) | Iker o yo | Un número mal extraído de un PDF en una diapositiva es un error detectable |
-| 🔴 **Duplicado `01:V27` = `04:A2`** | Iker | Son la misma medición en dos catálogos. Puede haber más duplicados entre archivos |
+| ✅ **Duplicados** | hecho | Barrido completo en `../variables-diagnostico/DUPLICADOS.md`: 2 fusionados, 7 reportados. 🔴 **El ppCO2 está TRIPLICADO** (`01:V87`, `03:V77`, `04:A23`) |
 | 🔶 Fragmento de dBA desde micrófono | quien haga la UI | Es la única medición ambiental real que podemos demostrar |
 | ⚠️ Telemetría de cabina como dataset abierto | yo, baja prioridad | No la encontré. Si no existe, se declara simulada y ya |
 

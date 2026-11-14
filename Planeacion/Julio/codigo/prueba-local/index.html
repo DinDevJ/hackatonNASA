@@ -123,6 +123,15 @@
       harían falta dos modelos. ⚠️ No encontré métricas de calidad publicadas, ni confirmé la
       <b>licencia</b> del repositorio base. Compruébalo antes de que entre al producto.</p>
   </section>
+
+  <section>
+    <h2>5 · ¿Qué expone tu reloj? <span id="p-ble" class="pill">sin probar</span></h2>
+    <p class="note">Web Bluetooth sólo entrega lo que el reloj publica por <b>GATT estándar</b>.
+      Confirmamos la frecuencia cardíaca, pero <b>SpO₂, sueño y pasos pueden quedarse dentro
+      de la app del fabricante</b>. Esto lo averigua preguntando por cada servicio estándar.</p>
+    <div class="row"><button id="b-ble">Conectar y descubrir</button></div>
+    <pre id="log-ble">Pon el reloj en modo de ahorro de batería y activa «Difusión de datos de FC».</pre>
+  </section>
 </div>
 
 <script>
@@ -361,6 +370,52 @@ bDec.onclick=async()=>{
     }
   }catch(e){di('Error al generar: '+e.message)}
   bDec.disabled=false;
+};
+</script>
+<script type="module">
+// ---------- 5. Descubrimiento de servicios del reloj ----------
+const L=document.getElementById('log-ble'), P=document.getElementById('p-ble');
+const d=t=>{L.textContent+='\n'+t};
+const SERV={ritmoCardiaco:0x180d,pulsioximetro:0x1822,bateria:0x180f,infoDispositivo:0x180a,
+            velocidadCadencia:0x1814,maquinaFitness:0x1826,temperaturaSalud:0x1809,presionArterial:0x1810};
+
+document.getElementById('b-ble').onclick=async()=>{
+  P.textContent='buscando…'; P.className='pill warn'; L.textContent='Abriendo selector…';
+  try{
+    const dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:Object.values(SERV)});
+    d(`\nDispositivo: ${dev.name||'(sin nombre)'}`);
+    const srv=await dev.gatt.connect(); d('Conectado.\n');
+    let hay=0;
+    for(const [nombre,uuid] of Object.entries(SERV)){
+      try{
+        const s=await srv.getPrimaryService(uuid);
+        const cs=await s.getCharacteristics();
+        hay++; d(`✅ ${nombre}`);
+        for(const c of cs){
+          const props=Object.entries({leer:c.properties.read,notificar:c.properties.notify,
+            indicar:c.properties.indicate,escribir:c.properties.write}).filter(([,v])=>v).map(([k])=>k).join(', ');
+          d(`     ${c.uuid.slice(4,8)}  [${props}]`);
+        }
+      }catch{ d(`❌ ${nombre} — no lo publica`); }
+    }
+    // Datos útiles que se pueden leer de inmediato
+    try{
+      const s=await srv.getPrimaryService(SERV.bateria);
+      const v=await (await s.getCharacteristic(0x2a19)).readValue();
+      d(`\n🔋 Batería: ${v.getUint8(0)} %`);
+    }catch{}
+    try{
+      const s=await srv.getPrimaryService(SERV.infoDispositivo);
+      for(const [n,u] of [['fabricante',0x2a29],['modelo',0x2a24],['firmware',0x2a26]]){
+        try{const v=await (await s.getCharacteristic(u)).readValue();
+          d(`   ${n}: ${new TextDecoder().decode(v).replace(/\0+$/,'')}`)}catch{}
+      }
+    }catch{}
+    d(`\n${hay} de ${Object.keys(SERV).length} servicios disponibles.`);
+    d(hay<=2?'⚠️ Sólo ritmo cardíaco y poco más: SpO2, sueño y pasos habrá que exportarlos desde la app del fabricante.'
+            :'✅ Hay más de lo esperado. Apunta cuáles y lo aprovechamos.');
+    P.textContent=`${hay} servicios`; P.className='pill ok';
+  }catch(e){P.textContent='FALLÓ';P.className='pill bad';d('Error: '+e.message)}
 };
 </script>
 </body>

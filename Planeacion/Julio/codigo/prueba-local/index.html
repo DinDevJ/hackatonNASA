@@ -95,13 +95,15 @@
 
   <section>
     <h2>4 · Voz neural local <span id="p-neu" class="pill">sin probar</span></h2>
-    <p class="note">Las voces del sistema (sección 2) suenan robóticas porque son las antiguas SAPI.
-      <b>Kokoro</b> es un modelo de síntesis de 82 M de parámetros que corre entero en el navegador:
-      un solo modelo trae <b>muchas voces</b>, así que cambiar de personalidad no cuesta otra descarga.</p>
+    <p class="note"><b>Estado verificado el 14-11:</b> <b>Kokoro</b> trae 28 voces y
+      <b>todas son en inglés</b> — lo comprobé leyendo la tabla de voces dentro del paquete.
+      <b>Piper</b> queda descartado: su runtime en navegador pesa <b>154 MB</b> antes de descargar
+      una sola voz. Queda <b>MMS-TTS</b>, un modelo VITS ligero de Meta con español,
+      que es lo que prueba esta sección.</p>
     <div class="row">
       <select id="motor" style="width:auto">
-        <option value="kokoro">Kokoro — un modelo, varias voces</option>
-        <option value="piper">Piper — 6 voces en español, sólo CPU</option>
+        <option value="mms">MMS-TTS español — VITS ligero</option>
+        <option value="kokoro">Kokoro — ⚠️ SÓLO INGLÉS</option>
       </select>
       <button id="b-neu">Cargar motor</button>
       <select id="dtype" style="width:auto">
@@ -117,8 +119,9 @@
       <button id="b-decir" class="sec" disabled>Generar y escuchar</button>
     </div>
     <pre id="log-neu">Sin probar.</pre>
-    <p class="note">⚠️ Comprobar la <b>licencia</b> de la voz antes de usarla en el producto.
-      Y si el español suena peor que el inglés, probar también <b>Piper</b> (un modelo por voz, ~30–75 MB, sólo CPU).</p>
+    <p class="note">⚠️ <b>MMS-TTS es de un solo hablante por modelo</b>: para tener hombre y mujer
+      harían falta dos modelos. ⚠️ No encontré métricas de calidad publicadas, ni confirmé la
+      <b>licencia</b> del repositorio base. Compruébalo antes de que entre al producto.</p>
   </section>
 </div>
 
@@ -283,100 +286,79 @@ bPro.onclick = async () => {
 };
 </script>
 <script type="module">
-// ---------- 4. Voz neural local: Kokoro en streaming + Piper ----------
+// ---------- 4. Voz neural local ----------
 const lg=document.getElementById('log-neu'), pn=document.getElementById('p-neu');
 const selV=document.getElementById('vneu'), bNeu=document.getElementById('b-neu'), bDec=document.getElementById('b-decir');
 const di=s=>{lg.textContent+='\n'+s;lg.scrollTop=lg.scrollHeight};
 let motor=null, tipo=null, kokoro=null;
 
-// Voces en español verificadas en rhasspy/piper-voices.
-// El genero NO esta documentado en las fichas: hay que escucharlas.
-const PIPER_ES=[
-  ['es_MX-claude-high','🇲🇽 claude — alta'],
-  ['es_MX-ald-medium','🇲🇽 ald — media'],
-  ['es_AR-daniela-high','🇦🇷 daniela — alta'],
-  ['es_ES-davefx-medium','🇪🇸 davefx — media'],
-  ['es_ES-sharvard-medium','🇪🇸 sharvard — media (2 hablantes)'],
-  ['es_ES-carlfm-x_low','🇪🇸 carlfm — muy baja, la más rápida'],
-];
+// Un modelo = un hablante. Para hombre y mujer hacen falta dos.
+const MMS=[['Xenova/mms-tts-spa','🌎 español neutro (MMS base)']];
 
 bNeu.onclick=async()=>{
   bNeu.disabled=true; pn.textContent='cargando…'; pn.className='pill warn';
   tipo=document.getElementById('motor').value;
-  lg.textContent=`Motor: ${tipo}`;
+  const dtype=document.getElementById('dtype').value;
+  lg.textContent=`Motor: ${tipo}, precisión ${dtype}`;
   try{
     if(tipo==='kokoro'){
-      const dtype=document.getElementById('dtype').value;
-      const mod=await import('https://esm.run/kokoro-js');
-      kokoro=mod;
+      const mod=await import('https://esm.run/kokoro-js'); kokoro=mod;
       const device=(dtype==='fp32'&&'gpu' in navigator)?'webgpu':'wasm';
-      di(`dispositivo ${device}, precisión ${dtype}. Descargando…`);
+      di(`dispositivo ${device}. Descargando…`);
       const t0=performance.now();
       motor=await mod.KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX',{dtype,device});
-      di(`modelo listo en ${((performance.now()-t0)/1000).toFixed(1)} s`);
-      let voces=null;
-      for(const f of [()=>motor.voices,()=>motor.list_voices?.()]){try{const v=f();if(v&&Object.keys(v).length){voces=v;break}}catch{}}
-      const ids=voces?(Array.isArray(voces)?voces:Object.keys(voces)):[];
+      di(`listo en ${((performance.now()-t0)/1000).toFixed(1)} s`);
+      let v=null; for(const f of [()=>motor.voices,()=>motor.list_voices?.()]){try{const x=f();if(x&&Object.keys(x).length){v=x;break}}catch{}}
+      const ids=v?Object.keys(v):[];
+      selV.innerHTML='';
+      ids.forEach(id=>{const m=v[id]||{};const o=document.createElement('option');o.value=id;
+        o.textContent=`${m.gender==='Female'?'mujer':'hombre'} · ${m.name||id} · ${m.language||''} ${m.overallGrade?'('+m.overallGrade+')':''}`;selV.appendChild(o)});
       const es=ids.filter(i=>/^e[fm]_/.test(i));
-      selV.innerHTML='';
-      (es.length?es:ids).forEach(id=>{const o=document.createElement('option');o.value=id;
-        o.textContent=`${/^ef_/.test(id)?'mujer':/^em_/.test(id)?'hombre':'?'} · ${id}`;selV.appendChild(o)});
-      di(`${ids.length} voces en total, ${es.length} en español: ${es.join(', ')||'ninguna'}`);
-      if(es.length<3) di('⚠️ Kokoro trae pocas voces en español. Si necesitas variedad, prueba Piper.');
+      di(`${ids.length} voces. En español: ${es.length}`);
+      if(!es.length) di('⚠️ CONFIRMADO: este paquete no trae voces en español. Sirve para comparar calidad, no para el producto.');
     } else {
-      di('Importando piper-tts-web…');
-      let mod=null, err=[];
-      for(const u of ['https://esm.run/@mintplex-labs/piper-tts-web','https://esm.run/piper-tts-web','https://esm.run/@diffusionstudio/piper-tts-web']){
-        try{mod=await import(u);di('cargado desde '+u);break}catch(e){err.push(u.split('/').pop())}
-      }
-      if(!mod){di('No se pudo importar Piper. Probé: '+err.join(', ')+
-        '\nMira https://github.com/Poket-Jony/piper-tts-web para el nombre correcto del paquete.');
-        pn.textContent='FALLÓ';pn.className='pill bad';bNeu.disabled=false;return}
-      motor=mod;
+      di('Importando transformers.js…');
+      const {pipeline}=await import('https://esm.run/@huggingface/transformers');
       selV.innerHTML='';
-      PIPER_ES.forEach(([id,et])=>{const o=document.createElement('option');o.value=id;o.textContent=et;selV.appendChild(o)});
-      di(`${PIPER_ES.length} voces en español. Cada una se descarga la primera vez que se usa (~30–75 MB).`);
-      di('⚠️ El género no está en las fichas del repositorio: hay que escucharlas.');
+      MMS.forEach(([id,et])=>{const o=document.createElement('option');o.value=id;o.textContent=et;selV.appendChild(o)});
+      di(`Descargando ${MMS[0][0]} (${dtype})…`);
+      const t0=performance.now();
+      motor=await pipeline('text-to-speech',MMS[0][0],{dtype:dtype==='fp32'?'fp32':'q8'});
+      di(`listo en ${((performance.now()-t0)/1000).toFixed(1)} s`);
+      di('⚠️ Un solo hablante. Para hombre y mujer harían falta dos modelos distintos.');
     }
     pn.textContent='LISTO'; pn.className='pill ok'; bDec.disabled=false;
-  }catch(e){pn.textContent='FALLÓ';pn.className='pill bad';
-    di('Error: '+e.message+'\nSi es por file://, sirve la carpeta: python -m http.server 8000');bNeu.disabled=false}
+  }catch(e){pn.textContent='FALLÓ';pn.className='pill bad';di('Error: '+e.message);bNeu.disabled=false}
 };
 
-// Reproduce trozos en orden, sin esperar a que terminen de generarse todos.
-function colaAudio(){
-  let cola=[],sonando=false;
-  const sig=()=>{if(!cola.length){sonando=false;return}sonando=true;
-    const a=new Audio(URL.createObjectURL(cola.shift()));a.onended=sig;a.play().catch(()=>sig())};
-  return{add:b=>{cola.push(b);if(!sonando)sig()}};
+function reproducir(buf,rate){
+  const ctx=new AudioContext();
+  const ab=ctx.createBuffer(1,buf.length,rate||16000);
+  ab.getChannelData(0).set(buf);
+  const src=ctx.createBufferSource(); src.buffer=ab; src.connect(ctx.destination); src.start();
 }
 
 bDec.onclick=async()=>{
   bDec.disabled=true;
   const voz=selV.value, texto=document.getElementById('tneu').value;
   di(`\n--- ${voz} ---`);
-  const t0=performance.now(); let tPrimero=null;
-  const cola=colaAudio();
+  const t0=performance.now();
   try{
     if(tipo==='kokoro'&&kokoro?.TextSplitterStream){
-      // STREAMING: se empieza a oír en cuanto está la primera frase.
-      const splitter=new kokoro.TextSplitterStream();
-      const stream=motor.stream(splitter,{voice:voz});
-      const leer=(async()=>{for await(const t of stream){
-        if(tPrimero===null){tPrimero=performance.now()-t0;di(`primer audio a los ${(tPrimero/1000).toFixed(2)} s`)}
-        cola.add(t.audio.toBlob());
-      }})();
-      splitter.push(texto); splitter.close(); await leer;
-    } else if(tipo==='kokoro'){
-      const a=await motor.generate(texto,{voice:voz});
-      tPrimero=performance.now()-t0; cola.add(a.toBlob());
+      const sp=new kokoro.TextSplitterStream(); const st=motor.stream(sp,{voice:voz});
+      let primero=null, cola=[];
+      const leer=(async()=>{for await(const t of st){
+        if(primero===null){primero=performance.now()-t0;di(`primer audio a los ${(primero/1000).toFixed(2)} s`)}
+        cola.push(t.audio.toBlob())}})();
+      sp.push(texto); sp.close(); await leer;
+      let i=0; const sig=()=>{if(i>=cola.length)return;const a=new Audio(URL.createObjectURL(cola[i++]));a.onended=sig;a.play().catch(sig)};sig();
     } else {
-      const wav=await (motor.predict??motor.tts??motor.synthesize).call(motor,{text:texto,voiceId:voz});
-      tPrimero=performance.now()-t0; cola.add(wav instanceof Blob?wav:new Blob([wav],{type:'audio/wav'}));
+      const out=await motor(texto);
+      const seg=(performance.now()-t0)/1000;
+      di(`generado en ${seg.toFixed(2)} s · ${texto.length} caracteres · ${(texto.length/seg).toFixed(0)} car/s`);
+      reproducir(out.audio, out.sampling_rate);
+      di(seg<1.5?'✅ Rápido para conversar.':'⚠️ Lento. Precalcula las frases fijas: suena al instante y sin modelo.');
     }
-    const tot=(performance.now()-t0)/1000;
-    di(`total ${tot.toFixed(2)} s · primer audio ${(tPrimero/1000).toFixed(2)} s · ${texto.length} caracteres`);
-    di(tPrimero<800?'✅ Latencia buena para conversar.':'⚠️ Lenta. Prueba una voz de menor calidad, o precalcula las frases fijas.');
   }catch(e){di('Error al generar: '+e.message)}
   bDec.disabled=false;
 };

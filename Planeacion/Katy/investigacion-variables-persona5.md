@@ -491,11 +491,45 @@ la app es una sola pantalla), 15 después y 3 solo como dato del perfil. Total: 
       Pendientes: NHIS (archivos exactos), Clue (acceso no confirmado).
 - [x] Distinguí medición directa, cálculo y estimación (`R05`, `R06` son calculadas;
       `R06` es estimación).
-- [ ] Identifiqué modelos preentrenados que realmente puedan ejecutarse. **Parcial:**
-      identifiqué 3 modelos entrenados para tira de orina en Roboflow [P60], que se usan
-      por API con cuenta gratuita, pero **no los probé**. Para caries hay modelos YOLO,
-      con licencia AGPL-3.0 si usan Ultralytics [P61]. No encontré ningún modelo con pesos
-      descargables que haya podido ejecutar.
+- [x] Identifiqué modelos preentrenados que realmente puedan ejecutarse. Resultado en §7.1:
+      **un solo modelo aplica a mis 40 variables** (tira de orina, Roboflow
+      `urinestrip-j7uvp/3`). Script de prueba listo y probado hasta el servidor; **falta la
+      corrida con una clave real** de alguien del equipo. El resto de las variables no tiene
+      modelo preentrenado útil y va con reglas.
+
+### 7.1 Modelos preentrenados: resultado
+
+| Variables | Modelo | ¿Se puede ejecutar? | Estado |
+|---|---|---|---|
+| `04:A22a–i` tira de orina | **Roboflow `urinestrip-j7uvp/3`** (CC BY 4.0) [P60]: localiza los cuadros de color y el código QR | ✅ Sí, por la API de Roboflow con cuenta gratuita | Script [`probar-modelo-tira.mjs`](scripts/probar-modelo-tira.mjs) probado: sintaxis correcta, mensajes claros sin clave o sin foto, y **el servidor reconoce la ruta del modelo** (responde "clave no autorizada", no "modelo no encontrado"). Falta correrlo con clave real |
+| `04:A48` caries | Modelos YOLO publicados | ⚠️ Casi todos son para radiografías, no para fotos de la boca; con Ultralytics la licencia es AGPL-3.0 [P61]; en esta computadora no hay Python | No se probó. El dataset abierto [P16] permite entrenar uno propio después |
+| `04:A41` piel | Clasificadores de heridas | ❌ El repositorio no tiene licencia [P15] | Descartado |
+| Las otras 30 variables | No existe modelo preentrenado aplicable | — | **Se resuelven con reglas y umbrales** ([A]/[T]), el mismo enfoque auditable del motor de Julio |
+
+**Qué hace y qué no hace el modelo de la tira:** encuentra en la foto dónde está cada
+cuadro de color. **No dice el resultado clínico** ("nitritos positivos"): para eso falta
+comparar el color de cada cuadro con la tabla del fabricante. Con 77 imágenes de
+entrenamiento, sirve para un demo, no para uso clínico.
+
+**Cómo correr la prueba final** (lo hace una persona del equipo; la clave nunca se
+comparte en el chat ni se sube al repo):
+
+1. Crear una cuenta gratuita en https://app.roboflow.com y copiar la clave de API
+   (Settings → API Keys).
+2. Tomar una foto de una tira de orina (o usar una imagen del dataset).
+3. En PowerShell:
+
+```powershell
+$env:ROBOFLOW_API_KEY="tu-clave"; node Planeacion/Katy/scripts/probar-modelo-tira.mjs --image foto.jpg
+```
+
+   En Git Bash, macOS o Linux:
+
+```bash
+ROBOFLOW_API_KEY=tu-clave node Planeacion/Katy/scripts/probar-modelo-tira.mjs --image foto.jpg
+```
+
+4. Si imprime la tabla de detecciones, cambiar en este archivo el estado a **"Probado"**.
 - [x] Documenté limitaciones de uso en vuelo y de validez clínica.
 - [x] Añadí instrucciones reproducibles de descarga o prueba: script probado con 13 de 13
       archivos de NHANES (§5.6) y pasos para pedir mcPHASES y MIMIC-IV (§5.7).

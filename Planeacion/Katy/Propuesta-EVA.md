@@ -435,7 +435,125 @@ más estas:
 
 ---
 
-## 12. Pendientes antes de presentar
+## 12. Decisiones del equipo (votación)
+
+🗳️ **Formulario para votar en línea, con resultados en vivo:**
+https://claude.ai/artifact/K5ZmVMpxAsD33TXarVKTY9
+(Katy tiene que compartirlo con cada quien por correo, con permiso de **Editor**,
+para que pueda votar).
+
+**Regla:** una decisión queda en **GO** cuando una opción tiene **más de la mitad de
+los votos y al menos 3**. ⭐ = opción recomendada por esta propuesta.
+
+Si alguien no puede usar el formulario, vota aquí: marca tu opción con tu nombre, por
+ejemplo `- [x] Opción (Julio)`. Cuando una decisión quede en GO, se anota en la columna
+**Resultado** de la tabla final.
+
+### Producto
+
+**1. Nombre del producto** · En NASA, EVA significa caminata espacial (§0).
+- [ ] ⭐ EVA — Evaluación Vital Autónoma
+- [ ] EVA, sin significado
+- [ ] Otro nombre: ______
+
+**2. Tripulación y contexto de la demo** · Tránsito a Marte, días 112–115 (§0.1).
+- [ ] ⭐ Aprobar como está
+- [ ] Cambiar nombres o roles
+- [ ] Cambiar el contexto de misión
+
+**3. Prioridad de la salud femenina** · Hoy es diferenciador 🟡 (§6).
+- [ ] ⭐ Dejarla como diferenciador (pantalla de diseño si no da el tiempo)
+- [ ] Subirla al núcleo (se programa sí o sí)
+
+### Demo
+
+**4. Emergencia principal** · El evento solar es logístico y usa datos reales; el desmayo
+exige pasos clínicos sin validar (§5).
+- [ ] ⭐ Evento de partículas solares
+- [ ] Desmayo
+- [ ] Las dos
+
+**5. Evento real de DONKI** · 51 eventos SEP de 2024 en `Planeacion/Julio/datos`;
+mediana de 17 min entre evento y alerta.
+- [ ] ⭐ Uno con latencia cercana a la mediana (17 min)
+- [ ] El del 9 de mayo de 2024 (alerta 1 min después)
+- [ ] Que lo elija quien lleva datos
+
+**6. Motor diagnóstico con porcentajes** · Priors de Crucian 2016 y "¿de dónde sale este %?".
+- [ ] ⭐ Solo si pasamos el gate T−9
+- [ ] Sí, en la demo pase lo que pase
+- [ ] Fuera; solo diapositiva de visión
+
+**7. Juego cooperativo** · Jardín de la base, sin rankings (módulo 12).
+- [ ] ⭐ Pantalla de diseño
+- [ ] Programarlo
+- [ ] Fuera de la demo
+
+### Privacidad
+
+**8. Qué ve el comandante** (§4)
+- [ ] ⭐ Apto / no apto, sin motivo
+- [ ] Nada médico
+- [ ] Lo mismo que la CMO
+
+**9. Qué ve la CMO del ánimo** (§4)
+- [ ] ⭐ Tendencia semanal (diaria con permiso)
+- [ ] Check-in diario
+- [ ] Nada sin permiso
+
+### Técnico
+
+**10. Plataforma**
+- [ ] ⭐ PWA en TypeScript + React
+- [ ] Otra: ______
+
+**11. Límite de radiación en la interfaz** · Fuentes en conflicto (§13, pendientes).
+- [ ] ⭐ 600 mSv con nota "verificar estándar vigente"
+- [ ] Mostrar 600 mSv y el 3 % REID
+- [ ] No mostrar el límite
+
+### Entrega
+
+**12. Idioma de la interfaz y del video** · ⚠️ Verificar las reglas del evento local.
+- [ ] ⭐ Inglés
+- [ ] Español
+- [ ] Interfaz en inglés, pitch local en español
+
+**13. ¿Quién presenta el pitch?**
+- [ ] Diana
+- [ ] Fani
+- [ ] Julio
+- [ ] Katy
+- [ ] Leo
+- [ ] Otra persona: ______
+
+**14. Hora de entrega interna** · Regla de Julio: freeze y entrega a T−4.
+- [ ] ⭐ Entregar a T−4
+- [ ] Entregar a T−2
+- [ ] Otra hora: ______
+
+### Resultado
+
+| # | Decisión | Resultado | Votos |
+|---|---|---|---|
+| 1 | Nombre | | |
+| 2 | Tripulación y contexto | | |
+| 3 | Salud femenina | | |
+| 4 | Emergencia principal | | |
+| 5 | Evento de DONKI | | |
+| 6 | Motor diagnóstico | | |
+| 7 | Juego cooperativo | | |
+| 8 | Qué ve el comandante | | |
+| 9 | Ánimo para la CMO | | |
+| 10 | Plataforma | | |
+| 11 | Límite de radiación | | |
+| 12 | Idioma | | |
+| 13 | Quién presenta | | |
+| 14 | Entrega interna | | |
+
+---
+
+## 13. Pendientes antes de presentar
 
 - [ ] ⚠️ Elegir **qué evento real de DONKI** usar en la demo (con fecha e instrumento).
 - [ ] ⚠️ Límite de radiación de 600 mSv: hay un technical brief de NASA (OCHMO, basado en

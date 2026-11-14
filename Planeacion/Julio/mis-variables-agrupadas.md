@@ -1,4 +1,4 @@
-# Mis 77 variables, agrupadas por ruta de investigación
+# Mis 75 variables, agrupadas por ruta de investigación
 
 Asignación de Iker (`../ASIGNACION_VARIABLES_MONARCAS.md`): cardiovascular, signos
 vitales, ambiente y carga laboral. Identificadores con su archivo de origen, porque
@@ -11,6 +11,9 @@ vitales, ambiente y carga laboral. Identificadores con su archivo de origen, por
 ## 0. Por qué agrupo distinto a como se repartió
 
 El checklist tiene 8 puntos. **8 × 77 = 616 casillas. Eso no se llena hoy.**
+
+> ⚠️ **Actualización:** eran 77. Tras fusionar dos duplicados entre catálogos quedan
+> **75**. Ver `../variables-diagnostico/DUPLICADOS.md`.
 
 Iker repartió por sistema del cuerpo, que es lo correcto para distribuir carga. Pero
 para **ejecutar** el checklist conviene agrupar por **cómo se captura el dato**, porque
@@ -31,18 +34,20 @@ presentación vale más que un dato inventado.
 
 | Prioridad | Grupos | Variables | Por qué |
 |---|---|---|---|
-| 🔴 **Primero** | G1, G2, G6 | 23 | Es lo que la demo usa de verdad |
+| 🔴 **Primero** | G1, G2, G6 | 21 | Es lo que la demo usa de verdad |
 | 🟡 **Después** | G3, G4, G9 | 23 | Entra si da el tiempo |
 | 🔵 **Una respuesta y ya** | G7, G8 | 23 | Huecos documentados |
 | ⚪ **Riesgo de licencia** | G5 | 8 | Puede que no se pueda usar nada |
 
 ---
 
-## G1 · Wearable continuo — 8 variables 🔴
+## G1 · Wearable continuo — 7 variables 🔴
 
-`01:V3` FC en reposo · `01:V23` tiempo de tránsito de onda de pulso · `01:V27` frecuencia
-respiratoria · `01:V29` minutos y tipo de ejercicio · `01:V48` aumento de FC al ponerse
-de pie · `04:A2` frecuencia respiratoria · `04:A3` SpO2 · `04:A4` frecuencia cardiaca
+`01:V3` FC en reposo · `01:V23` tiempo de tránsito de onda de pulso · `01:V29` minutos y
+tipo de ejercicio · `01:V48` aumento de FC al ponerse de pie · `04:A2` frecuencia
+respiratoria · `04:A3` SpO2 · `04:A4` frecuencia cardiaca
+
+⚠️ `01:V27` estaba aquí y **se fusionó en `04:A2`**: eran la misma medición.
 
 **Por qué agrupan:** todas salen de PPG, ECG o acelerómetro. Un solo dataset y un solo
 camino de integración las cubre.
@@ -63,10 +68,12 @@ fotopletismografía**, que es exactamente lo que tenemos.
 
 ---
 
-## G2 · Manguito de presión arterial — 4 variables 🔴
+## G2 · Manguito de presión arterial — 3 variables 🔴
 
 `01:V1` PA sistólica/diastólica · `01:V2` descenso nocturno (dip) · `01:V47` caída de PA
-al ponerse de pie · `04:A5` presión arterial
+al ponerse de pie
+
+⚠️ `04:A5` estaba aquí y **se fusionó en `01:V1`**.
 
 **Por qué van separadas de G1:** ningún reloj de consumo mide PA de forma confiable.
 **Requieren manguito y captura manual.** Es la misma conversación cuatro veces, así que

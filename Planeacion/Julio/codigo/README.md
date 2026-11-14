@@ -1,5 +1,17 @@
 # Código verificado
 
+## `smart_fusion.py` + `validar_smart_fusion.py`
+
+Estimación de frecuencia respiratoria desde el PPG, **implementada y validada contra
+25 registros reales de PhysioNet**. Resultados y decisiones de producto en
+[RESULTADOS-smart-fusion.md](RESULTADOS-smart-fusion.md).
+
+Titular: por ventana apenas supera a un número constante (+15 %), pero **agregada en
+un valor diario la correlación sube a 0,69 y el error baja a 1,34 rpm**. Eso valida
+que el producto compare contra la línea base propia en vez de mostrar lecturas
+instantáneas.
+
+
 ## `heart-rate.ts`
 
 Lectura de frecuencia cardiaca por Web Bluetooth, perfil GATT estándar

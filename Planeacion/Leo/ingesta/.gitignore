@@ -1,0 +1,6 @@
+node_modules/
+# Datos crudos: se descargan con `npm run descargar` (no se suben por tamaño)
+data/raw/
+# Entorno de Python para el puente de DeepACSA (ver README)
+py/.venv/
+__pycache__/

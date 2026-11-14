@@ -1,4 +1,4 @@
-# Checklist cumplido · G1 (wearable) y G6 (telemetría de la nave)
+# Checklist cumplido · G1 (wearable), G2 (manguito) y G6 (telemetría)
 
 Los ocho puntos del checklist del equipo, respondidos por grupo, más la **escalera de
 obtención** por variable: qué lo da el reloj, qué lo estima un modelo, qué lo mide el
@@ -162,6 +162,55 @@ que la información no está en el cuerpo. Un astronauta no "siente" el formalde
 | 6 | Modelos preentrenados | ✅ **Ninguno aplica, y es la respuesta correcta.** Para A28 basta el cálculo de dBA desde el micrófono. Para el resto, ningún modelo sustituye un sensor químico |
 | 7 | Limitaciones | ✅ La app no mide 9 de 11: **las consume y puede quedarse sin ellas.** Necesita estado de "sensor no disponible". A26 imposible en PWA. ⚠️ Iker marcó tres tablas de PDF de este catálogo como ambiguas: **verificar antes de citar un número de A30–A33** |
 | 8 | Instrucciones reproducibles | ✅ **Listo para DONKI:** `export NASA_API_KEY=...` y `python3 Planeacion/Julio/scripts/fetch_donki.py --desde 2024-01-01 --hasta 2024-12-31`. 🔶 Pendiente el fragmento de medición de dBA |
+
+---
+
+## 4b. G2 · Manguito de presión arterial — 3 variables
+
+`01:V1` PA sistólica/diastólica en reposo (✅ absorbió `04:A5`) · `01:V2` descenso
+nocturno (dip) · `01:V47` caída de PA al ponerse de pie
+
+### 🔴 El hallazgo que reordena el grupo
+
+**`01:V47` no se mide en microgravedad.** La fila de `01:V46` lo dice: *"tras aterrizaje:
+tumbado 5 min, de pie..."*. La prueba de bipedestación y la caída de PA al incorporarse
+**sólo tienen sentido cuando hay gravedad**: al aterrizar, o al llegar a la Luna o Marte.
+
+🔶 Consecuencia de producto: `01:V46`, `01:V47` y `01:V48` **no van en el panel diario**.
+Van en un **modo de transición de gravedad**, que es exactamente lo que Leo propuso en su
+resumen ("Prueba de transición — cada cambio de gravedad"). **Su idea y estas tres
+variables son la misma cosa.**
+
+### Escalera por variable
+
+| ID | Variable | Nivel | Cómo, y qué lo limita |
+|---|---|---|---|
+| `01:V1` | PA sistólica / diastólica en reposo | **N2 → N3** | Manguito braquial u oscilométrico (20–280 mmHg, ±3 mmHg). El astronauta lo hace; el CMO si hay duda. **Entrada manual en la app** |
+| `01:V47` | Caída de PA al ponerse de pie | **N2, sólo con gravedad** | Manguito a 1 y 3 min. **No aplica en tránsito** |
+| `01:V2` | Descenso nocturno (dip) | **N4 / fuera de alcance** | Requiere **registro ambulatorio de 24 h**. ⚠️ No es viable para nosotros |
+
+### Los ocho puntos
+
+| # | Punto | Respuesta para G2 |
+|---|---|---|
+| 1 | Significado confirmado | ✅ Hecho. `04:A5` fusionada en `01:V1` (ver `../variables-diagnostico/DUPLICADOS.md`) |
+| 2 | Unidades y método | ✅ mmHg. Manguito braquial manual u oscilométrico automático |
+| 3 | Fuentes y criterios | ✅ **[T]** estadiaje ACC/AHA: normal < 120 y < 80 · elevada 120–129 · estadio 1: 130–139 u 80–89 · estadio 2: ≥ 140 o ≥ 90 · grave > 180 y/o > 120. **[T]** caída ortostática ≥ 20/10 mmHg. **[A]** PAS < 70 mmHg como criterio de presíncope |
+| 4 | Datasets y licencias | ⚠️ **No verifiqué ningún dataset abierto de PA de manguito.** Lo que sí tenemos es el **cambio real en vuelo** del catálogo: media de 24 h sistólica **−8 ± 2**, diastólica **−9 ± 2** mmHg (n = 8, días 85–192); otro estudio: 24 h **120 ± 10 → 106 ± 9** mmHg. **Con eso se calibra el generador sintético sin inventar nada** |
+| 5 | Directa, cálculo o estimación | ✅ **Directa, manual.** Ninguna se estima |
+| 6 | Modelos preentrenados | 🔴 **Verificado que NO.** Ver §1: la AHA en 2025 concluye que ninguna tecnología sin manguito tiene exactitud adecuada, y la guía AHA/ACC recomienda no usarla. **Decisión: no la estimamos** |
+| 7 | Limitaciones | 🔴 Ningún reloj de consumo la mide · `01:V2` necesita equipo ambulatorio de 24 h, **fuera de alcance** · `01:V47` **sólo con gravedad** · depende de la adherencia del astronauta |
+| 8 | Instrucciones reproducibles | 🔶 Pendiente: la pantalla de entrada manual, y el cronómetro del protocolo de bipedestación (tumbado 5 min → de pie → medir a 1 y 3 min) |
+
+### 🔶 Lo que G2 aporta al producto
+
+Es el grupo más pequeño y el que más peso tiene en el discurso:
+
+1. **El reto pide presión arterial explícitamente.** Está cubierta, con manguito.
+2. **Es el único grupo donde descartamos una función citando evidencia**, no por falta de
+   tiempo.
+3. **Destapó el modo de transición de gravedad**, que no estaba en ningún diseño y que
+   coincide con la propuesta de Leo.
 
 ---
 

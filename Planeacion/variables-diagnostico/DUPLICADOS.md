@@ -43,6 +43,17 @@ Trasladado a `01:V1`: la especificación del equipo (**manguito oscilométrico 2
 ±3 mmHg o 2 %**), el significado agudo (**choque séptico o anafilaxia, intolerancia
 ortostática**) y las referencias `cat. 04: [27][36][45a]`.
 
+### 4. Masa corporal · `02:V75` → `01:V8`
+
+**Canónica: `01:V8`**, como propuso Julio por el detalle del instrumento. **Leo aceptó**
+(14 nov 2026; `02:V75` era suya).
+
+Trasladado a `01:V8`: el segundo equipo (**BMMD** ruso, oscilación de muelle), el umbral
+**[A] mantener la pérdida < 3,3 % de la basal**, el cambio en vuelo (**n = 25: −4,4 % BMMD,
+−2,8 % SLAMMD**, pérdida en los primeros 30 días y luego estable; 2–5 % en el primer mes) y
+las referencias `cat. 02: [5][6][29]`.
+*(`02:V35`, pérdida aguda por déficit hídrico, es una variable distinta: no se toca.)*
+
 ---
 
 ## ⚠️ Reportados, SIN tocar — le toca a su dueño
@@ -60,12 +71,6 @@ medición tres veces.
 
 🔶 Propongo **`04:A23` canónica**: es la única con el detalle del monitor portátil (CDM
 0,01–6,0 % vol.) y del monitor personal de CO2. **Iker decide**, son dos suyas.
-
-### 4. Masa corporal · `01:V8` + `02:V75`
-
-`01:V8` es mía (SLAMMD, exactitud 0,5 lb) · `02:V75` es de Leo. 🔶 Propongo `01:V8`
-canónica por el detalle del instrumento. **Leo decide.**
-*(`02:V35`, pérdida aguda por déficit hídrico, es una variable distinta: no se toca.)*
 
 ### 5. FC en reposo · `01:V3` + `03:V18`
 
@@ -102,13 +107,14 @@ aclare que es oral.
 
 ## Efecto en los conteos
 
-| | Antes | Después de lo fusionado | Si se cierran los 6 reportados |
+| | Antes | Después de lo fusionado | Si se cierran los 5 reportados |
 |---|---:|---:|---:|
-| Variables de los 4 catálogos | 364 | **362** | ~356 |
-| Total con las 24 reproductivas | 388 | **386** | ~380 |
+| Variables de los 4 catálogos | 364 | **361** | ~356 |
+| Total con las 24 reproductivas | 388 | **385** | ~380 |
 | Asignación de Julio | 77 | **75** | — |
+| Asignación de Leo | 78 | **77** | — |
 
-🔶 **Nadie debería citar "388 variables" en la presentación** hasta cerrar los seis
+🔶 **Nadie debería citar "388 variables" en la presentación** hasta cerrar los cinco
 pendientes. El número correcto es mejor argumento que el número grande.
 
 ---

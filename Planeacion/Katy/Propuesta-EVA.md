@@ -442,6 +442,10 @@ https://claude.ai/artifact/K5ZmVMpxAsD33TXarVKTY9
 (Katy tiene que compartirlo con cada quien por correo, con permiso de **Editor**,
 para que pueda votar).
 
+📄 **Copia del formulario en el repo:** [decisiones-equipo.html](decisiones-equipo.html).
+Se abre en cualquier navegador, pero sin conexión con los demás: cada quien vota,
+presiona **"Copiar mis respuestas"** y pega el texto en el chat del equipo.
+
 **Regla:** una decisión queda en **GO** cuando una opción tiene **más de la mitad de
 los votos y al menos 3**. ⭐ = opción recomendada por esta propuesta.
 

@@ -28,7 +28,9 @@ conflictos al mezclar ramas.
 | [Síntesis del equipo](Planeacion/Julio/sintesis-del-equipo.md) | Análisis de las cinco propuestas: convergencias, choques y qué decidir |
 | [Mis variables agrupadas](Planeacion/Julio/mis-variables-agrupadas.md) | Las 77 variables asignadas, en 9 grupos por ruta de investigación |
 | [Checklist G1, G2 y G6](Planeacion/Julio/checklist-G1-G6.md) | Checklist cumplido para wearable, manguito y telemetría, con la escalera de obtención por variable |
+| [Checklist G3–G9](Planeacion/Julio/checklist-G3-G9.md) | Los 54 restantes: pruebas funcionales, escalas, ultrasonido, laboratorio y derivadas |
 | [Hardware y radio](Planeacion/Julio/hardware-y-radio.md) | Qué está verificado sobre BLE y relojes en el espacio, y las restricciones del Huawei Watch 5 |
+| [Código](Planeacion/Julio/codigo/) | Módulo de lectura de frecuencia cardiaca por Web Bluetooth, tipado y probado |
 
 ## Convención de confianza
 

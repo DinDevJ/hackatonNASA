@@ -32,6 +32,7 @@ conflictos al mezclar ramas.
 | [Checklist G3–G9](Planeacion/Julio/checklist-G3-G9.md) | Los 54 restantes: pruebas funcionales, escalas, ultrasonido, laboratorio y derivadas |
 | [LLM local y voz](Planeacion/Julio/llm-local-y-voz.md) | Qué modelo local, qué tamaño, personalidad configurable y la trampa de la voz |
 | [Hardware y radio](Planeacion/Julio/hardware-y-radio.md) | Qué está verificado sobre BLE y relojes en el espacio, y las restricciones del Huawei Watch 5 |
+| [Trama base](Planeacion/trama-base/README.md) | Qué manda el hardware por Bluetooth, qué variables viajan, qué condiciones se detectan y el simulador en ESP32 |
 | [Código](Planeacion/Julio/codigo/) | Módulo de lectura de frecuencia cardiaca por Web Bluetooth, tipado y probado |
 
 ## Convención de confianza

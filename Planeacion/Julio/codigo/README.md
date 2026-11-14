@@ -12,6 +12,14 @@ que el producto compare contra la línea base propia en vez de mostrar lecturas
 instantáneas.
 
 
+## `watch.ts` + `heart-rate.ts`
+
+Sincronización con el reloj. Cómo llega cada variable, con su camino y su estado
+verificado, en [SINCRONIZACION-RELOJ.md](../SINCRONIZACION-RELOJ.md).
+
+`watch.ts` añade descubrimiento de servicios GATT, batería, info del dispositivo,
+pulsioximetría y el cálculo de FC en reposo. Compila en modo severo.
+
 ## `heart-rate.ts`
 
 Lectura de frecuencia cardiaca por Web Bluetooth, perfil GATT estándar

@@ -8,6 +8,30 @@ Convención heredada del diccionario de datos: ✅ verificado · ⚠️ verifica
 
 ---
 
+## 0. Qué hace el software, en cinco verbos
+
+    Recabar  →  Organizar  →  Monitorear  →  Prevenir  →  Asistir
+
+No son cinco módulos sueltos. Son una sola cadena, y cada eslabón existe para el
+siguiente. La tesis del producto cabe en una frase:
+
+> **Los 112 días de monitoreo no son para hacer gráficas. Son para que, cuando pase
+> lo malo, el software ya sepa cómo es esta persona cuando está bien.**
+
+Un checklist de emergencia genérico ve "FC 130" y no sabe qué hacer con ese número.
+Nosotros sabemos que el reposo de MS-2 es 58, así que eso es **2.2 veces su normal**.
+Esa diferencia sólo la puede dar alguien que llevaba 112 días mirando.
+
+| Verbo | Qué lo cubre | Estado |
+|---|---|---|
+| **Recabar** | Sensores, auto-reporte, pruebas cognitivas | Diseñado · ver diccionario de datos |
+| **Organizar** | Almacén local, SCET/ERT, cola priorizada | Diseñado · §5 |
+| **Monitorear** | Línea base móvil, z robusto, semáforo | Diseñado · §2 y §6 |
+| **Prevenir** | Reglas multivariables, protocolos, aviso pre-EVA | Diseñado · §3 y §6 |
+| **Asistir en emergencia** | Modo emergencia | §8 |
+
+---
+
 ## 1. Actores del sistema
 
 | Actor | Dónde | Latencia | Nota |
@@ -419,7 +443,120 @@ disputa entre fuentes — ver el diccionario de datos antes de ponerlo en una sl
 
 ---
 
-## 8. Por qué esto no es un dashboard
+## 8. Modo emergencia
+
+**Modo emergencia es un producto distinto dentro del mismo producto.** Tratarlo como
+"otra pantalla" es el error que lo vuelve inútil.
+
+| | Monitoreo | Emergencia |
+|---|---|---|
+| Escala de tiempo | Días y semanas | Segundos y minutos |
+| Quién opera | El propio astronauta | **Un rescatista.** El paciente puede estar inconsciente |
+| Estado mental | Calma, rutina | Estrés alto, manos ocupadas |
+| Interacción | Explorar, comparar | **Un paso a la vez. Sin decisiones.** |
+| Qué se registra | Lo que el usuario captura | **Todo, automáticamente** |
+
+### Activación — tres vías
+
+1. **Manual.** Botón siempre visible. Un toque, sin confirmación.
+2. **Automática.** El motor la propone ante caída de SpO2, FC fuera de rango extremo,
+   o caída detectada por el acelerómetro.
+3. **Por un tercero.** Cualquier tripulante la activa *para otro* y selecciona a quién.
+
+### Clases de emergencia
+
+Cuatro de las cinco son ✅ nombres literales de riesgos que NASA ya rastrea, así que la
+relevancia viene gratis:
+
+| Clase | Riesgo NASA |
+|---|---|
+| Hipoxia / atmósfera | ✅ Risk of Hypoxia |
+| Enfermedad por descompresión | ✅ Risk of Decompression Sickness |
+| Trauma y lesión | ✅ Injury from Dynamic Loads · Injury from Spacewalks |
+| Exposición aguda a radiación | ✅ Risk of Radiation-Induced Cancers (SPE) |
+| Evento cardíaco | 🔶 nuestro |
+
+### Lo que hace que un papel no puede
+
+1. **Contexto de línea base.** *"FC 130. Su reposo son 58. Esto es 2.2× su normal."*
+   Ningún checklist genérico puede decir eso.
+2. **Registro automático sellado con SCET.** El rescatista no escribe nada; cada paso
+   queda con su hora exacta. Aquí es donde el modelo de tiempos de §5 se paga solo.
+3. **Paquete prioritario.** El evento salta al frente de la cola con los últimos
+   minutos de telemetría cruda adjuntos.
+4. **Sabe quién está disponible.** Si el CMO **es** el paciente, lo dice y escala.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor R as Rescatista
+    participant APP as App · modo emergencia
+    participant M as Motor
+    participant DB as Almacén
+    actor C as CMO
+    participant T as Tierra
+
+    Note over R,T: T+0. El cronómetro arranca y no se detiene.
+
+    R->>APP: Activa emergencia · un toque
+    APP->>R: ¿Quién es el paciente?
+    R->>APP: Selecciona MS-2
+    APP->>M: Trae la línea base de MS-2
+    M-->>APP: FC reposo 58 · SpO2 97 · sin alertas abiertas
+    APP->>DB: Abre registro con SCET en T+0
+    APP->>C: Alerta al CMO · salvo que sea el paciente
+    APP->>DB: Encola paquete prioritario para Tierra
+
+    loop Cada paso del protocolo
+        APP->>R: Un paso. Texto grande. Sin scroll.
+        R->>APP: Marca hecho
+        APP->>DB: Sella el paso con SCET
+    end
+
+    APP->>R: Lectura contra su base<br/>FC 130 · 2.2 veces su reposo
+    DB->>T: Envía en la primera ventana · OWLT
+    Note over DB,T: Tierra recibe la cronología completa y sellada,<br/>sin que nadie haya escrito una sola nota.
+```
+
+### ⚠️⚠️ Advertencia que no es negociable
+
+**El contenido clínico de los protocolos de emergencia no se inventa.** Esto es distinto
+del protocolo de fatiga: ahí una recomendación floja es inútil; aquí es peligrosa.
+
+Hay procedimientos de emergencia en microgravedad que son genuinamente especializados y
+distintos de los de la Tierra — la RCP es el ejemplo conocido, porque sin gravedad no hay
+contra-reacción para comprimir. **No conozco el procedimiento vigente y no lo voy a
+redactar de memoria.**
+
+Tres reglas para el equipo:
+
+- Cualquier paso clínico que se muestre va **marcado visiblemente como ilustrativo**,
+  o sale de una fuente citada.
+- El software **nunca** se presenta como sustituto del CMO ni del entrenamiento médico.
+  Es un registrador y un asistente de contexto.
+- Lleva un aviso visible en el propio modo emergencia. **Eso no es timidez: un jurado
+  técnico lo lee como criterio.** Un equipo que inventa procedimientos médicos pierde
+  credibilidad en todo lo demás.
+
+### 🔶 Alcance recomendado para mañana
+
+Esto es consejo de entrega, no de diseño. Quedan ~18 horas.
+
+**No construyan las cinco clases.** Construyan **una sola, completa**: activación,
+contexto de línea base, pasos sellados con SCET, paquete prioritario y cierre. Una
+rebanada vertical que funcione de verdad vale más que cinco pantallas a medias.
+
+**Cuál elegir:** la de **radiación aguda (SPE)**, porque reaprovecha el escenario del
+día 115 que ya está escrito, conecta con el material de CSA, y su protocolo es
+logístico — *ve al refugio* — no clínico. **Esquiva por completo el problema de
+inventar medicina.**
+
+Costo estimado: ~2 horas sobre lo que ya existe. Si el reloj aprieta, **esto es lo
+primero que se recorta**, y el producto sigue de pie sin ello.
+
+---
+
+## 9. Por qué esto no es un dashboard
 
 Cuatro diferencias concretas, útiles como diapositiva:
 
@@ -432,7 +569,7 @@ Cuatro diferencias concretas, útiles como diapositiva:
 
 ---
 
-## 9. Guion de demo — 90 segundos
+## 10. Guion de demo — 105 segundos
 
 1. **0:00–0:15** — "Un astronauta con una señal preocupante no puede preguntarle a
    Houston. La respuesta tarda hasta 48 minutos."
@@ -443,22 +580,29 @@ Cuatro diferencias concretas, útiles como diapositiva:
 5. **1:10–1:25** — Avanzar a día 114: cierra en verde. Entra la **nota de Tierra con
    41 min de antigüedad**, respondiendo a un evento ya cerrado. *"Esto es por qué no
    podemos esperar."*
-6. **1:25–1:30** — Modo avión encendido **toda la demo**. Señalarlo al final.
+6. **1:25–1:40** — Modo emergencia: activar, y que aparezca *"FC 130 · 2.2 veces su
+   reposo"*. Una línea: *"sabemos eso porque llevábamos 112 días mirando."*
+7. **1:40–1:45** — Modo avión encendido **toda la demo**. Señalarlo al final.
 
 🔶 **Dejar el teléfono en modo avión durante toda la presentación y decirlo hasta el
 final** es el remate más barato y más efectivo que tenemos.
 
+⚠️ **No alarguen la demo más allá de esto.** El arco de prevención (pasos 2–5) es lo
+novedoso; checklists de emergencia hay muchos. Si hay que recortar, se recorta el paso 6,
+no el 3.
+
 ---
 
-## 10. Qué le toca a cada rol
+## 11. Qué le toca a cada rol
 
 | Rol | Qué sale de este documento |
 |---|---|
 | Datos y sensores | Diagrama 1 · franja del reloj |
 | Motor de reglas | §6: fórmulas de z, YAML, criterio de cierre · §4: niveles de escalamiento |
+| Modo emergencia | §8 · **una sola clase, completa** |
 | UI | §6: tarjeta y semáforo · §5: la tarjeta de nota tardía y el indicador de antigüedad |
 | Contenido científico | ⚠️ verificar protocolos clínicos · mapear cada regla a un riesgo de NASA |
-| Demo y presentación | §9 completa |
+| Demo y presentación | §10 completa |
 | Datos sintéticos | §6 y §7: tablas día a día. **Ese es el spec.** Más los campos SCET/ERT de §5. |
 
 **Lo mínimo que no puede faltar del modelo de tiempos**, aunque se recorte todo lo demás:

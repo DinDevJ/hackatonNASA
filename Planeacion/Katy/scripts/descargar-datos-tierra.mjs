@@ -29,6 +29,10 @@ const NHANES = "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public";
 // [ciclo, archivo, variables de Persona 5 que cubre, qué es]
 const NHANES_FILES = [
   ["2017", "DEMO_J", "todas", "Demografía: sexo, edad (para unir por SEQN)"],
+  ["2017", "BMX_J", "R19 (prueba de viabilidad)", "Medidas corporales: peso, talla, índice de masa corporal"],
+  ["2005", "DEMO_D", "04:A43, 04:A47", "Demografía 2005-2006 (para la prueba de intestino)"],
+  ["2007", "DEMO_E", "04:A43, 04:A47", "Demografía 2007-2008"],
+  ["2009", "DEMO_F", "04:A43, 04:A47", "Demografía 2009-2010"],
   ["2005", "BHQ_D", "04:A43, 04:A47", "Salud intestinal: frecuencia y escala de Bristol (BHD050, BHQ060)"],
   ["2007", "BHQ_E", "04:A43, 04:A47", "Salud intestinal 2007-2008"],
   ["2009", "BHQ_F", "04:A43, 04:A47", "Salud intestinal 2009-2010"],
@@ -56,7 +60,16 @@ const MANUAL_FILES = [
     covers: "R02, R03, R04, R09",
   },
 ];
-const OTHER_FILES = [];
+// NHIS (National Health Interview Survey), archivo de adultos 2019: dolor de espalda (04:A45).
+const OTHER_FILES = [
+  {
+    dir: "nhis",
+    name: "adult19csv.zip",
+    url: "https://ftp.cdc.gov/pub/Health_Statistics/NCHS/Datasets/NHIS/2019/adult19csv.zip",
+    covers: "04:A45",
+    zip: true,
+  },
+];
 
 const XPT_MAGIC = "HEADER RECORD*******LIBRARY HEADER RECORD";
 
@@ -88,9 +101,9 @@ for (const f of OTHER_FILES) {
   const path = join(OUT, f.dir, f.name);
   try {
     const buf = await download(f.url, path);
-    const head = buf.subarray(0, 200).toString("utf8");
-    const ok = head.includes("ClientID") || head.includes("CycleNumber") || head.includes(",");
-    results.push({ file: f.name, kb: Math.round(buf.length / 1024), valid: ok ? "CSV ✓" : "Revisar: no parece CSV", covers: f.covers, what: f.note });
+    const ok = f.zip ? buf[0] === 0x50 && buf[1] === 0x4b : buf.subarray(0, 200).toString("utf8").includes(",");
+    const kind = f.zip ? "ZIP" : "CSV";
+    results.push({ file: f.name, kb: Math.round(buf.length / 1024), valid: ok ? `${kind} ✓` : `Revisar: no parece ${kind}`, covers: f.covers, what: f.note });
   } catch (e) {
     results.push({ file: f.name, kb: 0, valid: `ERROR ${e.message}`, covers: f.covers, what: f.note });
   }

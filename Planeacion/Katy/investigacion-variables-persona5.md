@@ -111,7 +111,7 @@ cámara. El checklist médico tiene exactamente estos campos [P2].
 | 04:A22a | Leucocitos (esterasa leucocitaria) | neg / traza / pos | Imagen (tira) o manual | [P2][P4][P6] | [P12][P60] | PNG/JPG | NO (métodos publicados sin pesos [P11]) | Negativo [T] | Terrestre | Directa | Infección urinaria. ITU en vuelo: 0,1 por año-vuelo [P4]; 1,44 por misión en el modelo IMM [P1] | Fuente encontrada | Más frecuente en mujeres [P30]. Leer con `A22b` y `R24` |
 | 04:A22b | Nitritos | neg / pos | Imagen (tira) o manual | [P2][P6] | [P12][P60] | PNG/JPG | NO | Negativo [T] | Terrestre | Directa | Infección urinaria bacteriana | Fuente encontrada | Un negativo no descarta infección ⚠️ |
 | 04:A22c | Sangre / hemoglobina | ery/µL | Imagen (tira) o manual | [P2][P6] | [P12][P60] · NHANES `KIQ_U_J` [P58] ✅ descargado | PNG/JPG; XPT (SAS) | NO | Negativo [T] | Terrestre | Directa | Cálculo renal, infección. La pérdida ósea sube el calcio urinario [P1] | Datos descargados | ⚠️ Puede dar positivo durante la menstruación: cruzar con `R01`/`R03` |
-| 04:A22d | Proteína | mg/dL | Imagen (tira) o manual | [P2][P6] | [P12][P60] · NHANES `ALB_CR_J` [P58] ✅ descargado | PNG/JPG; XPT (SAS) | NO | No detectable [T] | Terrestre | Directa | Daño renal | Datos descargados | Cambio en vuelo: no encontrado |
+| 04:A22d | Proteína | mg/dL | Imagen (tira) o manual | [P2][P6] | [P12][P60] · NHANES `ALB_CR_J` [P58] ✅ descargado | PNG/JPG; XPT (SAS) | NO | No detectable [T] | Terrestre | Directa | Daño renal | Probado (ver viabilidad/) | Cambio en vuelo: no encontrado |
 | 04:A22e | Glucosa | mg/dL | Imagen (tira) o manual | [P2][P6] | [P12][P60] | PNG/JPG | NO | No detectable [T] | Terrestre | Directa | Hiperglucemia (complementa la glucosa capilar de Leo, `02:V86–V93`) | Fuente encontrada | Cambio en vuelo: no encontrado |
 | 04:A22f | Cetonas | neg / + / ++ / +++ | Imagen (tira) o manual | [P2][P6] | [P12][P60] | PNG/JPG | NO | No detectable [T] | Terrestre | Directa | Comer de menos, ayuno | Fuente encontrada | Útil con el módulo de nutrición: en vuelo se suele comer de menos |
 | 04:A22g | pH | unidades | Imagen (tira) o manual | [P2][P8] | [P12][P60] | PNG/JPG | NO | 4,6–8,0 [T] | Terrestre | Directa | Riesgo de cálculos, infección | Fuente encontrada | — |
@@ -159,11 +159,11 @@ de "contactar al cirujano" vienen del checklist médico del transbordador [P2].
 | 04:A40 | Insomnio / horas de sueño | h; ISI 0–28 | Wearable (actigrafía) + cuestionario | [P1][P10][P13][P14] | NO DISPONIBLE (astronautas) | CSV (actigrafía) | NO | Sin corte validado en astronautas; ISI con cortes terrestres [T] | NASA/astronautas (frecuencia) + terrestre (escala) | Directa | Insomnio: **13,85 por misión, el evento más frecuente del IMM** [P1]. Sueño medio en vuelo ~6 h [P13] | Fuente encontrada | ISI **no es de uso libre**: se pide permiso a Mapi Research Trust [P14]. Se cruza con Leo (`03:V30–V43`) |
 | 04:A41 | Abrasión de piel | sí/no; área; foto | Imagen + manual | [P1] | NO DISPONIBLE para reutilizar: el repositorio de AZH **no tiene licencia** [P15] | — | NO reutilizable | Sin umbral | NASA (frecuencia) | Directa | **9,86 por misión** [P1] | Fuente encontrada | Sin licencia, el código y los datos no se pueden reutilizar legalmente. Los datasets de heridas son sobre todo de heridas crónicas |
 | 04:A42 | Abrasión ocular, cuerpo extraño, ojo rojo | sí/no; síntomas; foto | Imagen + manual | [P1][P2][P17] | NO DISPONIBLE | — | NO (estudios con datos cerrados [P17]) | **[A] Contactar al cirujano si hay visión borrosa, dolor, fotofobia o pus, o si el cuerpo extraño no sale** [P2] | NASA (procedimiento) | Directa | Abrasión ocular **7,42 por misión**; quemadura química 0,64; infección 0,53 [P1] | Fuente encontrada | Fotos de ojo con teléfono necesitan calibración de color [P17] |
-| 04:A43 | Diarrea / gastroenteritis | episodios/día; fiebre sí/no | Manual | [P1][P2] | NHANES `BHQ_D`, `BHQ_E`, `BHQ_F` [P58] ✅ descargado | XPT (SAS) | NO | **[A] Con fiebre → contactar al cirujano** [P2] | NASA (procedimiento) | Directa | 3,53 / 0,42 por misión [P1] | Datos descargados | Leer con temperatura (`04:A1–A9`, Julio) |
+| 04:A43 | Diarrea / gastroenteritis | episodios/día; fiebre sí/no | Manual | [P1][P2] | NHANES `BHQ_D`, `BHQ_E`, `BHQ_F` [P58] ✅ descargado | XPT (SAS) | NO | **[A] Con fiebre → contactar al cirujano** [P2] | NASA (procedimiento) | Directa | 3,53 / 0,42 por misión [P1] | Probado (ver viabilidad/) | Leer con temperatura (`04:A1–A9`, Julio) |
 | 04:A44 | Infección respiratoria | síntomas; SpO₂; temperatura | Manual + wearable | [P1][P3][P4] | NO DISPONIBLE | — | NO | SpO₂ ≤ 92 % contactar, ≤ 88 % urgente [T, no oficial, catálogo 04 de Iker] | NASA (frecuencia) + terrestre | Directa | 3,46 por misión [P1]; síntomas respiratorios altos ~0,97 por año-vuelo [P4] | Fuente encontrada | La SpO₂ del reloj no debe ser la única alerta |
-| 04:A45 | Dolor de espalda (adaptación) | escala 0–10; zona | Manual | [P1][P9] | NO DISPONIBLE | — | NO | Sin corte; afecta al 52 % [P1][P9] | NASA/astronautas | Directa | 3,15 por misión [P1] | Fuente encontrada | Se traslapa con Leo (`02:V58–V66`): acordar quién lo documenta completo |
+| 04:A45 | Dolor de espalda (adaptación) | escala 0–10; zona | Manual | [P1][P9] | NO DISPONIBLE | — | NO | Sin corte; afecta al 52 % [P1][P9] | NASA/astronautas | Directa | 3,15 por misión [P1] | Probado (ver viabilidad/) | Se traslapa con Leo (`02:V58–V66`): acordar quién lo documenta completo |
 | 04:A46 | Reacción alérgica | síntomas; foto; signos vitales | Manual + imagen | [P1][P4] | NHANES `AGQ_D` [P58] ✅ descargado | XPT (SAS) | NO | Sin umbral | NASA (frecuencia) | Directa | 1,18 por misión [P1]; erupciones ~1,12 por año-vuelo [P4] | Datos descargados | No encontré un dataset abierto de erupciones alérgicas ⚠️ |
-| 04:A47 | Estreñimiento | días sin evacuar | Manual | [P1] | NHANES `BHQ_D`, `BHQ_E`, `BHQ_F` [P58] ✅ descargado | XPT (SAS) | NO | Criterios Roma IV [T] ⚠️ no abierto en esta sesión | NASA (frecuencia) | Directa | 1,02 por misión [P1] | Datos descargados | Ligado a hidratación (`A22h`) y fibra de la dieta |
+| 04:A47 | Estreñimiento | días sin evacuar | Manual | [P1] | NHANES `BHQ_D`, `BHQ_E`, `BHQ_F` [P58] ✅ descargado | XPT (SAS) | NO | Criterios Roma IV [T] ⚠️ no abierto en esta sesión | NASA (frecuencia) | Directa | 1,02 por misión [P1] | Probado (ver viabilidad/) | Ligado a hidratación (`A22h`) y fibra de la dieta |
 | 04:A48 | Dental: caries, absceso, empaste o corona | sí/no; foto intraoral | Imagen + manual | [P1][P16] | [P16]: registro 14827784, **abierto, CC BY 4.0, 6313 imágenes** ✅ · NHANES `OHXDEN_J` [P58] ✅ descargado | JPG; YOLO, COCO, Pascal VOC, LabelMe; XPT (SAS) | Hay modelos YOLO de caries; si usan Ultralytics, su licencia es AGPL-3.0 [P61] | Sin umbral | NASA (frecuencia) + terrestre (imagen) | Directa (kit dental a bordo [P3]) | Caries 0,88; absceso 0,068 por misión [P1] | Datos descargados | El otro registro (14723443) tiene archivos restringidos: usar el 14827784 |
 | 04:A49 | Sinusitis | síntomas; temperatura | Manual | [P1] | NO DISPONIBLE | — | NO | Sin umbral | NASA (frecuencia) | Directa | 0,64 por misión [P1] | Fuente encontrada | La congestión en vuelo también sube con el CO₂ (Julio, `04:A23`) |
 | 04:A50 | Parestesia y despegamiento de uña tras caminata espacial | sí/no; foto | Imagen + manual | [P1] | NO DISPONIBLE | — | NO | Sin umbral | NASA (frecuencia) | Directa | 0,65 / 0,40 por misión [P1] | Fuente encontrada | Lesiones de traje: se cruza con Leo (`02:V94–V97`) |
@@ -219,11 +219,11 @@ menstrual [P25]. Rangos de referencia terrestres: sistema 1 de FIGO [P18].
 | id | nombre | unidad | metodo_captura | fuente | dataset_url | formato | modelo_existente | umbral | validacion | factibilidad_vuelo | utilidad | estado | observaciones |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | R18 | Estado menopáusico y terapia hormonal | etapa STRAW+10; terapia sí/no | Historial | [P21] | NHANES `RHQ_J` [P58] ✅ descargado | XPT (SAS) | NO | Transición temprana: ciclos con ≥ 7 días de diferencia; tardía: ≥ 60 días sin sangrado [T] ⚠️ (resúmenes secundarios) | Terrestre | Directa | Contexto para hueso, sueño, FC y valores de referencia | Datos descargados | ⚠️ Umbrales tomados de resúmenes; verificar en Harlow 2012 [P21]. No aplica con SOP ni amenorrea hipotalámica |
-| R19 | Hemoglobina y ferritina en relación con el sangrado | g/dL; µg/L | Laboratorio | [P27] · consultar a Fani (`01:V108`) | NHANES `FERTIN_J`, `CBC_J` [P58] ✅ descargado | XPT (SAS) | NO | Ferritina < 15 o < 30 µg/L según el estudio [T] | Terrestre | **Solo tierra** (en la ISS la sangre se analiza al regreso) | Anemia por sangrado abundante (`R04`) | Datos descargados | Con sangrado abundante, 42,8 % tenía ferritina < 15 µg/L (n = 454, clínica especializada) [P27] |
+| R19 | Hemoglobina y ferritina en relación con el sangrado | g/dL; µg/L | Laboratorio | [P27] · consultar a Fani (`01:V108`) | NHANES `FERTIN_J`, `CBC_J` [P58] ✅ descargado | XPT (SAS) | NO | Ferritina < 15 o < 30 µg/L según el estudio [T] | Terrestre | **Solo tierra** (en la ISS la sangre se analiza al regreso) | Anemia por sangrado abundante (`R04`) | Probado (ver viabilidad/) | Con sangrado abundante, 42,8 % tenía ferritina < 15 µg/L (n = 454, clínica especializada) [P27] |
 | R20 | Sueño según ciclo o tratamiento hormonal | h; eficiencia; fase | Wearable + historial | [P24] · consultar a Leo (`03:V30–V43`) | NO DISPONIBLE (datos de WHOOP no públicos) | — | NO | Sin umbral | Terrestre | Indirecta | Separar sueño malo por el ciclo de sueño malo por la misión | Fuente encontrada | Dormir menos en la semana premenstrual se asocia a FC más alta y HRV más baja [P24] |
 | R21 | FC en reposo y HRV según el ciclo | lpm; ms | Wearable | [P23][P24] | [P22] (acuerdo de uso) | CSV | MCAnalysis [P32] ⚠️ | Sin umbral; patrón esperado: FC mínima ~día 5, máxima ~día 26; HRV inversa [P23] | Terrestre | Directa | **Evitar falsas alarmas del motor** (hallazgo 1 de §0) | Fuente encontrada | Estudios con relojes WHOOP; puede no trasladarse a otros dispositivos. Menor amplitud con anticonceptivos [P23] |
 | R22 | Factores de riesgo de trombosis y tratamiento hormonal | lista de factores | Historial | [P28][P29] · consultar a Iker (`01:V54–V66`) | NO DISPONIBLE | — | NO | Factor V Leiden 4,9×; anticonceptivo combinado hasta 3,2× [T] [P28] | NASA (vigilancia de yugular) + terrestre (riesgo) | Directa | Priorizar ultrasonido de yugular en quien tenga más factores | Fuente encontrada | Caso de trombosis yugular en la ISS [P29] |
-| R23 | Densidad ósea y estado hormonal | % de la basal (DXA) | DXA en tierra + historial | [P25][P31] · consultar a Fani (`02:V01–V16`) | NHANES `DXXFEM_J`, `DXXSPN_J` [P58] ✅ descargado | XPT (SAS) | NO | ≥ 95 % de la basal en cadera y columna [A] (catálogo de Iker) | NASA (estándar) | **Solo tierra** | Riesgo de hueso sumado: microgravedad + estado hormonal | Datos descargados | No hay forma de medir densidad ósea en vuelo |
+| R23 | Densidad ósea y estado hormonal | % de la basal (DXA) | DXA en tierra + historial | [P25][P31] · consultar a Fani (`02:V01–V16`) | NHANES `DXXFEM_J`, `DXXSPN_J` [P58] ✅ descargado | XPT (SAS) | NO | ≥ 95 % de la basal en cadera y columna [A] (catálogo de Iker) | NASA (estándar) | **Solo tierra** | Riesgo de hueso sumado: microgravedad + estado hormonal | Probado (ver viabilidad/) | No hay forma de medir densidad ósea en vuelo |
 | R24 | Síntomas urinarios y ginecológicos | lista sí/no | Cuestionario | [P30] | NHANES `KIQ_U_J` [P58] ✅ descargado | XPT (SAS) | NO | Sin umbral | NASA/astronautas (frecuencia por sexo) | Directa | Infección urinaria, vaginitis | Datos descargados | Más infecciones urinarias en mujeres en vuelo [P30]. Leer con `A22a`/`A22b` |
 
 ---
@@ -456,6 +456,27 @@ claro o una regla oficial de NASA, y ayuda a una decisión real.
 | `R19` hemoglobina y ferritina | N4 | Solo laboratorio en Tierra; entra como dato del perfil previo al vuelo |
 | `R23` densidad ósea | N4 | Solo densitometría en Tierra; entra como dato del perfil |
 
+#### El reloj: Huawei Watch 5
+
+EVA usará el **Huawei Watch 5**. Según reseñas y la página de Huawei ⚠️ (no la
+documentación técnica), mide frecuencia cardiaca, **HRV**, **SpO₂** (con el sensor
+X-TAP en el dedo, unos 10 s), **temperatura de la piel**, estrés y **ECG**, además del
+sueño. Eso cubre, en nivel N0:
+
+| Variable | Qué toma del reloj |
+|---|---|
+| `R21` FC y HRV según el ciclo | FC y HRV |
+| `R06` fase del ciclo | FC + temperatura de la piel (estimación, N1) |
+| `04:A40` sueño | Sueño |
+| `04:A44` infección respiratoria | SpO₂, FC, temperatura de la piel |
+
+⚠️ **Sin verificar:** si el reloj tiene registro de ciclo propio y cómo una app de
+terceros lee sus datos en HarmonyOS (sus apps se escriben en ArkTS, que se basa en
+TypeScript). Hay que revisarlo en la documentación de desarrolladores de Huawei.
+
+**Reparto de lenguajes del equipo:** las **pruebas de viabilidad van en Python**; la
+**interfaz, el reloj y el motor van en TypeScript**.
+
 **Resultado:** 22 variables desde el principio (9 de ellas son la tira de orina, que en
 la app es una sola pantalla), 15 después y 3 solo como dato del perfil. Total: 40.
 
@@ -649,3 +670,20 @@ salvo que se indique.
 | Cuestionarios **ISI** (insomnio) y **PSST** (premenstrual) | Requieren licencia; se usa una lista propia sin puntaje |
 | `R20` sueño según el ciclo | Sin mcPHASES no hay con qué hacerlo |
 | `R18`, `R19`, `R23` como medición en vuelo | Solo se miden en Tierra: entran como **dato del perfil antes del vuelo**, no como módulo |
+| Predecir el hierro (`R19`) con un cuestionario | ✅ **Probado y descartado:** con 1132 mujeres de NHANES, el mejor modelo sin laboratorio llega a AUC 0,61 (apenas mejor que adivinar); la hemoglobina llega a 0,88. Ver [RESULTADOS-ferritina.md](viabilidad/RESULTADOS-ferritina.md) |
+
+### Resultados de las pruebas de viabilidad ✅
+
+Detalle en [viabilidad/RESULTADOS-viabilidad.md](viabilidad/RESULTADOS-viabilidad.md).
+
+| Variable | Mejor AUC | Veredicto | Decisión para EVA |
+|---|---|---|---|
+| `R19` ferritina | 0,61 | 🔴 No viable sin laboratorio | Dato antes del vuelo + regla |
+| `04:A43` + `04:A47` intestino | 0,66 | 🟡 Débil | Preguntar la escala de Bristol directamente |
+| `R23` densidad ósea | 0,74 | 🟢 Útil en Tierra | No hace falta: hay densitometría antes del vuelo |
+| `04:A22d` proteína en orina | 0,95 | 🟢 Útil, falla con orina concentrada | Leerla siempre junto con la densidad (`A22h`) |
+| `04:A45` dolor de espalda | 0,69 | 🟡 Débil | Escala 0–10 + regla; el mecanismo en el espacio es otro |
+
+Las otras 14 variables de modelo no se pudieron probar: requieren acceso restringido
+(MIMIC-IV, mcPHASES), registro (NSRR, SWAN), una descarga manual (Marquette) o
+entrenamiento de imagen.

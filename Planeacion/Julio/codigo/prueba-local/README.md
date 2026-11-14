@@ -28,11 +28,40 @@ La prueba de generación usa **el veredicto del día 112 como entrada**, igual q
 arquitectura real: el motor ya decidió, el modelo sólo redacta. Al terminar, lo lee en
 voz alta.
 
+## 4 · Voz neural: por qué tardaba y qué cambió
+
+**Dos problemas distintos:**
+
+1. **Pocas voces en español.** Kokoro trae muy pocas. Por eso ahora puedes elegir
+   **Piper**, con seis voces en español verificadas en `rhasspy/piper-voices`:
+   `es_MX-claude-high`, `es_MX-ald-medium`, `es_AR-daniela-high`,
+   `es_ES-davefx-medium`, `es_ES-sharvard-medium`, `es_ES-carlfm-x_low`.
+   ⚠️ **El género no está en las fichas del repositorio.** Hay que escucharlas.
+
+2. **Tardaba mucho.** Antes se generaba la frase entera y después sonaba. Ahora Kokoro
+   va en **streaming**: se oye la primera frase mientras se generan las siguientes. La
+   página mide y te dice **el tiempo hasta el primer audio**, que es el número que
+   importa, no el total.
+
+### 🔑 El arreglo de verdad no es el modelo: es no generar casi nada en vivo
+
+**Casi todo lo que dice la app es texto fijo**: los pasos de un protocolo, las cabeceras
+de alerta, las instrucciones de emergencia. Eso se puede **sintetizar una sola vez y
+guardar el audio en IndexedDB**. Después suena al instante, sin modelo y sin espera.
+
+Sólo la frase personalizada que redacta el LLM necesita síntesis en vivo, y esa es
+corta. Con eso la latencia percibida se va casi a cero en el 90 % de lo que habla.
+
+🔶 En emergencia esto deja de ser una optimización y pasa a ser un requisito: **los pasos
+del protocolo tienen que sonar ya**, no en tres segundos.
+
 ## Qué anotar
 
 - Nombre de la GPU y `maxBufferSize`
 - Cuántas voces **locales** hay y si alguna es en español
 - Qué modelo elegiste, **cuánto tardó en cargar** y los fragmentos por segundo
+- En la voz: **tiempo hasta el primer audio** con Kokoro en streaming, y con qué voz de
+  Piper suena mejor el español. Si una voz es hombre o mujer, apúntalo: no está documentado
 - Si la frase generada **cambió algún número** del veredicto (no debería)
 
 Ese último punto es el que decide si el modelo elegido sirve: **si inventa cifras, se

@@ -6,37 +6,85 @@ Decisión de lenguaje, qué reutilizar en vez de escribir, y qué pasó al proba
 
 ---
 
-## 1. ✅ DONKI: la API existe y responde
+## 1. ✅ DONKI: verificado, con datos reales ya descargados
 
-Probado en vivo desde esta sesión:
+Probado en vivo desde esta sesión. **Funciona.** Y los datos ya están en el repo.
 
 ```bash
-curl "https://api.nasa.gov/DONKI/SEP?startDate=2026-09-01&endDate=2026-11-14&api_key=DEMO_KEY"
+curl "https://api.nasa.gov/DONKI/SEP?startDate=2024-04-15&endDate=2024-06-13&api_key=DEMO_KEY"
 ```
 
-**El endpoint existe y contesta.** Pero con `DEMO_KEY` devolvió `429 OVER_RATE_LIMIT`:
+### Lo que aprendimos probándola, que ninguna documentación decía
+
+| Hallazgo | Detalle |
+|---|---|
+| ✅ Funciona | HTTP 200, devuelve un arreglo JSON |
+| ⚠️ **Máximo 60 días por consulta** | `API Error: Date range cannot exceed 60 days` |
+| ⚠️ `DEMO_KEY` se agota | 429 intermitente: la cuota es por IP y compartida |
+| ✅ Los SEP son raros | **0 eventos** en los últimos 60 días; hay que ir a 2024 |
+
+### 🚩 Acción inmediata
+
+**Saquen su propia API key en https://api.nasa.gov** — gratis e instantánea. Y partan
+las consultas en ventanas de ≤60 días.
+
+### ✅ Datos reales ya guardados en el repo
+
+    Planeacion/Julio/datos/donki-sep-2024-04-15_2024-06-13.json   27 eventos
+    Planeacion/Julio/datos/donki-sep-2024-09-15_2024-11-13.json   24 eventos
+
+**51 eventos solares reales.** No hay que volver a llamar a la API para la demo.
+
+### Esquema real de un evento
 
 ```json
-{ "error": { "code": "OVER_RATE_LIMIT",
-             "message": "You have exceeded your rate limit..." } }
+{
+  "sepID": "2024-05-09T13:59:00-SEP-001",
+  "eventTime": "2024-05-09T13:59Z",
+  "instruments": [{"displayName": "MODEL: REleASE:ACE/EPAM 15.8-39.8 MeV"}],
+  "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30609/-1",
+  "linkedEvents": [{"activityID": "2024-05-09T08:45:00-FLR-001"}],
+  "sentNotifications": [{"messageID": "20240509-AL-004",
+                         "messageIssueTime": "2024-05-09T14:00Z",
+                         "messageURL": "..."}],
+  "submissionTime": "2024-05-09T13:54Z",
+  "versionId": 1
+}
 ```
 
-**Causa:** `DEMO_KEY` es compartido por dirección IP y tiene cuota muy baja. No es un
-fallo del endpoint ni de la URL.
+### ✅ Estadísticas que calculamos sobre esos 51 eventos reales
 
-### 🚩 Acción inmediata, antes de escribir una línea de código de radiación
+Esto es **análisis propio sobre datos espaciales reales** — exactamente lo que premia
+*Best Use of Data*:
 
-**Saquen su propia API key en https://api.nasa.gov** — es gratis, instantánea, y llega
-por correo. Con llave propia la cuota sube de forma drástica.
+| Métrica | Valor |
+|---|---|
+| Eventos SEP | **51** |
+| Con alerta emitida por NASA | **41** |
+| **Latencia evento → alerta** | **mediana 17 min** (rango −26 a 656) |
+| Ligados a una fulguración solar | **43 de 51** |
 
-🔶 Y una regla de demo que no es negociable: **la demo nunca llama a la red en vivo.**
-Se descarga el JSON de DONKI antes, se guarda en el repo, y la app lo lee de disco. Una
-demo que depende del wifi del venue es una demo que falla. Además encaja con el
-discurso: el software es offline-first, así que **leer de un archivo local es lo
-correcto, no un atajo.**
+Instrumentos reales que aparecen: `GOES-P: SEISS >10 MeV`, `SOHO: COSTEP`,
+`STEREO A: IMPACT 13-100 MeV`, `ACE/EPAM`.
 
-⚠️ Pendiente: confirmar el esquema exacto de la respuesta (nombres de campos del SEP).
-No lo pude ver porque nunca pasé del 429.
+⚠️ **Honestidad sobre la mediana:** la distribución es muy ancha y **hay latencias
+negativas** (hasta −26 min), porque algunas alertas se emiten antes del inicio modelado
+del evento: son predictivas, no reactivas. **No digan "NASA siempre tarda 17 minutos".**
+Digan: *"la mediana fue de 17 minutos, con casos predictivos y casos de horas."*
+
+### 🎯 El argumento que sale de estos datos
+
+> NASA tardó una **mediana de 17 minutos** en emitir la alerta tras el evento.
+> Súmale **4 a 24 minutos** de viaje hasta Marte.
+> Para cuando el aviso llega, el astronauta ya recibió la dosis.
+> **Por eso la decisión tiene que ser local.**
+
+Ese párrafo está construido con datos reales de NASA, medidos por ustedes. No es
+retórica: es el resultado de un análisis.
+
+🔶 **Regla de demo:** la demo **nunca** llama a la red en vivo. Lee el JSON del repo.
+Una demo que depende del wifi del venue es una demo que falla — y además leer de disco
+es coherente con el discurso offline-first.
 
 ---
 

@@ -24,6 +24,7 @@ conflictos al mezclar ramas.
 | [Comportamiento del software](Planeacion/Julio/comportamiento-del-software.md) | Diagramas de secuencia, escalera de escalamiento, modelo de tiempos SCET/ERT, modo emergencia y guion de demo |
 | [Motor diagnóstico](Planeacion/Julio/motor-diagnostico.md) | Diferencial probabilístico, priors publicados, bucle de refutación y reglas de honestidad |
 | [Roadmap](Planeacion/Julio/roadmap.md) | Plan por fases, inventario de datos reales y estrategia para Best Use of Data |
+| [Stack y dependencias](Planeacion/Julio/stack-y-dependencias.md) | Decisión de lenguaje, librerías a reutilizar y estado de la API DONKI |
 
 ## Convención de confianza
 

@@ -1,7 +1,9 @@
-# EVA — propuesta unificada del equipo
+# EVA — propuesta unificada del Equipo Monarcas
 
 Monitoreo de salud para astronautas en misiones de larga duración. NASA Space Apps 2026,
 reto *Create Health Monitoring Software for Astronauts on Space Missions*.
+
+**Equipo:** Monarcas · **Producto:** EVA
 
 Este documento **une las propuestas de todo el equipo** (Diana, Fani, Iker, Julio, Katy,
 Leo). No las reemplaza: cada sección dice de quién viene y enlaza al documento original.
@@ -19,8 +21,11 @@ cruza señales para detectar problemas antes de que sean emergencias, guía a la
 tripulación paso a paso cuando la Tierra tarda hasta 48 min en responder, y cuida quién
 ve qué en una tripulación de 4 personas.
 
-**Qué sale en la demo (núcleo, 7 módulos):** panel con figura humana y semáforo · motor
-de prevención con reglas auditables · emergencia de evento solar con buddy check ·
+**Qué incluye:** los **22 módulos** que propuso el equipo (§9). Ninguno se quita: la
+prioridad solo decide en qué orden se construyen.
+
+**Qué se construye primero (núcleo, 7 módulos):** panel con figura humana y semáforo ·
+motor de prevención con reglas auditables · emergencia de evento solar con buddy check ·
 radiación con datos reales de DONKI · reloj · privacidad por rol · nota de Tierra que
 llega tarde.
 
@@ -28,8 +33,8 @@ llega tarde.
 oficiales de NASA-STD-3001), **cada número dice de dónde sale** ([A] o [T]), y tiene
 un ángulo humano que pocos equipos tendrán: buddy system, privacidad y salud femenina.
 
-**Riesgo principal:** el alcance. Son 22 módulos; si no se respeta el orden de
-prioridad, la demo no termina. La evaluación honesta está en §2.
+**Riesgo principal:** el alcance. Son 22 módulos; si no se construyen en orden de
+prioridad, el núcleo no termina. La evaluación honesta está en §2.
 
 ---
 
@@ -118,7 +123,7 @@ Fuente: pestañas *Details* y *Resources* del reto ✅.
 | ¿Qué hacer para prevenir? | Motor de prevención (fatiga 112 → 114), metas de agua, ejercicio y CO₂ | ✅ Cumple |
 | Interfaz clara, animación e interactividad | Maquetas, guía de estilo, figura humana | 🟡 Diseñado; falta construirlo |
 | Figura humana clicable | Cuerpo EVA | 🟡 Diseñado; falta construirlo |
-| Distintos entornos (nave, estación, rover, Luna, Marte) | Perfiles de entorno (módulo 17) | 🔴 Solo hoja de ruta. La demo usa un único entorno |
+| Distintos entornos (nave, estación, rover, Luna, Marte) | Perfiles de entorno (módulo 17, prioridad 🔵) | 🟠 Se construye al final; si no llega, la demo usa un único entorno (tránsito a Marte) |
 | Recordatorios dentro de la rutina | Reloj + recordatorios (módulo 5) | ✅ En el núcleo |
 | Gamificación | Juego cooperativo (módulo 12) | 🟡 Como pantalla de diseño |
 | Gráficas dinámicas | Tendencias contra línea base (módulo 1) | ✅ En el núcleo |
@@ -198,7 +203,8 @@ Basado en el [catálogo de Iker](../variables-diagnostico/00-indice-priorizado.m
   nutrición (§5.3), y criterios públicos de "Contact Surgeon" (§5.4).
 - **Casi todos los estudios en vuelo tienen entre 3 y 14 personas.** Sirven para decidir
   qué medir, no para predecir en un individuo.
-- **La SpO₂ de reloj sobreestima cuando el oxígeno está bajo.** Nunca es la única alerta.
+- **La SpO₂ de reloj puede sobreestimar cuando el oxígeno está bajo** (Iker cita un
+  resumen que no está en el repo). Por prudencia, nunca es la única alerta.
 
 ### 5.2 Los indicadores del reto, con umbral y procedencia
 
@@ -385,9 +391,14 @@ Orion o la ISS **no es público**.
 
 ## 9. Módulos de EVA
 
-**Ninguna idea se descarta: todas entran, ordenadas por prioridad.**
-🔴 Núcleo = se programa y sale en la demo · 🟡 Diferenciador = se programa si da el
-tiempo; si no, pantalla de diseño · 🔵 Visión = hoja de ruta y diapositiva.
+**Los 22 módulos son parte de EVA. Ninguno se quita.** La prioridad solo decide el
+**orden de construcción**: se termina un nivel antes de empezar el siguiente.
+
+| Prioridad | Qué significa | Si no da el tiempo |
+|---|---|---|
+| 🔴 **Núcleo** | Se construye primero y tiene que funcionar de punta a punta | No hay plan B: es lo mínimo para la demo |
+| 🟡 **Diferenciador** | Se construye en cuanto el núcleo funciona | Se presenta como pantalla de diseño |
+| 🔵 **Visión** | Se construye al final | Se presenta como pantalla de diseño o en la diapositiva de visión |
 
 ### 🔴 Núcleo
 
@@ -429,8 +440,9 @@ tiempo; si no, pantalla de diseño · 🔵 Visión = hoja de ruta y diapositiva.
 ### Reglas que aplican a todos los módulos
 
 - **~8 minutos activos al día como máximo** (Leo). Lo demás se mide solo.
-- **En el pitch solo se muestran los 7 del núcleo.** Los 🟡 como pantallas de diseño y
-  los 🔵 en una diapositiva de "visión".
+- **En el pitch se presentan los 22 módulos**, cada uno en el estado en que llegue: los
+  que funcionen, en vivo; los demás, como pantalla de diseño o en la diapositiva de
+  visión. El tiempo de la demo en vivo se dedica al núcleo.
 
 ### Quién programa qué
 
@@ -448,8 +460,9 @@ contenido**, **Julio → Motor**, **Leo → Datos**, **Katy → UI o Emergencia 
 Diana y Fani: por definir. ⚠️ Confirmar con el equipo.
 
 **Puntos de corte (de Julio):**
-- **Gate T−9:** el arco de prevención (día 112 → 114) funciona de punta a punta. Si no, se
-  recorta en este orden: 🟡 completos → buddy check → nota tardía.
+- **Gate T−9:** el arco de prevención (día 112 → 114) funciona de punta a punta. Si no,
+  se **pausa** todo lo 🟡 y 🔵 y el equipo completo termina el núcleo. Lo pausado no se
+  quita: pasa a pantalla de diseño.
 - **Freeze T−4:** no entra nada nuevo. **Se entrega a T−4, no a T−0.**
 
 ---
@@ -517,7 +530,7 @@ más estas:
 | **"¿Qué pasa si la persona miente en el check-in?"** | "El CMO ve tendencias, no el día a día, y el resto del monitoreo es pasivo." |
 | **"¿Qué es real y qué es simulado?"** | "Reales: 51 eventos solares de NASA, su latencia, los umbrales de NASA-STD-3001 y la incidencia de Crucian 2016. Simulados: los signos vitales, y lo decimos en pantalla." |
 | **"¿Por qué no usan análisis de sangre?"** | "Porque a bordo casi no hay laboratorio en tiempo real: las muestras se congelan y se analizan en Tierra." |
-| **"¿Por qué 22 módulos?"** | "Construimos 7. El resto es la hoja de ruta, por prioridad." |
+| **"¿Por qué 22 módulos?"** | "Porque eso es EVA completo. Los construimos por prioridad: primero los 7 que hacen funcionar la demo, después el resto." |
 
 ---
 
@@ -644,9 +657,9 @@ equipo.
 
 | # | Duda | Por qué importa | A quién |
 |---|---|---|---|
-| 1 | **¿"Monarcas" es el nombre del equipo?** El índice de Iker dice "Equipo Monarcas" | Si el equipo es Monarcas y el producto EVA, hay que decirlo igual en todos lados | Todos |
-| 2 | **¿Dónde está `RESUMEN-MAESTRO.md`?** Iker lo cita (sobre la precisión de la SpO₂ de reloj), pero no está en el repo | Es la fuente de una regla de diseño | Iker |
-| 3 | **¿Cuántas horas quedan de verdad?** El roadmap de Julio contaba ~18 h desde que lo escribió | Decide cuánto del núcleo es realista | Julio |
+| 1 | ~~¿"Monarcas" es el nombre del equipo?~~ | ✅ **Sí.** Equipo Monarcas, producto EVA | Resuelta |
+| 2 | ~~¿Dónde está `RESUMEN-MAESTRO.md`?~~ | ✅ No está en el repo; seguimos sin él. La regla "la SpO₂ de reloj nunca es la única alerta" se mantiene por prudencia, sin cifra | Resuelta |
+| 3 | ~~¿Cuántas horas quedan?~~ | ✅ No cambia el alcance: entran los 22 módulos y se construyen por prioridad (§9) | Resuelta |
 | 4 | **¿Qué glucómetro hay a bordo?** Iker no lo encontró | La glucosa es indicador del reto; hoy entra a mano | Iker |
 | 5 | **¿Qué umbral de tasa de dosis dispara la alarma?** No es público | Los números de la demo del evento solar son simulados | Datos |
 | 6 | **¿Usamos PHQ-9 y GAD-7 en la app?** Son de uso libre, pero sus cortes son terrestres | Más validez vs. más tiempo del astronauta | Ciencia |

@@ -3,6 +3,10 @@
 Software de monitoreo de salud para astronautas en misiones de larga duración.
 NASA Space Apps Challenge 2026.
 
+El software **recaba, organiza, monitorea, previene y asiste en emergencias**. Los cinco
+son una sola cadena: el monitoreo diario existe para que, cuando ocurra una emergencia,
+el sistema ya sepa cómo es esa persona cuando está bien.
+
 ## Estructura del repositorio
 
     Planeacion/
@@ -17,7 +21,7 @@ conflictos al mezclar ramas.
 | Documento | Qué contiene |
 |---|---|
 | [Diccionario de datos](Planeacion/Julio/diccionario-de-datos.md) | De dónde sale y cómo se calcula cada indicador: sensores, fórmulas, instrumentos y fuentes |
-| [Comportamiento del software](Planeacion/Julio/comportamiento-del-software.md) | Diagramas de secuencia, escalera de escalamiento, modelo de tiempos SCET/ERT y escenario de demo |
+| [Comportamiento del software](Planeacion/Julio/comportamiento-del-software.md) | Diagramas de secuencia, escalera de escalamiento, modelo de tiempos SCET/ERT, modo emergencia y guion de demo |
 
 ## Convención de confianza
 

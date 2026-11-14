@@ -10,19 +10,36 @@ Convención heredada del diccionario de datos: ✅ verificado · ⚠️ verifica
 
 ## 1. Actores del sistema
 
-| Actor | Qué es | ¿Necesita red? |
-|---|---|---|
-| **Astronauta** | Usuario principal. Decide y actúa. | — |
-| **Reloj** | PPG + acelerómetro + termistor | No |
-| **App** | UI local en el teléfono | No |
-| **Motor** | Reglas deterministas sobre archivo YAML | **No. Nunca.** |
-| **Almacén** | Base local cifrada + cola de salida | No |
-| **Tierra** | Cirujano de vuelo | Sí, cuando hay ventana |
+| Actor | Dónde | Latencia | Nota |
+|---|---|---|---|
+| **Astronauta** | A bordo | 0 | Sujeto de la medición. Decide y actúa. |
+| **CMO** · Crew Medical Officer | A bordo | 0 | ✅ Tripulante asignado como experto médico. **Frecuentemente, pero no obligatoriamente, es médico.** |
+| **Reloj** | A bordo | — | PPG + acelerómetro + termistor |
+| **App + Motor** | A bordo | ms | Reglas deterministas. **Nunca necesita red.** |
+| **Almacén** | A bordo | — | Base cifrada + cola de salida |
+| **Enlace DSN** | — | OWLT 4–24 min | Ventanas, no continuo |
+| **Cirujano de vuelo** | Tierra · MCC | OWLT por trayecto | Supervisa, ajusta umbrales |
+| **NASA · segmento de tierra** | Tierra | Diferido | Archivo longitudinal, HRP |
 
-El punto de arquitectura: **las primeras cinco filas cierran el ciclo completo sin
-Tierra.** Tierra es un observador diferido, no un eslabón de la decisión.
+### El CMO cambia el diseño
 
----
+✅ Datos verificados sobre el rol: el CMO recibe entrenamiento preflight en trauma,
+emergencias, odontología, ultrasonido y toma de decisiones clínicas en aislamiento.
+Maneja las pruebas médicas rutinarias y atiende a quien enferme o se lesione,
+**siguiendo las indicaciones de los cirujanos de vuelo en Tierra**. En la literatura se
+le describe como *healthcare extender* del cirujano de vuelo. Se apoya en el **CHeCS**
+(Crew Health Care System): diagnóstico, trauma y formulario de medicamentos.
+
+⚠️ Las horas de entrenamiento no son consistentes entre fuentes: un resumen de AsMA
+2021 indica ~15 h en los dos años previos al lanzamiento; otra fuente menos autorizada
+dice ~40 h en 18 meses. **No citar una cifra concreta sin verificar.**
+
+✅ **Y aquí está la frase que justifica el proyecto entero, en voz de la propia
+literatura de NASA:** se espera que el paradigma actual sea **insuficiente** para
+misiones de exploración a la Luna y Marte, donde los retrasos de comunicación exigirán
+**mayor autonomía en la toma de decisiones**.
+
+Eso no es nuestra opinión de hackathon. Es el planteamiento del problema, publicado.
 
 ## 2. Diagrama 1 — Ciclo diario nominal
 
@@ -108,38 +125,173 @@ sequenceDiagram
 
 ---
 
-## 4. Diagrama 3 — Sincronización diferida con Tierra
+## 4. Escalera de escalamiento
+
+El error de diseño que evitamos: tratar "alerta" como sinónimo de "llamar a Tierra".
+Hay dos niveles **a bordo** antes de que la latencia importe siquiera.
+
+| Nivel | Quién resuelve | Latencia | Cuándo |
+|---|---|---|---|
+| **0 · Autocuidado** | Motor + astronauta | 0 | Verde y ámbar con protocolo estándar |
+| **1 · CMO a bordo** | Crew Medical Officer | 0 | Ámbar persistente, rojo, cualquier síntoma físico |
+| **2 · Cirujano de vuelo** | Tierra · MCC | OWLT por trayecto | Rojo sin resolver, ajuste de umbrales, duda clínica |
+| **3 · Junta médica NASA** | Tierra | Horas o días | Decisiones de misión, consulta especializada |
+
+**La métrica de éxito del software es cuánto se resuelve en niveles 0 y 1.** Un rojo que
+exige a Tierra ya es un caso perdido en términos de autonomía.
+
+🔶 **Caso borde que hay que manejar:** si el afectado **es el propio CMO**, el sistema
+salta el nivel 1, escala directo a nivel 2 y notifica al comandante. En una tripulación
+de 4 esto no es hipotético.
+
+🔶 **Privacidad:** el CMO ve los datos de salud de la tripulación; el resto de
+tripulantes, no. El astronauta siempre ve los suyos completos. Tres niveles de acceso,
+no uno.
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor A as Astronauta
-    participant APP as App
-    participant DB as Almacén local
-    participant L as Enlace · ventana DSN
+    participant M as Motor
+    actor C as CMO a bordo
+    participant DB as Almacén
     participant T as Cirujano de vuelo
 
-    Note over APP,T: Marte: 4–24 min por trayecto.<br/>Preguntar y recibir respuesta: hasta ~48 min.
+    M-->>A: ÁMBAR · protocolo de autocuidado
+    Note over A,M: Nivel 0 · se resuelve solo. Latencia cero.
 
-    APP->>DB: Encola resumen diario comprimido
-    Note right of DB: Sin enlace la app NO se bloquea.<br/>Sigue decidiendo sola.
+    alt Persiste 48 h o aparece sintoma fisico
+        M-->>C: Notifica al CMO con evidencia y tendencia
+        C->>A: Evaluación presencial · CHeCS
+        C->>DB: Registra hallazgo y conducta
+        Note over C,A: Nivel 1 · sigue siendo latencia cero.
 
-    L->>DB: Se abre ventana de comunicación
-    DB->>L: Envía la cola acumulada
-    L->>T: Entrega · retraso 4–24 min
-    T->>T: Revisa tendencias y eventos
-    T->>L: Nota clínica y ajuste de umbrales
-    L->>APP: Llega · retraso 4–24 min
-    APP->>DB: Aplica nueva configuración
-    APP->>A: "Tierra revisó tu evento del día 112"
+        alt El CMO resuelve
+            C-->>M: Cierra evento a bordo
+        else Requiere criterio de Tierra
+            C->>DB: Encola consulta con prioridad alta
+            DB->>T: En la próxima ventana · OWLT
+            T-->>DB: Respuesta · OWLT de regreso
+            Note over DB,T: Nivel 2 · ida y vuelta hasta 48 min.
+        end
+    end
 ```
-
-Esto responde de inmediato a la pregunta obvia del jurado: *"¿entonces el médico no
-sirve?"*. Sí sirve — **pero como supervisor asíncrono, no como cuello de botella.**
 
 ---
 
-## 5. Escenario corrido — Día 112, fatiga antes de una EVA
+## 5. Modelo de tiempos — SCET, ERT y OWLT
+
+Tu observación es correcta y tiene nomenclatura formal en operaciones de espacio
+profundo. ✅ Los términos y las relaciones:
+
+| Término | Qué es |
+|---|---|
+| **SCET** · Spacecraft Event Time | Cuándo **ocurrió** el evento a bordo, en UTC |
+| **ERT** · Earth Received Time | UTC en que una estación del DSN **recibió** el dato |
+| **OWLT** · One-Way Light Time | Retraso de un trayecto. Marte: 4–24 min |
+| **TWLT** · Two-Way Light Time | Ida y vuelta. Marte: hasta ~48 min |
+| **SCLK** · Spacecraft Clock | Reloj de a bordo. Es la mejor estimación del SCET, **pero deriva** |
+
+Las relaciones, verificadas:
+
+    SCET = ERT − OWLT          (bajada: de la nave a Tierra)
+    ERT  = SCET + OWLT
+    llegada_a_bordo = TRM + OWLT   (subida: TRM = UTC de envío desde Tierra)
+
+✅ **Sobre la deriva del reloj:** el SCLK no coincide exactamente con el SCET. NASA
+analiza los valores de SCLK telemetrados contra el SCET derivado de UTC y produce
+periódicamente un **archivo de coeficientes SCLK/SCET** para corregirlo. En la misión
+Cluster se rehace la correlación cuando la discrepancia supera los 2 ms.
+
+🔶 Para nosotros eso es exagerado, pero **el campo tiene que existir en el esquema**:
+dejamos `t_sclk` crudo y `t_scet` corregido. Decir en la presentación que sabemos que
+el reloj deriva y que dejamos el espacio para la corrección vale mucho y cuesta un campo.
+
+### Esquema de cada registro
+
+```json
+{
+  "id": "ms2-112-0742-fatiga03",
+  "t_sclk":  "D112T07:42:11",
+  "t_scet":  "2027-03-18T07:42:09Z",
+  "t_ert":   null,
+  "owlt_s":  null,
+  "origen":  "a_bordo",
+  "tipo":    "evento",
+  "payload": { }
+}
+```
+
+`t_ert` y `owlt_s` los rellena Tierra al recibir. A bordo son `null`, y eso es correcto:
+**la nave no sabe cuándo llegará su propio paquete.**
+
+### Las cinco consecuencias que hay que programar
+
+1. **Ordenar por SCET, nunca por ERT.** Los paquetes llegan desordenados. Si la UI de
+   Tierra ordena por hora de recepción, muestra una historia clínica falsa.
+2. **Idempotencia.** Hay reenvíos. Cada registro con `id` único; aplicarlo dos veces no
+   puede duplicar nada.
+3. **Ninguna pantalla en Tierra dice "estado actual".** Dice *"estado al SCET X,
+   recibido ERT Y, **antigüedad Z min**"*. La antigüedad va visible siempre.
+4. **Config versionada.** Tierra sube un umbral basado en datos viejos. Cada config
+   lleva versión y el SCET de los datos que la motivaron. Si a bordo hay una decisión
+   más nueva, **no se pisa en silencio** — se avisa.
+5. **Priorizar la cola.** Tras un hueco largo de enlace la cola es grande. Orden:
+   rojos abiertos → ámbares abiertos → resúmenes diarios → series crudas si cabe.
+
+### El caso que hay que enseñar en la demo: el consejo que llega tarde
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant APP as App a bordo
+    participant DB as Cola local
+    participant L as Enlace DSN
+    participant T as Cirujano de vuelo
+    participant N as NASA · archivo
+
+    APP->>DB: Evento FATIGA-03 · SCET D112 07:42
+    Note right of DB: Sin ventana. La app NO se bloquea.<br/>Sigue decidiendo sola.
+
+    L->>DB: Ventana abierta · D112 14:20
+    DB->>L: Envía cola priorizada
+    L->>T: Entrega · ERT = SCET + OWLT
+    L->>N: Copia al archivo longitudinal
+    T->>T: Revisa · ve antigüedad de 41 min
+    T->>L: Nota clínica + ajuste de umbral
+    L->>APP: Llega · D112 15:09
+
+    Note over APP,T: Mientras tanto, a bordo ya pasaron 7 horas.
+
+    APP->>APP: Reconcilia contra estado local
+    APP->>DB: La nota responde a un evento aún abierto → aplica
+```
+
+Y la tarjeta que resuelve la ambigüedad para el astronauta:
+
+```
+┌──────────────────────────────────────────────┐
+│  Nota de Tierra · cirujano de vuelo          │
+├──────────────────────────────────────────────┤
+│  Responde a:  evento FATIGA-03, día 112      │
+│  Estado hoy:  CERRADO el día 114             │
+│                                              │
+│  Emitida con datos hasta  SCET D112 14:20    │
+│  Antigüedad al llegar:    41 min             │
+│                                              │
+│  ⓘ Esta recomendación no conocía tu          │
+│    recuperación del día 113–114.             │
+├──────────────────────────────────────────────┤
+│  [ Leer de todos modos ]  [ Archivar ]       │
+└──────────────────────────────────────────────┘
+```
+
+**Ese recuadro es la demo entera en una imagen.** Dice, sin explicarlo: *aquí la
+latencia es real, el software la entiende, y por eso decide solo.*
+
+---
+
+## 6. Escenario corrido — Día 112, fatiga antes de una EVA
 
 Misión de tránsito a Marte. Tripulante MS-2. EVA de mantenimiento el día 114.
 
@@ -244,7 +396,7 @@ con evidencia. **La decisión sigue siendo de la tripulación.**
 
 ---
 
-## 6. Segundo escenario, corto — Día 115, evento de partículas solares
+## 7. Segundo escenario, corto — Día 115, evento de partículas solares
 
 Muestra el módulo de radiación, que es el hazard #1 del reto.
 
@@ -267,7 +419,7 @@ disputa entre fuentes — ver el diccionario de datos antes de ponerlo en una sl
 
 ---
 
-## 7. Por qué esto no es un dashboard
+## 8. Por qué esto no es un dashboard
 
 Cuatro diferencias concretas, útiles como diapositiva:
 
@@ -280,7 +432,7 @@ Cuatro diferencias concretas, útiles como diapositiva:
 
 ---
 
-## 8. Guion de demo — 90 segundos
+## 9. Guion de demo — 90 segundos
 
 1. **0:00–0:15** — "Un astronauta con una señal preocupante no puede preguntarle a
    Houston. La respuesta tarda hasta 48 minutos."
@@ -288,7 +440,9 @@ Cuatro diferencias concretas, útiles como diapositiva:
 3. **0:35–0:55** — Aparece el ámbar. Leer en voz alta: *"ninguna sola dispararía; las
    tres juntas, sí."*
 4. **0:55–1:10** — Abrir el YAML. "Esto no alucina. Es auditable."
-5. **1:10–1:25** — Avanzar a día 114: cierra en verde. Ciclo completo.
+5. **1:10–1:25** — Avanzar a día 114: cierra en verde. Entra la **nota de Tierra con
+   41 min de antigüedad**, respondiendo a un evento ya cerrado. *"Esto es por qué no
+   podemos esperar."*
 6. **1:25–1:30** — Modo avión encendido **toda la demo**. Señalarlo al final.
 
 🔶 **Dejar el teléfono en modo avión durante toda la presentación y decirlo hasta el
@@ -296,13 +450,32 @@ final** es el remate más barato y más efectivo que tenemos.
 
 ---
 
-## 9. Qué le toca a cada rol
+## 10. Qué le toca a cada rol
 
 | Rol | Qué sale de este documento |
 |---|---|
-| Datos y sensores | Diagrama 1, franja del reloj |
-| Motor de reglas | Sección 5: fórmulas de z, YAML, criterio de cierre |
-| UI | Sección 5: la tarjeta, el semáforo, la vista de evidencia |
-| Contenido científico | ⚠️ verificar protocolos; mapear reglas a riesgos de NASA |
-| Demo y presentación | Sección 8, completa |
-| Datos sintéticos | Secciones 5 y 6: tablas día a día. **Ese es el spec.** |
+| Datos y sensores | Diagrama 1 · franja del reloj |
+| Motor de reglas | §6: fórmulas de z, YAML, criterio de cierre · §4: niveles de escalamiento |
+| UI | §6: tarjeta y semáforo · §5: la tarjeta de nota tardía y el indicador de antigüedad |
+| Contenido científico | ⚠️ verificar protocolos clínicos · mapear cada regla a un riesgo de NASA |
+| Demo y presentación | §9 completa |
+| Datos sintéticos | §6 y §7: tablas día a día. **Ese es el spec.** Más los campos SCET/ERT de §5. |
+
+**Lo mínimo que no puede faltar del modelo de tiempos**, aunque se recorte todo lo demás:
+cada registro con `t_scet`, la UI de Tierra ordenando por SCET, y el indicador de
+antigüedad visible. Son tres cosas pequeñas y son las que hacen que un juez de
+operaciones levante la ceja.
+
+---
+
+## Fuentes
+
+Verificadas el 2026-11-14. Ver también `docs/diccionario-de-datos.md`.
+
+- Spacecraft Event Time · SCET, ERT, OWLT: https://en.wikipedia.org/wiki/Spacecraft_Event_Time
+- NAIF/JPL · CHRONOS, conversión entre SCET, ERT y SCLK: https://naif.jpl.nasa.gov/pub/naif/utilities/PC_Windows_64bit/chronos.ug
+- Reconstitución precisa del SCET y correlación SCLK (misión Cluster): https://cdaweb.gsfc.nasa.gov/istp_public/data/cluster/documents/DWP/Precise_reconstitution_of_SCET.pdf
+- NASA NTRS · Crew Medical Officer, rol y entrenamiento: https://ntrs.nasa.gov/api/citations/20230013415/downloads/IWS_CMO.pdf
+- NASA NTRS · CMO training (resumen AsMA 2021): https://ntrs.nasa.gov/citations/20205008925
+- JAXA · sistema de operaciones médicas y rol del CMO: https://humans-in-space.jaxa.jp/en/biz-lab/med-in-space/healthcare/medops/system
+- NASA · Space Communications, 7 Things (retraso 4–24 min): https://www.nasa.gov/centers-and-facilities/goddard/space-communications-7-things-you-need-to-know/

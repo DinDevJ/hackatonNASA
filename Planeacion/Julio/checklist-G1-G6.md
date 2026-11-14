@@ -93,7 +93,7 @@ umbrales terrestres. **Pero el número no se muestra solo: se muestra como banda
 
 | ID | Variable | Nivel | Cómo, y qué lo limita |
 |---|---|---|---|
-| `04:A4` | Frecuencia cardiaca | **N0** | PPG, detección de picos. Degrada con movimiento |
+| `04:A4` | Frecuencia cardiaca | **N0** | ✅ **Capturada en vivo del HUAWEI WATCH 5** con `codigo/heart-rate.ts`. ~1 Hz, limpia |
 | `01:V3` | FC en reposo | **N0** | 🔶 Nuestra definición: mediana de los 30 min más quietos del sueño |
 | `04:A3` | SpO2 | **N0** | PPG de dos longitudes de onda. ⚠️ **No es grado médico** |
 | `01:V29` | Minutos y tipo de ejercicio | **N0** | Acelerómetro + zonas de FC |
@@ -111,8 +111,8 @@ umbrales terrestres. **Pero el número no se muestra solo: se muestra como banda
 | 4 | Datasets reales y licencias | ✅ **BIDMC PPG and Respiration Dataset** (PhysioNet): PPG + respiración, licencia **Open Data Commons Attribution v1.0**, acceso abierto, DOI `10.13026/C2208R`. ⚠️ **CapnoBase** (42 registros de 8 min, PPG+ECG a 300 Hz) y **PPG-DaLiA** (15 sujetos, PPG de muñeca a 64 Hz): **licencia no confirmada**, hay que abrir su página |
 | 5 | Directa, cálculo o estimación | ✅ **Directa:** A4, V3, A3, V29, V48. **Estimación:** V27/A2. **No obtenible:** V23 |
 | 6 | Modelos preentrenados ejecutables | ✅ No hace falta red neuronal. Detección de picos, limpieza de artefactos y la transformada para respiración corren en el teléfono. 🔶 Es una ventaja: **nada que descargar, nada que explicar** |
-| 7 | Limitaciones de vuelo y validez clínica | ✅ El reloj da **PRV, no HRV de ECG** · SpO2 no es grado médico · respiración ±5,4 rpm · todo degrada con movimiento · ⚠️ los umbrales son terrestres |
-| 8 | Instrucciones reproducibles | 🔶 Pendiente: un comando de descarga de BIDMC y el fragmento de Web Bluetooth del perfil de ritmo cardiaco. **Va cuando exista el repo de código** |
+| 7 | Limitaciones de vuelo y validez clínica | 🔴 **Confirmado en hardware: el WATCH 5 no entrega intervalos RR, así que no hay HRV en vivo** (ver `hardware-y-radio.md` §1) · el reloj da **PRV, no HRV de ECG** · SpO2 no es grado médico · respiración ±5,4 rpm · todo degrada con movimiento · ⚠️ los umbrales son terrestres |
+| 8 | Instrucciones reproducibles | ✅ **Hecho para el reloj:** `codigo/heart-rate.ts`, compilado en modo severo y con 14 pruebas que pasan contra bytes reales. 🔶 Pendiente el comando de descarga de BIDMC |
 
 ---
 

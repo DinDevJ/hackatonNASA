@@ -27,6 +27,7 @@ conflictos al mezclar ramas.
 | [Stack y dependencias](Planeacion/Julio/stack-y-dependencias.md) | Decisión de lenguaje, librerías a reutilizar y estado de la API DONKI |
 | [Síntesis del equipo](Planeacion/Julio/sintesis-del-equipo.md) | Análisis de las cinco propuestas: convergencias, choques y qué decidir |
 | [Mis variables agrupadas](Planeacion/Julio/mis-variables-agrupadas.md) | Las 77 variables asignadas, en 9 grupos por ruta de investigación |
+| [Checklist G1 y G6](Planeacion/Julio/checklist-G1-G6.md) | Checklist cumplido para wearable y telemetría, con la escalera de obtención por variable |
 
 ## Convención de confianza
 

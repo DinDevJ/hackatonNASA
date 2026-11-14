@@ -24,10 +24,11 @@ ve qué en una tripulación de 4 personas.
 **Qué incluye:** los **22 módulos** que propuso el equipo (§9). Ninguno se quita: la
 prioridad solo decide en qué orden se construyen.
 
-**Qué se construye primero (núcleo, 7 módulos):** panel con figura humana y semáforo ·
+**Qué se construye primero (núcleo, 9 módulos):** panel con figura humana y semáforo ·
 motor de prevención con reglas auditables · emergencia de evento solar con buddy check ·
-radiación con datos reales de DONKI · reloj · privacidad por rol · nota de Tierra que
-llega tarde.
+radiación con datos reales de DONKI · reloj (Huawei Watch 5 por Bluetooth) · privacidad
+por rol · nota de Tierra que llega tarde · **salud femenina** · **asistente de voz**.
+Interfaz en inglés o español, a elección.
 
 **Por qué puede ganar:** usa **datos reales de NASA** (51 eventos solares + umbrales
 oficiales de NASA-STD-3001), **cada número dice de dónde sale** ([A] o [T]), y tiene
@@ -42,7 +43,12 @@ prioridad, el núcleo no termina. La evaluación honesta está en §2.
 
 | Decisión | Elegido | Origen |
 |---|---|---|
-| Nombre | **EVA** (propuesto: Evaluación Vital Autónoma; en votación) | Equipo |
+| Nombre | **EVA**, sin significado (decisión 1) | Equipo |
+| Reloj | **Huawei Watch 5**, conectado por **Bluetooth** | Equipo |
+| Asistente de voz | **Entra en la demo.** El motor decide y el LLM solo redacta lo ya decidido | [Julio](../Julio/llm-local-y-voz.md) |
+| Lenguajes | **Python** para pruebas de viabilidad; **TypeScript** para interfaz, reloj y motor; panel como PWA con React (decisión 10) | Equipo |
+| Idioma | **Seleccionable: inglés o español** (decisión 12) | Equipo |
+| Salud femenina | **Sube al núcleo** (decisión 3) | Equipo |
 | Base técnica | Motor de línea base + reglas YAML + escalera de escalamiento | [Julio](../Julio/comportamiento-del-software.md) |
 | Datos y umbrales | Catálogo de variables con procedencia [A]/[T] | [Iker](../variables-diagnostico/00-indice-priorizado.md) |
 | Emergencia de la demo | **Evento de partículas solares (SPE)** con datos reales de DONKI | [Julio](../Julio/comportamiento-del-software.md#7-segundo-escenario-corto--día-115-evento-de-partículas-solares) |
@@ -52,10 +58,11 @@ prioridad, el núcleo no termina. La evaluación honesta está en §2.
 
 ### ⚠️ Ojo con el nombre
 
-En NASA, **EVA = Extravehicular Activity**, una **caminata espacial**. 🔶 Propuesta:
+En NASA, **EVA = Extravehicular Activity**, una **caminata espacial**. El equipo decidió
+dejar **EVA sin significado** (decisión 1). Para evitar confusiones:
 
-- **EVA — Evaluación Vital Autónoma.**
-- En el texto, la UI y la demo, a la otra EVA le decimos siempre **"caminata espacial"**.
+- En el texto, la UI y la demo, a la otra EVA le decimos siempre **"caminata espacial"**
+  (en inglés, *spacewalk*).
 - Remate posible en el pitch: *"Antes de cada EVA, EVA te dice si estás listo."*
 
 ## 0.1 Contexto único de la demo y tripulación 🔶
@@ -411,6 +418,8 @@ Orion o la ISS **no es público**.
 | 5 | **Reloj + recordatorios** | Estado de un vistazo, "¿Estás bien?", alerta del compañero, recordatorios de medición | Katy · Fani |
 | 6 | **Privacidad: quién ve qué** | Matriz por rol, panel público, candados, "lo que ven de mí" | Katy |
 | 7 | **Comunicación con Tierra** | Cola priorizada, nota que llega tarde con su antigüedad, criterios "Contact Surgeon" de §5.4 | Julio · Fani · Iker |
+| 11 | **Salud femenina y diferencias por sexo** ⬆️ (decisión 3) | Supresión menstrual, inventario de anticonceptivos, riesgo de coágulos, mareo al volver a la gravedad, y **ajuste de la línea base por el ciclo** (la FC y la HRV cambian a lo largo del ciclo; sin esto, el motor da falsas alarmas). **Privado y sin juego** | Katy · Leo · Iker |
+| 19 | **Asistente de voz** ⬆️ | LLM local que **solo redacta** el veredicto del motor; nunca ve señales crudas ni decide. Si falla, se pierde la voz, no la salud | Julio · Fani |
 
 ### 🟡 Diferenciadores
 
@@ -419,7 +428,6 @@ Orion o la ISS **no es público**.
 | 8 | **Salud mental y del equipo** | Check-in de 20 s, HRV, PVT-B, PHQ-9 y GAD-7 semanales, somnolencia KSS, carga de trabajo (NASA-TLX), horas trabajadas (crítico > 60 h/semana [A]), cohesión del equipo | Julio · Leo · Katy · Fani · Iker |
 | 9 | **Crisis de ansiedad o pánico** | Primero descarta lo físico (SpO₂, ECG, CO₂); después respiración guiada con vibración y compañero opcional. **Ilustrativo** | Katy |
 | 10 | **Nutrición, hidratación y ejercicio** | Metas oficiales: 3035 kcal, 32 mL/kg de agua, sodio 1500–2300 mg; alerta por masa −3,3 % [A]; ARED, T2, CEVIS; fuerza ≥ 80 % de la basal [A] | Katy · Leo · Iker |
-| 11 | **Salud femenina y diferencias por sexo** | Supresión menstrual, inventario de anticonceptivos, riesgo de coágulos (anticonceptivos combinados hasta 3,2× [T]), mareo al volver a la gravedad. **Privado y sin juego** | Katy · Leo · Iker |
 | 12 | **Juego cooperativo** | Jardín de la base, metas del equipo; premia **registrar**, no tener "buenos números"; sin rankings | Katy · Leo |
 | 13 | **Biblioteca de enfermedades y cuidados** | Fichas sin conexión ordenadas por frecuencia real (modelo IMM de NASA: insomnio 13,85 por misión, abrasión ocular 7,42, diarrea 3,53, barotrauma 3,28, cefalea por CO₂ 2,15), con su criterio "Contact Surgeon" | Katy · Diana · Iker |
 | 14 | **Cómo se muestra el riesgo** | Probabilidad con modelo (radiación) · margen contra la norma (hueso, nutrición) · nivel relativo (sueño, SANS) | Leo |
@@ -432,7 +440,6 @@ Orion o la ISS **no es público**.
 | 16 | **Ambiente de la nave** | CO₂, O₂, ruido, temperatura y humedad contra los límites oficiales de §5.3; síntomas de varias personas → problema del ambiente | Katy · Fani · Iker |
 | 17 | **Perfiles de entorno** | Nave, ISS, rover, base lunar, Marte (polvo: lunar < 0,3 mg/m³, marciano < 0,1 [A]) | Fani · Katy · Iker |
 | 18 | **Motor diagnóstico probabilístico** | Diferencial con priors de Crucian 2016, "¿de dónde sale este %?" | Julio |
-| 19 | **Asistente de voz conversacional** | Local, solo con contenido aprobado | Fani |
 | 20 | **Red tolerante a interrupciones (DTN)** | Bundle Protocol | Fani |
 | 21 | **Pruebas cognitivas largas y de transición** | DSST, Fractal 2-Back (alerta con z ≤ −1,5 [A]); prueba en cada cambio de gravedad | Leo · Iker |
 | 22 | **Conexión con hardware real** | Adaptadores para Bio-Monitor/Astroskin, relojes Bluetooth, ultrasonido (yugular grado 3 = pretrombótico [A]; OCT > 19,4 µm = primer signo de SANS [A]) | Katy · Leo · Iker |
@@ -449,10 +456,10 @@ Orion o la ISS **no es público**.
 | Rol | Núcleo | Si sobra tiempo (🟡) |
 |---|---|---|
 | **Datos y sintéticos** | 4 Radiación (DONKI) · generador de datos de la tripulación de §0.1 | 10 Nutrición y ejercicio (datos) |
-| **Motor** | 2 Motor de prevención · reglas YAML con los umbrales de §5 | 14 Cómo se muestra el riesgo |
-| **UI** | 1 Panel + Cuerpo EVA · 5 Reloj | 12 Juego cooperativo |
+| **Motor** | 2 Motor de prevención · reglas YAML con los umbrales de §5 · 19 Asistente de voz | 14 Cómo se muestra el riesgo |
+| **UI** | 1 Panel + Cuerpo EVA · 5 Reloj (Huawei Watch 5 por Bluetooth) · selector de idioma | 12 Juego cooperativo |
 | **Emergencia y privacidad** | 3 Emergencias + buddy check · 6 Privacidad | 9 Pánico (ilustrativo) |
-| **Ciencia y contenido** | Umbrales [A]/[T] en el YAML · criterios "Contact Surgeon" · protocolo RAD-01 | 11 Salud femenina · 13 Biblioteca |
+| **Ciencia y contenido** | Umbrales [A]/[T] en el YAML · criterios "Contact Surgeon" · protocolo RAD-01 · 11 Salud femenina | 13 Biblioteca |
 | **Demo y pitch** | 7 Comunicación con Tierra · guion · video · diapositivas | 8 Salud mental (pantallas) |
 
 🔶 Propuesta de asignación por lo que cada quien ya investigó: **Iker → Ciencia y
@@ -463,7 +470,7 @@ Diana y Fani: por definir. ⚠️ Confirmar con el equipo.
 - **Gate T−9:** el arco de prevención (día 112 → 114) funciona de punta a punta. Si no,
   se **pausa** todo lo 🟡 y 🔵 y el equipo completo termina el núcleo. Lo pausado no se
   quita: pasa a pantalla de diseño.
-- **Freeze T−4:** no entra nada nuevo. **Se entrega a T−4, no a T−0.**
+- **Entrega interna:** sin fecha fija (decisión 14).
 
 ---
 
@@ -524,7 +531,7 @@ más estas:
 | Pregunta | Respuesta corta |
 |---|---|
 | **"¿De dónde salen sus umbrales?"** | "Cada uno dice si es oficial de NASA [A] o clínico terrestre [T]. Para signos vitales NASA no publica umbrales, por eso comparamos contra la normalidad de cada persona." |
-| **"¿Por qué se llama como la caminata espacial?"** | "EVA es Evaluación Vital Autónoma. Antes de cada EVA, EVA te dice si estás listo." |
+| **"¿Por qué se llama como la caminata espacial?"** | "Lo sabemos, y por eso a la caminata espacial le decimos siempre caminata espacial. Antes de cada EVA, EVA te dice si estás listo." |
 | **"En una tripulación de 4, ¿qué privacidad puede haber?"** | "No prometemos anonimato. Cada rol ve solo lo que necesita, el panel de pared solo muestra el estado y cada persona ve qué ven los demás de ella." |
 | **"¿Y si el reloj se apaga en el buddy check?"** | "EVA distingue 'sin señal del reloj' de 'no responde'." |
 | **"¿Qué pasa si la persona miente en el check-in?"** | "El CMO ve tendencias, no el día a día, y el resto del monitoreo es pasivo." |
@@ -551,67 +558,67 @@ nombre, por ejemplo `- [x] Opción (Iker)`.
 
 **1. Nombre del producto** · En NASA, EVA significa caminata espacial (§0).
 - [ ] ⭐ EVA — Evaluación Vital Autónoma
-- [ ] EVA, sin significado
+- [x] EVA, sin significado
 - [ ] Otro nombre: ______
 
 **2. Tripulación y contexto de la demo** · Tránsito a Marte, días 112–115 (§0.1).
-- [ ] ⭐ Aprobar como está
+- [x] ⭐ Aprobar como está
 - [ ] Cambiar nombres o roles
 - [ ] Cambiar el contexto de misión
 
 **3. Prioridad de la salud femenina** · Hoy es diferenciador 🟡 (§9).
 - [ ] ⭐ Dejarla como diferenciador
-- [ ] Subirla al núcleo
+- [x] Subirla al núcleo
 
 ### Demo
 
 **4. Emergencia principal** (§8)
-- [ ] ⭐ Evento de partículas solares
+- [x] ⭐ Evento de partículas solares
 - [ ] Desmayo
 - [ ] Las dos
 
 **5. Evento real de DONKI** · 51 eventos SEP de 2024; mediana de 17 min.
-- [ ] ⭐ Uno con latencia cercana a la mediana (17 min)
+- [x] ⭐ Uno con latencia cercana a la mediana (17 min)
 - [ ] El del 9 de mayo de 2024 (alerta 1 min después)
 - [ ] Que lo elija quien lleva datos
 
 **6. Motor diagnóstico con porcentajes**
-- [ ] ⭐ Solo si pasamos el gate T−9
+- [x] ⭐ Solo si pasamos el gate T−9
 - [ ] Sí, en la demo pase lo que pase
 - [ ] Fuera; solo diapositiva de visión
 
 **7. Juego cooperativo**
-- [ ] ⭐ Pantalla de diseño
+- [x] ⭐ Pantalla de diseño
 - [ ] Programarlo
 - [ ] Fuera de la demo
 
 ### Privacidad
 
 **8. Qué ve el comandante** (§7)
-- [ ] ⭐ Apto / no apto, sin motivo
+- [x] ⭐ Apto / no apto, sin motivo
 - [ ] Nada médico
 - [ ] Lo mismo que la CMO
 
 **9. Qué ve la CMO del ánimo** (§7)
-- [ ] ⭐ Tendencia semanal (diaria con permiso)
+- [x] ⭐ Tendencia semanal (diaria con permiso)
 - [ ] Check-in diario
 - [ ] Nada sin permiso
 
 ### Técnico
 
 **10. Plataforma**
-- [ ] ⭐ PWA en TypeScript + React
+- [x] ⭐ PWA en TypeScript + React
 - [ ] Otra: ______
 
 **11. Límite de radiación en la interfaz** · 🔶 **Propongo cerrarla:** Iker encontró que
 600 mSv para todos está en NASA-STD-3001 Vol. 1 Rev C (§5.3).
-- [ ] ⭐ 600 mSv como límite oficial [A], con su fuente
+- [x] ⭐ 600 mSv como límite oficial [A], con su fuente
 - [ ] Mostrar 600 mSv y el 3 % REID
 - [ ] No mostrar el límite
 
 ### Entrega
 
-**12. Idioma de la interfaz y del video** · ⚠️ Verificar las reglas del evento local.
+**12. Idioma de la interfaz y del video** · ✅ Decidido: **seleccionable, inglés o español**.
 - [ ] ⭐ Inglés
 - [ ] Español
 - [ ] Interfaz en inglés, pitch local en español
@@ -627,26 +634,26 @@ nombre, por ejemplo `- [x] Opción (Iker)`.
 **14. Hora de entrega interna**
 - [ ] ⭐ Entregar a T−4
 - [ ] Entregar a T−2
-- [ ] Otra hora: ______
+- [x] Sin fecha interna
 
 ### Resultado
 
 | # | Decisión | Resultado | Votos |
 |---|---|---|---|
-| 1 | Nombre | | |
-| 2 | Tripulación y contexto | | |
-| 3 | Salud femenina | | |
-| 4 | Emergencia principal | | |
-| 5 | Evento de DONKI | | |
-| 6 | Motor diagnóstico | | |
-| 7 | Juego cooperativo | | |
-| 8 | Qué ve el comandante | | |
-| 9 | Ánimo para la CMO | | |
-| 10 | Plataforma | | |
-| 11 | Límite de radiación | | |
-| 12 | Idioma | | |
-| 13 | Quién presenta | | |
-| 14 | Entrega interna | | |
+| 1 | Nombre | EVA, sin significado | Katy (14 nov) |
+| 2 | Tripulación y contexto | Aprobado como está | Katy (14 nov) |
+| 3 | Salud femenina | Sube al núcleo | Katy (14 nov) |
+| 4 | Emergencia principal | Evento de partículas solares | Katy (14 nov) |
+| 5 | Evento de DONKI | Uno con latencia cercana a la mediana (17 min) | Katy (14 nov) |
+| 6 | Motor diagnóstico | Solo si pasamos el gate T−9 | Katy (14 nov) |
+| 7 | Juego cooperativo | Pantalla de diseño | Katy (14 nov) |
+| 8 | Qué ve el comandante | Apto / no apto, sin motivo | Katy (14 nov) |
+| 9 | Ánimo para la CMO | Tendencia semanal (diaria con permiso) | Katy (14 nov) |
+| 10 | Plataforma | PWA en TypeScript + React (pruebas en Python) | Katy (14 nov) |
+| 11 | Límite de radiación | 600 mSv oficial [A], con su fuente | Katy (14 nov) |
+| 12 | Idioma | Seleccionable: inglés o español | Katy (14 nov) |
+| 13 | Quién presenta | Pendiente: aún no se define | — |
+| 14 | Entrega interna | Sin fecha interna | Katy (14 nov) |
 
 ---
 
@@ -665,17 +672,23 @@ equipo.
 | 6 | **¿Usamos PHQ-9 y GAD-7 en la app?** Son de uso libre, pero sus cortes son terrestres | Más validez vs. más tiempo del astronauta | Ciencia |
 | 7 | **¿Citamos el checklist del transbordador (2006)?** Es público pero viejo | Es la mejor fuente pública de "Contact Surgeon" | Ciencia |
 | 8 | **Umbrales de SpO₂ y fiebre:** Iker propone ≤ 92 / ≤ 88 % y ≥ 39,4 °C, no oficiales | Hay que aprobarlos antes de ponerlos en el YAML | Ciencia + Motor |
-| 9 | **Reglas del evento local:** idioma, formato de entrega, categorías de premio de 2026 | Afecta el video y el pitch | Demo y pitch |
+| 9 | **Reglas del evento local:** formato de entrega y categorías de premio de 2026. El idioma ya se resolvió: seleccionable | Afecta el video y el pitch | Demo y pitch |
 | 10 | **Qué rol toma cada persona** (§9) | Sin roles claros, el núcleo no se construye | Todos |
 | 11 | **Fani:** su propuesta menciona "patrones hormonales (bef/iac)" | No queda claro qué significa | Fani |
+| 12 | ~~¿Cómo se conecta el reloj?~~ | ✅ Huawei Watch 5 **por Bluetooth**. ⚠️ Falta comprobar en el reloj real que entregue la frecuencia cardiaca con el perfil estándar que lee el módulo de Julio | Resuelta en decisión; falta prueba |
+| 13 | ~~¿El asistente de voz entra en la demo?~~ | ✅ Sí, con la arquitectura de Julio: el motor decide y el LLM solo redacta | Resuelta |
+| 14 | **¿Quién presenta el pitch?** | Decisión 13 sin definir | Todos |
 
 ---
 
 ## 16. Pendientes antes de presentar
 
-- [ ] ⚠️ Elegir **qué evento real de DONKI** usar (decisión 5).
+- [ ] ⚠️ Elegir **cuál** de los eventos de DONKI con latencia cercana a 17 min (decisión 5).
 - [ ] ⚠️ Pasos del protocolo RAD-01: verificar o marcarlos como ilustrativos.
-- [ ] 🔶 Votar las 14 decisiones de §14.
+- [x] ~~Votar las 14 decisiones de §14~~: 13 decididas; falta quién presenta.
+- [ ] 🔶 Integrar al documento las pruebas de viabilidad
+      ([viabilidad/RESULTADOS-viabilidad.md](viabilidad/RESULTADOS-viabilidad.md)) y las
+      variables de Diana e Iker.
 - [ ] 🔶 Pasar todo al contexto de §0.1: las maquetas de LAZO dicen "Marte · Sol 2" y los
       escenarios de Julio dicen "MS-2".
 - [ ] 🔶 Llevar los umbrales [A]/[T] de §5 al YAML del motor.

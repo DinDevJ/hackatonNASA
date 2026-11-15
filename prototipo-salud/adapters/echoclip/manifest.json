@@ -1,0 +1,137 @@
+{
+  "key": "echoclip",
+  "nombre": "EchoCLIP / EchoCLIP-R",
+  "repo": "vendor/echo_CLIP",
+  "repo_url": "https://github.com/echonet/echo_CLIP",
+  "repo_commit": "23cd3278b5b62beabc101e07feb461e905ac3180",
+  "entrypoint": "adapters/echoclip/infer.py",
+  "env": {
+    "dir": "envs/echoclip",
+    "python": "3.11",
+    "torch": "2.5.1",
+    "torchvision": "0.20.1",
+    "torch_index_url": "https://download.pytorch.org/whl/cu124",
+    "requirements_in": "adapters/echoclip/requirements.in",
+    "lock_windows": "adapters/echoclip/requirements-win.lock.txt",
+    "install_vars": {},
+    "editable": [],
+    "notas": "requirements.txt del repo: pytorch==2.0.1 (nombre de paquete invalido en PyPI: es torch), torchvision 0.15.2, open_clip_torch 2.20.0, huggingface_hub 0.16.4, tokenizers 0.13.3, opencv-python-headless 4.8.0.76, numpy 1.24.4, matplotplib 3.8 (errata), Pillow 10.0.0, scipy 1.12, timm 0.9.5. DESVIACIONES: torch 2.0.1 -> 2.5.1 y torchvision 0.15.2 -> 0.20.1 (cu124) por el contrato; el resto de pines se conserva (open_clip 2.20.0, huggingface_hub 0.16.4, tokenizers 0.13.3, numpy 1.24.4, timm 0.9.5, opencv 4.8.0.76, Pillow 10.0.0) y se verifico en Linux que importan y funcionan con torch 2.5.1+cpu. QUITADOS: matplotplib y scipy (solo los usa gradcam.py, fuera de las funciones expuestas). open_clip 2.20.0 hace torch.load sin weights_only (FutureWarning en torch 2.5.1; el .bin es un pickle: se verifica su sha256 contra el oid LFS de HF antes de cargarlo). El adaptador NO usa 'hf-hub:' en tiempo de ejecucion: lee open_clip_config.json y open_clip_pytorch_model.bin de weights/echoclip/<modelo>/ y registra la config en open_clip (create_model_and_transforms(name_local, pretrained=ruta, image_mean/std de la config)), con HF_HUB_OFFLINE=1: nunca toca la red, ni token, ni login. Equivalente al flujo hf-hub de 2.20.0 (create_model L: config + load_checkpoint). Probado en Linux CPU con torch 2.5.1+cpu: prueba de carga dummy (arquitectura sin pesos), rechazo de modalidad, error por pesos faltantes y un flujo con pesos ALEATORIOS guardados en /tmp (valida rutas de codigo); NO se ha corrido inferencia real."
+  },
+  "pesos": [
+    {
+      "archivo": "weights/echoclip/echo-clip/open_clip_pytorch_model.bin",
+      "url": "https://huggingface.co/mkaichristensen/echo-clip/resolve/main/open_clip_pytorch_model.bin",
+      "tamano_bytes": 606262375,
+      "tamano_fuente": "HEAD (curl -sIL) sin token 2026-11-14: 302 -> HTTP 200, x-linked-size/content-length 606262375 (no se descargo)",
+      "sha256": "016e26e15da539b3a97dec89d7fa9a30f106e1c38d36ce64789cb99420786fe0",
+      "sha256_fuente": "x-linked-etag (oid LFS) del HEAD, revision HF 2c66a65d0693e2fefda093de7fc8b05b2f8031ee; infer.py lo verifica antes de usar el archivo",
+      "acceso": "publico",
+      "acceso_evidencia": "HEAD sin token: HTTP 200; API publica /api/models/mkaichristensen/echo-clip: gated=false, private=false",
+      "licencia": "Academic Software License de Cedars-Sinai (vendor/*/LICENSE): solo uso educativo/investigacion academica o sin fines de lucro, sin transferir a terceros; uso comercial requiere licencia aparte; publicaciones deben citar a Vukadinovic, He y Ouyang (EchoPrime) / la atribucion indicada en el LICENSE. Tarjeta HF de los pesos: license mit (cardData); se aplica la condicion mas restrictiva (licencia del repo) hasta aclararlo.",
+      "pasos_manuales": null,
+      "descomprimir_en": null,
+      "descripcion": "Pesos open_clip de echo-clip (convnext_base + texto, 151,518,849 parametros)"
+    },
+    {
+      "archivo": "weights/echoclip/echo-clip/open_clip_config.json",
+      "url": "https://huggingface.co/mkaichristensen/echo-clip/resolve/main/open_clip_config.json",
+      "tamano_bytes": 590,
+      "tamano_fuente": "HEAD sin token 2026-11-14: HTTP 200; 590 bytes contados al leerlo",
+      "sha256": "b49881ff5793d4b3b8a48895dbb8ca76e88909f8ddc059bf87b9b3084a71b8b4",
+      "sha256_fuente": "sha256 del archivo leido (config, no es un peso)",
+      "acceso": "publico",
+      "acceso_evidencia": "HEAD sin token: HTTP 200",
+      "licencia": "Academic Software License de Cedars-Sinai (vendor/*/LICENSE): solo uso educativo/investigacion academica o sin fines de lucro, sin transferir a terceros; uso comercial requiere licencia aparte; publicaciones deben citar a Vukadinovic, He y Ouyang (EchoPrime) / la atribucion indicada en el LICENSE. Tarjeta HF de los pesos: license mit (cardData); se aplica la condicion mas restrictiva (licencia del repo) hasta aclararlo.",
+      "pasos_manuales": null,
+      "descomprimir_en": null,
+      "descripcion": "Config del modelo y de preprocesamiento (mean/std) que open_clip descarga con 'hf-hub:'; aqui se lee local y sin red"
+    },
+    {
+      "archivo": "weights/echoclip/echo-clip-r/open_clip_pytorch_model.bin",
+      "url": "https://huggingface.co/mkaichristensen/echo-clip-r/resolve/main/open_clip_pytorch_model.bin",
+      "tamano_bytes": 606262375,
+      "tamano_fuente": "HEAD (curl -sIL) sin token 2026-11-14: 302 -> HTTP 200, x-linked-size/content-length 606262375 (no se descargo)",
+      "sha256": "5212c42fab82d4b2dd0a3196058d192bb91bc35c33633bf0ca01cae76d09e1cd",
+      "sha256_fuente": "x-linked-etag (oid LFS) del HEAD, revision HF 271e00685543ed609f67b2b97c3f81228af1452b; infer.py lo verifica antes de usar el archivo",
+      "acceso": "publico",
+      "acceso_evidencia": "HEAD sin token: HTTP 200; API publica /api/models/mkaichristensen/echo-clip-r: gated=false, private=false",
+      "licencia": "Academic Software License de Cedars-Sinai (vendor/*/LICENSE): solo uso educativo/investigacion academica o sin fines de lucro, sin transferir a terceros; uso comercial requiere licencia aparte; publicaciones deben citar a Vukadinovic, He y Ouyang (EchoPrime) / la atribucion indicada en el LICENSE. Tarjeta HF de los pesos: license mit (cardData); se aplica la condicion mas restrictiva (licencia del repo) hasta aclararlo.",
+      "pasos_manuales": null,
+      "descomprimir_en": null,
+      "descripcion": "Pesos open_clip de echo-clip-r (convnext_base + texto, 151,518,849 parametros)"
+    },
+    {
+      "archivo": "weights/echoclip/echo-clip-r/open_clip_config.json",
+      "url": "https://huggingface.co/mkaichristensen/echo-clip-r/resolve/main/open_clip_config.json",
+      "tamano_bytes": 590,
+      "tamano_fuente": "HEAD sin token 2026-11-14: HTTP 200; 590 bytes contados al leerlo",
+      "sha256": "b49881ff5793d4b3b8a48895dbb8ca76e88909f8ddc059bf87b9b3084a71b8b4",
+      "sha256_fuente": "sha256 del archivo leido (config, no es un peso)",
+      "acceso": "publico",
+      "acceso_evidencia": "HEAD sin token: HTTP 200",
+      "licencia": "Academic Software License de Cedars-Sinai (vendor/*/LICENSE): solo uso educativo/investigacion academica o sin fines de lucro, sin transferir a terceros; uso comercial requiere licencia aparte; publicaciones deben citar a Vukadinovic, He y Ouyang (EchoPrime) / la atribucion indicada en el LICENSE. Tarjeta HF de los pesos: license mit (cardData); se aplica la condicion mas restrictiva (licencia del repo) hasta aclararlo.",
+      "pasos_manuales": null,
+      "descomprimir_en": null,
+      "descripcion": "Config del modelo y de preprocesamiento (mean/std) que open_clip descarga con 'hf-hub:'; aqui se lee local y sin red"
+    }
+  ],
+  "muestras": [
+    {
+      "archivo": "samples/echoclip_example_video.avi",
+      "fuente": "vendor/echo_CLIP/example_video.avi (muestra oficial del repo; MJPEG 224x224, 113 frames). Texto oficial de acompanamiento: vendor/echo_CLIP/example_report.txt (informe del video segun el README del repo; la correspondencia no esta verificada por nosotros)",
+      "licencia": "Academic Software License de Cedars-Sinai; ver samples/FUENTES.md",
+      "modalidad": "video_2d",
+      "vista": "desconocida"
+    }
+  ],
+  "modalidades_admitidas": [
+    "video_2d",
+    "imagen_2d"
+  ],
+  "vistas_admitidas": [
+    "cualquiera"
+  ],
+  "entrada": "UN video 2D de ecografia (AVI/MP4/MOV...) o una imagen 2D (un fotograma); lectura oficial con OpenCV (utils.read_avi, 224x224). No se admiten DICOM directamente (el flujo oficial usa cv2), volumen 3D ni Doppler: 'analisis no implementado'. La vista no es obligatoria, pero el zero-shot de FEVE/marcapasos solo tiene sentido en vistas apicales del ventriculo (no verificado aqui).",
+  "salidas": [
+    "similitud_texto (EchoCLIP-R, embedding_example.py): tipo similitud, unit coseno, metric similitud_video_texto: producto punto entre el embedding del texto (tokenizer de plantilla) y la media de embeddings normalizados por frame; por defecto usa el informe de EJEMPLO del repo salvo options.texto/texto_path",
+    "feve (EchoCLIP, zero_shot_example.py + utils.py): tipo medicion, unit %, quality zero_shot_por_similitud, notes 'derivada de similitudes, no es probabilidad'",
+    "binario (EchoCLIP): metric zero_shot_similitud:<clave> (por defecto pacemaker; cualquier clave sin '<#>' de utils.zero_shot_prompts), tipo similitud, unit coseno, quality zero_shot_no_calibrado; NUNCA probabilidad_clase; el umbral oficial 0.298 (F1 en el conjunto de los autores) solo va en raw_output",
+    "embeddings por frame (.npy) como artifact; raw_output con valores sin redondear, frames usados, vram_pico_mb"
+  ],
+  "requiere_prompt": false,
+  "opciones": {
+    "device": "auto",
+    "precision": "auto",
+    "funciones": [
+      "feve",
+      "binario"
+    ],
+    "binarios": [
+      "pacemaker"
+    ],
+    "lote_frames": 32,
+    "guardar_embeddings": true,
+    "texto": null,
+    "texto_path": null,
+    "permitir_color": false,
+    "prueba_carga_dummy": false
+  },
+  "vram_estimada": {
+    "gb": 1.5,
+    "base": "ESTIMACION sin medir en GPU: 151,518,849 parametros medidos (convnext_base 88,090,752 + texto/proyecciones 63,428,097; cada modelo se carga y se libera por separado) x 4 B = 578 MB (fp32; 289 MB en bf16) + ~30 MB/frame (conservador; delta de RSS medido en CPU ~14 MB/frame con lote 32) x lote 32 = ~1 GB => ~1.5 GB. Coherente con el archivo de pesos (606,262,375 B ~ 151.5 M x 4 B).",
+    "cabe_en_6gb": "probable"
+  },
+  "licencia": "Academic Software License de Cedars-Sinai (vendor/*/LICENSE): solo uso educativo/investigacion academica o sin fines de lucro, sin transferir a terceros; uso comercial requiere licencia aparte; publicaciones deben citar a Vukadinovic, He y Ouyang (EchoPrime) / la atribucion indicada en el LICENSE. Tarjeta HF de los pesos: license mit (cardData); se aplica la condicion mas restrictiva (licencia del repo) hasta aclararlo.",
+  "estado": "pendiente de probar en PC",
+  "motivo_estado": "Pesos PUBLICOS (HEAD sin token: HTTP 200, gated=false; 606 MB cada uno): no estan bloqueados. En Linux solo se probo la prueba de carga dummy, el rechazo de modalidad, el error por pesos faltantes y un flujo con pesos aleatorios. NO se ha corrido inferencia real: faltan los pesos (scripts\\descargar_pesos.ps1 -Modelo echoclip).",
+  "preprocesamiento": "Oficial: vendor/echo_CLIP/utils.py L115-147 (read_avi + crop_and_scale 224, zoom 0.1) y preprocess_val de open_clip por frame (embedding_example.py L26-28, zero_shot_example.py L29-34); ver config.preprocesamiento_fuente.",
+  "no_implementado": [
+    "volumen_3d",
+    "doppler_color",
+    "doppler_espectral",
+    "DICOM directo",
+    "gradcam.py",
+    "regresion zero-shot de otras variables (p. ej. presion pulmonar) no mostrada en los ejemplos"
+  ],
+  "timeout_s": 1800
+}

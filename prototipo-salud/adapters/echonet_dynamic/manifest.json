@@ -1,0 +1,93 @@
+{
+  "key": "echonet_dynamic",
+  "nombre": "EchoNet-Dynamic (FEVE r2plus1d_18 + segmentacion VI deeplabv3_resnet50)",
+  "repo": "vendor/dynamic",
+  "repo_url": "https://github.com/echonet/dynamic",
+  "repo_commit": "e01d02947b20604b0ba1a427f3cf6f4890dc4e9c",
+  "entrypoint": "adapters/echonet_dynamic/infer.py",
+  "env": {
+    "dir": "envs/echonet_dynamic",
+    "python": "3.11",
+    "torch": "2.5.1",
+    "torchvision": "0.20.1",
+    "torch_index_url": "https://download.pytorch.org/whl/cu124",
+    "requirements_in": "adapters/echonet_dynamic/requirements.in",
+    "lock_windows": "adapters/echonet_dynamic/requirements-win.lock.txt",
+    "install_vars": {},
+    "editable": [],
+    "notas": "Desviaciones respecto al repo: requirements.txt fija torch 1.8.0, torchvision 0.9.0, numpy 1.20.1, opencv-python 4.5.1.48, scipy 1.6.1 (sin wheels cp311). Aqui torch 2.5.1/torchvision 0.20.1 (cu124), numpy 1.26.4, opencv-python-headless 4.10.0.84, scipy 1.13.1. API moderna: weights=None (y weights_backbone=None en deeplabv3, que en torchvision 0.20 por defecto seria ImageNet) en lugar de pretrained=False; sin DataParallel (se quita el prefijo 'module.' del state_dict). No se instala el paquete 'echonet' (la adaptacion reimplementa las funciones oficiales usadas, con cita de archivo y lineas). Probado en Linux CPU (torch 2.5.1+cpu) solo con prueba de carga dummy; NO se ha corrido inferencia real."
+  },
+  "pesos": [
+    {
+      "archivo": "weights/echonet_dynamic/r2plus1d_18_32_2_pretrained.pt",
+      "url": "https://github.com/douyang/EchoNetDynamic/releases/download/v1.0.0/r2plus1d_18_32_2_pretrained.pt",
+      "tamano_bytes": 250572083,
+      "tamano_fuente": "HEAD (curl -sIL) Content-Length 2026-11-14 tras redireccion a release-assets.githubusercontent.com, HTTP 200 sin login (no se descargo). URL tomada de vendor/dynamic/scripts/InitializationNotebook.ipynb",
+      "sha256": null,
+      "acceso": "publico",
+      "licencia": "No declarada explicitamente para los pesos. Codigo MIT (vendor/dynamic/LICENSE) con LICENSE.txt adicional ('redistribution not permitted without explicit written permission'); el dataset EchoNet-Dynamic es de uso no comercial con acuerdo (README L17). Uso local de investigacion, sin redistribuir.",
+      "pasos_manuales": null,
+      "descomprimir_en": null
+    },
+    {
+      "archivo": "weights/echonet_dynamic/deeplabv3_resnet50_random.pt",
+      "url": "https://github.com/douyang/EchoNetDynamic/releases/download/v1.0.0/deeplabv3_resnet50_random.pt",
+      "tamano_bytes": 317401511,
+      "tamano_fuente": "HEAD (curl -sIL) Content-Length 2026-11-14 tras redireccion a release-assets.githubusercontent.com, HTTP 200 sin login (no se descargo). URL tomada de vendor/dynamic/scripts/InitializationNotebook.ipynb",
+      "sha256": null,
+      "acceso": "publico",
+      "licencia": "Igual que el anterior (no declarada explicitamente para los pesos)",
+      "pasos_manuales": null,
+      "descomprimir_en": null
+    }
+  ],
+  "muestras": [
+    {
+      "archivo": "samples/echonet_dynamic_Example1.mp4",
+      "fuente": "vendor/dynamic/docs/media/Example1.mp4 (582x582, 120 frames, 30 fps, A4C por inspeccion visual; se convierte a 112x112 con los pasos de ConvertDICOMToAVI.ipynb)",
+      "licencia": "ver samples/FUENTES.md",
+      "modalidad": "video_2d",
+      "vista": "A4C"
+    }
+  ],
+  "modalidades_admitidas": [
+    "video_2d"
+  ],
+  "vistas_admitidas": [
+    "A4C"
+  ],
+  "entrada": "Video 2D modo B apical 4 camaras (A4C) de cualquier duracion, AVI/MP4/MOV (carpeta: cada video se procesa por separado). La vista debe declararse 'A4C'; si no, se rechaza ('EchoNet-Dynamic solo admite apical 4 camaras; declara la vista'). Videos que no son 112x112 se convierten con los pasos de ConvertDICOMToAVI.ipynb (recorte cuadrado, margen 10 %, INTER_CUBIC, mascara de sector). No admite imagen 2D, volumen 3D ni Doppler. DICOM no se decodifica (convertir antes).",
+  "salidas": [
+    "EF (FEVE): tipo medicion, unit '%', media de todos los clips de 32 frames con periodo 2 (clips='all', como video.py L235-241); por-clip en raw_output",
+    "area del VI por frame en px2 (tipo hallazgo, metric area_VI_frame:<i>; px2 del frame 112x112, NUNCA ml/mm); opcion filas_area_por_frame=false deja solo la serie en raw_output",
+    "sistole_candidata_frame:<k>: frames con minimo local del area (scipy find_peaks como segmentation.py L289-292); area_VI_max_px2 / area_VI_min_px2 con su frame",
+    "artefactos en run_dir: mascaras_<video>.npz (mascaras 112x112, area_px2, sistole_candidatos, logits float16, mean/std) y overlay_<video>.mp4 (o .avi si mp4v no esta disponible)",
+    "raw_output: EF por clip, mean/std usados, serie de areas, claves missing/unexpected, vram_pico_mb"
+  ],
+  "requiere_prompt": false,
+  "opciones": {
+    "device": "auto",
+    "block_size": 20,
+    "block_frames": 20,
+    "aplicar_mascara_sector": true,
+    "filas_area_por_frame": true,
+    "torch_load_weights_only": true,
+    "permitir_color": false,
+    "prueba_carga_dummy": false
+  },
+  "vram_estimada": {
+    "gb": 3.0,
+    "base": "estimacion: parametros medidos en la prueba de carga 31,300,638 (r2plus1d_18) + 39,633,729 (deeplabv3_resnet50) = 70,934,367 x 4 B = 270.6 MB + activaciones de un bloque de 20 clips 3x32x112x112 (r2plus1d) o 20 frames (deeplab), fp32 sin gradiente (~2-3 GB, no medido en GPU). Si hay OOM en 6 GB: options.block_size=8",
+    "cabe_en_6gb": "probable"
+  },
+  "licencia": "Dos archivos de licencia contradictorios en el repo: LICENSE (MIT) y LICENSE.txt ('Redistribution and use of the Code with or without modification is not permitted without explicit written permission by the authors'). Se usa solo localmente, para investigacion no comercial, sin redistribuir; para cualquier otro uso, pedir permiso a los autores. Pesos sin licencia explicita; datos de entrenamiento no comerciales. Resultados de investigacion, no diagnosticos.",
+  "estado": "pendiente de probar en PC",
+  "motivo_estado": "En Linux solo se probo la prueba de carga dummy (arquitecturas sin pesos + tensor aleatorio), rechazo de modalidad/vista y error limpio por pesos faltantes. NO se ha corrido inferencia real: faltan los pesos (250 MB + 317 MB). Pendiente confirmar que los state_dict de torchvision 0.9 cargan en modo estricto en 0.20.",
+  "preprocesamiento": "echonet/utils/__init__.py loadvideo + datasets/echo.py (normalizacion mean/std, length 32, period 2, clips all) + conversion 112x112 de scripts/ConvertDICOMToAVI.ipynb. mean/std calculados sobre el propio video (desviacion explicita: el repo usa los del conjunto de entrenamiento); calidad = preprocesamiento_adaptado.",
+  "no_implementado": [
+    "analisis latido a latido de scripts/beat_by_beat_analysis.R (R, no se porta)",
+    "deteccion de diastole por area (el repo solo usa indices humanos del dataset; no se inventa)",
+    "calibracion fisica: las areas quedan en px2, sin ml/mm/cm"
+  ],
+  "timeout_s": 1800
+}

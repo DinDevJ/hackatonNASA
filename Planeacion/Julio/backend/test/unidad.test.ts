@@ -98,3 +98,18 @@ test('fórmulas: nombres heredados del prototipo no son funciones ni campos', ()
   }
   assert.throws(() => evalF(compilar('toString + 1'), {}), /campo desconocido/);
 });
+
+test('LUNNA: probabilidad de que la desviación sea ruido normal', () => {
+  const p = predecir({ prior: P, basal: 62, calibracion: Array(14).fill(-0.08) });
+  const e0 = evaluar(p.esperado, p, P);
+  assert.ok(Math.abs(e0.prob_nominal - 1) < 1e-6, 'en lo esperado, P = 1');
+  const sd = Math.sqrt(p.tau ** 2 + P.sigma_dia ** 2);
+  const e2 = evaluar(p.basal * (1 + p.mu + 1.96 * sd), p, P);
+  assert.ok(Math.abs(e2.prob_nominal - 0.05) < 1e-4, `en 1,96 σ, P ≈ 0,05 (sale ${e2.prob_nominal})`);
+});
+
+test('esquema: satura en vez de desbordar', () => {
+  const e: Esquema = { id: 9, nombre: 's', version: 1, campos: [{ clave: 'fc', variable: '04:A4', tipo: 'u8' }] };
+  const buf = codificar({ idDisp: 1, idEsquema: 9, seq: 0, tScet: new Date(0) }, e, { fc: 300 });
+  assert.equal(decodificar(buf, e).valores.fc, 255);
+});

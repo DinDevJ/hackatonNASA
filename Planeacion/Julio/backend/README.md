@@ -9,7 +9,7 @@ modelo que define "lo esperado".
 ```bash
 npm start      # servidor en http://localhost:8787
 npm run sim    # simulador de hardware: 119 días de misión y luego en vivo
-npm test       # 15 pruebas
+npm test       # 17 pruebas
 ```
 
 Requiere **Node 22.6+** y nada más: SQLite y TypeScript vienen integrados en Node.
@@ -157,7 +157,11 @@ Actualización bayesiana en tres capas. Cada una pesa según cuánta evidencia a
 | ③ Calibración | Sus primeros 14 días en el entorno | Mediana diaria de cada día |
 
 Sin datos propios manda la literatura; con una misión previa, su historial; tras la
-calibración, sus datos. **La predicción siempre trae su banda del 95 %.**
+calibración, sus datos. **La predicción siempre trae su banda del 95 %**, y cada alerta su
+`prob_nominal`: la probabilidad de ver esa desviación si la persona siguiera normal.
+
+Relación con la fórmula de Bayes del cuaderno, firmware del ESP32 y pasarela Bluetooth:
+**[../INTEGRACION.md](../INTEGRACION.md)**.
 
 ### Resultado con el simulador
 

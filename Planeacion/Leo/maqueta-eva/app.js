@@ -146,14 +146,22 @@
   };
   let limpiar = null, actual = "hoy";
   const raizDe = (d) => RAIZ[d.split(/[:-]/)[0]] || "hoy";
+  // Pila de navegación (bug 3): "Volver" regresa a la pantalla anterior y la pestaña marcada es
+  // la de origen. Tocar una pestaña reinicia la pila.
+  const ES_TAB = new Set(TABS.map((t) => t.id));
+  let pila = [], tabActiva = "hoy";
   function pintarMenu() {
-    const ella = persona().sexo === "M", raiz = raizDe(actual);
+    const ella = persona().sexo === "M", raiz = tabActiva;
     $("#menu").innerHTML = TABS.filter((t) => !t.soloElla || ella).map((t) => `<button data-tab="${t.id}" class="${t.id === raiz ? "activo" : ""}" aria-current="${t.id === raiz ? "page" : "false"}">${ic(t.ic)}<span>${t.t}</span></button>`).join("");
   }
-  function ir(destino) {
+  function ir(destino, opc) {
+    opc = opc || {};
     destino = destino || "hoy";
     if (destino === "ciclo" && persona().sexo !== "M") destino = "hoy";
     if (limpiar) { limpiar(); limpiar = null; }
+    if (ES_TAB.has(destino)) { pila = []; tabActiva = destino; }
+    else if (!opc.volver && !opc.reemplazar && actual && actual !== destino) pila.push(actual);
+    if (!pila.length && !ES_TAB.has(destino)) tabActiva = raizDe(destino);
     actual = destino;
     if (destino !== "emergencia") actualizarFase();
     const p = $("#pantalla");
@@ -178,10 +186,16 @@
     const a = e.target.closest("[data-ir]");
     if (a) return ir(a.dataset.ir);
     const v = e.target.closest("[data-volver]");
-    if (v) return ir(v.dataset.volver || raizDe(actual));
+    if (v) return volver(v.dataset.volver);
     const t = e.target.closest("[data-tutorial]");
     if (t) abrirTutorial(t.dataset.tutorial);
   });
+
+  /** Regresa a la pantalla anterior; si no hay, al destino indicado o a la pestaña de origen. */
+  function volver(porDefecto) {
+    const prev = pila.pop();
+    ir(prev || porDefecto || tabActiva, { volver: true });
+  }
 
   function cabecera(titulo, sub, clave, color, icono) {
     return `<div class="cabecera">
@@ -1181,7 +1195,7 @@
         ["Primer check-in", "chispa", true], ["3 días seguidos", "estrella", estado.checkins >= 3], ["Explorador de menú", "manzana", estado.comidas.length >= 6],
         ["Piloto del sueño", "luna", false], ["Maestro de fuerza", "pesa", false], ["Racha de 7 días", "cohete", estado.checkins >= 7],
       ];
-      p.innerHTML = `<div class="cabecera"><div><h1>Logros</h1><div class="sub">Premio el hábito, no el resultado</div></div></div>
+      p.innerHTML = `<div class="cabecera"><button class="icono-btn" data-volver aria-label="Volver">${ic("atras")}</button><div><h1>Logros</h1><div class="sub">Premio el hábito, no el resultado</div></div></div>
         ${lunaGlobo(`Llevas <b>${estado.checkins}</b> días registrando. ¡La tripulación suma estrellas contigo!`)}
         <div class="tarjeta"><h3>${ic("trofeo")} Parches de misión</h3>
           <div class="insignias">${insignias.map(([n, i, ok]) => `<div class="insignia ${ok ? "" : "bloqueada"}"><div class="medalla">${ic(i)}</div>${n}</div>`).join("")}</div></div>
@@ -1194,7 +1208,7 @@
 
     ayuda(p) {
       const temas = [["bienvenida", "Conoce a Lunna", "luna"], ["corazon", "Corazón y ejercicio", "corazon"], ["sueno", "Sueño", "luna"], ["comida", "Comida", "manzana"], ["glucosa", "Glucosa", "gota"], ["sintomas", "Síntomas", "curita"], ["fuerza", "Fuerza", "pesa"], ["radiacion", "Clima espacial", "rayo"]];
-      p.innerHTML = `<div class="cabecera"><div><h1>Ayuda</h1><div class="sub">Tutoriales cortitos</div></div></div>
+      p.innerHTML = `<div class="cabecera"><button class="icono-btn" data-volver aria-label="Volver">${ic("atras")}</button><div><h1>Ayuda</h1><div class="sub">Tutoriales cortitos</div></div></div>
         ${lunaGlobo("¿Qué quieres aprender? Cada tutorial dura menos de un minuto.")}
         <div class="tarjeta"><div class="lista-sesiones">${temas.map(([k, n, i]) => `<div role="button" tabindex="0" data-tutorial="${k}" style="cursor:pointer">${ic(i)} ${n}<b>${ic("play", "ic-sm")}</b></div>`).join("")}</div></div>
         <div class="tarjeta"><h3>${ic("info")} Qué significan las etiquetas</h3>
@@ -1215,7 +1229,8 @@
   window.APP = {
     ir, abrirTutorial, cerrarTutorial, tutorialPrimeraVez, DEMO, VEL, D, M, C, $, $$, fmt, ic, ref, mem, estado, persona, aviso,
     cabecera, lunaGlobo, COLOR, anillo, sem, claseN, etiquetas, valorDe, grafNormal, tarjetaNormal, ESTADO_TXT, sumaComida, tiempoEnRango, unoRM,
-    PANTALLAS, pintarMenu, actualizarFase, raizDe,
+    PANTALLAS, pintarMenu, actualizarFase, raizDe, volver,
+    pila: () => pila.slice(),
     actual: () => actual,
     setLimpiar(f) { limpiar = f; },
     reposicionarLuna() { mem.guardar("luna-pos3", { lado: "izq", y: 1 }); location.reload(); },

@@ -22,6 +22,23 @@ export const VENTANA_CALIBRACION_DIAS = 14;
 const DIA_MS = 86_400_000;
 /** Umbral absoluto: mediana de las últimas 5 muestras válidas dentro de 10 minutos. */
 export const VENTANA_UMBRAL_MS = 10 * 60_000;
+
+/**
+ * Ventana del criterio personal: en misión, 24 h. Sólo para una demostración de minutos se puede
+ * acortar (PUT /api/lunna/ventana): con 24 h, una anomalía provocada en vivo tarda tanto en mover la
+ * mediana como datos se hayan acumulado en la ventana, y la vuelta a verde no se llega a ver.
+ * Lo que se acorte se informa en /api/salud, en la página de estado y en /api/app.
+ */
+export const VENTANA_PERSONAL_MISION_MIN = 24 * 60;
+let ventanaPersonalMin = VENTANA_PERSONAL_MISION_MIN;
+export const ventanaPersonal = () => ventanaPersonalMin;
+export function fijarVentanaPersonal(minutos: number): number {
+  if (!Number.isFinite(minutos) || minutos < 1 || minutos > VENTANA_PERSONAL_MISION_MIN) {
+    throw new Error(`la ventana va de 1 a ${VENTANA_PERSONAL_MISION_MIN} minutos`);
+  }
+  ventanaPersonalMin = Math.round(minutos);
+  return ventanaPersonalMin;
+}
 export const MUESTRAS_UMBRAL = 5;
 /** Con menos muestras no se evalúa nada: un artefacto suelto no dispara. */
 export const MINIMO_MUESTRAS = 3;
@@ -289,7 +306,7 @@ export interface EvaluacionVariable {
 /**
  * Los dos criterios para una persona y una variable en el instante `t`.
  *
- *  - personal: mediana de las últimas 24 h contra lo que LUNNA espera de ESA persona.
+ *  - personal: mediana de las últimas 24 h (ventanaPersonal) contra lo que LUNNA espera de ESA persona.
  *    No la muestra suelta: la validación de Smart Fusion mostró que el valor
  *    instantáneo apenas supera a una constante, y que el agregado sí tiene señal.
  *  - umbral: mediana de las últimas 5 muestras válidas en 10 min contra el límite
@@ -305,7 +322,7 @@ export function evaluarVariable(db: BD, tripulante: string, variable: string, t:
   let mediana_24h: number | null = null;
   let personal: EvalPersonal | null = null;
   if (evaluable || completo) {
-    const desde = new Date(Date.parse(t) - DIA_MS).toISOString();
+    const desde = new Date(Date.parse(t) - ventanaPersonalMin * 60_000).toISOString();
     const vals = (db.prepare(
       `SELECT valor FROM muestras WHERE tripulante = ? AND variable = ? AND t_scet > ? AND t_scet <= ? AND ${MUESTRA_VALIDA}`,
     ).all(tripulante, variable, desde, t) as Array<{ valor: number }>).map((r) => r.valor);

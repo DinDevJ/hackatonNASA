@@ -10,7 +10,7 @@
  *   POST /api/padecimientos/pesos/restaurar                   vuelve al peso de la fuente
  *   POST /api/padecimientos/evaluar                           corre el motor ({simulado})
  *   GET  /api/modelos/disponibles · POST /api/modelos/analizar (202) · GET /api/modelos/trabajos/:id
- *                                                             tarjeta «Analizar con modelos» (eco / ECG): trabajo en cola, polling
+ *                                                             tarjeta «Analizar con modelos» (eco / ECG), plegable y debajo de la tripulación: trabajo en cola, polling
  *
  * No inventa nada: sin backend o sin evaluaciones lo dice, y todo en GRIS. No es un diagnóstico; los umbrales
  * son provisionales. Distinto del «índice por padecimiento» del panel clínico (11 malestares, pesos de Leo).
@@ -66,11 +66,11 @@
         <p class="cn-nota">Distinto del índice por padecimiento del panel clínico (11 malestares, pesos de Leo): este semáforo lo calcula el motor Python con 20 padecimientos y sus vínculos con fuente.</p></section>
       <div id="sm-estado" aria-live="polite"></div>
       <div id="sm-sel" class="cn-sem-sel"></div>
-      <section class="tarjeta cn-sem-mod" id="sm-mod" aria-labelledby="sm-t-mod" hidden></section>
       <div class="cn-rejilla cn-2b" style="margin-top:16px">
         <section class="tarjeta" aria-labelledby="sm-t-lista"><h2 id="sm-t-lista">${pastilla("lista", "#5B8DFF", "#1F4FD8")} Padecimientos (20)</h2><div id="sm-lista"></div></section>
         <div style="display:grid;gap:16px;align-content:start"><section class="tarjeta" id="sm-detalle" aria-live="polite"></section><section class="tarjeta" id="sm-pesos" aria-labelledby="sm-t-pesos"></section></div>
-      </div></div>`;
+      </div>
+      <section class="tarjeta cn-sem-mod" id="sm-mod" aria-labelledby="sm-t-mod" hidden></section></div>`;
     raizEl = p.querySelector("#sm-raiz");
     $("#sm-act", p).addEventListener("click", () => cargar());
 
@@ -284,6 +284,22 @@
     const modelos = (function () {
       const M = { disp: null, tipo: "eco", trabajo: null, gen: 0, timer: null, error: "" };
       const raiz = () => $("#sm-mod", p);
+      const CLAVE_PLE = "sm-mod-abierto";
+      const abiertoPle = () => K.mem.leer(CLAVE_PLE, false) === true;
+      const guardarPle = (v) => K.mem.guardar(CLAVE_PLE, !!v);
+      /** Cabecera clicable: plegada por defecto; el estado se guarda en localStorage (eva:sm-mod-abierto). */
+      function envolver(icono, c1, c2, cuerpo) {
+        return `<details class="cn-sem-mod-caja"${abiertoPle() ? " open" : ""}>
+          <summary class="cn-sem-mod-cab">
+            <h2 id="sm-t-mod">${pastilla(icono, c1, c2)} Analizar con modelos</h2>
+            ${ic("chevron", "ic-sm cn-sem-mod-flecha")}
+          </summary>
+          <div class="cn-sem-mod-cuerpo">${cuerpo}</div></details>`;
+      }
+      function enlazarPle(el) {
+        const d = el.querySelector("details.cn-sem-mod-caja");
+        if (d) d.addEventListener("toggle", () => guardarPle(d.open));
+      }
       const parar = () => { if (M.timer) { clearTimeout(M.timer); M.timer = null; } M.gen++; };
       const ETAPA = { en_cola: "En cola", modelo: "Corriendo el modelo", puente: "Guardando en la base", reevaluando: "Reevaluando el semáforo", fin: "Terminado" };
       const mm = (x) => (x == null || x === "" ? "–" : String(x));
@@ -306,8 +322,9 @@
         if (g !== M.gen || !vivo()) return;
         if (!r || !r.ok || !r.j || !Array.isArray(r.j.modelos)) {
           el.hidden = false;
-          el.innerHTML = `<h2 id="sm-t-mod">${pastilla("info", "#5B8DFF", "#1F4FD8")} Analizar con modelos</h2>
-            <p class="cn-nota">No se pudo leer la lista de modelos${r && r.j && r.j.error ? ": " + esc(r.j.error) : " (este backend no la ofrece o no hay conexión)"}.</p>`;
+          el.innerHTML = envolver("info", "#5B8DFF", "#1F4FD8",
+            `<p class="cn-nota">No se pudo leer la lista de modelos${r && r.j && r.j.error ? ": " + esc(r.j.error) : " (este backend no la ofrece o no hay conexión)"}.</p>`);
+          enlazarPle(el);
           return;
         }
         M.disp = r.j;
@@ -316,13 +333,14 @@
       function pintar() {
         const el = raiz(), d = M.disp;
         el.hidden = false;
-        el.innerHTML = `<h2 id="sm-t-mod">${pastilla("tendencia", "#33C3B3", "#0E8F86")} Analizar con modelos</h2>
-          <p class="cn-nota">Corre un modelo de eco o de ECG sobre una muestra de la carpeta <code>${esc(d.muestras_dir || "samples")}</code> y guarda lo que el motor sabe usar. Son modelos de investigación: <b>No es diagnóstico.</b></p>
+        el.innerHTML = envolver("tendencia", "#33C3B3", "#0E8F86",
+          `<p class="cn-nota">Corre un modelo de eco o de ECG sobre una muestra de la carpeta <code>${esc(d.muestras_dir || "samples")}</code> y guarda lo que el motor sabe usar. Son modelos de investigación: <b>No es diagnóstico.</b></p>
           <div class="cn-sem-acciones" role="group" aria-label="Tipo de análisis" style="margin:8px 0">
             <button type="button" class="cn-boton" data-mt="eco" aria-pressed="${M.tipo === "eco"}">${ic("play", "ic-sm")}Analizar eco</button>
             <button type="button" class="cn-boton" data-mt="ecg" aria-pressed="${M.tipo === "ecg"}">${ic("play", "ic-sm")}Analizar ECG</button></div>
           <div class="cn-form cn-sem-mform" id="sm-mf"></div>
-          <div id="sm-mprog" aria-live="polite"></div><div id="sm-mres"></div>`;
+          <div id="sm-mprog" aria-live="polite"></div><div id="sm-mres"></div>`);
+        enlazarPle(el);
         $$("[data-mt]", el).forEach((b) => b.addEventListener("click", () => { M.tipo = b.dataset.mt; $$("[data-mt]", el).forEach((x) => x.setAttribute("aria-pressed", x === b)); formulario(); }));
         formulario();
         if (M.trabajo) pintarTrabajo(M.trabajo);

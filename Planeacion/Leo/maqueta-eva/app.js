@@ -998,11 +998,29 @@
       });
     },
 
-    emergencia(p) {
+    emergencia(p, pid) {
       // Modo emergencia (diseño de Julio, comportamiento-del-software.md §8): un paso por pantalla,
-      // cronómetro T+, valores contra la línea base, registro sellado automático, aviso al CMO.
+      // cronómetro T+, valores contra la línea base, registro sellado automático, aviso a la CMO.
       // SIMULACIÓN: caída de signos vitales por hipoxia. Los pasos clínicos son ILUSTRATIVOS.
-      const V = D.VITALES, T = D.TRIPULACION;
+      // La paciente es quien presiona SOS, salvo que elija a otra persona (ERS RF-03).
+      const P = M.PERSONAS.find((x) => x.id === pid) || persona();
+      const CMO = M.PERSONAS.find((x) => x.id === "MS-3");
+      const COM = M.PERSONAS.find((x) => x.id === "MS-1");
+      const esCMO = P.id === CMO.id;
+      const ella = P.sexo === "M";
+      const la = ella ? "la" : "lo", sola = ella ? "sola" : "solo";
+      // Su normal sale del motor (mediana de 14 días); la crisis es la del escenario de hipoxia.
+      const med = (k, def) => { const n = M.estadoIndicador(P.id, k, estado.dia).normal; return n ? Math.round(n.med) : def; };
+      const serie = (k) => { const s = M.SERIES[P.id][k].slice(0, M.idx(estado.dia)).filter((x) => x != null).slice(-14); return s.length ? Math.round(M.mediana(s)) : null; };
+      const fcB = med("fc", 60), spoB = serie("spo2") || 97, frB = med("fr", 14), pasB = serie("presion") || 116;
+      const V = [
+        { id: "spo2", nombre: "SpO₂", unidad: "%", base: spoB, crisis: 84, icono: "gota", decimales: 0 },
+        { id: "fc", nombre: "Pulso", unidad: "lpm", base: fcB, crisis: Math.round(fcB * 2.06), icono: "corazon", decimales: 0 },
+        { id: "resp", nombre: "Respiración", unidad: "rpm", base: frB, crisis: 26, icono: "ola", decimales: 0 },
+        { id: "pas", nombre: "Presión", unidad: "mmHg", base: pasB, crisis: pasB - 22, icono: "rayo", decimales: 0, extra: (v) => `/${Math.round(v * 0.64)}` },
+        { id: "temp", nombre: "Temperatura", unidad: "°C", base: 36.6, crisis: 36.8, icono: "fuego", decimales: 1 },
+      ];
+      const T = D.TRIPULACION;
       const tel = $(".telefono");
       tel.classList.add("en-emergencia");
       p.innerHTML = `
@@ -1010,8 +1028,22 @@
           <span class="emerg-etq">${ic("info", "ic-sm")} EMERGENCIA · SIMULACIÓN</span>
           <span class="emerg-reloj" id="reloj">T+00:00</span>
         </div>
+        <div class="emerg-quien" id="emerg-quien">
+          <span>Paciente: <b>${P.nombre}</b></span>
+          <details class="emerg-otra"><summary>¿Es otra persona?</summary>
+            <div class="emerg-personas">${M.PERSONAS.map((x) => `<button data-paciente="${x.id}" aria-pressed="${x.id === P.id}">${x.nombre}</button>`).join("")}</div>
+          </details>
+        </div>
+        <div class="emerg-error" id="emerg-error">
+          <button class="btn btn-suave btn-ancho" id="fue-error">${ic("cerrar")} Fue un error</button>
+          <div class="emerg-confirma" id="emerg-confirma" hidden>
+            <span>¿Cancelar la emergencia?</span>
+            <button class="btn" id="cancelar-si">Sí, cancelar</button>
+            <button class="btn btn-suave" id="cancelar-no">No</button>
+          </div>
+        </div>
         <div class="emerg-luna"><div class="luna-aqui"></div>
-          <div><b id="emerg-titulo">Signos de ${T.paciente}</b><span id="emerg-sub">Lunna vigila los signos en vivo…</span></div></div>
+          <div><b id="emerg-titulo">Signos de ${P.nombre}</b><span id="emerg-sub">Lunna vigila los signos en vivo…</span></div></div>
         <div class="vitales" id="vitales">${V.map((v) => `
           <div class="vital" id="v-${v.id}">
             <span class="vital-nom">${ic(v.icono, "ic-sm")} ${v.nombre}</span>
@@ -1047,10 +1079,11 @@
         }
       };
       const relojT = setInterval(() => { $("#reloj", p).textContent = tiempo(); }, 250);
-      let anim = 0;
+      let anim = 0, cancelada = false;
       const animar = (desde, hasta, ms, alPaso) => new Promise((ok) => {
         const ini = performance.now();
         const cuadro = (ahora) => {
+          if (cancelada) return;
           const f = Math.min(1, (ahora - ini) / ms);
           alPaso(desde + (hasta - desde) * f);
           if (f < 1) anim = requestAnimationFrame(cuadro); else ok();
@@ -1065,8 +1098,25 @@
         if (k !== ultimaFase) { ultimaFase = k; luna.fase(k); }
       };
 
+      // Otra paciente: se reinicia la emergencia con esa persona.
+      $$("[data-paciente]", p).forEach((b) => b.addEventListener("click", () => {
+        if (b.dataset.paciente !== P.id) ir(`emergencia:${b.dataset.paciente}`, { reemplazar: true });
+      }));
+
+      // Activación accidental: "Fue un error" los primeros 10 s, con confirmación (bug 2).
+      const tError = setTimeout(() => { const e = $("#emerg-error", p); if (e) e.hidden = true; }, 10000);
+      $("#fue-error", p).addEventListener("click", () => { $("#fue-error", p).hidden = true; $("#emerg-confirma", p).hidden = false; $("#cancelar-no", p).focus(); });
+      $("#cancelar-no", p).addEventListener("click", () => { $("#emerg-confirma", p).hidden = true; $("#fue-error", p).hidden = false; });
+      $("#cancelar-si", p).addEventListener("click", () => {
+        cancelada = true;
+        registrar("Emergencia cancelada: activación accidental");
+        estado.registros.unshift({ t: "Emergencia cancelada", v: "activación accidental", hora: new Date().toTimeString().slice(0, 5), ic: "cerrar" });
+        aviso("Emergencia cancelada. Quedó en el registro.");
+        ir("hoy");
+      });
+
       const PASOS = [
-        `Mantén a ${T.paciente} en un lugar seguro y no la dejes sola.`,
+        `Mantén a ${P.nombre} en un lugar seguro y no ${la} dejes ${sola}.`,
         "Revisa el oxígeno y el CO₂ de la cabina en el panel de la nave.",
         "Sigue el procedimiento de oxígeno de la tripulación.",
       ];
@@ -1079,17 +1129,26 @@
 
       (async () => {
         conFase(0);
-        registrar(`Monitoreo de ${T.paciente}: signos en su normal`);
+        registrar(`Monitoreo de ${P.nombre}: signos en su normal`);
         await animar(0, 0.55, 3000, conFase);
+        if (cancelada) return;
         luna.poner("alerta");
         $("#emerg-sub", p).textContent = "La saturación de oxígeno está bajando…";
         await animar(0.55, 1, 2600, conFase);
+        if (cancelada) return;
         const fc = V.find((v) => v.id === "fc"), sat = V.find((v) => v.id === "spo2");
         $("#emerg-titulo", p).textContent = "Lunna activó el modo emergencia";
         $("#emerg-sub", p).innerHTML = `SpO₂ <b>${sat.crisis} %</b> (su normal ${sat.base} %) · pulso <b>${fmt((fc.crisis / fc.base).toFixed(1))}×</b> su normal`;
         registrar(`<b>Activación automática</b>: SpO₂ ${sat.crisis} % · pulso ${fc.crisis} lpm`);
-        registrar(`Aviso enviado a <b>${T.cmo}</b>, médico de a bordo`);
-        registrar(`Paquete prioritario a Tierra en cola (≈ ${T.retrasoTierraMin} min de retraso)`);
+        // Escalamiento (ERS §4.3): nunca se avisa a la misma persona que es paciente.
+        if (esCMO) {
+          registrar(`<b>Nivel 1 sin cubrir</b>: la paciente es la CMO (médica de a bordo)`);
+          registrar(`Aviso enviado a <b>${COM.nombre}</b>, comandante`);
+          registrar(`Escalado a nivel 2: paquete prioritario al cirujano de vuelo en Tierra (≈ ${T.retrasoTierraMin} min de retraso)`);
+        } else {
+          registrar(`Aviso enviado a <b>${CMO.nombre}</b>, CMO (médica de a bordo)`);
+          registrar(`Paquete prioritario a Tierra en cola (≈ ${T.retrasoTierraMin} min de retraso)`);
+        }
         luna.poner("empatica");
         mostrarPaso();
       })();
@@ -1100,7 +1159,9 @@
         if (paso < PASOS.length) return mostrarPaso();
         $("#paso", p).hidden = true;
         $("#emerg-titulo", p).textContent = "Los signos se están recuperando";
-        $("#emerg-sub", p).textContent = `${T.cmo} ya está con ${T.paciente}. Lunna sigue registrando.`;
+        $("#emerg-sub", p).textContent = esCMO
+          ? `${COM.nombre} ya está con ${P.nombre}; Tierra fue avisada. Lunna sigue registrando.`
+          : `${CMO.nombre} ya está con ${P.nombre}. Lunna sigue registrando.`;
         luna.poner("tranquila");
         await animar(1, 0.12, 4200, conFase);
         luna.poner("feliz");
@@ -1112,7 +1173,7 @@
         $(".registro", p).before(cerrar);
       });
 
-      limpiar = () => { clearInterval(relojT); cancelAnimationFrame(anim); tel.classList.remove("en-emergencia"); };
+      limpiar = () => { cancelada = true; clearInterval(relojT); clearTimeout(tError); cancelAnimationFrame(anim); tel.classList.remove("en-emergencia"); };
     },
 
     logros(p) {

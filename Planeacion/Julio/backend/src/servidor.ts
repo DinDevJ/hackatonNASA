@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, extname, join, resolve, sep } from 'node:path';
 import { abrir, ahora, deJson, json, type BD } from './db.ts';
 import { validarEsquema, type Esquema } from './esquema.ts';
-import { bus, entornoEn, ingerirBinaria, ingerirJson, prediccionPara, type TramaJson } from './ingesta.ts';
+import { bus, entornoEn, fijarVentanaPersonal, ingerirBinaria, ingerirJson, prediccionPara, ventanaPersonal, VENTANA_PERSONAL_MISION_MIN, type TramaJson } from './ingesta.ts';
 import { ENTORNOS, type Entorno, type Prior } from './lunna.ts';
 import { cargarInicial, importarSemillas, type SalidaTipo } from './semillas.ts';
 import { escribirEnlace, iniciarEnlace, leerEnlace, redactarAviso } from './enlace.ts';
@@ -88,6 +88,7 @@ function estadoTexto(db: BD): string {
     `CORRIENDO desde hace ${Math.floor(seg / 60)} min ${seg % 60} s`,
     '',
     `entorno actual       ${entornoEn(db, ahora())}`,
+    `ventana de LUNNA     ${ventanaPersonal() === VENTANA_PERSONAL_MISION_MIN ? '24 h (misión)' : `${ventanaPersonal()} min · DEMOSTRACIÓN`}`,
     `tripulantes          ${n('SELECT COUNT(*) AS n FROM tripulantes')}`,
     `dispositivos         ${n('SELECT COUNT(*) AS n FROM dispositivos')}`,
     `asignaciones activas ${n('SELECT COUNT(*) AS n FROM asignaciones WHERE hasta IS NULL')}`,
@@ -149,7 +150,19 @@ export function construir(db: BD) {
   const uno = (sql: string, ...a: Array<string | number | null>) => db.prepare(sql).get(...a);
   rutas.length = 0;
 
-  ruta('GET', '/api/salud', () => ({ ok: true, version: VERSION_BACKEND, hora: ahora(), entorno: entornoEn(db, ahora()) }));
+  ruta('GET', '/api/salud', () => ({ ok: true, version: VERSION_BACKEND, hora: ahora(), entorno: entornoEn(db, ahora()),
+    ventana_personal_min: ventanaPersonal() }));
+  // Ventana del criterio personal de LUNNA: 1440 min en misión; se acorta sólo para demostraciones.
+  ruta('GET', '/api/lunna/ventana', () => ({ minutos: ventanaPersonal(), mision: VENTANA_PERSONAL_MISION_MIN }));
+  ruta('PUT', '/api/lunna/ventana', async (req) => {
+    const { minutos } = await cuerpoJson<{ minutos: number }>(req);
+    try {
+      const m = fijarVentanaPersonal(Number(minutos ?? VENTANA_PERSONAL_MISION_MIN));
+      reiniciarEstados();              // los estados recordados se calcularon con otra ventana
+      anotar(m === VENTANA_PERSONAL_MISION_MIN ? 'LUNNA: ventana personal de 24 h (misión)' : `LUNNA: ventana personal de ${m} min (DEMOSTRACIÓN)`);
+      return { minutos: m, mision: VENTANA_PERSONAL_MISION_MIN };
+    } catch (e) { throw new ErrorHttp(400, (e as Error).message); }
+  });
 
   // ── Registro de variables (edición desde la interfaz) ──
   ruta('GET', '/api/variables', () => todos(`SELECT * FROM variables ORDER BY id`));
@@ -383,6 +396,7 @@ export function construir(db: BD) {
   ruta('POST', '/api/demo/reiniciar', () => {
     db.exec(`DELETE FROM muestras; DELETE FROM alertas; DELETE FROM asignaciones; DELETE FROM fases;
              DELETE FROM bajada; DELETE FROM subida; DELETE FROM abordo; DELETE FROM emergencias;`);
+    fijarVentanaPersonal(VENTANA_PERSONAL_MISION_MIN);
     reiniciarEstados();
     return { ok: true };
   });

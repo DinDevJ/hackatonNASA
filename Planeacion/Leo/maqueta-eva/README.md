@@ -1,25 +1,43 @@
-# Maqueta LUNA con Luna — experiencia de las métricas
+# Maqueta LUNNA con Lunna — experiencia de las métricas
 
-Maqueta interactiva de cómo el astronauta vive sus métricas de salud en la app **LUNA** (antes EVA),
-acompañado de su asistente **Luna**. **Todos los datos son simulados**: todavía no recibe datos reales
+## Estructura de la app (Katy, 14 nov 2026)
+
+Sobre el Cuerpo LUNNA, el motor y la Lunna flotante de Diana. Solo celular. Diseño unificado de
+**glassmorfismo** en versión **clara** y **azul marino** (Ajustes → Apariencia), con **barra de
+navegación flotante** abajo.
+
+| Pestaña | Qué tiene |
+|---|---|
+| **Inicio** | Cuerpo LUNNA, avisos (fatiga, nota de Tierra, evento solar), check-in, datos del cuerpo y tu tripulación (con privacidad por rol) |
+| **Registrar** | Comida, glucosa, presión, temperatura, agua, masa, síntomas, sueño, ejercicio, fuerza, mente (estrés, PHQ-9, KSS, diario), tira de orina y foto por cámara |
+| **Ciclo** | Solo para ellas, privado y al estilo Clue: anillo del ciclo, semana, registro por categorías y lo que cambia en el espacio |
+| **Reportes** | Resumen de alertas y protocolos, signos y tendencias, reflejos (PVT-B), radiación, Tierra, evento solar, vista CMO y logros. Lo desglosado va en el panel de escritorio |
+| **Ajustes** | Simulación (persona y día), privacidad, Lunna, tema, notificaciones, ayuda y qué es real o simulado |
+| **Lunna (botón flotante)** | Todo lo de IA: lo que ve hoy, cómo te monitorea, clima espacial, qué procesa, biblioteca y hablar |
+
+Archivos nuevos: `modulos.js` (pantallas y panel de Lunna) y `tema.css` (diseño). Abrir una vista
+directo: `?pantalla=ciclo`, `?persona=MS-1`, `?dia=115`, `?tema=oscuro`. Demo: `?demo`.
+
+Maqueta interactiva de cómo el astronauta vive sus métricas de salud en la app **LUNNA** (antes EVA),
+acompañado de su asistente **Lunna**. **Todos los datos son simulados**: todavía no recibe datos reales
 ni del reloj.
 
-## Nuevo en la pantalla Hoy: Cuerpo LUNA y lo que Luna ve
+## Nuevo en la pantalla Hoy: Cuerpo LUNNA y lo que Lunna ve
 
 Integra en esta maqueta el panel de salud (módulo 1) que se hizo en `app/`.
 
 | Qué | Dónde | Cómo funciona |
 |---|---|---|
-| **Cuerpo LUNA**, lo primero de Hoy | `cuerpo.js`, `cuerpo.css` | Escáner azul marino estilo holograma médico: esqueleto tenue, **arterias con flujo**, **corazón anatómico** (aorta, vena cava, tronco pulmonar, coronarias) que late, pulmones con lóbulos, hígado, estómago, intestinos, riñones y vejiga. **Cambia según el sexo:** mujer (hombros más estrechos, cintura, cadera, pecho, pelo largo) u hombre (hombros y cuello más anchos, torso recto, pectorales, pelo corto) |
+| **Cuerpo LUNNA**, lo primero de Hoy | `cuerpo.js`, `cuerpo.css` | Escáner azul marino estilo holograma médico: esqueleto tenue, **arterias con flujo**, **corazón anatómico** (aorta, vena cava, tronco pulmonar, coronarias) que late, pulmones con lóbulos, hígado, estómago, intestinos, riñones y vejiga. **Cambia según el sexo:** mujer (hombros más estrechos, cintura, cadera, pecho, pelo largo) u hombre (hombros y cuello más anchos, torso recto, pectorales, pelo corto) |
 | Zonas que se tocan | `cuerpo.js` | Cabeza, ojos, corazón, pulmones, abdomen, riñones y vejiga, músculos, piel (sensor de muñeca) y halo de radiación. Cada zona lleva el peor estado de sus indicadores en su contorno y su marca: ● en tu normal · ■ atención · ▲ actúa ahora · ○ sin dato |
 | **Zoom y panel tecnológico** | `app.js` → `abrirRegion` | Al tocar un órgano, la figura se acerca a él y la información sale de ese punto hasta cubrir la pantalla: visor del órgano, peligro del HRP, indicadores con semáforo, procedencia y gráfica de 14 días. Al cerrar, vuelve al cuerpo completo |
 | Fila de zonas | `app.js` | La misma información sin la figura, navegable con teclado. "Salud femenina" solo aparece a ellas y con candado |
-| **Luna flotante** | `app.js` → `crearLunaFlotante` | Burbuja como AssistiveTouch: se arrastra, se pega al borde, se atenúa si no se usa y recuerda su lugar. Su cara y una insignia dicen cuántas cosas hay que mirar. Al tocarla abre **"Lo que Luna ve hoy"**: qué señales, con qué números contra tu normal, qué regla se cumplió y qué hacer. No diagnostica |
+| **Lunna flotante** | `app.js` → `crearLunaFlotante` | Burbuja como AssistiveTouch: se arrastra, se pega al borde, se atenúa si no se usa y recuerda su lugar. Su cara y una insignia dicen cuántas cosas hay que mirar. Al tocarla abre **"Lo que Lunna ve hoy"**: qué señales, con qué números contra tu normal, qué regla se cumplió y qué hacer. No diagnostica |
 | Letra | `estilos.css` | Sans técnica del sistema (Segoe UI Variable, SF Pro, Inter) y monoespaciada para los datos |
 | Fichas | `app.js` → `ficha` | Presión, temperatura, ánimo, SpO₂ y respiración: valor, tu normal, gráfica, por qué, cómo se mide y umbral con su fuente. Corazón, Sueño y Glucosa ganan la tarjeta "contra tu normal" |
 | Simulación | Hoy, arriba | Cambia de tripulante (Ana, Luis, Mei, Tomás) y de día (106–115) para recorrer el escenario |
 
-### El escenario (ERS-LUNA)
+### El escenario (ERS-LUNNA)
 
 | Día | Qué pasa |
 |---|---|
@@ -48,13 +66,13 @@ python -m http.server 8091
 Funciona sin internet: no usa librerías ni fuentes externas. En escritorio se ve dentro de un marco de
 teléfono; en el móvil, a pantalla completa.
 
-## Luna
+## Lunna
 
 Asistente con **forma de luna**, sin manos ni pies. **Su fase refleja los signos vitales de la persona:**
 
 | Fase | Halo | Significa |
 |---|---|---|
-| Luna llena | Cian | Todo en su normal |
+| Lunna llena | Cian | Todo en su normal |
 | Gibosa / cuarto | Ámbar | Algo se aleja de su normal (cada alerta la hace menguar) |
 | Casi nueva | Rojo pulsante | Emergencia |
 

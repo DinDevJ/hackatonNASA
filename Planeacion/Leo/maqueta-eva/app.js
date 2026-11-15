@@ -1,4 +1,4 @@
-/* App EVA con su asistente LUNA · maqueta interactiva. Todo es SIMULADO: no recibe datos reales todavía. */
+/* App LUNA con su asistente Luna · maqueta interactiva. Todo es SIMULADO: no recibe datos reales todavía. */
 (function () {
   "use strict";
   const D = window.DATOS;
@@ -26,7 +26,11 @@
     animo: null,
     glucometro: [],
     checkins: mem.leer("checkins", 3),
+    persona: mem.leer("persona", "MS-2"), // quién se ve en Hoy (simulación)
+    dia: 112,
   };
+  const M = window.MOTOR, C = window.CUERPO;
+  const persona = () => M.PERSONAS.find((x) => x.id === estado.persona) || M.PERSONAS[0];
 
   // ---------- Avisos ----------
   let avisoT = 0;
@@ -124,7 +128,8 @@
     if (destino !== "emergencia") actualizarFase();
     const p = $("#pantalla");
     p.innerHTML = "";
-    (PANTALLAS[destino] || PANTALLAS.hoy)(p);
+    if (destino.startsWith("ficha-")) PANTALLAS.ficha(p, destino.slice(6));
+    else (PANTALLAS[destino] || PANTALLAS.hoy)(p);
     p.scrollTop = 0;
     const raiz = ["hoy", "checkin", "logros", "ayuda"].includes(destino) ? destino : "hoy";
     $$(".menu button").forEach((b) => b.classList.toggle("activo", b.dataset.ir === raiz));
@@ -201,50 +206,276 @@
   }
   /** Fase de Luna según los signos: llena si todo está en su normal; mengua con cada alerta. */
   function actualizarFase() {
+    // El motor decide el estado; Luna solo lo refleja: llena en verde, menguante en ámbar, casi nueva en rojo.
+    const n = M.evaluar(estado.persona, estado.dia).general;
     const alertas = resumen().filter((x) => !x.ok).length;
-    LUNA.ponerFase(Math.max(0.35, 1 - 0.15 * alertas));
+    LUNA.ponerFase(n === 2 ? 0.12 : n === 1 ? 0.55 : Math.max(0.75, 1 - 0.08 * alertas));
+    const d = document.getElementById("dia");
+    if (d) d.textContent = estado.dia;
+  }
+
+
+  /** Hoja con una región del cuerpo: sus indicadores, su peligro del HRP y por qué se mide. */
+  function abrirRegion(r) {
+    const P = persona(), def = M.REGIONES[r], ev = M.evaluar(P.id, estado.dia);
+    const previo = document.activeElement;
+    const tarjetas = def.ind.map((k) => {
+      const e = ev.ind[k], v = valorDe(P.id, k, e), n = ev.nivelDe(k), ind = M.IND[k];
+      return `<button class="reg-ind" data-ficha="${ind.seccion && P.id === "MS-2" ? ind.seccion : "ficha-" + k}">
+        <span class="fila-sup"><b>${ind.nombre}</b>${sem(n)}</span>
+        <span class="v">${v.v}<small>${v.u}</small></span>
+        ${etiquetas(k, e)}
+        ${grafNormal(P.id, k, estado.dia, true)}
+        <span class="ver">¿Por qué se mide esto? →</span>
+      </button>`;
+    }).join("");
+    let extra = "";
+    if (def.cabina === "co2") extra += `<div class="reg-meta">${sem(ev.cabina.co2 > 3 ? 1 : 0, false)} CO₂ que respiras (cabina): <b>${fmt(ev.cabina.co2)} mmHg</b> · [A] ≤ 3 promedio de 1 h</div>`;
+    if (def.cabina === "radiacion") extra += `<div class="reg-meta">${sem(ev.regiones.radiacion, false)} Tasa de dosis: <b>${ev.cabina.tasa.toLocaleString("es-ES")} µSv/h</b> · [A] diseño &lt; 54<br>Dosis de la misión: <b>${ev.cabina.dosisMision} de 600 mSv</b> [A] · dato simulado</div>`;
+    if (def.metas && def.metas.includes("agua")) { const a = M.SERIES[P.id].agua[M.idx(estado.dia)]; extra += `<div class="reg-meta">Agua de hoy: <b>${fmt(a)} L</b> de ${fmt((32 * P.masaKg / 1000).toFixed(1))} L · meta [A] 32 mL/kg</div>`; }
+    if (def.metas && def.metas.includes("ejercicio")) { const m = M.SERIES[P.id].ejercicio[M.idx(estado.dia)]; extra += `<div class="reg-meta">Ejercicio de hoy: <b>${m} min</b> de 90 · meta [A] ISS 1,5 h/día (ARED, CEVIS, T2)</div>`; }
+    if (def.nota) extra += `<p class="reg-meta">${def.nota}</p>`;
+    const nombre = r === "radiacion" ? "Radiación (todo el cuerpo)" : def.nombre;
+    const hoja = document.createElement("div");
+    hoja.className = "hoja reg-hoja";
+    hoja.setAttribute("role", "dialog");
+    hoja.setAttribute("aria-modal", "true");
+    hoja.setAttribute("aria-label", nombre);
+    hoja.innerHTML = `<div class="hoja-fondo" data-cerrar></div>
+      <div class="hoja-panel">
+        <button class="icono-btn hoja-x" data-cerrar aria-label="Cerrar">${ic("cerrar")}</button>
+        <h2>${nombre}</h2>
+        <span class="peligro">Peligro del HRP: ${def.peligro}</span>
+        ${def.privada ? "" : sem(ev.regiones[r])}
+        ${tarjetas}${extra}
+        <p class="no-diag">Luna avisa, no diagnostica. Datos simulados.</p>
+      </div>`;
+    document.body.append(hoja);
+    const cerrar = () => { hoja.remove(); document.removeEventListener("keydown", tecla); if (previo && previo.isConnected) previo.focus(); };
+    const tecla = (e) => { if (e.key === "Escape") cerrar(); };
+    document.addEventListener("keydown", tecla);
+    hoja.addEventListener("click", (e) => {
+      if (e.target.closest("[data-cerrar]")) return cerrar();
+      const f = e.target.closest("[data-ficha]");
+      if (f) { cerrar(); ir(f.dataset.ficha); }
+    });
+    $(".hoja-x", hoja).focus();
+  }
+
+  // ---------- Integración del módulo 1: semáforo con forma, tu normal y fichas ----------
+  const ESTADO_TXT = { 0: "En tu normal", 1: "Atención", 2: "Actúa ahora", nd: "Sin dato" };
+  const claseN = (n) => (n == null ? "nd" : ["ok", "ojo", "alto"][n]);
+  /** Semáforo: forma + color + texto (RI-UI-02). */
+  function sem(n, txt) {
+    const k = claseN(n);
+    return `<span class="sem sem-${k}"><svg viewBox="-8 -8 16 16" aria-hidden="true">${C.forma(n, 0, 0, 7)}</svg>${txt === false ? "" : txt || ESTADO_TXT[n == null ? "nd" : n]}</span>`;
+  }
+  const PROC = { sensor: "medido", calculado: "calculado", estimado: "estimado", manual: "anotado a mano" };
+  function etiquetas(k, e) {
+    const ind = M.IND[k];
+    const t = [];
+    if (!ind.sinNormal) t.push(`<span class="etq etq-normal">tu normal</span>`);
+    if (ind.abs) t.push(`<span class="ref ref-${ind.abs.tipo}" title="${ind.abs.texto}">${ic(ind.abs.tipo === "A" ? "escudo" : "info", "ic-sm")}${ind.abs.tipo === "A" ? "NASA" : "Tierra"}</span>`);
+    if (ind.abs && ind.abs.propuesta) t.push(`<span class="etq etq-prop">propuesta</span>`);
+    t.push(`<span class="etq etq-proc ${ind.proc}">${PROC[ind.proc]}</span>`);
+    if (e && e.valor == null && e.ultimo) t.push(`<span class="etq etq-proc">del día ${e.ultimo.dia}</span>`);
+    return `<div class="etiquetas">${t.join("")}</div>`;
+  }
+  /** Valor con su unidad; la presión lleva la diastólica y lo estimado su intervalo (RS-07). */
+  function valorDe(pid, k, e) {
+    const ind = M.IND[k];
+    const u = e.valor != null ? e.valor : e.ultimo ? e.ultimo.valor : null;
+    if (u == null) return { v: "–", u: ind.unidad };
+    if (k === "presion") return { v: `${u}/${M.SERIES[pid].diastolica[M.idx(e.ultimo.dia)]}`, u: "mmHg" };
+    if (k === "sueno") return { v: fmt(u.toFixed(1)), u: "h" };
+    if (ind.ic) return { v: `≈${u}`, u: `${ind.unidad} (${u - ind.ic}–${u + ind.ic})` };
+    return { v: fmt(ind.dec ? u.toFixed(ind.dec) : u), u: ind.unidad };
+  }
+  /** Serie de 14 días contra la franja de tu normal (RF-01-03). */
+  function grafNormal(pid, k, dia, mini) {
+    const e = M.estadoIndicador(pid, k, dia);
+    const ind = M.IND[k];
+    const h = e.historia;
+    const vals = h.filter((v) => v != null);
+    if (vals.length < 2) return `<div class="tenue-12">Aún no hay suficientes días.</div>`;
+    const W = 320, H = mini ? 38 : 120, mi = mini ? 2 : 30, md = 8, ma = 8, mb = mini ? 4 : 18;
+    const cand = k === "glucosa" ? [100, 126] : k === "presion" ? [130, 140] : k === "spo2" ? [92] : [];
+    const rango = Math.max(...vals) - Math.min(...vals) || 1;
+    const lineas = mini ? [] : cand.filter((l) => l <= Math.max(...vals) + rango * 1.5 && l >= Math.min(...vals) - rango * 1.5);
+    const ext = [...vals, ...(e.normal ? e.normal.banda : []), ...lineas];
+    let lo = Math.min(...ext), hi = Math.max(...ext);
+    const pad = (hi - lo) * 0.12 || 1; lo -= pad; hi += pad;
+    const x = (i) => mi + (i / Math.max(1, h.length - 1)) * (W - mi - md);
+    const y = (v) => ma + (1 - (v - lo) / (hi - lo)) * (H - ma - mb);
+    const fuera = (v) => e.normal && (ind.dir === "alto" ? v > e.normal.banda[1] : v < e.normal.banda[0]);
+    let d = "";
+    const partes = [];
+    h.forEach((v, i) => { if (v == null) { if (d) partes.push(d); d = ""; } else d += `${d ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`; });
+    if (d) partes.push(d);
+    const ult = h.length - 1, hoy = h[ult];
+    const nivel = M.evaluar(pid, dia).nivelDe(k);
+    const color = ["var(--verde)", "var(--ambar)", "var(--rojo)"][nivel || 0];
+    return `<svg class="normal-graf ${mini ? "mini" : ""}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${ind.nombre}, últimos ${h.length} días contra tu normal">
+      ${e.normal ? `<rect class="banda" x="${mi}" width="${W - mi - md}" y="${y(e.normal.banda[1])}" height="${Math.max(1, y(e.normal.banda[0]) - y(e.normal.banda[1]))}" rx="5"/>` : ""}
+      ${e.normal && !mini ? `<line class="mediana" x1="${mi}" x2="${W - md}" y1="${y(e.normal.med)}" y2="${y(e.normal.med)}"/>` : ""}
+      ${lineas.map((l) => `<line class="umbral" x1="${mi}" x2="${W - md}" y1="${y(l)}" y2="${y(l)}"/><text x="${W - md}" y="${y(l) - 3}" text-anchor="end">${l}</text>`).join("")}
+      ${partes.map((pp) => `<path class="trazo" d="${pp}" vector-effect="non-scaling-stroke"/>`).join("")}
+      ${h.map((v, i) => (v == null || i === ult ? "" : `<circle class="punto ${fuera(v) ? "fuera" : ""}" cx="${x(i)}" cy="${y(v)}" r="${mini ? 1.8 : 3}"/>`)).join("")}
+      ${hoy != null ? `<circle class="hoy" cx="${x(ult)}" cy="${y(hoy)}" r="${mini ? 3.4 : 5.5}" fill="${color}"/>` : ""}
+      ${mini ? "" : `<text x="${mi - 4}" y="${y(hi - pad) + 3}" text-anchor="end">${fmt(+(hi - pad).toFixed(ind.dec))}</text><text x="${mi - 4}" y="${y(lo + pad) + 3}" text-anchor="end">${fmt(+(lo + pad).toFixed(ind.dec))}</text>
+        <text x="${x(0)}" y="${H - 4}">Día ${dia - ult}</text><text x="${x(ult)}" y="${H - 4}" text-anchor="end">Hoy</text>`}
+    </svg>`;
+  }
+  /** Tarjeta "contra tu normal" que se añade a las pantallas de Leo y a las fichas. */
+  function tarjetaNormal(k) {
+    const pid = estado.persona, e = M.estadoIndicador(pid, k, estado.dia), ind = M.IND[k];
+    const v = valorDe(pid, k, e);
+    const nivel = M.evaluar(pid, estado.dia).nivelDe(k);
+    return `<div class="tarjeta">
+      <h3>${ic(ind.icono || "info")} ${ind.nombre} · ${persona().nombre}</h3>
+      <div class="valor-grande"><b>${v.v}</b><span class="u">${v.u}</span>${sem(nivel)}</div>
+      ${etiquetas(k, e)}
+      ${grafNormal(pid, k, estado.dia)}
+      <div class="tenue-12">${e.normal ? `Últimos 14 días · la franja es tu normal (${M.texto(k, e.normal.banda[0])} a ${M.texto(k, e.normal.banda[1])})` : ind.abs ? `Sin tu normal: se compara con el umbral (${ind.abs.texto})` : ""}</div>
+    </div>`;
   }
 
   // ---------- Pantallas ----------
   const PANTALLAS = {
     hoy(p) {
       const sec = resumen();
-      const alertas = sec.filter((x) => !x.ok).length;
+      const P = persona();
+      const ev = M.evaluar(P.id, estado.dia);
+      const L = M.lunaDice(P.id, estado.dia);
+      const esAna = P.id === "MS-2"; // las secciones detalladas de la maqueta (comida, síntomas, fuerza) son de Ana
+      // Mosaico (RF-01-02): los seis del reto siempre visibles, más las secciones de Leo.
+      const tile = (id, nombre, icono, color, k, leo) => {
+        let valor, u, n, txt;
+        if (k) {
+          const e = ev.ind[k], vv = valorDe(P.id, k, e);
+          valor = vv.v; u = vv.u; n = ev.nivelDe(k);
+          txt = ESTADO_TXT[n == null ? "nd" : n];
+        } else {
+          valor = leo.valor; u = leo.u; n = esAna ? (leo.ok ? 0 : 1) : null; txt = esAna ? leo.txt : "Ver detalle";
+        }
+        const destino = k && !(M.IND[k].seccion && esAna) ? `ficha-${k}` : id;
+        return `<button data-seccion="${destino}" aria-label="${nombre}: ${valor} ${u}, ${ESTADO_TXT[n == null ? "nd" : n]}">
+          <div class="fila" style="gap:8px"><div class="pastilla-ic" style="width:32px;height:32px;border-radius:11px;background:${color.fondo};color:${color.tinta}">${ic(icono)}</div><span class="nombre">${nombre}</span></div>
+          <div class="valor">${valor}<small>${u}</small></div>
+          <span class="estado estado-${claseN(n)}">${sem(n, txt)}</span>
+        </button>`;
+      };
+      const S = Object.fromEntries(sec.map((x) => [x.id, x]));
+      const tiles = [
+        tile("corazon", "Corazón", "corazon", COLOR.corazon, "fc"),
+        tile("sueno", "Sueño", "luna", COLOR.sueno, "sueno"),
+        tile("presion", "Presión", "gota", { fondo: "#FFE6F0", tinta: "#B0306A" }, "presion"),
+        tile("temperatura", "Temperatura", "fuego", { fondo: "#FFF3DA", tinta: "#8A5600" }, "temperatura"),
+        tile("animo", "Ánimo", "chispa", { fondo: "#EEE6FF", tinta: "#6B3FD0" }, "animo"),
+        tile("glucosa", "Glucosa", "gota", COLOR.glucosa, "glucosa"),
+        tile("comida", "Comida", "manzana", COLOR.comida, null, S.comida),
+        tile("sintomas", "Síntomas", "curita", COLOR.sintomas, null, S.sintomas),
+        tile("fuerza", "Fuerza", "pesa", COLOR.fuerza, null, S.fuerza),
+      ];
+      // Lista de regiones: alternativa a la figura, navegable con teclado y lector de pantalla.
+      const regs = ["cabeza", "ojos", "corazon", "pulmones", "abdomen", "rinones", "musculos", "piel", "radiacion"];
+      if (P.sexo === "M") regs.push("femenina"); // solo a ella y con candado
+      const lista = regs.map((r) => {
+        const def = M.REGIONES[r], n = def.privada ? null : ev.regiones[r];
+        const nombre = r === "radiacion" ? "Radiación" : def.nombre;
+        const extra = def.privada ? `<span class="candado" title="Privado: solo tú lo ves">${ic("escudo", "ic-sm")}</span>` : "";
+        return `<li><button data-region="${r}" aria-label="${nombre}: ${def.privada ? "privado" : ESTADO_TXT[n == null ? "nd" : n]}"><svg viewBox="-8 -8 16 16" aria-hidden="true">${C.forma(n, 0, 0, 7)}</svg><span class="reg-nombre">${nombre}</span>${extra}</button></li>`;
+      }).join("");
+      const hall = L.hallazgos.map((h) => `
+        <article class="hallazgo n${h.nivel}">
+          <div class="hallazgo-cab">${sem(h.nivel, false)}<b>${h.titulo}</b><code>${h.id}</code></div>
+          <p>${h.frase}</p>
+          <ul>${h.evidencia.map((x) => `<li>${x}</li>`).join("")}</ul>
+          <div class="hacer">${ic("check", "ic-sm")}<span>${h.hacer}</span></div>
+          <div class="pie">Umbral: ${h.umbral}${h.simulado ? " · dato simulado" : ""}</div>
+        </article>`).join("");
+      const cab = ev.cabina;
       p.innerHTML = `
         <div class="parche-fila">
-          <svg class="parche" viewBox="0 0 64 64" role="img" aria-label="Parche de misión EVA, Equipo Monarcas">
+          <svg class="parche" viewBox="0 0 64 64" role="img" aria-label="Parche de misión LUNA, Equipo Monarcas">
             <defs><linearGradient id="g-parche" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#192584"/><stop offset="1" stop-color="#8A2BD0"/></linearGradient></defs>
             <circle cx="32" cy="32" r="30" fill="url(#g-parche)" stroke="#4FD2E9" stroke-width="3"/>
             <path d="M37 14a17 17 0 1 0 12 29a14 14 0 0 1-12-29z" fill="#FBF6FF"/>
             <path d="M24 33c-4-6-11-6-11-1 0 4 5 6 11 3m0-2c4-6 11-6 11-1 0 4-5 6-11 3m0-1v8" fill="#FFB547" stroke="#192584" stroke-width="1.2" stroke-linejoin="round"/>
             <path d="M48 18l1 2.4 2.4 1-2.4 1-1 2.4-1-2.4-2.4-1 2.4-1z" fill="#FFD66B"/>
           </svg>
-          <div class="parche-txt"><b>EVA</b><span>Equipo Monarcas · proyecto para NASA Space Apps Challenge 2026</span></div>
+          <div class="parche-txt"><b>LUNA</b><span>Equipo Monarcas · proyecto para NASA Space Apps Challenge 2026</span></div>
         </div>
-        <div class="cabecera"><div><div class="sub">Buenos días,</div><h1>${D.PERFIL.nombre} ${ic("chispa", "ic-sm")}</h1></div><span class="espacio"></span>
+        <div class="simula" aria-label="Simulación">
+          <span class="ref ref-sim">${ic("planeta", "ic-sm")} Simulación</span>
+          <select id="sim-persona" aria-label="Ver como">${M.PERSONAS.map((x) => `<option value="${x.id}" ${x.id === P.id ? "selected" : ""}>${x.nombre} · ${x.sexo === "M" ? "mujer" : "hombre"}</option>`).join("")}</select>
+          <span class="paso-dia"><button id="dia-menos" aria-label="Día anterior" ${estado.dia <= 106 ? "disabled" : ""}>‹</button><b>Día ${estado.dia}</b><button id="dia-mas" aria-label="Día siguiente" ${estado.dia >= M.ULTIMO_DIA ? "disabled" : ""}>›</button></span>
+        </div>
+        <div class="cabecera"><div><div class="sub">Buenos días,</div><h1>${P.nombre} ${ic("chispa", "ic-sm")}</h1><div class="sub">${P.rol} · ${P.id}</div></div><span class="espacio"></span>
           <div class="racha" title="Días seguidos registrando">${ic("estrella", "ic-relleno")}<b>${estado.checkins}</b></div></div>
-        ${lunaGlobo(alertas ? `Todo va bien, pero hay <b>${alertas}</b> cosa${alertas > 1 ? "s" : ""} que vale la pena mirar hoy.` : "¡Todo en tu normal hoy! Sigue así.")}
-        <button class="clima" data-tutorial="radiacion" aria-label="Clima espacial: evento solar simulado. Ver qué hacer">
+        ${lunaGlobo(L.resumen)}
+        <section class="tarjeta luna-ve" aria-label="Lo que Luna ve hoy">
+          <h3>${ic("chispa")} Lo que Luna ve hoy</h3>
+          ${hall}
+          ${L.bien.length ? `<p class="bien">${hall ? "Lo demás va bien: " : "Con tus datos de hoy: "}${L.bien.join("; ")}.</p>` : ""}
+          <p class="no-diag">Luna avisa, no diagnostica: cuenta lo que miden tus sensores contra tu normal y qué regla se cumplió.</p>
+        </section>
+        <button class="clima" data-tutorial="radiacion" aria-label="Clima espacial. Ver qué hacer">
           <div class="luna-clima"></div>
-          <div><b>${ic("rayo", "ic-sm")} Clima espacial</b><span>Evento de partículas solares <em>simulado</em>. Toca para ver qué hacer.</span></div>
+          <div><b>${ic("rayo", "ic-sm")} Clima espacial</b>
+            <span>${cab.solar ? `Evento de partículas solares <em>simulado</em>: ${cab.tasa.toLocaleString("es-ES")} µSv/h. Ve al refugio.` : `Sin evento activo · ${cab.tasa} µSv/h · misión ${cab.dosisMision} de 600 mSv.`}
+            Modelo: evento real de DONKI del ${M.DONKI.id.slice(0, 10)} (aviso ${M.DONKI.latenciaMin} min después).</span></div>
           ${ic("atras", "ic-sm voltear")}
         </button>
-        <div class="mosaico">${sec.map((x) => `
-          <button data-seccion="${x.id}" aria-label="${x.nombre}: ${x.valor} ${x.u}">
-            <div class="fila" style="gap:8px"><div class="pastilla-ic" style="width:32px;height:32px;border-radius:11px;background:${COLOR[x.id].fondo};color:${COLOR[x.id].tinta}">${ic(x.icono)}</div><span class="nombre">${x.nombre}</span></div>
-            <div class="valor">${x.valor}<small>${x.u}</small></div>
-            <span class="estado ${x.ok ? "estado-ok" : "estado-ojo"}">${x.txt}</span>
-          </button>`).join("")}</div>
+        <section class="tarjeta cuerpo-tarjeta" aria-label="Cuerpo LUNA">
+          <h3>${ic("usuario")} Cuerpo LUNA <span class="espacio"></span><span class="tenue-12">Toca una zona</span></h3>
+          <div class="cuerpo-lienzo">${C.svg({ sexo: P.sexo, regiones: ev.regiones })}</div>
+          <ul class="regiones">${lista}</ul>
+        </section>
+        <div class="mosaico">${tiles.join("")}</div>
+        ${esAna ? "" : `<p class="tenue-12" style="margin:-4px 0 12px">Comida, Síntomas y Fuerza de esta maqueta son datos de ejemplo de Ana.</p>`}
         <button class="btn btn-ancho" data-ir-checkin>${ic("chispa")} Check-in de 1 minuto</button>`;
-      const luna = LUNA.crear($(".luna-aqui", p), { cara: alertas ? "tranquila" : "feliz", accesorio: "estrella", tam: 88 });
+      LUNA.crear($(".luna-aqui", p), { cara: L.cara, accesorio: L.nivel ? null : "estrella", tam: 88 });
       LUNA.crear($(".luna-clima", p), { cara: "radiacion", tam: 46 });
       $("[data-ir-checkin]", p).addEventListener("click", () => ir("checkin"));
-      void luna;
+      $("#sim-persona", p).addEventListener("change", (e) => { estado.persona = e.target.value; mem.guardar("persona", estado.persona); ir("hoy"); });
+      $("#dia-menos", p).addEventListener("click", () => { estado.dia--; ir("hoy"); });
+      $("#dia-mas", p).addEventListener("click", () => { estado.dia++; ir("hoy"); });
+      $$("[data-region]", p).forEach((el) => {
+        el.addEventListener("click", () => abrirRegion(el.dataset.region));
+        if (el.tagName !== "BUTTON") el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirRegion(el.dataset.region); } });
+      });
+    },
+
+    /** Ficha de un indicador (M2): valor, tu normal, gráfica, por qué y umbral con fuente. */
+    ficha(p, k) {
+      const ind = M.IND[k];
+      if (!ind) return PANTALLAS.hoy(p);
+      const P = persona(), e = M.estadoIndicador(P.id, k, estado.dia);
+      const n = M.evaluar(P.id, estado.dia).nivelDe(k);
+      const color = { fondo: "#EEE6FF", tinta: "#6B3FD0" };
+      const frase = n == null ? "Hoy no tengo este dato."
+        : n === 0 ? (e.normal ? `Estás dentro de tu normal: lo habitual para ti es ${M.texto(k, e.normal.med)}.` : "Estás dentro del rango de referencia.")
+        : e.motivo === "T" ? "Estás en la zona de atención de un umbral clínico de Tierra, no validado en el espacio."
+        : "Esta señal se alejó de tu normal. En Hoy, «Lo que Luna ve» te explica con qué otras señales coincide.";
+      p.innerHTML = `${cabecera(ind.corto || ind.nombre, `${PROC[ind.proc][0].toUpperCase() + PROC[ind.proc].slice(1)} · ${ind.varId}`, "bienvenida", color, ind.icono || "info")}
+        ${lunaGlobo(frase)}
+        ${ind.aviso ? `<div class="aviso-fijo">${ic("info", "ic-sm")}<span>${ind.aviso}</span></div>` : ""}
+        ${tarjetaNormal(k)}
+        <div class="tarjeta"><dl class="explica">
+          <dt>¿Por qué se mide en el espacio?</dt><dd>${ind.porQue}</dd>
+          <dt>Cómo se mide</dt><dd>${ind.como}</dd>
+          <dt>Qué cambia en vuelo</dt><dd>${ind.espacio}</dd>
+          ${ind.abs ? `<dt>Umbral [${ind.abs.tipo}]${ind.abs.propuesta ? " · propuesta del equipo" : ""}</dt><dd>${ind.abs.texto}${ind.abs.url ? ` · <a href="${ind.abs.url}" target="_blank" rel="noreferrer">fuente</a>` : ""}</dd>` : ""}
+          ${!ind.sinNormal ? `<dt>Tu normal</dt><dd>Tus 14 días anteriores. Una señal sola pide atención si se aleja 3 veces tu variación habitual; tres señales juntas, desde 2 (regla FATIGA-03).</dd>` : ""}
+        </dl></div>`;
+      LUNA.crear($(".luna-aqui", p), { cara: n ? "tranquila" : "feliz", tam: 80 });
     },
 
     corazon(p) {
       p.innerHTML = `${cabecera("Corazón", "Reloj · en vivo", "corazon", COLOR.corazon, "corazon")}
         ${lunaGlobo("Tu corazón late tranquilo. ¿Vamos a entrenar?")}
+        ${tarjetaNormal("fc")}
         <div class="tarjeta" style="text-align:center">
           <div class="fila" style="justify-content:center;gap:10px"><span class="latido" id="latido">${ic("corazon", "ic-lg ic-relleno")}</span><span class="bpm" id="bpm">68</span><span class="tenue">lpm</span></div>
           <div class="tenue" id="contacto" style="margin-top:4px">${ic("reloj", "ic-sm")} Sensor en contacto con la piel</div>
@@ -308,6 +539,7 @@
       const cara = s.horas < 6 ? "preocupada" : "dormida";
       p.innerHTML = `${cabecera("Sueño", "Reloj · anoche", "sueno", COLOR.sueno, "luna")}
         ${lunaGlobo(s.horas < 6 ? "Dormiste poquito. ¿Pruebo a recordarte la luz tenue más temprano?" : `Dormiste <b>${fmt(s.horas)} h</b>. Un poco menos que tu normal.`)}
+        ${tarjetaNormal("sueno")}
         <div class="tarjeta"><div class="fila">
           ${anillo(s.horas / 8.5, `<div class="grande">${fmt(s.horas)}<small style="font-size:14px"> h</small></div><div class="tenue">de 8,5 h</div>`)}
           <div class="datos-lista">
@@ -398,6 +630,7 @@
       const media = Math.round(g.reduce((s, v) => s + v.mg, 0) / g.length);
       p.innerHTML = `${cabecera("Glucosa", "Parche CGM · 24 h", "glucosa", COLOR.glucosa, "gota")}
         ${lunaGlobo(`Estuviste en rango el <b>${tir}%</b> del día. ¡Muy estable!`)}
+        ${tarjetaNormal("glucosa")}
         <div class="tarjeta"><h3>${ic("gota")} Últimas 24 h <span class="espacio"></span>${ref("glucosa")}</h3>
           <svg class="grafica-glucosa" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Glucosa de las últimas 24 horas, media ${media} mg/dL">
             <rect x="0" y="${y(180)}" width="${w}" height="${y(70) - y(180)}" fill="#E3F6EC"/>

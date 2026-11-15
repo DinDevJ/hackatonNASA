@@ -1,7 +1,37 @@
-# Maqueta EVA con Luna — experiencia de las métricas
+# Maqueta LUNA con Luna — experiencia de las métricas
 
-Maqueta interactiva de cómo el astronauta vive sus métricas de salud en la app **EVA**, acompañado de
-su asistente **Luna**. **Todos los datos son simulados**: todavía no recibe datos reales ni del reloj.
+Maqueta interactiva de cómo el astronauta vive sus métricas de salud en la app **LUNA** (antes EVA),
+acompañado de su asistente **Luna**. **Todos los datos son simulados**: todavía no recibe datos reales
+ni del reloj.
+
+## Nuevo en la pantalla Hoy: Cuerpo LUNA y lo que Luna ve
+
+Integra en esta maqueta, con su mismo estilo, el panel de salud (módulo 1) que se hizo en `app/`.
+
+| Qué | Dónde | Cómo funciona |
+|---|---|---|
+| **Cuerpo LUNA** realista | `cuerpo.js`, `cuerpo.css` | Figura de frente con volumen. **Cambia según el sexo de cada tripulante:** mujer (hombros más estrechos, cintura, cadera, pecho, pelo largo) u hombre (hombros y cuello más anchos, torso recto, pectorales, pelo corto) |
+| Zonas que se tocan | `cuerpo.js` | Cabeza, ojos, corazón, pulmones, abdomen, riñones y vejiga, huesos y músculos, piel (sensor de muñeca) y un halo de radiación alrededor del cuerpo. Cada zona toma el peor estado de sus indicadores y lleva su forma: ● en tu normal · ■ atención · ▲ actúa ahora · ○ sin dato |
+| Hoja de cada zona | `app.js` → `abrirRegion` | Sus indicadores con semáforo, procedencia y gráfica de 14 días, el peligro del HRP y "¿por qué se mide esto?" |
+| Lista de zonas | `app.js` | La misma información sin la figura, navegable con teclado. "Salud femenina" solo aparece a ellas y con candado |
+| **Lo que Luna ve hoy** | `motor.js` → `lunaDice` | Luna cuenta lo que miden los sensores contra tu normal: qué señales, con qué números, qué regla se cumplió y qué hacer. No diagnostica |
+| Fichas | `app.js` → `ficha` | Presión, temperatura, ánimo, SpO₂ y respiración: valor, tu normal, gráfica, por qué, cómo se mide y umbral con su fuente. Corazón, Sueño y Glucosa ganan la tarjeta "contra tu normal" |
+| Simulación | Hoy, arriba | Cambia de tripulante (Ana, Luis, Mei, Tomás) y de día (106–115) para recorrer el escenario |
+
+### El escenario (ERS-LUNA)
+
+| Día | Qué pasa |
+|---|---|
+| 112 | **FATIGA-03 de Ana**: sueño z −2,4, lapsos del PVT-B z +2,0 y pulso en reposo z +2,2. Ninguna sola dispararía (todas bajo \|z\| 3); las tres juntas sí. Cabeza y corazón en ■ |
+| 113 | "Vas mejorando": las señales bajan; el aviso sigue abierto |
+| 114 | Dos días con z < 2: el aviso se cierra en ● verde |
+| 115 | Evento de partículas solares, modelado sobre el evento real de DONKI 2024-05-11T02:10:00-SEP-001 (aviso 20 min después). ▲ rojo para todos |
+| Siempre | Luis en ■ por presión 130–139 (umbral AHA [T]) |
+
+Reglas del motor (`motor.js`): tu normal = 14 días anteriores (mínimo 7), z robusto, variación mínima
+creíble por indicador; una señal sola pide atención con |z| ≥ 3; tu normal nunca da rojo por sí sola.
+
+Pruebas: `node --test Planeacion/Leo/maqueta-eva/motor.test.mjs` (11 pruebas).
 
 ## Abrir
 

@@ -11,6 +11,7 @@
  */
 import { ahora, json, type BD } from './db.ts';
 import { bus, prediccionPara } from './ingesta.ts';
+import { idEmisor, siguienteSeq, leerEstado, escribirEstado } from './sincro.ts';
 
 export interface Enlace { owlt_s: number; abierto: boolean }
 
@@ -36,9 +37,49 @@ export function escribirEnlace(db: BD, e: Partial<Enlace>): Enlace {
 
 const mas = (iso: string, s: number) => new Date(Date.parse(iso) + s * 1000).toISOString();
 
+let _sp = 0;
+/** Ejecuta `f` en un SAVEPOINT (anidable): si falla, deshace también el seq consumido. */
+export function enSavepoint<T>(db: BD, f: () => T): T {
+  const n = `sp${++_sp}`;
+  db.exec(`SAVEPOINT ${n}`);
+  try { const r = f(); db.exec(`RELEASE ${n}`); return r; }
+  catch (e) { db.exec(`ROLLBACK TO ${n}; RELEASE ${n}`); throw e; }
+}
+
 export function encolarBajada(db: BD, tipo: string, datos: unknown, tScet: string, prioridad: number): number {
-  return Number(db.prepare(`INSERT INTO bajada (tipo, datos, prioridad, t_scet) VALUES (?,?,?,?)`)
-    .run(tipo, json(datos), prioridad, tScet).lastInsertRowid);
+  return enSavepoint(db, () => {
+    const emisor = idEmisor(db, 'nave');
+    const seq = siguienteSeq(db, emisor);
+    db.prepare(`INSERT INTO bajada (tipo, datos, prioridad, t_scet, emisor, seq) VALUES (?,?,?,?,?,?)`)
+      .run(tipo, json(datos), prioridad, tScet, emisor, seq);
+    return seq;
+  });
+}
+
+/** Aviso de la nave a Tierra (canal de avisos nave→Tierra). */
+export function encolarAvisoNave(db: BD, a: { de?: string; texto: string; prioridad?: 'normal' | 'urgente' }): number {
+  const texto = String(a.texto ?? '').trim();
+  if (!texto) throw new Error('el aviso necesita texto');
+  if (texto.length > 500) throw new Error('el aviso admite hasta 500 caracteres');
+  const urgente = a.prioridad === 'urgente';
+  return encolarBajada(db, 'aviso', { de: a.de ?? 'Nave', texto, prioridad: urgente ? 'urgente' : 'normal' }, ahora(), urgente ? 0 : 1);
+}
+
+/** Encola en la bajada las evaluaciones nuevas (tabla `evaluaciones`, si existe). Devuelve cuántas. */
+export function encolarEvaluaciones(db: BD): number {
+  if (!db.prepare(`SELECT 1 FROM sqlite_master WHERE type='table' AND name='evaluaciones'`).get()) return 0;
+  return enSavepoint(db, () => {
+    const cur = Number(leerEstado(db, 'cursor:evaluaciones') ?? 0);
+    const filas = db.prepare(`SELECT * FROM evaluaciones WHERE id > ? ORDER BY id`).all(cur) as Array<Record<string, unknown>>;
+    for (const f of filas) {
+      let detalle: unknown = null;
+      try { detalle = f.detalle ? JSON.parse(String(f.detalle)) : null; } catch { detalle = f.detalle; }
+      encolarBajada(db, 'evaluacion', { ...f, detalle }, String(f.hora),
+        f.color === 'ROJO' ? 0 : f.color === 'AMARILLO' ? 1 : 2);
+    }
+    if (filas.length) escribirEstado(db, 'cursor:evaluaciones', String(filas[filas.length - 1]!.id));
+    return filas.length;
+  });
 }
 
 export interface Redaccion {
@@ -55,10 +96,13 @@ export function redactarAviso(db: BD, a: Redaccion) {
   const para = a.para || 'todos';
   if (para !== 'todos' && !db.prepare(`SELECT 1 FROM tripulantes WHERE id = ?`).get(para)) throw new Error(`el tripulante "${para}" no existe`);
   const datos = tipo === 'alerta' ? json({ nivel: a.nivel, variable: a.variable ?? null }) : null;
-  const r = db.prepare(`INSERT INTO subida (de, para, texto, prioridad, tipo, datos, t_redactado) VALUES (?,?,?,?,?,?,?)`)
-    .run(a.de ?? 'Cirujano de vuelo', para, a.texto.trim().slice(0, 500),
-      tipo === 'alerta' ? 'urgente' : (a.prioridad ?? 'normal'), tipo, datos, ahora());
-  return Number(r.lastInsertRowid);
+  return enSavepoint(db, () => {
+    const emisor = idEmisor(db, 'tierra');
+    const r = db.prepare(`INSERT INTO subida (de, para, texto, prioridad, tipo, datos, t_redactado, emisor, seq) VALUES (?,?,?,?,?,?,?,?,?)`)
+      .run(a.de ?? 'Cirujano de vuelo', para, a.texto.trim().slice(0, 500),
+        tipo === 'alerta' ? 'urgente' : (a.prioridad ?? 'normal'), tipo, datos, ahora(), emisor, siguienteSeq(db, emisor));
+    return Number(r.lastInsertRowid);
+  });
 }
 
 /** Último valor de cada variable de cada tripulante, con lo que LUNNA espera de él. */
@@ -101,7 +145,7 @@ export function pulso(db: BD, t: string = ahora()): void {
 }
 
 /** Conecta el enlace al resto del sistema. Devuelve la función para pararlo. */
-export function iniciarEnlace(db: BD): () => void {
+export function iniciarEnlace(db: BD, opciones: { simularLlegadas?: boolean } = {}): () => void {
   const alAlertar = (a: Record<string, unknown>) =>
     encolarBajada(db, 'alerta', a, String(a.t_scet), a.estado === 'rojo' ? 0 : a.estado === 'ambar' ? 1 : 2);
   bus.on('alerta', alAlertar);
@@ -109,7 +153,9 @@ export function iniciarEnlace(db: BD): () => void {
   let crudas: unknown[] = [];
   const alRecibir = (tr: unknown) => { crudas.push(tr); };
   bus.on('trama', alRecibir);
-  const reloj = setInterval(() => pulso(db), 1000);
+  // Con enlace real (simularLlegadas=false) el reloj `pulso` no corre: lo sustituye sincro.
+  const reloj = opciones.simularLlegadas === false ? null : setInterval(() => pulso(db), 1000);
+  const evals = setInterval(() => { try { encolarEvaluaciones(db); } catch { /* BD cerrada o a medias */ } }, 2000);
   const res = setInterval(() => {
     const r = resumen(db);
     if (r.length) encolarBajada(db, 'resumen', r, ahora(), 2);
@@ -119,5 +165,5 @@ export function iniciarEnlace(db: BD): () => void {
     }
     crudas = [];
   }, RESUMEN_CADA_MS);
-  return () => { bus.off('alerta', alAlertar); bus.off('trama', alRecibir); clearInterval(reloj); clearInterval(res); };
+  return () => { bus.off('alerta', alAlertar); bus.off('trama', alRecibir); if (reloj) clearInterval(reloj); clearInterval(evals); clearInterval(res); };
 }

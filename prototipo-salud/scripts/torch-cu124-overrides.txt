@@ -1,0 +1,4 @@
+# Overrides de uv para TODAS las instalaciones en envs\<modelo>: ningun paquete puede arrastrar otro torch.
+# (Sin sufijo +cu124 a proposito: "==2.5.1" acepta la build local 2.5.1+cu124 ya instalada.)
+torch==2.5.1
+torchvision==0.20.1

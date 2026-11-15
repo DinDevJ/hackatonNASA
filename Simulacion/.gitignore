@@ -1,0 +1,4 @@
+# Base del modo simulación: datos sintéticos, local
+eva-simulacion.db
+eva-simulacion.db-shm
+eva-simulacion.db-wal

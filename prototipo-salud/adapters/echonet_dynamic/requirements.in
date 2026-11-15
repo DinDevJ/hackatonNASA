@@ -1,0 +1,5 @@
+# EchoNet-Dynamic: pines minimos de inferencia (SIN torch/torchvision: se instalan aparte, cu124). Python 3.11.
+numpy==1.26.4
+opencv-python-headless==4.10.0.84
+scipy==1.13.1
+pillow>=10.4,<12

@@ -306,11 +306,17 @@
     if (def.nota) partes.push(`<p class="cn-nota">${esc(def.nota)}</p>`);
     return `<div class="cn-region" id="region-panel"><h3>${forma(n, 14)} ${esc(def.nombre)}</h3><p class="cn-nota">Peligro del HRP: <b>${esc(def.peligro)}</b> · ${esc(ESTADO_TXT[n == null ? "nd" : n])}</p>${partes.join("") || `<div class="cn-vacio">Sin indicadores a bordo para esta zona.</div>`}</div>`;
   }
-  /** Cuerpo LUNNA grande con sus zonas y, debajo, el detalle de la zona elegida. */
-  function centroCuerpo(pid, d, visor, seleccion) {
-    const x = persona(pid), e = ev(pid, d);
+  /** Zona que se muestra: la que eligió quien mira o, si no eligió, la de peor estado. */
+  function regionElegida(pid, d, seleccion) {
+    const e = ev(pid, d);
     const peor = REGIONES_VISTA.reduce((a, r) => ((e.regiones[r] ?? -1) > (e.regiones[a] ?? -1) ? r : a), "cabeza");
-    const r = (seleccion && seleccion[pid]) || peor;
+    return (seleccion && seleccion[pid]) || peor;
+  }
+  /** Cuerpo LUNNA grande con sus zonas y, debajo, el detalle de la zona elegida.
+   *  Con sinPanel el detalle no va debajo: lo pinta conectarCuerpo en #region-dest (otra columna). */
+  function centroCuerpo(pid, d, visor, seleccion, sinPanel) {
+    const x = persona(pid), e = ev(pid, d);
+    const r = regionElegida(pid, d, seleccion);
     const quien = visor === "tierra" ? "Tierra" : "la CMO";
     const chips = REGIONES_VISTA.map((z) => `<li><button type="button" data-region="${z}" aria-pressed="${z === r}">${forma(e.regiones[z], 11)}${esc(z === "radiacion" ? "Radiación" : M.REGIONES[z].nombre)}</button></li>`).join("")
       + (x.sexo === "M" ? `<li><button type="button" disabled title="Privado: solo ella lo ve; ${quien}, con su permiso">${ic("candado", "ic-sm")}Salud femenina</button></li>` : "");
@@ -320,7 +326,7 @@
         <ul class="esc-regiones" aria-label="Zonas del cuerpo">${chips}</ul>
         <div class="esc-pie"><span class="vivo">${visor === "tierra" ? `SCET D${d} 07:42 · hace ${OWLT_ESCENARIO_MIN} min` : "Escaneo del día"}</span><span>● ■ ▲ ○</span></div>
       </section>
-      ${panelRegion(pid, r, d, visor)}`;
+      ${sinPanel ? "" : panelRegion(pid, r, d, visor)}`;
   }
   /** Conecta los clics del cuerpo y de las zonas (contenedor #centro). */
   function conectarCuerpo(cont, pid, d, visor, seleccion) {
@@ -328,7 +334,9 @@
     if (!centro) return;
     const abrir = (r) => {
       seleccion[pid] = r;
-      centro.innerHTML = centroCuerpo(pid, d, visor, seleccion);
+      const dest = $("#region-dest", cont);
+      centro.innerHTML = centroCuerpo(pid, d, visor, seleccion, !!dest);
+      if (dest) dest.innerHTML = panelRegion(pid, r, d, visor);
       conectarCuerpo(cont, pid, d, visor, seleccion);
       const panel = $("#region-panel", cont);
       if (panel) panel.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -819,7 +827,7 @@
     PERSONAS, persona, CMO, BACKEND_ID, ev, general,
     ESTADO_TXT, claseN, sem, forma, chip, NOMBRE_ALERTA,
     IND, valorDe, grafNormal, MISION, barraMision, tarjetaMision, positivo, cuerpoMini, tarjetaTripulante,
-    filaVital, filaAnimo, anillo, metasYDosis, panelRegion, centroCuerpo, conectarCuerpo,
+    filaVital, filaAnimo, anillo, metasYDosis, panelRegion, regionElegida, centroCuerpo, conectarCuerpo,
     MALESTARES, NOMBRE_VAR, indice, indices, tendencia, RUMBO, barrasIndice, detalleIndice, grafIndice,
     OWLT_ESCENARIO_MIN, owltSeg, get backend() { return backend; }, detectarBackend, avisoBackend,
     DESDE_BACKEND, alEventoBk, nombreVar, avisoAbordoBk, consultaBk, emergenciasBk, bandejaBk,

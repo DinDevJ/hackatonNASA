@@ -206,6 +206,20 @@ a.aviso-card { text-decoration: none; color: inherit; }
 .cn-region { border-radius: 20px; padding: 14px; background: var(--brillo), linear-gradient(var(--vidrio-2), var(--vidrio-2)); border: 1px solid var(--vidrio-borde); box-shadow: var(--vidrio-sombra); }
 .cn-region h3 { display: flex; align-items: center; gap: 8px; font-size: 15px; margin-bottom: 4px; }
 .cn-region .normal-graf { height: 120px; margin-top: 6px; }
+/* La zona elegida vive en la columna derecha (central): el cuerpo queda solo y fijo al centro. */
+.cn-zona { display: grid; gap: 6px; }
+.cn-zona-etq { display: flex; align-items: center; gap: 6px; margin: 0 2px; }
+#region-dest .cn-region { animation: entrar 260ms var(--ease-out) both; }
+#region-dest .cn-region .normal-graf { height: 96px; }
+#region-dest .cn-vital { padding: 9px 0; }
+.cn-bloque { margin-top: 16px; }
+/* Bloque en vivo: la tabla a la izquierda, alertas y avisos a su lado */
+.cn-vivo-cuerpo { display: grid; grid-template-columns: minmax(0, 2.3fr) minmax(250px, 1fr); gap: 16px; align-items: start; }
+.cn-vivo-lado { display: grid; gap: 12px; align-content: start; }
+.cn-vivo-lado .cn-vivo-sub { margin-top: 0; }
+.cn-vivo-tabla th, .cn-vivo-tabla td { padding: 7px 6px; }
+@media (max-width: 1180px) { .cn-vivo-cuerpo { grid-template-columns: minmax(0, 1fr); } .cn-vivo-lado { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .cn-vivo-lado { grid-template-columns: minmax(0, 1fr); } }
 .cn-anillos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; text-align: center; }
 .cn-anillo { display: grid; justify-items: center; gap: 4px; font-size: 11.5px; color: var(--texto-2); }
 .cn-anillo svg { width: 76px; height: 76px; transform: rotate(-90deg); }
@@ -594,3 +608,38 @@ details[open] > summary.cn-vivo-cab { margin-bottom: 8px; }
 
 /* Botón de idioma en la barra: el código del idioma al que se cambia. */
 .cn-idioma { min-width: 44px; justify-content: center; font-weight: 700; letter-spacing: .04em; }
+
+/* Semáforo de padecimientos (motor de 20) */
+.cn-sem-acciones { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.cn-sem-aviso { margin-bottom: 16px; display: grid; gap: 6px; border-color: var(--ambar); }
+.cn-sem-aviso p { margin: 0; }
+.cn-sem-sim { background: var(--cian-suave); color: #0E7894; font-size: 10.5px; letter-spacing: .06em; }
+:root[data-tema="oscuro"] .cn-sem-sim { color: #7DE3F4; }
+.cn-sem-sel { margin-top: 16px; }
+.cn-sem-trip { gap: 8px; }
+.cn-sem-trip[aria-pressed="true"], .cn-sem-fila[aria-pressed="true"] { border-color: var(--acento); box-shadow: 0 0 0 2px var(--acento) inset; }
+.cn-sem-cuenta { display: inline-flex; align-items: center; gap: 3px; font: 600 11.5px var(--mono); color: var(--texto-2); }
+.cn-sem-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.cn-sem-fila {
+  display: grid; gap: 3px; width: 100%; text-align: left; padding: 9px 12px; border-radius: 14px; cursor: pointer;
+  border: 1px solid var(--vidrio-borde); background: var(--vidrio-2); color: var(--texto); font: 500 13px var(--letra);
+}
+.cn-sem-fila:hover { border-color: var(--acento); }
+.cn-sem-cab { display: flex; align-items: center; gap: 8px; }
+.cn-sem-porque { font-size: 12px; color: var(--texto-2); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cn-sem-fuente { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.cn-sem-cmd { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.cn-sem-cmd code, .cn-sem-aviso code, #sm-raiz code { font: 500 12px var(--mono); background: var(--separador); padding: 2px 6px; border-radius: 6px; overflow-wrap: anywhere; }
+.cn-sem-sub { font: 700 10.5px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--texto-2); margin: 14px 0 6px; }
+.cn-sem-peso { display: grid; gap: 6px; padding: 10px 0; border-top: 1px solid var(--separador); }
+.cn-sem-ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.cn-sem-ctl input[type="range"] { flex: 1 1 90px; min-width: 80px; accent-color: var(--acento); }
+.cn-sem-num { width: 78px; padding: 6px 8px; }
+.cn-sem-lbl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+.cn-sem-mod { margin-top: 16px; }
+.cn-sem-mod[hidden], .cn-sem-mod [hidden] { display: none; }
+.cn-sem-mform { max-width: 560px; }
+.cn-sem-mod .cn-boton[aria-pressed="true"] { border-color: var(--acento); box-shadow: 0 0 0 2px var(--acento) inset; }
+.cn-sem-alerta { border-left: 3px solid var(--ambar); padding-left: 8px; }
+.cn-sem-err { color: var(--rojo); margin: 6px 0; }

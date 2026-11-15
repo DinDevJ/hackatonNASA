@@ -284,26 +284,109 @@
   // Curva suave al empezar y al terminar: el acercamiento no arranca ni frena de golpe.
   const suave = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
   const reducirMov = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  function animarVista(svgEl, destino, ms, listo) {
-    cancelAnimationFrame(svgEl._anim || 0); // si había otra animación, esta sigue desde donde iba
-    const desde = svgEl.getAttribute("viewBox").split(/\s+/).map(Number);
-    if (reducirMov()) { svgEl.setAttribute("viewBox", destino.join(" ")); return listo && listo(); }
-    const t0 = performance.now();
-    (function paso(t) {
-      const k = suave(Math.min(1, (t - t0) / ms));
-      svgEl.setAttribute("viewBox", desde.map((a, i) => (a + (destino[i] - a) * k).toFixed(2)).join(" "));
-      if (k < 1) svgEl._anim = requestAnimationFrame(paso); else if (listo) listo();
-    })(t0);
+  /** El acercamiento a `vista` como transformación CSS (escala + desplazamiento) de la figura entera.
+   *  Se anima en la tarjeta gráfica: no redibuja el SVG en cada cuadro como cambiar el viewBox, así va a 60 fps. */
+  function zoomCSS(svgEl, vista) {
+    const L = svgEl.parentElement.getBoundingClientRect();   // el lienzo no se transforma: sirve de referencia fija
+    const [VX, VY, VW, VH] = C.VISTA, esc = Math.min(L.width / VW, L.height / VH);
+    const offX = (L.width - VW * esc) / 2, offY = (L.height - VH * esc) / 2;
+    const [x, y, w, h] = vista;
+    const k = Math.min(L.width / (w * esc), L.height / (h * esc));
+    const cx = offX + (x + w / 2 - VX) * esc, cy = offY + (y + h / 2 - VY) * esc;
+    return { k, tx: L.width / 2 - k * cx, ty: L.height / 2 - k * cy, L, esc, offX, offY };
   }
-  /** Dónde quedará el centro de un órgano en pantalla cuando termine el acercamiento a `vista`. */
+  function acercar(svgEl, vista, ms) {
+    const z = zoomCSS(svgEl, vista);
+    svgEl.style.transformOrigin = "0 0";
+    svgEl.style.transition = ms ? `transform ${ms}ms cubic-bezier(.22, 1, .36, 1)` : "none";
+    svgEl.style.transform = `translate(${z.tx.toFixed(1)}px, ${z.ty.toFixed(1)}px) scale(${z.k.toFixed(3)})`;
+  }
+  function alejarCSS(svgEl, ms, listo) {
+    svgEl.style.transition = ms ? `transform ${ms}ms cubic-bezier(.65, 0, .35, 1)` : "none";
+    svgEl.style.transform = "";
+    setTimeout(() => { svgEl.style.transition = ""; if (listo) listo(); }, ms || 0);
+  }
+  /** Dónde quedará el centro de un órgano en pantalla (relativo al teléfono) cuando termine el acercamiento. */
   function puntoFinal(svgEl, el, vista, tel) {
     const t = tel.getBoundingClientRect();
     if (!svgEl || !el) return { x: t.width / 2, y: t.height / 2 };
-    const bb = el.getBBox(), r = svgEl.getBoundingClientRect();
-    const [vx, vy, vw, vh] = vista, esc = Math.min(r.width / vw, r.height / vh);
-    const x = r.left + (r.width - vw * esc) / 2 + (bb.x + bb.width / 2 - vx) * esc;
-    const y = r.top + (r.height - vh * esc) / 2 + (bb.y + bb.height / 2 - vy) * esc;
-    return { x: x - t.left, y: y - t.top };
+    const bb = el.getBBox(), z = zoomCSS(svgEl, vista);
+    const px = z.offX + (bb.x + bb.width / 2 - C.VISTA[0]) * z.esc, py = z.offY + (bb.y + bb.height / 2 - C.VISTA[1]) * z.esc;
+    return { x: z.L.left + z.k * px + z.tx - t.left, y: z.L.top + z.k * py + z.ty - t.top };
+  }
+  /** Línea de escaneo que barre la figura de arriba abajo mientras se acerca (solo transform: va a 60 fps). */
+  function barrido(lienzo, n) {
+    if (!lienzo) return;
+    const b = document.createElement("span");
+    b.className = `esc-escaneo es-${n == null ? "nd" : n}`;
+    lienzo.append(b);
+    setTimeout(() => b.remove(), 900);
+  }
+  /** Los números del panel cuentan desde cero hasta su valor (63 lpm, 5,8 h, 113/74…). */
+  function contarValores(hud) {
+    const nodos = $$(".hud-dato .v", hud).map((v) => v.firstChild).filter((t) => t && t.nodeType === 3 && /\d/.test(t.data));
+    const datos = nodos.map((t) => {
+      const partes = t.data.split(/(\d+(?:,\d+)?)/);
+      return { t, partes, nums: partes.map((p) => (/^\d/.test(p) ? { v: parseFloat(p.replace(",", ".")), dec: (p.split(",")[1] || "").length } : null)) };
+    });
+    if (!datos.length) return;
+    const coma = window.Lunna && window.Lunna.idioma && window.Lunna.idioma.actual() === "en" ? "." : ",";
+    const MS = 700, t0 = performance.now();
+    (function paso(ahora) {
+      const k = Math.min(1, (ahora - t0) / MS), e = 1 - Math.pow(1 - k, 3);
+      for (const d of datos) {
+        if (!d.t.isConnected) continue;
+        d.t.data = d.partes.map((p, i) => (d.nums[i] ? (d.nums[i].v * e).toFixed(d.nums[i].dec).replace(".", coma) : p)).join("");
+      }
+      if (k < 1) requestAnimationFrame(paso);
+    })(t0);
+  }
+  /** Deslizar el panel hacia abajo (desde arriba del todo) lo cierra, como una hoja de iPhone. Sigue al dedo. */
+  function arrastrarParaCerrar(hud, cerrar) {
+    let y0 = null, dy = 0, activo = false;
+    const empezar = (y) => { if (hud.scrollTop > 2 || !hud.classList.contains("abierto")) return; y0 = y; dy = 0; activo = false; };
+    const mover = (y, e) => {
+      if (y0 == null) return;
+      dy = y - y0;
+      if (!activo) {
+        if (dy > 8) { activo = true; hud.classList.add("arrastrando"); }
+        else { if (dy < -4) y0 = null; return; }
+      }
+      if (e && e.cancelable) e.preventDefault();
+      const d = Math.max(0, dy);
+      hud.style.transform = `translateY(${d.toFixed(1)}px) scale(${Math.max(0.88, 1 - d / 1600).toFixed(4)})`;
+      hud.style.borderRadius = `${Math.min(36, d / 4).toFixed(1)}px`;
+    };
+    const soltar = () => {
+      if (y0 == null) return;
+      y0 = null;
+      if (!activo) return;
+      hud.classList.remove("arrastrando");
+      hud._arrastro = true; setTimeout(() => { hud._arrastro = false; }, 60);
+      hud.style.transform = ""; hud.style.borderRadius = "";
+      if (dy > 110) cerrar();   // si no, regresa solo a su lugar con la transición del panel
+    };
+    hud.addEventListener("touchstart", (e) => empezar(e.touches[0].clientY), { passive: true });
+    hud.addEventListener("touchmove", (e) => mover(e.touches[0].clientY, e), { passive: false });
+    hud.addEventListener("touchend", soltar);
+    hud.addEventListener("touchcancel", soltar);
+    // Con mouse (laptop): mismo gesto arrastrando con el botón presionado.
+    hud.addEventListener("pointerdown", (e) => {
+      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      empezar(e.clientY);
+      const mv = (ev) => mover(ev.clientY, ev);
+      const up = () => { document.removeEventListener("pointermove", mv); document.removeEventListener("pointerup", up); soltar(); };
+      document.addEventListener("pointermove", mv);
+      document.addEventListener("pointerup", up);
+    });
+  }
+  /** Anillo de luz que late sobre el órgano justo antes de que brote el panel. */
+  function pulso(tel, pt, n) {
+    const a = document.createElement("span");
+    a.className = `org-pulso es-${n == null ? "nd" : n}`;
+    a.style.left = `${pt.x}px`; a.style.top = `${pt.y}px`;
+    tel.append(a);
+    setTimeout(() => a.remove(), 900);
   }
 
   /** Toca un órgano: la figura se acerca a él y la información sale de ahí hasta cubrir la pantalla. */
@@ -344,7 +427,7 @@
     hud.setAttribute("aria-modal", "true");
     hud.setAttribute("aria-label", nombre);
     hud.innerHTML = `
-      <div class="hud-cab"><span class="hud-ruta">Escaneo · ${P.nombre} · día ${estado.dia}</span><span class="espacio"></span>
+      <div class="hud-cab"><span class="hud-asa" aria-hidden="true"></span><span class="hud-ruta">Escaneo · ${P.nombre} · día ${estado.dia}</span><span class="espacio"></span>
         <button class="hud-x" data-cerrar aria-label="Cerrar y volver al cuerpo">${ic("cerrar")}</button></div>
       <div class="hud-visor">${C.svg({ sexo: P.sexo, regiones: ev.regiones, activa: r, vista: zoom, marcas: false })}<span class="anillo-hud"></span><span class="esquinas"></span></div>
       <h2>${nombre}</h2>
@@ -361,31 +444,51 @@
       hud.style.setProperty("--ox", `${pt.x}px`);
       hud.style.setProperty("--oy", `${pt.y}px`);
     };
-    const ZOOM_MS = 620;
+    const ZOOM_MS = 640;
+    // Cuando el panel termina de crecer se enciende su vidrio (backdrop-filter): animarlo con el
+    // desenfoque puesto obliga a recalcularlo en cada cuadro y es lo que hacía que se trabara.
+    hud.addEventListener("transitionend", (e) => { if (e.target === hud && e.propertyName === "transform" && hud.classList.contains("abierto")) hud.classList.add("listo"); });
+    // El panel se mete al teléfono desde el toque (invisible y chiquito en el órgano): así el trabajo pesado
+    // de dibujarlo ocurre antes de que empiece el movimiento y no a media animación.
+    const montar = () => { if (!hud.isConnected) { origen(); tel.append(hud); } };
     const abrir = () => {
-      origen();
-      tel.append(hud);
+      montar();
       requestAnimationFrame(() => requestAnimationFrame(() => hud.classList.add("abierto")));
       $(".hud-x", hud).focus({ preventScroll: true });
+      if (!reducirMov() && !opc.directo) setTimeout(() => contarValores(hud), 260);
     };
     if (opc.directo) {
       // Al volver de una ficha: el órgano ya está acercado y su panel abierto, sin animación de entrada.
-      if (svgEl) svgEl.setAttribute("viewBox", zoom.join(" "));
-      hud.classList.add("sin-trans");
+      if (svgEl) acercar(svgEl, zoom, 0);
+      hud.classList.add("sin-trans", "listo");
       abrir();
       hud.classList.add("abierto");
       requestAnimationFrame(() => requestAnimationFrame(() => hud.classList.remove("sin-trans")));
-    } else if (svgEl && !reducirMov()) { animarVista(svgEl, zoom, ZOOM_MS); setTimeout(abrir, ZOOM_MS * 0.45); }
-    else { if (svgEl) animarVista(svgEl, zoom, 0); abrir(); }
+    } else if (svgEl && !reducirMov()) {
+      // 1) el órgano late, 2) la figura se acerca, 3) el panel brota del órgano a media carrera.
+      const o = $(`[data-region="${r}"]`, svgEl);
+      const pt0 = puntoFinal(svgEl, o, C.VISTA, tel);
+      montar();
+      // Solo si una persona ya tocó la pantalla: en la demo automática el navegador la bloquea y lo marca como error.
+      const tocado = !navigator.userActivation || navigator.userActivation.hasBeenActive;
+      if (navigator.vibrate && tocado) try { navigator.vibrate(12); } catch (e) { /* sin vibración: no pasa nada */ }
+      pulso(tel, pt0, ev.regiones[r]);
+      barrido(svgEl.parentElement, ev.regiones[r]);
+      // Un cuadro después del toque (ya con el panel dibujado y los demás órganos atenuados) empieza el acercamiento.
+      requestAnimationFrame(() => requestAnimationFrame(() => acercar(svgEl, zoom, ZOOM_MS)));
+      setTimeout(() => pulso(tel, puntoFinal(svgEl, o, zoom, tel), ev.regiones[r]), ZOOM_MS * 0.35);
+      setTimeout(abrir, ZOOM_MS * 0.42);
+    } else { if (svgEl) acercar(svgEl, zoom, 0); hud.classList.add("listo"); abrir(); }
 
     const cerrar = (luego) => {
       document.removeEventListener("keydown", tecla);
       origen();
+      hud.classList.remove("listo");
       hud.classList.remove("abierto");
       // El alejamiento empieza mientras el panel se recoge hacia el órgano: sin corte entre los dos.
       const alejar = () => {
         if (!svgEl || !svgEl.isConnected) return;
-        animarVista(svgEl, C.VISTA, ZOOM_MS, () => {
+        alejarCSS(svgEl, reducirMov() ? 0 : ZOOM_MS, () => {
           svgEl.classList.remove("con-foco");
           $$(".org, .halo", svgEl).forEach((el) => el.classList.remove("activa"));
         });
@@ -401,7 +504,9 @@
     };
     const tecla = (e) => { if (e.key === "Escape") cerrar(); };
     document.addEventListener("keydown", tecla);
+    arrastrarParaCerrar(hud, () => cerrar());
     hud.addEventListener("click", (e) => {
+      if (hud._arrastro) return; // fue un arrastre para cerrar, no un toque
       if (e.target.closest("[data-cerrar]")) return cerrar();
       const f = e.target.closest("[data-ficha]");
       // Se apila "hoy:<órgano>": al volver de la ficha se reabre este órgano, no el cuerpo entero.
@@ -721,6 +826,7 @@
       ${k === "presion" ? `<div class="pa-leyenda"><span><i class="pa-sis"></i>Sistólica (arriba)</span><span><i class="pa-dia-i"></i>Diastólica (abajo)</span><span>mmHg · manguito</span></div>` : ""}
       ${grafNormal(pid, k, estado.dia)}
       <div class="tenue-12">${e.normal ? `Últimos 14 días · la franja es tu normal (${M.texto(k, e.normal.banda[0])} a ${M.texto(k, e.normal.banda[1])})` : ind.abs ? `Sin tu normal: se compara con el umbral (${ind.abs.texto})` : ""}</div>
+      ${ind.varId ? `<div class="tenue-12 ref-motor" data-var="${ind.varId}"></div>` : ""}
     </div>`;
   }
 
@@ -1037,6 +1143,7 @@
         const v = Number(input.value);
         if (!v || v < 20 || v > 600) { luna.poner("pensando"); globo.innerHTML = "Ese número no parece una glucosa. Revísalo, por fa."; return; }
         estado.glucometro.push(v);
+        { const d = new Date(); M.registrar(estado.persona, estado.dia, "glucosa", v, `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`); }
         $("#glu-lista", p).innerHTML = "Registradas: " + estado.glucometro.map((n) => `<b>${n}</b>`).join(" · ") + " mg/dL";
         if (v < 70) { luna.poner("alerta"); globo.innerHTML = "Está <b>baja</b>. Avisa a la CMO."; }
         else if (v > 180) { luna.poner("preocupada"); globo.innerHTML = "Está <b>alta</b> para el rango de la Tierra. Lo anoto."; }
@@ -1195,6 +1302,9 @@
         // Lo registrado hoy reemplaza el valor simulado del día y se recalcula todo (bug 4).
         const d = new Date(), hora = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
         M.registrar(estado.persona, estado.dia, "animo", estado.estres, hora);
+        // Dolor de espalda y de cabeza (0–10) también quedan registrados: telefono-vivo.js los manda a la central.
+        M.registrar(estado.persona, estado.dia, "dolor_espalda", estado.dolor, hora);
+        M.registrar(estado.persona, estado.dia, "cefalea", estado.cefalea ? (estado.intensidadCefalea || 5) : 0, hora);
         estado.tocado.sintomas = true;
         const cara = { feliz: "Genial", tranquila: "Bien", preocupada: "Regular", empatica: "Mal" }[estado.animo];
         estado.registros.unshift({ t: "Check-in", v: `${cara ? cara + " · " : ""}estrés ${estado.estres} · espalda ${estado.dolor}/10${estado.cefalea ? " · cefalea" : ""}`, hora, ic: "chispa" });
@@ -1364,6 +1474,8 @@
       })();
 
       $("#paso-hecho", p).addEventListener("click", async () => {
+        // Un doble toque en el último paso no debe registrar un paso que no existe ("Hecho: undefined").
+        if (paso >= PASOS.length || cancelada) return;
         registrar(`Hecho: ${PASOS[paso]}`);
         paso++;
         if (paso < PASOS.length) return mostrarPaso();

@@ -97,7 +97,15 @@ export function construir(db: BD) {
   ruta('GET', '/api/asignaciones', () => todos(`SELECT * FROM asignaciones ORDER BY desde DESC`));
   ruta('POST', '/api/asignaciones', async (req) => {
     const a = await cuerpoJson<{ dispositivo: number; tripulante: string; desde?: string }>(req);
-    const desde = a.desde ?? ahora();
+    if (!uno(`SELECT 1 FROM dispositivos WHERE id = ?`, Number(a.dispositivo))) {
+      throw new ErrorHttp(400, `el dispositivo ${a.dispositivo} no está registrado (GET /api/dispositivos para ver los que hay)`);
+    }
+    if (!uno(`SELECT 1 FROM tripulantes WHERE id = ?`, String(a.tripulante))) {
+      throw new ErrorHttp(400, `el tripulante "${a.tripulante}" no existe (GET /api/tripulantes para ver los que hay)`);
+    }
+    // Las tramas tienen resolución de 1 s: si la asignación empezara a mitad de un
+    // segundo, una trama tomada en ese mismo segundo parecería anterior y se rechazaría.
+    const desde = a.desde ?? new Date(Math.floor(Date.now() / 1000) * 1000).toISOString();
     // Ponerse un dispositivo cierra su asignación anterior.
     db.prepare(`UPDATE asignaciones SET hasta = ? WHERE dispositivo = ? AND hasta IS NULL`).run(desde, a.dispositivo);
     db.prepare(`INSERT INTO asignaciones (dispositivo, tripulante, desde) VALUES (?,?,?)`).run(a.dispositivo, a.tripulante, desde);
@@ -260,7 +268,9 @@ export function construir(db: BD) {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const db = abrir(process.env.BD ?? join(AQUI, '..', 'eva.db'));
-  cargarInicial(db, join(AQUI, '..', 'semillas', 'inicial.json'));
+  const { nuevos } = cargarInicial(db, join(AQUI, '..', 'semillas', 'inicial.json'));
+  const añadidos = Object.entries(nuevos).filter(([, n]) => n > 0).map(([k, n]) => `${n} ${k}`);
+  if (añadidos.length) console.log(`Semillas: añadidos ${añadidos.join(', ')}`);
   construir(db).listen(PUERTO, () => {
     console.log(`EVA · computadora central en http://localhost:${PUERTO}`);
     console.log(`  eventos en vivo:  http://localhost:${PUERTO}/api/stream`);

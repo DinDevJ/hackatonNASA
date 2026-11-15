@@ -60,12 +60,24 @@ def recibir(datos: bytes) -> None:
     cola.append(datos)
 
 
+class ErrorBackend(Exception):
+    """El backend respondió con error. El mensaje trae su motivo."""
+
+
 def http(metodo: str, url: str, cuerpo: object | None = None) -> object:
     datos = json.dumps(cuerpo).encode() if cuerpo is not None else None
     req = urllib.request.Request(url, data=datos, method=metodo,
                                  headers={"content-type": "application/json"})
-    with urllib.request.urlopen(req, timeout=10) as r:
-        return json.loads(r.read())
+    try:
+        with urllib.request.urlopen(req, timeout=10) as r:
+            return json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        # Mostrar el motivo que da el backend, no sólo el código.
+        try:
+            motivo = json.loads(e.read()).get("error", "")
+        except Exception:  # noqa: BLE001
+            motivo = ""
+        raise ErrorBackend(f"{metodo} {url} -> {e.code}: {motivo or e.reason}") from None
 
 
 async def reenviar(backend: str) -> None:
@@ -83,7 +95,7 @@ async def reenviar(backend: str) -> None:
             if r.get("rechazos"):
                 log("⚠ el backend rechazó:", r["rechazos"][:3])
             espera = 0.5
-        except (urllib.error.URLError, OSError) as e:
+        except (urllib.error.URLError, OSError, ErrorBackend) as e:
             cola.extendleft(reversed(lote))          # vuelven al frente, en orden
             espera = min(espera * 2, 10)
             log(f"backend no disponible ({e}); {len(cola)} tramas en espera, reintento en {espera:.0f} s")
@@ -158,9 +170,16 @@ async def principal() -> None:
                     help="asigna un dispositivo a un tripulante al arrancar (p. ej. 2561=ana)")
     a = ap.parse_args()
 
+    try:
+        http("GET", f"{a.backend}/api/salud")
+    except (urllib.error.URLError, OSError) as e:
+        raise SystemExit(f"No responde el backend en {a.backend} ({e}). ¿Está corriendo `npm start`?")
     for par in a.asignar:
         disp, trip = par.split("=")
-        http("POST", f"{a.backend}/api/asignaciones", {"dispositivo": int(disp), "tripulante": trip})
+        try:
+            http("POST", f"{a.backend}/api/asignaciones", {"dispositivo": int(disp), "tripulante": trip})
+        except ErrorBackend as e:
+            raise SystemExit(f"No se pudo asignar {disp} a {trip}: {e}")
         log(f"dispositivo {disp} asignado a {trip}")
 
     tareas = [reenviar(a.backend), informar(), prueba() if a.prueba else buscar()]

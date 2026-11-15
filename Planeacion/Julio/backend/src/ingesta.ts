@@ -12,6 +12,7 @@ import { EventEmitter } from 'node:events';
 import { ahora, deJson, json, type BD } from './db.ts';
 import { decodificar, leerCabecera, type Esquema } from './esquema.ts';
 import { aDelta, evaluar, predecir, type Covariables, type Entorno, type Prediccion, type Prior } from './lunna.ts';
+import { evaluarUmbral, peor, referenciaDe, umbralUtil, type Estado } from './referencias.ts';
 
 /** Eventos para la interfaz: 'muestra', 'alerta', 'rechazo'. */
 export const bus = new EventEmitter();
@@ -19,6 +20,13 @@ bus.setMaxListeners(100);
 
 export const VENTANA_CALIBRACION_DIAS = 14;
 const DIA_MS = 86_400_000;
+/** Umbral absoluto: mediana de las últimas 5 muestras válidas dentro de 10 minutos. */
+export const VENTANA_UMBRAL_MS = 10 * 60_000;
+export const MUESTRAS_UMBRAL = 5;
+/** Con menos muestras no se evalúa nada: un artefacto suelto no dispara. */
+export const MINIMO_MUESTRAS = 3;
+/** Una muestra sin valor o tomada sin contacto del sensor no cuenta para evaluar. */
+export const MUESTRA_VALIDA = `valor IS NOT NULL AND (calidad IS NULL OR json_extract(calidad, '$.contacto') IS NOT 0)`;
 
 export interface MuestraEntrada {
   variable: string;
@@ -184,7 +192,7 @@ export function ingerirJson(db: BD, tr: TramaJson): Resultado {
 
 // ─── LUNNA aplicado ──────────────────────────────────────────────────────────
 
-const mediana = (xs: number[]) => {
+export const mediana = (xs: number[]) => {
   const o = [...xs].sort((a, b) => a - b);
   const m = Math.floor(o.length / 2);
   return o.length % 2 ? o[m]! : (o[m - 1]! + o[m]!) / 2;
@@ -239,44 +247,207 @@ export function prediccionPara(db: BD, tripulante: string, variable: string, t: 
   return { ...pred, calibrando: entorno !== 'tierra' && dia < VENTANA_CALIBRACION_DIAS, dia };
 }
 
-const ultimoEstado = new Map<string, string>();
+/** ¿Está `t` dentro de la ventana de calibración del entorno vigente? */
+export function calibrandoEn(db: BD, t: string): boolean {
+  const inicio = inicioEntorno(db, t);
+  return !!inicio && entornoEn(db, t) !== 'tierra'
+    && Date.parse(t) - Date.parse(inicio) < VENTANA_CALIBRACION_DIAS * DIA_MS;
+}
+
+// ─── vigilancia: normal personal + umbral clínico absoluto ───────────────────
+
+export type Motivo = 'personal' | 'umbral' | 'ambos';
+
+/** Resultado del criterio personal (LUNNA): la mediana de 24 h contra lo esperado para esa persona. */
+export interface EvalPersonal { estado: Estado; z: number; prob_nominal: number }
+
+/** Resultado del criterio por umbral absoluto. */
+export interface EvalUmbral {
+  tipo: 'A' | 'T';
+  fuente: string;
+  /** Límite cruzado; `null` si el valor está dentro. */
+  limite: number | null;
+  lado: 'min' | 'max' | null;
+  /** Mediana de las últimas muestras válidas (hasta 5, en 10 min). */
+  valor_evaluado: number;
+  estado: Estado;
+  n: number;
+}
+
+export interface EvaluacionVariable {
+  /** `null` si falta el prior o el basal. */
+  pred: (Prediccion & { calibrando: boolean; dia: number }) | null;
+  mediana_24h: number | null;
+  /** Si el criterio existe para esta variable (hay prior y basal · hay umbral de referencia). */
+  aplica: { personal: boolean; umbral: boolean };
+  /** `null` = no se pudo evaluar ahora (calibrando, sin prior o con menos de 3 muestras). */
+  personal: EvalPersonal | null;
+  /** `null` = no se pudo evaluar ahora (sin umbral de referencia o con menos de 3 muestras en 10 min). */
+  umbral: EvalUmbral | null;
+}
 
 /**
- * Evalúa la mediana de las últimas 24 h, no la muestra suelta: la validación de
- * Smart Fusion mostró que el valor instantáneo apenas supera a una constante, y
- * que el agregado sí tiene señal.
+ * Los dos criterios para una persona y una variable en el instante `t`.
+ *
+ *  - personal: mediana de las últimas 24 h contra lo que LUNNA espera de ESA persona.
+ *    No la muestra suelta: la validación de Smart Fusion mostró que el valor
+ *    instantáneo apenas supera a una constante, y que el agregado sí tiene señal.
+ *  - umbral: mediana de las últimas 5 muestras válidas en 10 min contra el límite
+ *    clínico absoluto de `referencias`. Reacciona en minutos, y vale también en
+ *    calibración o sin prior.
+ *
+ * `completo` calcula la mediana de 24 h aunque el criterio personal no se pueda evaluar
+ * (lo pide la app; la vigilancia no, para no consultar de más en cada muestra).
+ */
+export function evaluarVariable(db: BD, tripulante: string, variable: string, t: string, completo = false): EvaluacionVariable {
+  const pred = prediccionPara(db, tripulante, variable, t);
+  const evaluable = !!pred && !pred.calibrando;
+  let mediana_24h: number | null = null;
+  let personal: EvalPersonal | null = null;
+  if (evaluable || completo) {
+    const desde = new Date(Date.parse(t) - DIA_MS).toISOString();
+    const vals = (db.prepare(
+      `SELECT valor FROM muestras WHERE tripulante = ? AND variable = ? AND t_scet > ? AND t_scet <= ? AND ${MUESTRA_VALIDA}`,
+    ).all(tripulante, variable, desde, t) as Array<{ valor: number }>).map((r) => r.valor);
+    if (vals.length) mediana_24h = mediana(vals);
+    if (evaluable && vals.length >= MINIMO_MUESTRAS) {
+      const ev = evaluar(mediana_24h!, pred!, priorDe(db, variable, pred!.entorno)!);
+      personal = { estado: ev.estado, z: ev.z, prob_nominal: ev.prob_nominal };
+    }
+  }
+
+  const u = referenciaDe(db, variable)?.umbral;
+  let umbral: EvalUmbral | null = null;
+  if (umbralUtil(u)) {
+    // Usa el índice (tripulante, variable, t_scet): lee como mucho las muestras de 10 minutos.
+    const desde = new Date(Date.parse(t) - VENTANA_UMBRAL_MS).toISOString();
+    const vals = (db.prepare(
+      `SELECT valor FROM muestras WHERE tripulante = ? AND variable = ? AND t_scet >= ? AND t_scet <= ? AND ${MUESTRA_VALIDA}
+       ORDER BY t_scet DESC LIMIT ?`,
+    ).all(tripulante, variable, desde, t, MUESTRAS_UMBRAL) as Array<{ valor: number }>).map((r) => r.valor);
+    if (vals.length >= MINIMO_MUESTRAS) {
+      const v = mediana(vals);
+      umbral = { tipo: u.tipo, fuente: u.fuente, ...evaluarUmbral(v, u), valor_evaluado: v, n: vals.length };
+    }
+  }
+  return { pred, mediana_24h, aplica: { personal: !!pred, umbral: umbralUtil(u) }, personal, umbral };
+}
+
+/** `'ambos'` si los dos criterios están fuera de verde; `null` si ninguno. */
+export function motivoDe(personal: Estado | null, umbral: Estado | null): Motivo | null {
+  const p = !!personal && personal !== 'verde', u = !!umbral && umbral !== 'verde';
+  return p && u ? 'ambos' : p ? 'personal' : u ? 'umbral' : null;
+}
+
+/** Lo que la vigilancia recuerda de cada tripulante y variable. */
+interface Recordado {
+  /** Último estado conocido de cada criterio; `null` = nunca evaluado o no aplica. */
+  personal: Estado | null;
+  umbral: Estado | null;
+  /** Último resultado del umbral fuera de verde: va dentro de la alerta. */
+  detalle: EvalUmbral | null;
+  /** Último estado combinado visto: sólo sus cambios generan alerta. */
+  combinado: Estado | null;
+  /** Ya hubo alguna alerta: la vuelta a verde también se avisa. */
+  alertado: boolean;
+  /** Motivo de la última alerta: la vuelta a verde dice qué se resolvió. */
+  motivo: Motivo | null;
+}
+
+let recordados = new WeakMap<BD, Map<string, Recordado>>();
+
+/**
+ * Estado recordado. La primera vez que se pregunta por una clave se recupera de la
+ * última alerta guardada: tras reiniciar el servidor no se repite la alerta que ya
+ * estaba dada, y la vuelta a verde se sigue avisando.
+ */
+function recordar(db: BD, tripulante: string, variable: string): Recordado {
+  let m = recordados.get(db);
+  if (!m) { m = new Map(); recordados.set(db, m); }
+  const k = `${tripulante}|${variable}`;
+  let r = m.get(k);
+  if (!r) {
+    r = { personal: null, umbral: null, detalle: null, combinado: null, alertado: false, motivo: null };
+    const f = db.prepare(
+      `SELECT estado, motivo, umbral FROM alertas WHERE tripulante = ? AND variable = ? ORDER BY id DESC LIMIT 1`,
+    ).get(tripulante, variable) as { estado: Estado; motivo: Motivo | null; umbral: string | null } | undefined;
+    if (f) {
+      r.combinado = f.estado;
+      r.alertado = true;
+      r.motivo = f.motivo ?? 'personal';             // las alertas de antes de los umbrales eran todas personales
+      if (f.estado !== 'verde') {
+        if (r.motivo !== 'umbral') r.personal = f.estado;
+        if (r.motivo !== 'personal') {
+          try { r.detalle = f.umbral ? deJson<EvalUmbral>(f.umbral) : null; } catch { r.detalle = null; }
+          r.umbral = r.detalle?.estado ?? f.estado;
+        }
+      }
+    }
+    m.set(k, r);
+  }
+  return r;
+}
+
+/** Último estado conocido de cada criterio (lo usa la app para ser coherente con las alertas). */
+export function estadoRecordado(db: BD, tripulante: string, variable: string): { personal: Estado | null; umbral: Estado | null } {
+  const r = recordar(db, tripulante, variable);
+  return { personal: r.personal, umbral: r.umbral };
+}
+
+/**
+ * Se ejecuta por cada muestra válida. El estado de la variable es el PEOR de los dos
+ * criterios, y sólo sus cambios generan alerta (también la vuelta a verde).
+ *
+ * Un criterio que ahora no se puede evaluar (calibrando, o menos de 3 muestras en su
+ * ventana) conserva su último estado: tras un hueco de datos, una sola muestra no
+ * basta para dar por resuelta una alerta.
  */
 function vigilar(db: BD, tripulante: string, variable: string, t: string): void {
-  const pred = prediccionPara(db, tripulante, variable, t);
-  if (!pred || pred.calibrando) return;
-  const prior = priorDe(db, variable, pred.entorno)!;
+  const ev = evaluarVariable(db, tripulante, variable, t);
+  const rec = recordar(db, tripulante, variable);
+  if (ev.personal) rec.personal = ev.personal.estado;
+  if (ev.umbral) {
+    rec.umbral = ev.umbral.estado;
+    rec.detalle = ev.umbral.estado === 'verde' ? null : ev.umbral;
+  } else if (!ev.aplica.umbral) {
+    rec.umbral = null;                               // la variable ya no tiene umbral de referencia
+    rec.detalle = null;
+  }
+  if (!ev.personal && !ev.umbral) return;            // nada nuevo que decir
 
-  const desde = new Date(Date.parse(t) - DIA_MS).toISOString();
-  const vals = (db.prepare(
-    `SELECT valor FROM muestras WHERE tripulante = ? AND variable = ? AND t_scet > ? AND t_scet <= ?
-       AND valor IS NOT NULL AND (calidad IS NULL OR json_extract(calidad, '$.contacto') IS NOT 0)`,
-  ).all(tripulante, variable, desde, t) as Array<{ valor: number }>).map((r) => r.valor);
-  if (vals.length < 3) return;
+  const estado = peor(rec.personal ?? 'verde', rec.umbral ?? 'verde');
+  if (rec.combinado === estado) return;              // sólo los cambios de estado generan alerta
+  rec.combinado = estado;
+  if (estado === 'verde' && !rec.alertado) return;
+  if (estado !== 'verde') rec.alertado = true;
 
-  const valor = mediana(vals);
-  const ev = evaluar(valor, pred, prior);
-  const k = `${tripulante}|${variable}`;
-  if (ultimoEstado.get(k) === ev.estado) return; // sólo los cambios de estado generan alerta
-  ultimoEstado.set(k, ev.estado);
-  if (ev.estado === 'verde' && !ultimoEstado.has(`${k}|alertado`)) return;
-  if (ev.estado !== 'verde') ultimoEstado.set(`${k}|alertado`, '1');
-
+  // En la vuelta a verde, el motivo es el de la alerta que se resuelve.
+  const motivo: Motivo = motivoDe(rec.personal, rec.umbral) ?? rec.motivo ?? 'personal';
+  rec.motivo = motivo;
+  const d = rec.detalle;
+  const umbral = d
+    ? { tipo: d.tipo, fuente: d.fuente, limite: d.limite, valor_evaluado: d.valor_evaluado, lado: d.lado, estado: d.estado }
+    : null;
+  const { pred } = ev;
   const alerta = {
-    tripulante, variable, estado: ev.estado, z: Number(ev.z.toFixed(2)), prob_nominal: Number(ev.prob_nominal.toPrecision(3)), valor,
-    esperado: Number(pred.esperado.toFixed(2)), banda: pred.banda.map((x) => Number(x.toFixed(2))),
-    t_scet: t, entorno: pred.entorno, extrapolado: pred.extrapolado, pesos: pred.pesos,
+    tripulante, variable, estado, motivo,
+    z: ev.personal ? Number(ev.personal.z.toFixed(2)) : null,
+    prob_nominal: ev.personal ? Number(ev.personal.prob_nominal.toPrecision(3)) : null,
+    // Mediana de 24 h cuando hay criterio personal; si no, lo que evaluó el umbral.
+    valor: ev.personal ? ev.mediana_24h! : ev.umbral!.valor_evaluado,
+    esperado: pred ? Number(pred.esperado.toFixed(2)) : null,
+    banda: pred ? pred.banda.map((x) => Number(x.toFixed(2))) : null,
+    t_scet: t, entorno: pred?.entorno ?? entornoEn(db, t), extrapolado: pred?.extrapolado ?? false, pesos: pred?.pesos ?? null,
+    calibrando: pred ? pred.calibrando : calibrandoEn(db, t),
+    umbral, estado_personal: rec.personal, estado_umbral: rec.umbral,
   };
   db.prepare(
-    `INSERT INTO alertas (tripulante, variable, estado, z, valor, esperado, banda, t_scet, creada)
-     VALUES (?,?,?,?,?,?,?,?,?)`,
-  ).run(tripulante, variable, ev.estado, alerta.z, valor, alerta.esperado, json(alerta.banda), t, ahora());
+    `INSERT INTO alertas (tripulante, variable, estado, z, valor, esperado, banda, t_scet, creada, motivo, umbral)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+  ).run(tripulante, variable, estado, alerta.z, alerta.valor, alerta.esperado, alerta.banda ? json(alerta.banda) : null,
+        t, ahora(), motivo, umbral ? json(umbral) : null);
   bus.emit('alerta', alerta);
 }
 
-/** Para pruebas: olvida los estados recordados. */
-export function reiniciarEstados(): void { ultimoEstado.clear(); }
+/** Para pruebas y para reiniciar la demo: olvida los estados recordados. */
+export function reiniciarEstados(): void { recordados = new WeakMap(); }

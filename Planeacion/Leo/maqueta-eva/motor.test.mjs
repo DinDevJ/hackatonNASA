@@ -89,3 +89,15 @@ test("bug 4: lo registrado hoy reemplaza el valor simulado y se recalcula; se pu
   assert.equal(M.estadoIndicador(ana, "animo", 112).valor, antes.valor);
   assert.equal(M.estadoIndicador(ana, "animo", 112).registrado, null);
 });
+
+test("bug 7: en fase lútea tu normal de pulso y HRV se ensancha y no hay falsa alarma", () => {
+  const sin = M.estadoIndicador(ana, "fc", 112);
+  M.configurarCiclo((pid) => (pid === ana ? "lutea" : null));
+  const con = M.estadoIndicador(ana, "fc", 112);
+  assert.ok(con.ajusteCiclo);
+  assert.ok(Math.abs(con.z) < Math.abs(sin.z), "el z baja con el margen ensanchado");
+  assert.equal(M.estadoIndicador("MS-4", "fc", 112).ajusteCiclo, false, "a los hombres no se les ajusta");
+  M.configurarCiclo(null);
+  assert.equal(M.estadoIndicador(ana, "fc", 112).ajusteCiclo, false);
+  assert.equal(M.fatiga(ana, 112).estado, "abierto", "sin fase lútea el escenario no cambia");
+});

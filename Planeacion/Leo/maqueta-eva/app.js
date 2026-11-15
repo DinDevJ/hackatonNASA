@@ -32,7 +32,8 @@
     tema: mem.leer("tema", "auto"), humor: mem.leer("humor", 2), voz: mem.leer("voz", true),
     registros: [], agua: 0, estres: 35, phq: null, crisis: false, diario: "",
     protocolo: {}, aceptado: false, solar: null, permisos: {}, accesos: [], colaExtra: [], evaluaciones: [], pvtHoy: null,
-    ciclo: mem.leer("ciclo", { ultima: "2027-03-04", duracion: 28, sangrado: 5, registro: {} }),
+    // Ejemplo: el día 112 (18 de marzo) cae en fase folicular, así el ajuste lútea no tapa la fatiga del escenario.
+    ciclo: mem.leer("ciclo", { ultima: "2027-03-10", duracion: 28, sangrado: 5, registro: {} }),
   };
   const M = window.MOTOR, C = window.CUERPO;
   const persona = () => M.PERSONAS.find((x) => x.id === estado.persona) || M.PERSONAS[0];
@@ -538,6 +539,7 @@
   function etiquetas(k, e) {
     const ind = M.IND[k];
     const t = [];
+    if (e && e.ajusteCiclo) t.push(`<span class="etq etq-prop">ajustado por fase lútea</span>`);
     if (e && e.registrado) t.push(`<span class="etq etq-reg">registrado${e.registrado.hora ? " " + e.registrado.hora : ""}</span>`);
     if (!ind.sinNormal) t.push(`<span class="etq etq-normal">tu normal</span>`);
     if (ind.abs) t.push(`<span class="ref ref-${ind.abs.tipo}" title="${ind.abs.texto}">${ic(ind.abs.tipo === "A" ? "escudo" : "info", "ic-sm")}${ind.abs.tipo === "A" ? "NASA" : "Tierra"}</span>`);

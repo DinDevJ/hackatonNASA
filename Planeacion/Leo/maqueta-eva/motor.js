@@ -246,6 +246,14 @@
     return out || SERIES[pid][k];
   }
 
+  // ------------------------------------------------------------------ ciclo menstrual (RF-02-11)
+  // La app dice en qué fase está cada persona (null si no aplica: hombres o supresión menstrual).
+  // En fase lútea el pulso en reposo sube y la HRV baja de forma normal; para no dar falsas alarmas,
+  // tu normal se ensancha 1,5× en esas dos variables. 🔶 Factor propuesto por el equipo, sin validar.
+  let faseCiclo = () => null;
+  function configurarCiclo(fn) { faseCiclo = typeof fn === "function" ? fn : () => null; }
+  const AJUSTE_LUTEA = { fc: 1.5, hrv: 1.5 };
+
   // ------------------------------------------------------------------ evaluación
   function estadoIndicador(pid, k, dia) {
     const ind = IND[k];
@@ -255,17 +263,23 @@
     let ultimo = null;
     for (let j = i; j >= 0; j--) if (serie[j] != null) { ultimo = { valor: serie[j], dia: PRIMER_DIA + j }; break; }
     const vigente = valor != null ? valor : ultimo && dia - ultimo.dia <= 1 ? ultimo.valor : null;
-    const normal = ind.sinNormal ? null : tuNormal(serie.slice(0, i), ind.madMin);
+    let normal = ind.sinNormal ? null : tuNormal(serie.slice(0, i), ind.madMin);
+    let ajusteCiclo = false;
+    if (normal && AJUSTE_LUTEA[k] && faseCiclo(pid, dia) === "lutea") {
+      const mad = normal.mad * AJUSTE_LUTEA[k], ancho = (2 * mad) / 0.6745;
+      normal = { ...normal, mad, banda: [normal.med - ancho, normal.med + ancho] };
+      ajusteCiclo = true;
+    }
     const historia = serie.slice(Math.max(0, i - 14), i + 1);
     const registrado = registro(pid, dia, k);
-    if (vigente == null) return { k, valor, ultimo, normal, z: null, nivel: null, motivo: null, historia, registrado };
+    if (vigente == null) return { k, valor, ultimo, normal, z: null, nivel: null, motivo: null, historia, registrado, ajusteCiclo };
     const z = normal ? zDe(vigente, normal) : null;
     const malo = z == null ? 0 : ind.dir === "alto" ? z : -z;
     const porNormal = malo >= 3 ? 1 : 0;
     const porAbs = ind.abs ? ind.abs.nivel(vigente) : 0;
     const nivel = Math.max(porNormal, porAbs);
     const motivo = nivel === 0 ? null : porAbs >= porNormal ? ind.abs.tipo : "tu_normal";
-    return { k, valor, ultimo, normal, z, nivel, motivo, historia, registrado };
+    return { k, valor, ultimo, normal, z, nivel, motivo, historia, registrado, ajusteCiclo };
   }
 
   const SENALES_FATIGA = ["sueno", "lapsos", "fc"];
@@ -408,7 +422,7 @@
     return { resumen, hallazgos, bien, cara, nivel: ev.general };
   }
 
-  const API = { ESTADO, registrar, registro, limpiarRegistros, serieCon, PRIMER_DIA, ULTIMO_DIA, DIAS, IND, REGIONES, PERSONAS, SERIES, DONKI, idx, tuNormal, zDe, mediana, cabina, estadoIndicador, fatiga, evaluar, lunaDice, horas, texto };
+  const API = { ESTADO, configurarCiclo, AJUSTE_LUTEA, registrar, registro, limpiarRegistros, serieCon, PRIMER_DIA, ULTIMO_DIA, DIAS, IND, REGIONES, PERSONAS, SERIES, DONKI, idx, tuNormal, zDe, mediana, cabina, estadoIndicador, fatiga, evaluar, lunaDice, horas, texto };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else raiz.MOTOR = API;
 })(typeof window !== "undefined" ? window : globalThis);

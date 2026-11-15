@@ -16,6 +16,8 @@ import { cargarInicial, importarSemillas, type SalidaTipo } from './semillas.ts'
 import { escribirEnlace, iniciarEnlace, leerEnlace, redactarAviso } from './enlace.ts';
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { reiniciarEstados } from './ingesta.ts';
+import { cargarReferencias, referencias, type CargaReferencias } from './referencias.ts';
+import { estadoApp } from './app.ts';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 /** App móvil del equipo (Diana, Katy): se sirve tal cual en /app/. Se puede cambiar con APP_MOVIL. */
@@ -26,8 +28,10 @@ const TIPOS: Record<string, string> = {
   '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.ico': 'image/x-icon', '.wav': 'audio/wav', '.mp3': 'audio/mpeg',
 };
 const PUERTO = Number(process.env.PUERTO ?? 8787);
+/** Referencias clínicas (umbrales absolutos). Puede no existir. Se puede cambiar con MEDIBLES. */
+const RUTA_MEDIBLES = resolve(process.env.MEDIBLES ?? join(AQUI, '..', 'semillas', 'medibles.json'));
 /** Sube al cambiar algo que la pasarela o el simulador necesiten. */
-export const VERSION_BACKEND = '0.5.0';
+export const VERSION_BACKEND = '0.6.0';
 
 class ErrorHttp extends Error {
   estado: number;
@@ -81,6 +85,7 @@ function estadoTexto(db: BD): string {
     `asignaciones activas ${n('SELECT COUNT(*) AS n FROM asignaciones WHERE hasta IS NULL')}`,
     `muestras guardadas   ${n('SELECT COUNT(*) AS n FROM muestras')}`,
     `alertas de LUNNA     ${n('SELECT COUNT(*) AS n FROM alertas')}`,
+    `referencias clínicas ${referencias(db).size}`,
     '',
     `enlace con Tierra    ${e.abierto ? 'ABIERTO' : 'CERRADO'} · retraso ${e.owlt_s} s`,
     `  en cola en la nave ${n('SELECT COUNT(*) AS n FROM bajada WHERE t_envio IS NULL')}`,
@@ -90,8 +95,16 @@ function estadoTexto(db: BD): string {
     ...(recientes.length ? recientes.map((r) => '  ' + r) : ['  (nada todavía)']),
     '',
     'simulador visual: /simulador · control de misión (Tierra): /tierra · app móvil: /app/',
-    'API: /api/salud · /api/estado · /api/alertas · /api/stream · ver backend/README.md',
+    'API: /api/salud · /api/estado · /api/app/<tripulante> · /api/alertas · /api/referencias · /api/stream · ver backend/README.md',
   ].join('\n');
+}
+
+/** Línea de log de la carga de referencias clínicas. */
+function resumenReferencias(r: CargaReferencias): string {
+  if (r.ausente) return `Referencias clínicas: no hay ${RUTA_MEDIBLES}; se sigue sin umbrales absolutos nuevos`;
+  if (r.error) return `Referencias clínicas: ${RUTA_MEDIBLES} no se pudo cargar (${r.error}); se sigue con lo que hubiera`;
+  return `Referencias clínicas: ${r.cargadas} cargadas (${r.con_umbral} con umbral absoluto)`
+    + (r.omitidas ? `, ${r.omitidas} omitidas por no traer id` : '');
 }
 
 /** Actividad en la terminal y en la página de estado. */
@@ -99,8 +112,11 @@ function registrarActividad(): void {
   let muestras = 0;
   bus.on('muestra', () => { muestras++; });
   setInterval(() => { if (muestras) { anotar(`+${muestras} muestras`); muestras = 0; } }, 10_000);
-  bus.on('alerta', (a: Record<string, unknown>) =>
-    anotar(`LUNNA ${String(a.estado).toUpperCase()} · ${a.tripulante} · ${a.variable} = ${a.valor} (esperado ${a.esperado}, z=${a.z})`));
+  bus.on('alerta', (a: Record<string, unknown>) => {
+    const u = a.umbral as { limite: number | null; valor_evaluado: number; lado: string | null; tipo: string } | null;
+    const porUmbral = u ? ` · umbral ${u.tipo}: ${u.valor_evaluado} ${u.lado === 'min' ? '<' : '>'} ${u.limite}` : '';
+    anotar(`LUNNA ${String(a.estado).toUpperCase()} [${a.motivo}] · ${a.tripulante} · ${a.variable} = ${a.valor} (esperado ${a.esperado}, z=${a.z})${porUmbral}`);
+  });
   bus.on('rechazo', (r: string[]) => anotar(`rechazo: ${r.slice(0, 2).join(' · ')}`));
   bus.on('tierra', (b: Record<string, unknown>) => anotar(`→ Tierra recibe ${b.tipo}`));
   bus.on('aviso', (a: Record<string, unknown>) => anotar(`← aviso de Tierra para ${a.para}: «${a.texto}»`));
@@ -279,6 +295,21 @@ export function construir(db: BD) {
   ruta('GET', '/api/alertas', (_r, _p, q) =>
     todos(`SELECT * FROM alertas ORDER BY id DESC LIMIT ?`, Math.min(Number(q.get('limite') ?? 100), 1000)));
 
+  // ── Referencias clínicas: umbrales absolutos y ficha de cada variable (semillas/medibles.json) ──
+  ruta('GET', '/api/referencias', () => [...referencias(db).values()]);
+  ruta('POST', '/api/referencias/recargar', () => {
+    const r = cargarReferencias(db, RUTA_MEDIBLES);
+    anotar(resumenReferencias(r));
+    return { ...r, total: referencias(db).size };
+  });
+
+  // ── App móvil: todo lo de un tripulante en una llamada ──
+  ruta('GET', '/api/app/:tripulante', (_r, p) => {
+    const e = estadoApp(db, p.tripulante!);
+    if (!e) throw new ErrorHttp(404, `el tripulante "${p.tripulante}" no existe (GET /api/tripulantes para ver los que hay)`);
+    return e;
+  });
+
   // ── Sincronización con Tierra (almacenar y reenviar) ──
   ruta('GET', '/api/tierra/cola', () =>
     todos(`SELECT * FROM alertas WHERE enviada_tierra = 0
@@ -405,6 +436,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const { nuevos } = cargarInicial(db, join(AQUI, '..', 'semillas', 'inicial.json'));
   const añadidos = Object.entries(nuevos).filter(([, n]) => n > 0).map(([k, n]) => `${n} ${k}`);
   if (añadidos.length) console.log(`Semillas: añadidos ${añadidos.join(', ')}`);
+  console.log(resumenReferencias(cargarReferencias(db, RUTA_MEDIBLES)));
   const srv = construir(db);
   iniciarEnlace(db);
   registrarActividad();

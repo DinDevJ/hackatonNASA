@@ -99,7 +99,17 @@ CREATE TABLE IF NOT EXISTS alertas (
   tripulante TEXT NOT NULL, variable TEXT NOT NULL,
   estado TEXT NOT NULL, z REAL, valor REAL, esperado REAL, banda TEXT,
   t_scet TEXT NOT NULL, creada TEXT NOT NULL,
-  enviada_tierra INTEGER NOT NULL DEFAULT 0
+  enviada_tierra INTEGER NOT NULL DEFAULT 0,
+  motivo TEXT,                      -- 'personal' · 'umbral' · 'ambos': por qué saltó
+  umbral TEXT                       -- JSON: { tipo, fuente, limite, valor_evaluado, … } si hubo umbral
+);
+CREATE INDEX IF NOT EXISTS ix_alertas ON alertas (tripulante, variable);
+
+-- Referencias clínicas de cada variable (semillas/medibles.json): umbrales absolutos,
+-- cómo se mide, padecimientos. Dato de referencia: se recarga al arrancar, no se edita.
+CREATE TABLE IF NOT EXISTS referencias (
+  variable TEXT PRIMARY KEY,
+  datos TEXT NOT NULL               -- JSON: Referencia
 );
 
 -- ── Enlace con Tierra ──
@@ -142,6 +152,10 @@ export function abrir(ruta = 'eva.db'): BD {
   const cols = (db.prepare(`PRAGMA table_info(subida)`).all() as Array<{ name: string }>).map((c) => c.name);
   if (!cols.includes('tipo')) db.exec(`ALTER TABLE subida ADD COLUMN tipo TEXT NOT NULL DEFAULT 'aviso'`);
   if (!cols.includes('datos')) db.exec(`ALTER TABLE subida ADD COLUMN datos TEXT`);
+  // Bases creadas antes de los umbrales absolutos: la alerta no decía por qué saltó.
+  const colsAlertas = (db.prepare(`PRAGMA table_info(alertas)`).all() as Array<{ name: string }>).map((c) => c.name);
+  if (!colsAlertas.includes('motivo')) db.exec(`ALTER TABLE alertas ADD COLUMN motivo TEXT`);
+  if (!colsAlertas.includes('umbral')) db.exec(`ALTER TABLE alertas ADD COLUMN umbral TEXT`);
   return db;
 }
 

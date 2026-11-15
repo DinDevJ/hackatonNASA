@@ -58,7 +58,7 @@
   ];
   const comidasHoy = ["avena", "huevo", "tortilla", "pollo", "arroz"];
 
-  // Fuerza: peso muerto en ARED, 6 sesiones. 1RM previo al vuelo = 1,6 × masa (mínimo NASA para EVA en superficie).
+  // Fuerza: peso muerto en ARED, 6 sesiones. 1RM previo al vuelo = 1,6 × masa (mínimo NASA para caminata espacial en superficie).
   const unoRMPre = redondo(1.6 * PERFIL.masaKg, 1);
   const ared = Array.from({ length: 6 }, (_, i) => {
     const carga = redondo(0.75 * unoRMPre * (1 - 0.01 * i) + entre(-1.5, 1.5), 1);
@@ -73,7 +73,7 @@
     proteina: { min: 1.2, max: 1.8, tipo: "A", texto: "1,2–1,8 g/kg/día (NASA)" },
     sueno: { min: 7, max: 9, tipo: "T", texto: "7–9 h en adultos; en astronautas <6 h se asocia a peor desempeño" },
     glucosa: { min: 70, max: 180, tipo: "T", texto: "Rango 70–180 mg/dL: terrestre, no validado en microgravedad" },
-    fuerza: { min: 1.6, tipo: "A", texto: "Peso muerto ≥ 1,6 × peso corporal para EVA en superficie (NASA)" },
+    fuerza: { min: 1.6, tipo: "A", texto: "Peso muerto ≥ 1,6 × peso corporal para caminata espacial en superficie (NASA)" },
     fcmax: { valor: FC_MAX, tipo: "T", texto: `FC máxima estimada: 208 − 0,7 × edad = ${FC_MAX} lpm (Tanaka)` },
   };
 

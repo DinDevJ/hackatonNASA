@@ -1,9 +1,27 @@
-# EVA — propuesta unificada del Equipo Monarcas
+# Lunna — propuesta unificada del Equipo Monarcas
 
 Monitoreo de salud para astronautas en misiones de larga duración. NASA Space Apps 2026,
 reto *Create Health Monitoring Software for Astronauts on Space Missions*.
 
-**Equipo:** Monarcas · **Producto:** EVA
+**Equipo:** Monarcas · **Producto:** Lunna
+
+> **Actualización · 14 nov 2026 (auditoría de Lunna).** El producto se llama **Lunna**: antes
+> se llamó EVA y LUNA. Los identificadores técnicos `eva.ble.v1`, `eva.telemetry.v1` y
+> `EVA-SIM` se conservan (C-08). Estructura actual de la app móvil
+> (`Planeacion/Leo/maqueta-eva/`):
+>
+> | Pestaña | Qué tiene |
+> |---|---|
+> | **Inicio** | Cuerpo Lunna primero (escáner con zoom al órgano), clima espacial, tarjetas de alerta y mosaico con los seis indicadores del reto |
+> | **Registrar** | Lo que los sensores no miden: check-in, presión, temperatura, agua, masa, comida, síntomas, mente, tira de orina |
+> | **Ciclo** | Solo para ellas y privado; en fase lútea, tu normal de pulso y HRV se ensancha 1,5× (propuesta del equipo) |
+> | **Reportes** | Alertas, signos, reflejos (PVT-B), radiación con dosis personal, Tierra, vista de la CMO, logros |
+> | **Ajustes** | Persona y día (se guardan juntos), tema, privacidad, Lunna, ayuda |
+> | **Lunna flotante** | Burbuja tipo AssistiveTouch sobre todas las pantallas: lo que ve hoy, cómo monitorea, clima, qué procesa |
+>
+> Comportamiento corregido en la auditoría: el SOS atiende a quien lo presiona (o a quien se
+> elija) y se puede cancelar; "Volver" usa una pila de navegación; lo que se registra hoy
+> reemplaza el valor simulado del día y se recalcula todo.
 
 Este documento **une las propuestas de todo el equipo** (Diana, Fani, Iker, Julio, Katy,
 Leo). No las reemplaza: cada sección dice de quién viene y enlaza al documento original.
@@ -16,7 +34,7 @@ Iker)
 
 ## Resumen en un minuto
 
-**Qué es:** una app (reloj + panel + tablet) que conoce la línea base de cada astronauta,
+**Qué es:** una app que se adapta a **laptop, iPad o celular** y que conoce la línea base de cada astronauta,
 cruza señales para detectar problemas antes de que sean emergencias, guía a la
 tripulación paso a paso cuando la Tierra tarda hasta 48 min en responder, y cuida quién
 ve qué en una tripulación de 4 personas.
@@ -26,9 +44,12 @@ prioridad solo decide en qué orden se construyen.
 
 **Qué se construye primero (núcleo, 9 módulos):** panel con figura humana y semáforo ·
 motor de prevención con reglas auditables · emergencia de evento solar con buddy check ·
-radiación con datos reales de DONKI · reloj (Huawei Watch 5 por Bluetooth) · privacidad
+radiación con datos reales de DONKI · diseño adaptable a laptop, iPad y celular · privacidad
 por rol · nota de Tierra que llega tarde · **salud femenina** · **asistente de voz**.
 Interfaz en inglés o español, a elección.
+
+**El reloj no se programa.** Se presenta como **concepto** (Lunna Band, §9.1): la siguiente
+fuente de datos de Lunna, la que se llevaría siempre puesta.
 
 **Por qué puede ganar:** usa **datos reales de NASA** (51 eventos solares + umbrales
 oficiales de NASA-STD-3001), **cada número dice de dónde sale** ([A] o [T]), y tiene
@@ -43,27 +64,30 @@ prioridad, el núcleo no termina. La evaluación honesta está en §2.
 
 | Decisión | Elegido | Origen |
 |---|---|---|
-| Nombre | **EVA**, sin significado (decisión 1) | Equipo |
-| Reloj | **Huawei Watch 5**, conectado por **Bluetooth** | Equipo |
+| Nombre | **Lunna** (cambio del 14 nov; antes EVA) | Equipo |
+| Dispositivos | **Una sola app que se adapta a laptop, iPad y celular** (§9.1). Sin software de reloj: el reloj queda como concepto, **Lunna Band** ([propuesta](Propuesta-reloj-LUNA.md)). Cambio del 14 nov; antes era Huawei Watch 5 por Bluetooth | Equipo |
 | Asistente de voz | **Entra en la demo.** El motor decide y el LLM solo redacta lo ya decidido | [Julio](../Julio/llm-local-y-voz.md) |
-| Lenguajes | **Python** para pruebas de viabilidad; **TypeScript** para interfaz, reloj y motor; panel como PWA con React (decisión 10) | Equipo |
+| Lenguajes | **Python** para pruebas de viabilidad; **TypeScript** para interfaz y motor; panel como PWA con React (decisión 10) | Equipo |
 | Idioma | **Seleccionable: inglés o español** (decisión 12) | Equipo |
 | Salud femenina | **Sube al núcleo** (decisión 3) | Equipo |
 | Base técnica | Motor de línea base + reglas YAML + escalera de escalamiento | [Julio](../Julio/comportamiento-del-software.md) |
 | Datos y umbrales | Catálogo de variables con procedencia [A]/[T] | [Iker](../variables-diagnostico/00-indice-priorizado.md) |
 | Emergencia de la demo | **Evento de partículas solares (SPE)** con datos reales de DONKI | [Julio](../Julio/comportamiento-del-software.md#7-segundo-escenario-corto--día-115-evento-de-partículas-solares) |
 | Quién ve qué | Privacidad por capas con buddy system (§7) | Katy |
-| Capa visual | Figura humana, semáforo con formas, reloj + panel | [Katy](Propuesta-LAZO-NASA-SpaceApps-2026.md#6-diseño-uxui-cómo-se-ve-y-cómo-se-usa) |
+| Capa visual | Figura humana, semáforo con formas, diseño adaptable a laptop, iPad y celular | [Katy](Propuesta-LAZO-NASA-SpaceApps-2026.md#6-diseño-uxui-cómo-se-ve-y-cómo-se-usa) |
 | Módulos | 22 módulos de todas las propuestas, por prioridad (§9) | Todos |
 
 ### ⚠️ Ojo con el nombre
 
-En NASA, **EVA = Extravehicular Activity**, una **caminata espacial**. El equipo decidió
-dejar **EVA sin significado** (decisión 1). Para evitar confusiones:
+El producto se llamaba EVA; el 14 nov cambió a **Lunna**. Se quitó EVA porque en NASA
+significa *Extravehicular Activity* (caminata espacial). Con Lunna, tres cuidados:
 
-- En el texto, la UI y la demo, a la otra EVA le decimos siempre **"caminata espacial"**
-  (en inglés, *spacewalk*).
-- Remate posible en el pitch: *"Antes de cada EVA, EVA te dice si estás listo."*
+- **La demo es un tránsito a Marte.** Un jurado puede preguntar "¿por qué Lunna si van a
+  Marte?". Hay que tener una respuesta de una frase lista (§13).
+- **"Luna" ya nombra cosas en el espacio:** el programa soviético Luna (1959–1976) y Lunna,
+  la instalación análoga lunar de ESA y DLR en Colonia ⚠️. No es un impedimento, pero
+  conviene que el nombre siempre vaya con su frase de qué es.
+- A la caminata espacial le seguimos diciendo **"caminata espacial"** (*spacewalk*).
 
 ## 0.1 Contexto único de la demo y tripulación 🔶
 
@@ -94,13 +118,13 @@ Todos los escenarios, maquetas, datos sintéticos y diapositivas usan **este con
 > reconocer una emergencia y actuar a tiempo?
 
 **Tesis** ([Julio](../Julio/comportamiento-del-software.md)):
-> El monitoreo diario no es para hacer gráficas. Es para que, cuando pase lo malo, EVA
+> El monitoreo diario no es para hacer gráficas. Es para que, cuando pase lo malo, Lunna
 > ya sepa cómo es esta persona cuando está bien.
 
 **Cadena del producto:** Recabar → Organizar → Monitorear → Prevenir → Asistir.
 
 **Por qué tiene que decidir a bordo** (análisis de Julio con datos reales de DONKI ✅):
-NASA tardó una **mediana de 17 min** en emitir la alerta de un evento solar, con mucha
+NASA tardó una **mediana de 17 min** (sobre 51 eventos de dos ventanas de 2024; con los 71 eventos de 2024 que tienen alerta sale **12 min**) en emitir la alerta de un evento solar, con mucha
 variación. Súmale **4 a 24 min** de viaje de la señal hasta Marte. Cuando el aviso llega,
 la dosis ya se recibió.
 
@@ -117,9 +141,9 @@ públicos. Comparar a cada persona consigo misma es la forma honesta de alertar.
 
 Fuente: pestañas *Details* y *Resources* del reto ✅.
 
-| El reto pide o sugiere | Dónde está en EVA | Veredicto |
+| El reto pide o sugiere | Dónde está en Lunna | Veredicto |
 |---|---|---|
-| Herramienta **visual** para que el astronauta **evalúe su propia salud** | Panel, Cuerpo EVA, semáforo (módulos 1, 2, 5) | ✅ Cumple |
+| Herramienta **visual** para que el astronauta **evalúe su propia salud** | Panel, Cuerpo Lunna, semáforo (módulos 1, 2, 5) | ✅ Cumple |
 | **Guía de tratamientos y mejoras** | Protocolos con seguimiento y cierre (Julio); criterios "Contact Surgeon" del checklist médico de NASA (Iker) | 🟡 Cumple con reservas: los protocolos clínicos no están validados; la demo usa uno logístico |
 | Indicadores sugeridos: presión, FC, glucosa, temperatura, sueño, ánimo | Los seis, con su umbral y procedencia (§5) | ✅ Cumple. ⚠️ No se sabe qué glucómetro hay a bordo: la glucosa entra a mano |
 | Entrada por teclado, clics, cámara; cualquier indicador | Manual, wearable, cámara, prueba en pantalla, dato de la nave (catálogo de Iker) | ✅ Cumple |
@@ -129,9 +153,9 @@ Fuente: pestañas *Details* y *Resources* del reto ✅.
 | ¿Cuándo amerita atención de la tripulación o de Tierra? | Escalera de escalamiento + semáforo + criterios "Contact Surgeon" | ✅ Cumple |
 | ¿Qué hacer para prevenir? | Motor de prevención (fatiga 112 → 114), metas de agua, ejercicio y CO₂ | ✅ Cumple |
 | Interfaz clara, animación e interactividad | Maquetas, guía de estilo, figura humana | 🟡 Diseñado; falta construirlo |
-| Figura humana clicable | Cuerpo EVA | 🟡 Diseñado; falta construirlo |
+| Figura humana clicable | Cuerpo Lunna | 🟡 Diseñado; falta construirlo |
 | Distintos entornos (nave, estación, rover, Luna, Marte) | Perfiles de entorno (módulo 17, prioridad 🔵) | 🟠 Se construye al final; si no llega, la demo usa un único entorno (tránsito a Marte) |
-| Recordatorios dentro de la rutina | Reloj + recordatorios (módulo 5) | ✅ En el núcleo |
+| Recordatorios dentro de la rutina | Avisos en el celular o iPad (módulo 5) | ✅ En el núcleo |
 | Gamificación | Juego cooperativo (módulo 12) | 🟡 Como pantalla de diseño |
 | Gráficas dinámicas | Tendencias contra línea base (módulo 1) | ✅ En el núcleo |
 | Código de colores | Semáforo ●■▲ con forma, color y texto | ✅ Cumple, y además es accesible |
@@ -149,7 +173,7 @@ Space Apps evalúa impacto, creatividad, validez, relevancia y presentación.
 |---|---|---|---|
 | **Relevancia** | 🟢 Alta | Responde una por una las preguntas del reto (§2.1) | Mostrar la tabla de §2.1 en una diapositiva |
 | **Validez** | 🟢 Alta | [A]/[T] en cada umbral, fuentes de NASA, limitaciones dichas en voz alta | Abrir el YAML y la etiqueta [A]/[T] durante la demo |
-| **Impacto** | 🟡 Media-alta | Autonomía médica real (EIMO, Health Beyond) + uso en la Tierra | Una cifra concreta: latencia de 17 min + 18 min de viaje |
+| **Impacto** | 🟡 Media-alta | Autonomía médica real (EIMO, Health Beyond) + uso en la Tierra | Una cifra concreta: latencia de 17 min (51 eventos) o 12 min (71 con alerta) + 18 min de viaje |
 | **Creatividad** | 🟡 Media-alta | Buddy check, privacidad por rol, nota tardía. Pero "app de monitoreo de salud" es el tema obvio del reto | Que el buddy check y la nota tardía sean los momentos memorables de la demo |
 | **Presentación** | 🟠 Depende de la ejecución | Hay guion y maquetas; no hay producto todavía | Demo en modo avión que funcione de punta a punta |
 
@@ -182,13 +206,13 @@ Ordenados por qué tan difícil es que otro equipo los tenga.
 
 | Capa | Qué hace | De quién |
 |---|---|---|
-| **Datos** | Reloj, camiseta biométrica, check-in de 20 s, prueba de reflejos PVT-B, dosímetro, sensores de la nave, eventos DONKI | Julio · Iker |
+| **Datos** | Camiseta biométrica (Bio-Monitor), actígrafo, captura manual, foto de cámara, check-in de 20 s, prueba de reflejos PVT-B, dosímetro, sensores de la nave, eventos DONKI | Julio · Iker |
 | **Umbrales** | Oficiales NASA [A] donde existen; terrestres [T] rotulados; si no hay, línea base personal | Iker |
 | **Motor** | Línea base móvil de 14 días (mediana + MAD), z robusto, reglas multivariables en YAML | Julio |
 | **Riesgo** | Probabilidad con modelo, margen contra la norma o nivel relativo | [Leo](../Leo/resumen.md) |
 | **Escalamiento** | Nivel 0 autocuidado → 1 CMO a bordo → 2 cirujano de vuelo → 3 junta médica | Julio |
 | **Privacidad** | Quién ve qué, buddy system, registro de accesos | Katy |
-| **Experiencia** | Reloj + panel, figura humana, semáforo ●■▲, juego cooperativo | Katy |
+| **Experiencia** | Diseño adaptable (laptop, iPad, celular), figura humana, semáforo ●■▲, juego cooperativo | Katy |
 | **Tiempos** | Cada registro con `t_sclk`, `t_scet`, `t_ert`; Tierra ordena por SCET y muestra la antigüedad | Julio |
 | **Enlace con Tierra** | Cola priorizada, envío diferido, red tolerante a interrupciones (DTN) a futuro | Julio · [Fani](../Fani/Propuesta.docx) |
 
@@ -202,15 +226,15 @@ Basado en el [catálogo de Iker](../variables-diagnostico/00-indice-priorizado.m
 
 - **Casi ningún análisis de sangre u orina está disponible en tiempo real.** En la ISS las
   muestras se congelan y se analizan al regreso, y ningún sistema mide densidad ósea en
-  vuelo. EVA se apoya en autoinforme, signos vitales, wearables, ultrasonido, fotos,
+  vuelo. Lunna se apoya en autoinforme, signos vitales, wearables, ultrasonido, fotos,
   equipo de ejercicio y datos de la nave.
-- **No hay umbrales públicos de NASA para signos vitales.** Los de EVA son terrestres [T]
+- **No hay umbrales públicos de NASA para signos vitales.** Los de Lunna son terrestres [T]
   y se rotulan así en pantalla.
 - **Sí hay umbrales oficiales NASA [A]** de radiación, ambiente de cabina, aptitud física y
   nutrición (§5.3), y criterios públicos de "Contact Surgeon" (§5.4).
 - **Casi todos los estudios en vuelo tienen entre 3 y 14 personas.** Sirven para decidir
   qué medir, no para predecir en un individuo.
-- **La SpO₂ de reloj puede sobreestimar cuando el oxígeno está bajo** (Iker cita un
+- **La SpO₂ de muñeca puede sobreestimar cuando el oxígeno está bajo** (Iker cita un
   resumen que no está en el repo). Por prudencia, nunca es la única alerta.
 
 ### 5.2 Los indicadores del reto, con umbral y procedencia
@@ -218,11 +242,11 @@ Basado en el [catálogo de Iker](../variables-diagnostico/00-indice-priorizado.m
 | Indicador | Cómo se mide a bordo | Qué cambia en vuelo | ● / ■ / ▲ y procedencia |
 |---|---|---|---|
 | **Presión arterial** | Manguito; Bio-Monitor | Sistólica de 24 h baja ~8–14 mmHg (n = 8–12) | Rangos AHA [T]. Al volver a la gravedad: caída ≥ 20/10 mmHg [T]; sistólica < 70 = presíncope [A] |
-| **Frecuencia cardiaca** | Reloj, Bio-Monitor, Holter | En reposo sin cambio claro (n = 8) | Desviación de la línea base; > 100 lpm en reposo [T]; QTc ≥ 500 ms de riesgo [T], > 440 ms observado en astronautas [A] |
+| **Frecuencia cardiaca** | Bio-Monitor, Holter, pulsioxímetro | En reposo sin cambio claro (n = 8) | Desviación de la línea base; > 100 lpm en reposo [T]; QTc ≥ 500 ms de riesgo [T], > 440 ms observado en astronautas [A] |
 | **SpO₂** | Pulsioxímetro del kit, Bio-Monitor | NASA fija el límite sobre el aire de cabina, no sobre la SpO₂ | ≤ 92 % contactar, ≤ 88 % urgente [T, propuesta no oficial] |
 | **Glucosa** | Glucómetro (⚠️ modelo a bordo desconocido) → entrada manual | Resistencia a la insulina hasta +60 % (n = 8) | Ayuno < 100 / 100–125 / ≥ 126 mg/dL, ADA [T] |
 | **Temperatura** | Bio-Monitor, termómetro | La central sube ~1 °C en vuelo largo (n = 11) | Contra línea base propia; fiebre ≥ 39,4 °C sostenida para contactar [T, propuesta no oficial] |
-| **Sueño** | Reloj (actigrafía) | ISS: 6,09 h de media, 43,8 % de noches < 6 h (n = 21) | Contra línea base; somnolencia KSS > 6 [T] |
+| **Sueño** | Actígrafo (Actiwatch) + autoinforme | ISS: 6,09 h de media, 43,8 % de noches < 6 h (n = 21) | Contra línea base; somnolencia KSS > 6 [T] |
 | **Ánimo** | Check-in de 20 s; PHQ-9 y GAD-7 semanales (uso libre) | Sin corte validado en astronautas | Tendencia de 7 días; PHQ-9 o GAD-7 ≥ 10 como alerta [T] |
 | **Hidratación** | Registro de agua; masa corporal | Se bebe menos en microgravedad | Al menos **32 mL/kg al día [A]**; orina < 1,5 L/día = riesgo de cálculos [T] |
 | **Masa corporal** | Equipo de masa en microgravedad (SLAMMD) | Refleja líquidos y balance de energía | Alerta si baja **más de 3,3 % de la basal [A]** |
@@ -250,7 +274,7 @@ Todos de NASA-STD-3001 (Vol. 1 Rev C y Vol. 2 Rev F, 2026), según el
 ### 5.4 Cuándo contactar a Tierra: criterios públicos
 
 El checklist médico del transbordador (JSC-48031 Rev K, 2006) tiene **110 instrucciones
-"Contact Surgeon"** ✅. Ejemplos que EVA usa tal cual:
+"Contact Surgeon"** ✅. Ejemplos que Lunna usa tal cual:
 
 - Diarrea **con fiebre**.
 - **Sin mejoría en 24 h.**
@@ -327,22 +351,23 @@ compañero lee su check-in diario, puede responder "bien" aunque no lo esté.
 
 ### Casos borde
 
-| Caso | Qué hace EVA |
+| Caso | Qué hace Lunna |
 |---|---|
 | **El CMO es el paciente** | Salta el nivel 1, escala al cirujano de vuelo y avisa al comandante. Su compañero hace de rescatista. |
 | **El compañero también está afectado** | La alerta pasa a toda la tripulación. |
 | **Varias personas con síntomas a la vez** | Lo trata como un problema del ambiente y alerta a todos. Ejemplo real: con CO₂ alto, cada +1 mmHg duplica la probabilidad de cefalea (n = 49) [A]. |
 | **Riesgo de hacerse daño** | Nivel rojo: CMO y cirujano de vuelo, aunque el diario sea privado. Única excepción al ✋ del diario. |
 | **El astronauta revoca un consentimiento** | Deja de compartirse desde ese momento; lo ya enviado queda registrado. |
-| **El reloj se apaga o pierde señal** | Se dice **"sin señal del reloj de Mei"** con la hora de la última lectura, nunca "no responde". |
+| **El iPad o el celular se apaga o pierde conexión** | Se dice **"sin conexión con el iPad de Mei"** con la hora del último dato, nunca "no responde". |
 
 ### Privacidad en un espacio compartido
 
 1. **El panel de pared es público:** en reposo solo muestra el estado ●■▲ de cada
    persona y las alertas del ambiente.
-2. **El detalle se abre identificándose** (reloj o tablet personal) y **se bloquea solo a
+2. **El detalle se abre identificándose** (iPad o celular personal) y **se bloquea solo a
    los 30 s**.
-3. **Notificaciones discretas:** sin texto médico en la pantalla bloqueada del reloj.
+3. **Notificaciones discretas:** sin texto médico en la pantalla bloqueada del celular o
+   del iPad.
 
 ### Transparencia y consentimiento
 
@@ -364,7 +389,7 @@ Se agregan el buddy system, la privacidad y los umbrales oficiales de Iker.
 - Tiene **umbrales oficiales** ✅: < 250 mSv por evento; NASA pide poder montar el refugio
   en **≤ 1 h**, permanecer **hasta 24 h** y terminar una caminata espacial en **≤ 2 h**.
 - Conecta con el material de radiación de la CSA de *Resources*.
-- Dato que da contexto: **~95 % de los eventos solares no se acercan a los límites**. EVA
+- Dato que da contexto: **~95 % de los eventos solares no se acercan a los límites**. Lunna
   no asusta: avisa cuando hace falta.
 
 ### Línea de tiempo
@@ -379,9 +404,9 @@ Orion o la ISS **no es público**.
 | 11:04 | **▲ ROJO · Evento de partículas solares.** *"Dirígete al refugio blindado. Ahora."* | **Todos** (alerta del ambiente) |
 | 11:04 | En pantalla: el evento real de DONKI que sirve de modelo, con su instrumento | Todos |
 | 11:05 | Protocolo RAD-01, un paso por pantalla | Cada astronauta |
-| 11:06 | **Buddy check:** el reloj de cada uno pregunta *"¿Tu pareja llegó al refugio?"* | Cada compañero |
-| 11:07 | Luis confirma a Ana y Ana a Luis. Mei no confirma, pero su reloj sí tiene señal | Tomás (pareja de Mei) |
-| 11:07 | Alerta a Tomás: *"Mei no ha confirmado. Su reloj tiene señal. Última ubicación: Módulo C."* Como Mei es la **CMO**, EVA avisa que el nivel 1 está sin cubrir | Tomás, que además es comandante (ubicación 🚨) |
+| 11:06 | **Buddy check:** el celular o iPad de cada uno pregunta *"¿Tu pareja llegó al refugio?"* | Cada compañero |
+| 11:07 | Luis confirma a Ana y Ana a Luis. Mei no confirma, pero su iPad sí tiene conexión | Tomás (pareja de Mei) |
+| 11:07 | Alerta a Tomás: *"Mei no ha confirmado. Su iPad tiene conexión. Última ubicación: Módulo C."* (ubicación simulada ⚠️) Como Mei es la **CMO**, Lunna avisa que el nivel 1 está sin cubrir | Tomás, que además es comandante (ubicación 🚨) |
 | 11:09 | Mei llega: tenía audífonos puestos | Todos ven "4 de 4 en el refugio" |
 | 11:31 | La tasa se normaliza. Evento cerrado. Dosis personal actualizada contra 250 mSv por evento y 600 mSv de carrera [A] | Cada uno ve la suya; la CMO todas; el comandante el margen |
 | 11:32 | La caminata espacial de Ana sigue en pie: su fatiga cerró el día 114 y la dosis queda dentro del margen | Ana ve el detalle; Tomás ve "apta" |
@@ -396,9 +421,9 @@ Orion o la ISS **no es público**.
 
 ---
 
-## 9. Módulos de EVA
+## 9. Módulos de Lunna
 
-**Los 22 módulos son parte de EVA. Ninguno se quita.** La prioridad solo decide el
+**Los 22 módulos son parte de Lunna. Ninguno se quita.** La prioridad solo decide el
 **orden de construcción**: se termina un nivel antes de empezar el siguiente.
 
 | Prioridad | Qué significa | Si no da el tiempo |
@@ -411,11 +436,11 @@ Orion o la ISS **no es público**.
 
 | # | Módulo | Qué incluye | De quién |
 |---|---|---|---|
-| 1 | **Panel de salud + Cuerpo EVA** | Figura humana clicable, semáforo ●■▲, los indicadores de §5.2 con etiqueta [A]/[T]/"tu normal", gráficas contra la línea base | Katy · Fani · Diana · Iker |
+| 1 | **Panel de salud + Cuerpo Lunna** | Figura humana clicable, semáforo ●■▲, los indicadores de §5.2 con etiqueta [A]/[T]/"tu normal", gráficas contra la línea base | Katy · Fani · Diana · Iker |
 | 2 | **Motor de prevención** | Línea base de 14 días, z robusto, reglas YAML, cruce de 3 señales, protocolo con seguimiento y cierre (fatiga 112 → 114) | Julio |
 | 3 | **Emergencias + buddy system** | Activación manual, automática o por un tercero; un paso por pantalla; registro sellado con SCET; buddy check | Julio · Katy · Diana |
 | 4 | **Radiación** | Eventos reales de DONKI; dosis personal (simulada ⚠️) contra los límites oficiales de §5.3 | Julio · Iker · Leo |
-| 5 | **Reloj + recordatorios** | Estado de un vistazo, "¿Estás bien?", alerta del compañero, recordatorios de medición | Katy · Fani |
+| 5 | **Diseño adaptable + recordatorios** | La misma app en laptop, iPad y celular (§9.1). En el celular: estado de un vistazo, "¿Estás bien?", alerta del compañero, recordatorios de medición | Katy · Fani |
 | 6 | **Privacidad: quién ve qué** | Matriz por rol, panel público, candados, "lo que ven de mí" | Katy |
 | 7 | **Comunicación con Tierra** | Cola priorizada, nota que llega tarde con su antigüedad, criterios "Contact Surgeon" de §5.4 | Julio · Fani · Iker |
 | 11 | **Salud femenina y diferencias por sexo** ⬆️ (decisión 3) | Supresión menstrual, inventario de anticonceptivos, riesgo de coágulos, mareo al volver a la gravedad, y **ajuste de la línea base por el ciclo** (la FC y la HRV cambian a lo largo del ciclo; sin esto, el motor da falsas alarmas). **Privado y sin juego** | Katy · Leo · Iker |
@@ -442,7 +467,45 @@ Orion o la ISS **no es público**.
 | 18 | **Motor diagnóstico probabilístico** | Diferencial con priors de Crucian 2016, "¿de dónde sale este %?" | Julio |
 | 20 | **Red tolerante a interrupciones (DTN)** | Bundle Protocol | Fani |
 | 21 | **Pruebas cognitivas largas y de transición** | DSST, Fractal 2-Back (alerta con z ≤ −1,5 [A]); prueba en cada cambio de gravedad | Leo · Iker |
-| 22 | **Conexión con hardware real** | Adaptadores para Bio-Monitor/Astroskin, relojes Bluetooth, ultrasonido (yugular grado 3 = pretrombótico [A]; OCT > 19,4 µm = primer signo de SANS [A]) | Katy · Leo · Iker |
+| 22 | **Conexión con hardware real** | Adaptadores para Bio-Monitor/Astroskin, ultrasonido (yugular grado 3 = pretrombótico [A]; OCT > 19,4 µm = primer signo de SANS [A]) y el reloj **Lunna Band** (concepto, §9.1) | Katy · Leo · Iker |
+
+### 9.1 Dispositivos: una app que se adapta 🔶
+
+**Por qué estos tres:** el reto pide software, no hardware, y acepta datos por "keyboard
+text, mouse clicks, or camera images" ✅ [R1]. A bordo de la ISS ya se usan laptops e
+**iPads certificados** para procedimientos y horarios ✅ [R2], y en febrero de 2026 NASA
+aprobó que las tripulaciones de **Crew-12 y Artemis II** lleven su propio celular ✅ [R3].
+Lunna usa lo que ya vuela.
+
+Es **una sola app** (PWA en TypeScript + React, decisión 10) con un diseño que cambia según
+el tamaño de la pantalla. No son tres apps.
+
+| Dispositivo | Para qué sirve en Lunna | Qué muestra |
+|---|---|---|
+| **Laptop** | Puesto de trabajo y **panel de pared** de la nave | Panel completo: figura humana, gráficas contra la línea base, estado ●■▲ de los 4, CMO, cola hacia Tierra |
+| **iPad** | Lo que el astronauta lleva por la nave (ya es equipo de a bordo) | Check-in de 20 s, prueba de reflejos PVT-B, protocolos un paso por pantalla, foto de la tira de orina |
+| **Celular** | Lo que trae en el bolsillo | Estado de un vistazo, avisos y recordatorios, "¿Estás bien?", alerta del compañero, botón de ayuda |
+
+**Reglas del diseño adaptable:**
+- Mismo semáforo ●■▲, mismos colores y mismos textos en los tres. Solo cambia cuánto cabe.
+- Celular: **una acción por pantalla**, botones grandes (se usa flotando, con guantes o con
+  prisa).
+- La emergencia se ve igual en los tres: ▲ rojo a pantalla completa con la instrucción.
+- La privacidad de §7 aplica igual: el panel de pared de la laptop es público; el iPad y el
+  celular son personales.
+- **En la demo los datos son simulados**, así que no hace falta Bluetooth. ⚠️ Si después se
+  conectan sensores: Web Bluetooth funciona en Chrome y Edge, no en Safari del iPad.
+
+**El reloj: concepto, no software.** Un celular o un iPad **no se lleva siempre puesto**,
+y a bordo no hay ningún equipo que se lleve siempre, mida signos vitales sin parar y avise a
+la tripulación. Ese hueco lo llena **Lunna Band**, que se presenta en **una diapositiva** como
+la siguiente fuente de datos de Lunna: qué mediría que la camiseta Bio-Monitor no mide, cómo
+ayudaría en emergencias y qué haría falta para que vuele. Detalle y fuentes:
+[Propuesta-reloj-LUNA.md](Propuesta-reloj-LUNA.md).
+
+[R1] Reto de Space Apps 2026, *Objectives*. https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/
+[R2] NASA, iPads certificados para procedimientos de la ISS. https://ntrs.nasa.gov/citations/20130000791
+[R3] Anuncio de NASA del 4 de febrero de 2026 sobre celulares en Crew-12 y Artemis II. https://appleinsider.com/articles/26/02/05/iphone-in-space-nasa-gives-approval-for-personal-iphones-to-artemis-astronauts
 
 ### Reglas que aplican a todos los módulos
 
@@ -457,7 +520,7 @@ Orion o la ISS **no es público**.
 |---|---|---|
 | **Datos y sintéticos** | 4 Radiación (DONKI) · generador de datos de la tripulación de §0.1 | 10 Nutrición y ejercicio (datos) |
 | **Motor** | 2 Motor de prevención · reglas YAML con los umbrales de §5 · 19 Asistente de voz | 14 Cómo se muestra el riesgo |
-| **UI** | 1 Panel + Cuerpo EVA · 5 Reloj (Huawei Watch 5 por Bluetooth) · selector de idioma | 12 Juego cooperativo |
+| **UI** | 1 Panel + Cuerpo Lunna · 5 Diseño adaptable (laptop, iPad, celular) · selector de idioma | 12 Juego cooperativo |
 | **Emergencia y privacidad** | 3 Emergencias + buddy check · 6 Privacidad | 9 Pánico (ilustrativo) |
 | **Ciencia y contenido** | Umbrales [A]/[T] en el YAML · criterios "Contact Surgeon" · protocolo RAD-01 · 11 Salud femenina | 13 Biblioteca |
 | **Demo y pitch** | 7 Comunicación con Tierra · guion · video · diapositivas | 8 Salud mental (pantallas) |
@@ -485,8 +548,8 @@ Diana y Fani: por definir. ⚠️ Confirmar con el equipo.
    número es de NASA."
 5. **1:05–1:15** · Día 114: cierra en verde. Llega la nota de Tierra con 41 min de
    antigüedad.
-6. **1:15–1:40** · **Evento solar real:** ▲ rojo para todos → refugio → buddy check → "Mei
-   no ha confirmado" → 4 de 4 a salvo. Mostrar el candado: la ubicación de Mei solo se
+6. **1:15–1:40** · **Evento solar real:** ▲ rojo para todos → refugio → buddy check en el
+   celular de Tomás → "Mei no ha confirmado" → 4 de 4 a salvo. Mostrar el candado: la ubicación de Mei solo se
    compartió durante la emergencia.
 7. **1:40–1:50** · Modo avión encendido toda la demo. Decirlo al final.
 
@@ -498,13 +561,14 @@ Diana y Fani: por definir. ⚠️ Confirmar con el equipo.
 |---|---|
 | **Los signos vitales son simulados.** Lo real son los eventos solares y los umbrales oficiales | El generador sigue los cambios en vuelo publicados (catálogo de Iker) y la incidencia de Crucian 2016 |
 | **No hay umbrales públicos de NASA para signos vitales** | Usamos [T] rotulados + línea base personal |
-| **Casi no hay laboratorio en tiempo real a bordo** | EVA no depende de sangre ni orina; usa lo que sí se mide en vuelo |
+| **Casi no hay laboratorio en tiempo real a bordo** | Lunna no depende de sangre ni orina; usa lo que sí se mide en vuelo |
 | **DONKI no da dosis** y el umbral de alarma de dosis no es público | Dosis simuladas; lo real es el evento, su instrumento y la latencia |
 | **Los protocolos clínicos no están validados** | La demo usa un protocolo logístico; los clínicos van marcados como ilustrativos |
 | **Estudios de 3 a 14 personas; pocos datos de mujeres** | Las diferencias por sexo son avisos, no diagnósticos |
 | **La línea base nunca se probó contra datos reales** | Umbrales 🔶 en un YAML que el cirujano de vuelo puede ajustar |
 | **La privacidad en tripulaciones de 4 es frágil** | No prometemos anonimato; consentimiento + reglas de NASA |
 | **Sin hardware real** | Capa de adaptadores lista (módulo 22) |
+| **El celular y el iPad no se llevan siempre puestos** | Por eso el reloj Lunna Band es la siguiente fuente de datos (concepto, §9.1) |
 
 ---
 
@@ -531,13 +595,14 @@ más estas:
 | Pregunta | Respuesta corta |
 |---|---|
 | **"¿De dónde salen sus umbrales?"** | "Cada uno dice si es oficial de NASA [A] o clínico terrestre [T]. Para signos vitales NASA no publica umbrales, por eso comparamos contra la normalidad de cada persona." |
-| **"¿Por qué se llama como la caminata espacial?"** | "Lo sabemos, y por eso a la caminata espacial le decimos siempre caminata espacial. Antes de cada EVA, EVA te dice si estás listo." |
+| **"¿Por qué Lunna si la demo va a Marte?"** | ⚠️ Falta definir la respuesta con el equipo. |
 | **"En una tripulación de 4, ¿qué privacidad puede haber?"** | "No prometemos anonimato. Cada rol ve solo lo que necesita, el panel de pared solo muestra el estado y cada persona ve qué ven los demás de ella." |
-| **"¿Y si el reloj se apaga en el buddy check?"** | "EVA distingue 'sin señal del reloj' de 'no responde'." |
+| **"¿Y si el iPad o el celular se apaga en el buddy check?"** | "Lunna distingue 'sin conexión' de 'no responde'." |
+| **"¿Por qué no hicieron un reloj?"** | "Porque lo que se pide es software, y a bordo ya vuelan laptops, iPads y desde 2026 celulares. El reloj Lunna Band es nuestro siguiente paso: lo que mediría que la camiseta no, y qué haría falta para que vuele." |
 | **"¿Qué pasa si la persona miente en el check-in?"** | "El CMO ve tendencias, no el día a día, y el resto del monitoreo es pasivo." |
 | **"¿Qué es real y qué es simulado?"** | "Reales: 51 eventos solares de NASA, su latencia, los umbrales de NASA-STD-3001 y la incidencia de Crucian 2016. Simulados: los signos vitales, y lo decimos en pantalla." |
 | **"¿Por qué no usan análisis de sangre?"** | "Porque a bordo casi no hay laboratorio en tiempo real: las muestras se congelan y se analizan en Tierra." |
-| **"¿Por qué 22 módulos?"** | "Porque eso es EVA completo. Los construimos por prioridad: primero los 7 que hacen funcionar la demo, después el resto." |
+| **"¿Por qué 22 módulos?"** | "Porque eso es Lunna completo. Los construimos por prioridad: primero los 7 que hacen funcionar la demo, después el resto." |
 
 ---
 
@@ -558,8 +623,8 @@ nombre, por ejemplo `- [x] Opción (Iker)`.
 
 **1. Nombre del producto** · En NASA, EVA significa caminata espacial (§0).
 - [ ] ⭐ EVA — Evaluación Vital Autónoma
-- [x] EVA, sin significado
-- [ ] Otro nombre: ______
+- [ ] EVA, sin significado
+- [x] Otro nombre: **Lunna** (14 nov)
 
 **2. Tripulación y contexto de la demo** · Tránsito a Marte, días 112–115 (§0.1).
 - [x] ⭐ Aprobar como está
@@ -577,8 +642,8 @@ nombre, por ejemplo `- [x] Opción (Iker)`.
 - [ ] Desmayo
 - [ ] Las dos
 
-**5. Evento real de DONKI** · 51 eventos SEP de 2024; mediana de 17 min.
-- [x] ⭐ Uno con latencia cercana a la mediana (17 min)
+**5. Evento real de DONKI** · 51 eventos SEP de 2024; mediana de 17 min sobre esos 51 (12 min sobre los 71 eventos de 2024 con alerta).
+- [x] ⭐ Uno con latencia cercana a la mediana (17 min, sobre 51 eventos)
 - [ ] El del 9 de mayo de 2024 (alerta 1 min después)
 - [ ] Que lo elija quien lleva datos
 
@@ -640,11 +705,11 @@ nombre, por ejemplo `- [x] Opción (Iker)`.
 
 | # | Decisión | Resultado | Votos |
 |---|---|---|---|
-| 1 | Nombre | EVA, sin significado | Katy (14 nov) |
+| 1 | Nombre | **Lunna** (antes EVA, sin significado) | Katy (14 nov) |
 | 2 | Tripulación y contexto | Aprobado como está | Katy (14 nov) |
 | 3 | Salud femenina | Sube al núcleo | Katy (14 nov) |
 | 4 | Emergencia principal | Evento de partículas solares | Katy (14 nov) |
-| 5 | Evento de DONKI | Uno con latencia cercana a la mediana (17 min) | Katy (14 nov) |
+| 5 | Evento de DONKI | Uno con latencia cercana a la mediana (17 min, sobre 51 eventos) | Katy (14 nov) |
 | 6 | Motor diagnóstico | Solo si pasamos el gate T−9 | Katy (14 nov) |
 | 7 | Juego cooperativo | Pantalla de diseño | Katy (14 nov) |
 | 8 | Qué ve el comandante | Apto / no apto, sin motivo | Katy (14 nov) |
@@ -664,18 +729,18 @@ equipo.
 
 | # | Duda | Por qué importa | A quién |
 |---|---|---|---|
-| 1 | ~~¿"Monarcas" es el nombre del equipo?~~ | ✅ **Sí.** Equipo Monarcas, producto EVA | Resuelta |
-| 2 | ~~¿Dónde está `RESUMEN-MAESTRO.md`?~~ | ✅ No está en el repo; seguimos sin él. La regla "la SpO₂ de reloj nunca es la única alerta" se mantiene por prudencia, sin cifra | Resuelta |
+| 1 | ~~¿"Monarcas" es el nombre del equipo?~~ | ✅ **Sí.** Equipo Monarcas, producto Lunna | Resuelta |
+| 2 | ~~¿Dónde está `RESUMEN-MAESTRO.md`?~~ | ✅ No está en el repo; seguimos sin él. La regla "la SpO₂ de muñeca nunca es la única alerta" se mantiene por prudencia, sin cifra | Resuelta |
 | 3 | ~~¿Cuántas horas quedan?~~ | ✅ No cambia el alcance: entran los 22 módulos y se construyen por prioridad (§9) | Resuelta |
 | 4 | **¿Qué glucómetro hay a bordo?** Iker no lo encontró | La glucosa es indicador del reto; hoy entra a mano | Iker |
 | 5 | **¿Qué umbral de tasa de dosis dispara la alarma?** No es público | Los números de la demo del evento solar son simulados | Datos |
 | 6 | **¿Usamos PHQ-9 y GAD-7 en la app?** Son de uso libre, pero sus cortes son terrestres | Más validez vs. más tiempo del astronauta | Ciencia |
 | 7 | **¿Citamos el checklist del transbordador (2006)?** Es público pero viejo | Es la mejor fuente pública de "Contact Surgeon" | Ciencia |
 | 8 | **Umbrales de SpO₂ y fiebre:** Iker propone ≤ 92 / ≤ 88 % y ≥ 39,4 °C, no oficiales | Hay que aprobarlos antes de ponerlos en el YAML | Ciencia + Motor |
-| 9 | **Reglas del evento local:** formato de entrega y categorías de premio de 2026. El idioma ya se resolvió: seleccionable | Afecta el video y el pitch | Demo y pitch |
+| 9 | ~~Reglas de entrega~~ | ✅ **Domingo 15 nov, 11:59 p.m. hora local.** Demo de máximo 7 diapositivas o video de 30 s. Página de envío en inglés; video en español con subtítulos en inglés ([guía del jurado](https://www.spaceappschallenge.org/resources/judging-awards-guide)). ⚠️ Confirmar con el Local Lead | Resuelta |
 | 10 | **Qué rol toma cada persona** (§9) | Sin roles claros, el núcleo no se construye | Todos |
 | 11 | **Fani:** su propuesta menciona "patrones hormonales (bef/iac)" | No queda claro qué significa | Fani |
-| 12 | ~~¿Cómo se conecta el reloj?~~ | ✅ Huawei Watch 5 **por Bluetooth**. ⚠️ Falta comprobar en el reloj real que entregue la frecuencia cardiaca con el perfil estándar que lee el módulo de Julio | Resuelta en decisión; falta prueba |
+| 12 | ~~¿Cómo se conecta el reloj?~~ | ✅ Ya no aplica: no se programa software de reloj. La app se adapta a laptop, iPad y celular; el reloj queda como concepto Lunna Band (§9.1) | Resuelta |
 | 13 | ~~¿El asistente de voz entra en la demo?~~ | ✅ Sí, con la arquitectura de Julio: el motor decide y el LLM solo redacta | Resuelta |
 | 14 | **¿Quién presenta el pitch?** | Decisión 13 sin definir | Todos |
 
@@ -683,7 +748,7 @@ equipo.
 
 ## 16. Pendientes antes de presentar
 
-- [ ] ⚠️ Elegir **cuál** de los eventos de DONKI con latencia cercana a 17 min (decisión 5).
+- [ ] ⚠️ Elegir **cuál** de los eventos de DONKI con latencia cercana a 17 min (mediana sobre 51 eventos; decisión 5).
 - [ ] ⚠️ Pasos del protocolo RAD-01: verificar o marcarlos como ilustrativos.
 - [x] ~~Votar las 14 decisiones de §14~~: 13 decididas; falta quién presenta.
 - [ ] 🔶 Integrar al documento las pruebas de viabilidad

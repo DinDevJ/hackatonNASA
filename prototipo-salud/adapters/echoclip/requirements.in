@@ -1,0 +1,10 @@
+# EchoCLIP (vendor/echo_CLIP @ 23cd327). Python 3.11. SIN torch/torchvision (se instalan aparte: torch 2.5.1 / torchvision 0.20.1).
+# Pines del repo: open_clip_torch 2.20.0, huggingface_hub 0.16.4, tokenizers 0.13.3, numpy 1.24.4, timm 0.9.5,
+# opencv-python-headless 4.8.0.76, Pillow 10.0.0. Quitados: matplotplib (sic, solo gradcam.py) y scipy (solo gradcam.py).
+open_clip_torch==2.20.0
+huggingface_hub==0.16.4
+tokenizers==0.13.3
+numpy==1.24.4
+timm==0.9.5
+opencv-python-headless==4.8.0.76
+Pillow==10.0.0

@@ -1,0 +1,14 @@
+# EchoPrime (vendor/EchoPrime @ 6d9c1ee). Python 3.11. SIN torch/torchvision (se instalan aparte: torch 2.5.1 / torchvision 0.20.1).
+# Pines del repo conservados: opencv-python-headless, pydicom; transformers 4.57.0 del repo esta "yanked" en PyPI -> 4.57.1 (model.py hace `import transformers`).
+# Quitados del requirements.txt del repo (no se importan en inferencia): ipywidgets, mysql-connector-python, polars,
+# pytorch-lightning, PyWavelets, wandb. Ver env.notas en manifest.json.
+# Usados por el codigo del repo pero NO listados en su requirements.txt: numpy, pandas, matplotlib, scikit-learn, tqdm.
+numpy==1.26.4
+pandas==2.2.3
+opencv-python-headless==4.5.5.64
+pydicom==2.3.1
+pillow==10.4.0
+matplotlib==3.9.4
+scikit-learn==1.5.2
+tqdm==4.67.1
+transformers==4.57.1

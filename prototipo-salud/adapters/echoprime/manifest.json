@@ -1,0 +1,121 @@
+{
+  "key": "echoprime",
+  "nombre": "EchoPrime",
+  "repo": "vendor/EchoPrime",
+  "repo_url": "https://github.com/echonet/EchoPrime",
+  "repo_commit": "6d9c1eee02eca040dfb45c0a59cbf7377510f4ec",
+  "entrypoint": "adapters/echoprime/infer.py",
+  "env": {
+    "dir": "envs/echoprime",
+    "python": "3.11",
+    "torch": "2.5.1",
+    "torchvision": "0.20.1",
+    "torch_index_url": "https://download.pytorch.org/whl/cu124",
+    "requirements_in": "adapters/echoprime/requirements.in",
+    "lock_windows": "adapters/echoprime/requirements-win.lock.txt",
+    "install_vars": {},
+    "editable": [],
+    "notas": "El repo no declara version de Python ni de torch/torchvision (Dockerfile: nvcr.io/nvidia/pytorch:24.01); aqui Python 3.11, torch 2.5.1/torchvision 0.20.1 (cu124) por el contrato. requirements.txt del repo (ipywidgets 8.1.2, mysql-connector-python 8.0.31, opencv-python-headless 4.5.5.64, polars 0.15.14, pydicom 2.3.1, pytorch-lightning 2.2.0.post0, PyWavelets 1.4.1, wandb 0.16.3, transformers 4.57.0). QUITADOS (no se importan en echo_prime/ ni utils/ ni en el notebook de inferencia; grep): ipywidgets (solo widgets de notebook), mysql-connector-python, polars, pytorch-lightning, PyWavelets, wandb. MANTENIDOS con el mismo pin: opencv-python-headless 4.5.5.64 (el README advierte que otras versiones dan imagenes con tinte verde) y pydicom 2.3.1. transformers 4.57.0 esta 'yanked' en PyPI ('Error in the setup causing installation issues'): se usa 4.57.1; model.py hace `import transformers` al importarse aunque la inferencia no use el codificador de texto. AGREGADOS (el codigo del repo los importa pero requirements.txt no los lista): numpy 1.26.4 (<2: opencv 4.5.5.64 no soporta numpy 2), pandas 2.2.3, matplotlib 3.9.4 (model.py importa pyplot), scikit-learn 1.5.2 (import sklearn), tqdm, pillow (decodifica DICOM JPEG baseline en pydicom 2.3.1). NO incluidos: av (torchvision.io.read_video de process_mp4s lo exige; el adaptador lee mp4/avi con cv2) ni decodificadores DICOM extra (python-gdcm/pylibjpeg): DICOM con JPEG sin perdida/JPEG2000 podria no abrirse -> problema abierto, pendiente de probar con un DICOM real. El adaptador no ejecuta EchoPrime.__init__ (rutas relativas al cwd, device forzado, torch.load sin map_location): replica sus pasos con rutas bajo weights/echoprime/model_data y torch.load(weights_only=True) para los .pt; los .pkl se cargan con pandas.read_pickle (pickle: solo del release oficial). Probado en Linux CPU con torch 2.5.1+cpu: prueba de carga dummy, rechazo de modalidad, error por pesos faltantes y un flujo con model_data FALSO (pesos aleatorios, candidatos sinteticos); NO se ha corrido inferencia real."
+  },
+  "pesos": [
+    {
+      "archivo": "weights/echoprime/model_data.zip",
+      "url": "https://github.com/echonet/EchoPrime/releases/download/v1.0.0/model_data.zip",
+      "tamano_bytes": 1338009590,
+      "tamano_fuente": "HEAD (curl -sIL) 2026-11-14: 302 -> HTTP 200 content-length 1338009590, sin login (no se descargo)",
+      "sha256": "b29362b6b40e8695b138d191f874ad92417b6da9fcdb2f0764ed1440be5272b3",
+      "sha256_fuente": "campo digest del asset en la API publica de releases (api.github.com/repos/echonet/EchoPrime/releases/tags/v1.0.0), 2026-11-14",
+      "acceso": "publico",
+      "acceso_evidencia": "HEAD sin credenciales: 302 -> 200 en release-assets.githubusercontent.com",
+      "licencia": "Academic Software License de Cedars-Sinai (vendor/*/LICENSE): solo uso educativo/investigacion academica o sin fines de lucro, sin transferir a terceros; uso comercial requiere licencia aparte; publicaciones deben citar a Vukadinovic, He y Ouyang (EchoPrime) / la atribucion indicada en el LICENSE.",
+      "pasos_manuales": null,
+      "descomprimir_en": "weights/echoprime",
+      "descripcion": "README paso 2: contiene model_data/weights/{echo_prime_encoder.pt, view_classifier.pt, echo_prime_text_encoder.pt} y model_data/candidates_data/{candidate_studies.csv, candidate_reports.pkl, candidate_labels.pkl} (rutas leidas de model.py L41,50,78-84; contenido interno del zip NO verificado: no se descargo). El README indica `unzip model_data.zip` y luego mover los .pt de candidatos a model_data/candidates_data/."
+    },
+    {
+      "archivo": "weights/echoprime/model_data/candidates_data/candidate_embeddings_p1.pt",
+      "url": "https://github.com/echonet/EchoPrime/releases/download/v1.0.0/candidate_embeddings_p1.pt",
+      "tamano_bytes": 1260213315,
+      "tamano_fuente": "HEAD (curl -sIL) 2026-11-14: 302 -> HTTP 200 content-length 1260213315, sin login (no se descargo)",
+      "sha256": null,
+      "acceso": "publico",
+      "acceso_evidencia": "HEAD sin credenciales: 302 -> 200",
+      "licencia": "Academic Software License de Cedars-Sinai (vendor/*/LICENSE): solo uso educativo/investigacion academica o sin fines de lucro, sin transferir a terceros; uso comercial requiere licencia aparte; publicaciones deben citar a Vukadinovic, He y Ouyang (EchoPrime) / la atribucion indicada en el LICENSE.",
+      "pasos_manuales": null,
+      "descomprimir_en": null,
+      "descripcion": "Embeddings de estudios candidatos (parte 1). p1+p2 = ~1.23 M x 512 float32 (el notebook muestra 1230676 informes). Se guarda tras descomprimir model_data.zip (este archivo va despues del zip en la lista)."
+    },
+    {
+      "archivo": "weights/echoprime/model_data/candidates_data/candidate_embeddings_p2.pt",
+      "url": "https://github.com/echonet/EchoPrime/releases/download/v1.0.0/candidate_embeddings_p2.pt",
+      "tamano_bytes": 1260213315,
+      "tamano_fuente": "HEAD (curl -sIL) 2026-11-14: 302 -> HTTP 200 content-length 1260213315, sin login (no se descargo)",
+      "sha256": null,
+      "acceso": "publico",
+      "acceso_evidencia": "HEAD sin credenciales: 302 -> 200",
+      "licencia": "Academic Software License de Cedars-Sinai (vendor/*/LICENSE): solo uso educativo/investigacion academica o sin fines de lucro, sin transferir a terceros; uso comercial requiere licencia aparte; publicaciones deben citar a Vukadinovic, He y Ouyang (EchoPrime) / la atribucion indicada en el LICENSE.",
+      "pasos_manuales": null,
+      "descomprimir_en": null,
+      "descripcion": "Embeddings de estudios candidatos (parte 2)."
+    }
+  ],
+  "muestras": [
+    {
+      "archivo": "samples/echoclip_example_video.avi",
+      "fuente": "vendor/echo_CLIP/example_video.avi (MJPEG 224x224, 113 frames). NO es una muestra oficial de EchoPrime: sirve solo para probar la carga/ruta mp4-avi como estudio de UN video; un solo video da metricas poco informativas (EchoPrime espera un estudio multivista).",
+      "licencia": "Academic Software License de Cedars-Sinai; ver samples/FUENTES.md",
+      "modalidad": "video_2d",
+      "vista": "desconocida"
+    },
+    {
+      "archivo": "weights/echoprime/model_data/example_study",
+      "fuente": "Muestra OFICIAL segun EchoPrimeDemo.ipynb celda 0 (INPUT = 'model_data/example_study': carpeta de DICOM de un estudio, ~50 videos segun la barra de progreso de la celda 3). Se obtiene al descomprimir model_data.zip; su presencia dentro del zip NO esta verificada (no se descargo). No esta en samples/ ni se copio.",
+      "licencia": "Academic Software License de Cedars-Sinai; origen/anonimizacion del estudio no documentados en el repo: no redistribuir",
+      "modalidad": "video_2d",
+      "vista": "desconocida"
+    }
+  ],
+  "modalidades_admitidas": [
+    "video_2d",
+    "doppler_color"
+  ],
+  "vistas_admitidas": [
+    "cualquiera"
+  ],
+  "entrada": "UN ESTUDIO multivista: carpeta con DICOM multiframe (.dcm; procedimiento oficial del notebook, con mascara del sector) y/o videos .mp4/.avi ya recortados (ruta ep.process_mp4s del README: sin mascara). Tambien un solo archivo. El modelo clasifica la vista de cada video (11 vistas) y pondera por vista. EchoPrime incluye vistas Doppler (Apical_Doppler, Doppler_Parasternal_Long/Short) en el estudio, por eso 'doppler_color' (clips multiframe) se admite SOLO como componente del estudio multivista, sin analisis Doppler cuantitativo; Doppler espectral/imagenes fijas (el repo las omite: model.py L109-111), imagen 2D y volumen 3D se rechazan o se omiten con 'analisis no implementado'. Los DICOM multiframe en escala de grises fallan en el codigo oficial (se omiten con el motivo).",
+  "salidas": [
+    "vista por video: tipo probabilidad_clase, metric 'vista[<archivo>]:<clase>', unit probabilidad_modelo_0_1 (softmax de los logits del clasificador de 11 vistas; el repo usa argmax; no calibrado); las 11 probabilidades y los logits van en raw_output",
+    "metricas por recuperacion (predict_metrics, k=50; 21 variables de section_to_phenotypes.pkl): tipo medicion, notes 'estimación por recuperación de EchoPrime'; ejection_fraction en %, pulmonary_artery_pressure_continuous en mmHg, el resto (hallazgos binarios) como fraccion de vecinos 0-1 (unit fraccion_vecinos_0_1, NO probabilidad calibrada)",
+    "informe generado por recuperacion (generate_report): una fila tipo hallazgo por seccion (metric 'informe:<seccion>', value texto) + informe_generado.txt; es texto de otros estudios, no redactado para este",
+    "embeddings: embeddings_estudio.npy (N x 523 = 512 de video + 11 one-hot de vista) como artifact",
+    "raw_output: probabilidades de vista, metricas sin redondear, umbrales ROC de Cedars-Sinai (assets/roc_thresholds.csv) solo como referencia, videos omitidos y motivo, vram_pico_mb"
+  ],
+  "requiere_prompt": false,
+  "opciones": {
+    "device": "auto",
+    "lote_videos": 4,
+    "generar_informe": true,
+    "idioma": "en",
+    "k": 50,
+    "guardar_embeddings": true,
+    "permitir_color": false,
+    "prueba_carga_dummy": false
+  },
+  "vram_estimada": {
+    "gb": 2.0,
+    "base": "ESTIMACION sin medir en GPU: 122,201,611 parametros medidos (MViT-v2-S 34,623,872 + ConvNeXt-B 87,577,739) x 4 B = 466 MB + ~280 MB/video de activaciones (delta de RSS medido en CPU: 336 MB con 1 video, 1071 MB con 4) x lote 4 = ~1.1 GB => ~1.6 GB (lote 8: ~2.7 GB; el repo usa lote 50, que NO cabria). Los candidate_embeddings (1,230,676 x 512 float32 = 2.4 GB) se quedan en CPU/RAM como en el repo; si fueran a GPU sumarian 2.4 GB. RAM de CPU: pico > 6 GB estimado con informe (embeddings 2.4 GB + 1.2 M informes decodificados + etiquetas), sin medir; options.generar_informe=false evita decodificar los informes.",
+    "cabe_en_6gb": "probable"
+  },
+  "licencia": "Academic Software License de Cedars-Sinai (vendor/*/LICENSE): solo uso educativo/investigacion academica o sin fines de lucro, sin transferir a terceros; uso comercial requiere licencia aparte; publicaciones deben citar a Vukadinovic, He y Ouyang (EchoPrime) / la atribucion indicada en el LICENSE.",
+  "estado": "pendiente de probar en PC",
+  "motivo_estado": "En Linux solo se probo la prueba de carga dummy (arquitectura sin pesos + tensor aleatorio), el rechazo de modalidad, el error limpio por pesos faltantes y un flujo con model_data FALSO. NO se ha corrido inferencia real: faltan ~3.9 GB de pesos/candidatos (descargar_pesos.ps1) y no hay un DICOM real de estudio para verificar la ruta de mascara.",
+  "preprocesamiento": "Oficial: vendor/EchoPrime/echo_prime/model.py L87-210 (process_dicoms / process_mp4s) + utils/utils.py L251-268 y L339-423; ver config.preprocesamiento_fuente en response.json.",
+  "no_implementado": [
+    "volumen_3d",
+    "doppler_espectral",
+    "imagen_2d",
+    "analisis cuantitativo Doppler",
+    "codificador de texto (echo_prime_text_encoder.pt, solo fine-tuning)"
+  ],
+  "timeout_s": 3600
+}

@@ -45,6 +45,13 @@ MALESTARES = [
     (11, "Trombosis yugular y SANS", "Risk of SANS / venous thrombosis (HRP)"),
 ]
 VARIABLES = ["fc_reposo", "spo2", "respiracion", "temperatura", "presion_arterial", "sueno", "pvt_lapsos", "co2_cabina", "sintomas"]
+# ID de catálogo de cada variable (para unir con LUNNA de Julio y la tabla de Iker). Dueño entre paréntesis.
+ID_CATALOGO = {
+    "fc_reposo": "04:A4 / 01:V3 (Julio)", "spo2": "04:A3 (Julio)", "respiracion": "04:A2 (Julio)",
+    "temperatura": "04:A1 (Julio)", "presion_arterial": "01:V1 (Julio)", "sueno": "03:V30 (Leo)",
+    "pvt_lapsos": "03:V66 (Iker)", "co2_cabina": "04:A23 (Julio)",
+    "sintomas": "02:V67a, 03:V82, 04:A40–A50 (Leo, Persona 5)",
+}
 
 # (malestar, variable): (peso 0–3, dirección, nivel A/B/C, referencia o None, mecanismo)
 P = {
@@ -123,7 +130,7 @@ for mid, mal, riesgo in MALESTARES:
         sd = 0.5 if peso == 0 else SD[nivel]
         texto, doi = REF[ref] if ref else ("Juicio fisiológico del equipo (sin fuente directa)", "")
         filas.append({
-            "malestar_id": mid, "malestar": mal, "riesgo_nasa": riesgo, "variable": v,
+            "malestar_id": mid, "malestar": mal, "riesgo_nasa": riesgo, "variable": v, "id_catalogo": ID_CATALOGO[v],
             "peso_fisiologico": peso, "direccion": dirc, "nivel_evidencia": nivel,
             "mecanismo": mec, "referencia": texto, "doi": doi, "url": f"https://doi.org/{doi}" if doi else "",
             "prior_media": float(peso), "prior_de": sd,
@@ -135,7 +142,7 @@ with open(aqui / "pesos.csv", "w", encoding="utf-8-sig", newline="") as f:
     w.writeheader(); w.writerows(filas)
 (aqui / "pesos.json").write_text(json.dumps({
     "descripcion": "Pesos fisiológicos (0–3) por malestar × variable, con prior Normal(prior_media, prior_de) para actualización bayesiana.",
-    "variables": VARIABLES, "niveles": {"A": "relación medida", "B": "mecanismo documentado", "C": "juicio fisiológico"},
+    "variables": VARIABLES, "id_catalogo": ID_CATALOGO, "niveles": {"A": "relación medida", "B": "mecanismo documentado", "C": "juicio fisiológico"},
     "referencias": {k: {"cita": t, "doi": d, "url": f"https://doi.org/{d}"} for k, (t, d) in REF.items()},
     "pesos": filas}, ensure_ascii=False, indent=1), encoding="utf-8")
 

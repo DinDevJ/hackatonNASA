@@ -356,14 +356,18 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
       const fase = (d) => (d <= sang ? "per" : d === ovu ? "ovu" : d >= fertil[0] && d <= fertil[1] ? "fer" : d > dur - 5 ? "pms" : "nor");
       const NOMBRE = { per: "Menstruación", fer: "Ventana fértil", ovu: "Ovulación estimada", pms: "Premenstrual", nor: diaC < ovu ? "Fase folicular" : "Fase lútea" };
       const prox = dur - diaC + 1, aOvu = ovu - diaC;
+      // Lo registrado manda sobre lo predicho (como Clue): un día con sangrado anotado se pinta rojo aunque la
+      // predicción diga otra fase. Manchado = aro rojo; ligero/medio/abundante = rojo sólido, más intenso.
+      const flujo = (isoD) => FLUJO.find((o) => (C.registro[isoD] || []).includes(o)) || null;
+      const claseFlujo = (isoD) => { const f = flujo(isoD); return f ? ` cd-real cd-flujo-${FLUJO.indexOf(f)}` : ""; };
       const R = 104, cx = 130, cy = 130;
       const puntos = Array.from({ length: dur }, (_, i) => {
         const d = i + 1, ang = (-90 + (i * 360) / dur) * Math.PI / 180, x = cx + R * Math.cos(ang), y = cy + R * Math.sin(ang);
         const f = fase(d), hoyD = d === diaC;
         const fechaD = new Date(hoy.getTime() + (d - diaC) * 864e5).toISOString().slice(0, 10);
-        return `<g class="cd cd-${f} ${hoyD ? "cd-hoy" : ""}">${hoyD ? `<circle cx="${x}" cy="${y}" r="15" class="cd-aro"/>` : ""}<circle cx="${x}" cy="${y}" r="${hoyD ? 10 : 7}"/>${C.registro[fechaD] ? `<circle cx="${cx + (R - 19) * Math.cos(ang)}" cy="${cy + (R - 19) * Math.sin(ang)}" r="2.6" class="cd-reg"/>` : ""}</g>`;
+        return `<g class="cd cd-${f} ${hoyD ? "cd-hoy" : ""}${claseFlujo(fechaD)}">${hoyD ? `<circle cx="${x}" cy="${y}" r="15" class="cd-aro"/>` : ""}<circle cx="${x}" cy="${y}" r="${hoyD ? 10 : 7}"/>${C.registro[fechaD] ? `<circle cx="${cx + (R - 19) * Math.cos(ang)}" cy="${cy + (R - 19) * Math.sin(ang)}" r="2.6" class="cd-reg"/>` : ""}</g>`;
       }).join("");
-      const semana = Array.from({ length: 7 }, (_, i) => { const d = ((diaC - 4 + i - 1 + dur) % dur) + 1, f = new Date(hoy.getTime() + (i - 3) * 864e5); return `<div class="sem-dia ${i === 3 ? "hoy" : ""}"><small>${f.toLocaleDateString("es-MX", { weekday: "narrow", timeZone: "UTC" })}</small><span class="cd-${fase(d)}">${f.getUTCDate()}</span>${C.registro[f.toISOString().slice(0, 10)] ? "<i></i>" : ""}</div>`; }).join("");
+      const semana = Array.from({ length: 7 }, (_, i) => { const d = (((diaC - 1 + (i - 3)) % dur) + dur) % dur + 1, f = new Date(hoy.getTime() + (i - 3) * 864e5); return `<div class="sem-dia ${i === 3 ? "hoy" : ""}"><small>${f.toLocaleDateString("es-MX", { weekday: "narrow", timeZone: "UTC" })}</small><span class="cd-${fase(d)}${claseFlujo(f.toISOString().slice(0, 10))}">${f.getUTCDate()}</span>${C.registro[f.toISOString().slice(0, 10)] ? "<i></i>" : ""}</div>`; }).join("");
       p.innerHTML = `${titulo("Ciclo", `<span class="priv-chip">${ic("candado", "ic-sm")} Privado</span>`)}
         ${supr ? `<div class="tarjeta ciclo-supr"><h3>${ic("escudo")} Supresión menstrual activa</h3><p>DIU de levonorgestrel. Lunna no calcula fases; sigue registrando sangrado inesperado y síntomas.</p></div>` : `
         <div class="ciclo-anillo">
@@ -640,10 +644,11 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
   };
 
   // Registro del día en Ciclo, con categorías como Clue
+  const FLUJO = ["Manchado", "Ligero", "Medio", "Abundante"];
   function registrarCiclo(iso) {
     const C = E.ciclo, hoy = C.registro[iso] || [];
     const CAT = [
-      ["Sangrado", "per", "gota", "#FF5A75", ["Manchado", "Ligero", "Medio", "Abundante"]],
+      ["Sangrado", "per", "gota", "#FF5A75", FLUJO],
       ["Dolor", "pms", "curita", "#9B6BFF", ["Cólicos", "Cabeza", "Ovulación", "Senos sensibles"]],
       ["Emociones", "emo", "chispa", "#F5A524", ["Feliz", "Sensible", "Triste", "Irritable"]],
       ["Energía", "fer", "rayo", "#1AA6D6", ["Con energía", "Cansada", "Agotada"]],
@@ -663,7 +668,14 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
       $("#c-ok", h).addEventListener("click", () => {
         const sel = $$('[data-op][aria-pressed="true"]', h).map((b) => b.dataset.op);
         if (sel.length) C.registro[iso] = sel; else delete C.registro[iso];
-        mem.guardar("ciclo", C); cerrarHoja(); aviso(sel.length ? `Registrado: ${sel.length} cosa${sel.length > 1 ? "s" : ""}` : "Sin registro hoy"); ir("ciclo");
+        // Flujo (no manchado) fuera de los días de sangrado predichos = empezó un periodo nuevo: el ciclo se
+        // recalcula desde hoy, como en Clue. El manchado solo se marca; no mueve la predicción.
+        const conFlujo = sel.some((o) => o !== "Manchado" && FLUJO.includes(o));
+        const dur = Math.max(21, Math.min(40, +C.duracion || 28)), sang = Math.max(2, Math.min(9, +C.sangrado || 5));
+        const diaC = (((Math.floor((new Date(iso + "T00:00:00Z") - new Date(C.ultima + "T00:00:00Z")) / 864e5)) % dur) + dur) % dur + 1;
+        let msg = sel.length ? `Registrado: ${sel.length} cosa${sel.length > 1 ? "s" : ""}` : "Sin registro hoy";
+        if (conFlujo && diaC > sang) { C.ultima = iso; msg = "Empezó tu periodo: ajusté tu ciclo desde hoy"; }
+        mem.guardar("ciclo", C); cerrarHoja(); aviso(msg); ir("ciclo");
       });
     });
   }

@@ -685,6 +685,7 @@ window.LUNNA_EN = {
   "Emergencia cerrada": "Emergency closed",
   "Emergencia roja": "Red emergency",
   "Emociones": "Emotions",
+  "Empezó tu periodo: ajusté tu ciclo desde hoy": "Your period started: I adjusted your cycle from today",
   "en {n} días": "in {n} days",
   "en atención": "needs attention",
   "En ayunas y tiempo en rango": "Fasting and time in range",

@@ -73,11 +73,11 @@ test('semillas incrementales: una base vieja recibe los dispositivos nuevos sin 
   vieja.exec(`CREATE TABLE IF NOT EXISTS _x (a)`);
   const ruta = fileURLToPath(new URL('../semillas/inicial.json', import.meta.url));
   cargarInicial(vieja, ruta);
-  vieja.prepare(`DELETE FROM dispositivos WHERE id IN (2561, 2817)`).run();   // simula una base anterior
+  vieja.prepare(`DELETE FROM dispositivos WHERE id IN (401, 302)`).run();   // simula una base anterior
   vieja.prepare(`UPDATE variables SET nombre = 'editado por el equipo' WHERE id = '04:A4'`).run();
   const { nuevos } = cargarInicial(vieja, ruta);
   assert.equal(nuevos.dispositivos, 2);
-  assert.ok(vieja.prepare(`SELECT 1 FROM dispositivos WHERE id = 2561`).get());
+  assert.ok(vieja.prepare(`SELECT 1 FROM dispositivos WHERE id = 401`).get());
   const v = vieja.prepare(`SELECT nombre FROM variables WHERE id = '04:A4'`).get() as { nombre: string };
   assert.equal(v.nombre, 'editado por el equipo', 'no pisa lo que el equipo editó');
   const h = vieja.prepare(`SELECT COUNT(*) AS n FROM historial`).get() as { n: number };

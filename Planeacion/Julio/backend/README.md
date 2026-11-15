@@ -46,6 +46,9 @@ Requiere **Node 22.6+** y nada más: SQLite y TypeScript vienen integrados en No
 | Estado actual de la tripulación | `GET /api/estado` |
 | Gráfica de una variable | `GET /api/muestras?tripulante=ana&variable=04:A4&desde=…` |
 | Predicción y banda esperada | `GET /api/prediccion/ana` |
+| **Todo lo de un tripulante, ya evaluado** (lo usan el celular y la central) | `GET /api/app/:tripulante` — por variable: último valor, mediana, esperado, banda, z, `estado`, `motivo`, umbral clínico, serie de 14 días; más sus alertas y avisos |
+| Umbrales clínicos de referencia | `GET /api/referencias` (de `semillas/medibles.json`) |
+| Ventana de LUNNA (sólo demostraciones) | `GET/PUT /api/lunna/ventana` `{ minutos }` — 1440 en misión |
 | Alertas | `GET /api/alertas` |
 | Editar variables · esquemas · dispositivos | `GET/POST /api/variables` · `/api/esquemas` · `/api/dispositivos` |
 | Tripulantes, basales e historial | `GET/POST /api/tripulantes` · `PUT …/:id/basales` · `POST …/:id/historial` |
@@ -173,8 +176,24 @@ Sin datos propios manda la literatura; con una misión previa, su historial; tra
 calibración, sus datos. **La predicción siempre trae su banda del 95 %**, y cada alerta su
 `prob_nominal`: la probabilidad de ver esa desviación si la persona siguiera normal.
 
-Relación con la fórmula de Bayes del cuaderno, firmware del ESP32 y pasarela Bluetooth:
-**[../INTEGRACION.md](../INTEGRACION.md)**.
+### Dos criterios, el peor manda
+
+| Criterio | Qué compara | Para qué |
+|---|---|---|
+| **Personal** (LUNNA) | Mediana de 24 h contra lo esperado para **esa** persona en ese entorno | Derivas lentas que un rango genérico no ve (fatiga, desacondicionamiento) |
+| **Umbral clínico** | Mediana de las últimas 5 muestras válidas (≤ 10 min) contra el límite de `semillas/medibles.json` | Lo agudo: una SpO₂ de 87 % es grave aunque sea «normal para ti». Vale también en calibración |
+
+Cada alerta dice su `motivo`: `personal`, `umbral` o `ambos`, y si hubo umbral, cuál y de qué fuente.
+Los umbrales de signos vitales del catálogo de Iker son **[T] clínicos terrestres**: no se encontró una
+tabla pública de NASA para ellos. Trazabilidad dato por dato en [`semillas/medibles.md`](semillas/medibles.md).
+
+⚠️ **Modo demostración.** Con 24 h, una anomalía provocada en una demo de minutos tarda en mover la
+mediana y la vuelta a verde no se ve. El simulador, al pasar a «En vivo», acorta la ventana a 5 min y lo
+anuncia (`modo mision` en la terminal de la PC la devuelve a 24 h). `/api/salud` y la página de estado
+siempre dicen qué ventana está activa.
+
+Relación con la fórmula de Bayes del cuaderno, firmware del ESP32 y pasarela Bluetooth: `INTEGRACION.md`,
+en la etiqueta `planeacion-archivo` (`git checkout planeacion-archivo -- Planeacion/Julio/INTEGRACION.md`).
 
 ### Resultado con el simulador
 

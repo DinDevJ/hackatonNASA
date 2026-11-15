@@ -9,7 +9,7 @@
 import { ahora, type BD } from './db.ts';
 import {
   calibrandoEn, entornoEn, estadoRecordado, evaluarVariable, mediana, motivoDe, MUESTRA_VALIDA, type Motivo,
-} from './ingesta.ts';
+ ventanaPersonal } from './ingesta.ts';
 import { CLAVES, peor, referencias, type Estado, type Umbral } from './referencias.ts';
 import type { Entorno } from './lunna.ts';
 
@@ -43,6 +43,8 @@ export interface EstadoApp {
   tripulante: { id: string; nombre: string; rol: string | null };
   entorno: Entorno;
   dia_mision: number | null;
+  /** Ventana de la mediana del criterio personal, en minutos (1440 = 24 h, en misión). */
+  ventana_personal_min: number;
   t: string;
   variables: VariableApp[];
   alertas: Array<Record<string, unknown>>;
@@ -148,5 +150,5 @@ export function estadoApp(db: BD, idTripulante: string, t: string = ahora()): Es
     `SELECT * FROM subida WHERE entregado = 1 AND para IN (?, 'todos') ORDER BY id DESC LIMIT 20`,
   ).all(trip.id) as Array<Record<string, unknown>>).map((a) => ({ ...a, datos: deTexto(a.datos) }));
 
-  return { tripulante: { id: trip.id, nombre: trip.nombre, rol: trip.rol ?? null }, entorno: entornoEn(db, t), dia_mision, t, variables, alertas, avisos };
+  return { tripulante: { id: trip.id, nombre: trip.nombre, rol: trip.rol ?? null }, entorno: entornoEn(db, t), dia_mision, ventana_personal_min: ventanaPersonal(), t, variables, alertas, avisos };
 }

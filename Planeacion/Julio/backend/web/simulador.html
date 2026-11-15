@@ -478,6 +478,7 @@ button.sec:hover{border-color:rgba(88,200,255,.55);box-shadow:0 0 0 3px rgba(88,
       <text x="472" y="395" class="sub">opcional · FC (PPG) · SpO₂</text>
     </g>
     <text x="400" y="608" class="sub">Tripulante: Ana</text>
+    <text x="400" y="622" class="sub" id="nota-trip">La tripulación completa transmite · la maqueta muestra a Ana</text>
 
     <!-- ═══ consola: escritorio, PC central y smartphone ═══ -->
     <ellipse cx="975" cy="600" rx="170" ry="16" fill="#8fa9b9" opacity=".6"/>
@@ -523,7 +524,7 @@ button.sec:hover{border-color:rgba(88,200,255,.55);box-shadow:0 0 0 3px rgba(88,
     <h2 id="intro-t">Así trabajaría Lunna dentro de una nave</h2>
     <p>Los sensores, sus lecturas y la tripulación de esta maqueta son <b>simulados</b>. Lo real es el software: cada trama llega al <b>backend</b> que correría en la computadora central, y <b>Lunna</b> la evalúa.</p>
     <ol class="bv-pasos">
-      <li><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg></span><div><b>Sensores puestos</b><span>La playera (con su ESP32), el brazalete y el reloj miden signos vitales y los mandan por Bluetooth.</span></div></li>
+      <li><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg></span><div><b>Sensores puestos</b><span>La playera (con su ESP32), el brazalete y el reloj miden signos vitales y los mandan por Bluetooth. Toda la tripulación lleva el mismo equipo; la maqueta muestra a Ana.</span></div></li>
       <li><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span><div><b>Computadora central</b><span>Sabe quién lleva cada dispositivo, guarda los datos y Lunna los compara con lo esperado para esa persona.</span></div></li>
       <li><span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span><div><b>Tierra</b><span>Recibe las alertas con el retraso de la luz y responde con avisos a la tripulación.</span></div></li>
     </ol>
@@ -543,14 +544,13 @@ const S = {
   lanzamiento: null, vivo: false, temporizador: null, tic: 0,
   encendido: { playera: true, brazalete: true, reloj: true, cel: true },
   bleConectado: true, colaEsp: [], descartadas: 0,
-  seq: { 401: 0, 201: 0, reloj: 0 },
+  trip: [],     // tripulación, la carga cargarTripulacion() del backend; Ana va primero
   anom: { fatiga: 0, taquipnea: 0, fiebre: 0, hipoxia: 0, hiper: 0 },
+  esc: null,    // escenario clínico en curso (sólo Ana)
   contactoReloj: true, ultimosVar: {}, version: '',
   enlace: { owlt_s: 20, abierto: true }, pred: [],
   consola: { playera: [], esp32: [], brazalete: [], reloj: [], cel: [], pc: [], tierra: [] },
 };
-const BASAL = { fc: 62, spo2: 98, fr: 14, temp: 36.6, sis: 115, dia: 75 };
-const DELTA = { fc: -0.08, spo2: -0.005, fr: -0.04, temp: 1.0, sis: -0.06, dia: -0.10 };
 const NOMBRE = { '04:A4': 'frecuencia cardiaca', '04:A3': 'SpO₂', '04:A2': 'frec. respiratoria', '04:A1': 'temperatura', '01:V1': 'PA sistólica', 'X:PAD': 'PA diastólica', 'X:PAM': 'PA media' };
 const CORTO = { '04:A4': 'fc', '04:A3': 'spo2', '04:A2': 'fr', '04:A1': 'temp', '01:V1': 'pa_sis', 'X:PAD': 'pa_dia', 'X:PAM': 'pa_media' };
 const NODO = { esp32: 'esp32', playera: 'playera-01', brazalete: 'brazalete-201', reloj: 'reloj-ana', cel: 'smartphone', pc: 'pc-central', tierra: 'tierra' };
@@ -563,7 +563,14 @@ const api = async (ruta, metodo = 'GET', cuerpo) => {
   if (!r.ok) throw new Error(j.error || r.status);
   return j;
 };
-const gauss = () => Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random());
+// Generador con semilla (mulberry32): la HISTORIA sale idéntica cada vez; el vivo usa Math.random.
+const sembrar = (a) => () => {
+  a = (a + 0x6D2B79F5) | 0;
+  let x = Math.imul(a ^ (a >>> 15), 1 | a);
+  x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+  return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+};
+const gauss = (azar = Math.random) => Math.sqrt(-2 * Math.log(1 - azar())) * Math.cos(2 * Math.PI * azar());
 const hora = (ms) => new Date(ms).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -594,6 +601,62 @@ function decodificar(b) {
 }
 const b64 = (u8) => btoa(String.fromCharCode(...u8));
 const hex = (u8) => [...u8].map((x) => x.toString(16).padStart(2, '0')).join(' ');
+
+// ═══════════ Tripulación ═══════════
+// Quién lleva qué. Los ids y claves de los equipos son del simulador; nombres y basales salen del
+// backend (GET /api/tripulantes y /api/tripulantes/:id). La maqueta dibuja a Ana; los demás
+// transmiten en segundo plano y sólo se les ve llegar a la PC central.
+const PROTA = 'ana';
+const EQUIPO = {
+  ana:   { playera: [401, 'playera-01'], brazalete: [201, 'brazalete-1'],   reloj: [302, 'reloj-ana'] },
+  tomas: { playera: [402, 'playera-02'], brazalete: [202, 'brazalete-202'], reloj: [303, 'reloj-tomas'] },
+  mei:   { playera: [403, 'playera-03'], brazalete: [203, 'brazalete-203'], reloj: [304, 'reloj-mei'] },
+  luis:  { playera: [404, 'playera-04'], brazalete: [204, 'brazalete-204'], reloj: [305, 'reloj-luis'] },
+};
+const TIPO_EQUIPO = {
+  playera:   { tipo: 'chest', perfil: 'eva', esquema_id: 5, nombre: 'Playera con sensores (ESP32 integrado): FC, respiración, temperatura' },
+  brazalete: { tipo: 'wrist', perfil: 'eva', esquema_id: 2, nombre: 'Brazalete de presión' },
+  reloj:     { tipo: 'wrist', perfil: 'json', nombre: 'Reloj (BLE directo a la central)' },
+};
+// Respuesta «real» de cada persona a la órbita (Δ relativo; temperatura en °C). SINTÉTICA: es el
+// guion de la simulación, con los mismos valores que src/simulador.ts. LUNNA no la conoce: la aprende.
+const RESPUESTA = {
+  ana:   { fc: -0.08, spo2: -0.005, fr: -0.04, temp: 1.0, sis: -0.06, dia: -0.10 },
+  tomas: { fc: -0.05, spo2: -0.005, fr: -0.05, temp: 0.9, sis: -0.07, dia: -0.11 },
+  mei:   { fc: -0.03, spo2: -0.004, fr: -0.06, temp: 0.8, sis: -0.08, dia: -0.12 },
+  luis:  { fc: -0.06, spo2: -0.006, fr: -0.05, temp: 1.1, sis: -0.07, dia: -0.11 },
+};
+const VAR = { fc: '04:A4', spo2: '04:A3', fr: '04:A2', temp: '04:A1', sis: '01:V1', dia: 'X:PAD' };
+const ana = () => S.trip.find((p) => p.id === PROTA);
+
+async function cargarTripulacion() {
+  const trip = [];
+  for (const { id, nombre } of await api('/api/tripulantes')) {
+    if (!EQUIPO[id]) continue;
+    const det = await api('/api/tripulantes/' + encodeURIComponent(id));
+    const basales = Object.fromEntries(det.basales.map((b) => [b.variable, b.valor]));
+    const basal = Object.fromEntries(Object.entries(VAR).map(([k, v]) => [k, basales[v]]));
+    if (Object.values(basal).some((x) => !Number.isFinite(x))) { tr('pc', `<span class="amb">${esc(id)}: le faltan basales en el backend; no transmite</span>`); continue; }
+    const equipo = Object.fromEntries(Object.entries(EQUIPO[id]).map(([k, [n, clave]]) => [k, { id: n, clave }]));
+    trip.push({ id, nombre, basal, resp: RESPUESTA[id], equipo, seq: { playera: 0, brazalete: 0, reloj: 0 }, lento: {} });
+  }
+  if (!trip.some((p) => p.id === PROTA)) throw new Error(`el backend no tiene a la tripulante «${PROTA}»`);
+  trip.sort((a, b) => (b.id === PROTA) - (a.id === PROTA));
+  S.trip = trip;
+  $('#nota-trip').textContent = `Transmiten ${trip.length} tripulantes · la maqueta muestra a ${trip[0].nombre}`;
+}
+// Registra en el backend los equipos que falten. Se puede repetir: lo que ya existe no se toca.
+async function asegurarDispositivos() {
+  const hay = await api('/api/dispositivos');
+  for (const p of S.trip) for (const [k, d] of Object.entries(p.equipo)) {
+    const mismo = hay.find((x) => x.clave === d.clave);
+    if (mismo) { d.id = mismo.id; continue; }              // ya registrado (aunque sea con otro id): se usa ése
+    while (hay.some((x) => x.id === d.id)) d.id++;          // id ocupado por otro equipo: el siguiente libre
+    const { nombre, ...resto } = TIPO_EQUIPO[k];
+    hay.push(await api('/api/dispositivos', 'POST', { id: d.id, clave: d.clave, nombre: `${nombre} · ${p.nombre}`, ...resto }));
+    tr('pc', `dispositivo ${d.id} (${d.clave}) registrado para ${esc(p.id)}`);
+  }
+}
 
 // ═══════════ Terminales ═══════════
 function tr(nodo, html) {
@@ -709,7 +772,10 @@ const AYUDA = {
   brazalete: ['apagar | encender', 'hipertension N        (presión +N mmHg)'],
   reloj: ['apagar | encender', 'contacto off | contacto on', 'hipoxia N             (SpO₂ −N puntos)'],
   cel: ['apagar | encender'],
-  pc: ['lunna                 (lo esperado vs lo medido para Ana)', 'ventana abrir | ventana cerrar   (enlace con Tierra)', 'retraso N             (segundos por trayecto a Tierra)'],
+  pc: ['lunna [tripulante]    (lo esperado vs lo medido; sin nombre, Ana)',
+       'escenario NOMBRE      (cuadro clínico gradual en Ana: fatiga | infeccion | hipoxia | hipertension | normal)',
+       'modo demo N | modo mision   (ventana de la mediana de LUNNA: N min para demostrar · 24 h en misión)',
+       'ventana abrir | ventana cerrar   (enlace con Tierra)', 'retraso N             (segundos por trayecto a Tierra)'],
 };
 async function comando(nodo, txt) {
   if (!txt) return;
@@ -721,7 +787,7 @@ async function comando(nodo, txt) {
   if (c === 'limpiar' || c === 'clear') { S.consola[nodo] = []; $(`.ventana[data-nodo="${nodo}"] .vlog`).innerHTML = ''; return; }
   if ((c === 'apagar' || c === 'encender') && nodo in S.encendido) {
     S.encendido[nodo] = c === 'encender'; pintarEnlacesLocales(); ok(c === 'encender' ? 'encendido' : 'apagado');
-    if (nodo === 'playera') { if (c === 'encender') esp32Arranca(); else { S.colaEsp = []; S.seq[401] = 0; } }
+    if (nodo === 'playera') { if (c === 'encender') esp32Arranca(); else { S.colaEsp = []; if (ana()) ana().seq.playera = 0; } }
     avisarEnergia(nodo);
     tr('pc', `<span class="${c === 'encender' ? 'verde' : 'amb'}">${NODO[nodo]} ${c === 'encender' ? 'conectado' : 'desconectado'}</span>`); return;
   }
@@ -732,7 +798,7 @@ async function comando(nodo, txt) {
     return;
   }
   if (nodo === 'esp32' && c === 'reiniciar') {
-    const perdidas = S.colaEsp.length; S.colaEsp = []; S.seq[401] = 0;
+    const perdidas = S.colaEsp.length; S.colaEsp = []; if (ana()) ana().seq.playera = 0;
     tr(nodo, `<span class="amb">reinicio: ${perdidas} lecturas en cola perdidas (estaban en RAM)</span>`);
     if (S.encendido.playera) esp32Arranca();
     return;
@@ -741,15 +807,36 @@ async function comando(nodo, txt) {
   if (nodo === 'brazalete' && c === 'hipertension') return num('hiper', 'mmHg', 60);
   if (nodo === 'reloj' && c === 'hipoxia') return num('hipoxia', 'puntos', 15);
   if (nodo === 'reloj' && c === 'contacto' && (arg === 'on' || arg === 'off')) { S.contactoReloj = arg === 'on'; return ok(`contacto con la piel: ${arg === 'on' ? 'sí' : 'no'}`); }
+  if (nodo === 'pc' && c === 'modo' && (resto[0] === 'mision' || resto[0] === 'demo')) {
+    const min = resto[0] === 'mision' ? 1440 : Number(resto[1] ?? MODO_DEMO_MIN);
+    try { await fijarModo(min); } catch (e) { return mal(esc(e.message)); }
+    return;
+  }
   if (nodo === 'pc' && c === 'lunna') {
-    await refrescar();
+    const quien = (resto[0] || PROTA).toLowerCase(), ult = S.ultimosVar[quien] || {};
+    if (S.trip.length && !S.trip.some((p) => p.id === quien)) return mal(`tripulante desconocido: ${esc(quien)} · hay ${S.trip.map((p) => p.id).join(', ')}`);
+    await refrescar(quien);
     if (!S.pred.length) return mal('sin datos: pulsa «Preparar misión»');
+    tr(nodo, `<span class="dim">LUNNA · ${esc(quien)}</span>`);
     tr(nodo, `<span class="dim">${`${'variable'.padEnd(10)}${'medido'.padEnd(9)}${'esperado'.padEnd(10)}banda 95 %`.replace(/ /g, '&nbsp;')}</span>`);
     for (const p of S.pred) {
-      const act = S.ultimosVar[p.variable], fuera = act != null && (act < p.banda[0] || act > p.banda[1]);
+      const act = ult[p.variable], fuera = act != null && (act < p.banda[0] || act > p.banda[1]);
       tr(nodo, `${(CORTO[p.variable] || p.variable).padEnd(10)}${String(act ?? '—').padEnd(9)}${p.esperado.toFixed(1).padEnd(10)}${p.banda[0].toFixed(1)}–${p.banda[1].toFixed(1)}`.replace(/ /g, '&nbsp;') + (fuera ? ' <span class="amb">fuera*</span>' : ''));
     }
     return tr(nodo, '<span class="dim">* lectura suelta; LUNNA sólo alerta si se sale la mediana de 24 h</span>');
+  }
+  if (nodo === 'pc' && c === 'escenario') {
+    const nombre = (resto[0] || '').toLowerCase(), E = ESCENARIOS[nombre];
+    if (!E) {
+      if (nombre) mal(`escenario desconocido: ${esc(nombre)}`);
+      tr(nodo, `<span class="dim">en curso: ${S.esc ? S.esc.nombre : 'normal'} · uso: escenario NOMBRE</span>`);
+      return Object.entries(ESCENARIOS).forEach(([k, e]) => tr(nodo, `<span class="dim">  ${k.padEnd(13).replace(/ /g, '&nbsp;')}${esc(e.txt)}</span>`));
+    }
+    ponerEscenario(nombre);
+    ok(`escenario ${nombre} (Ana): ${esc(E.txt)}`);
+    if (nombre === 'normal') return tr(nodo, '<span class="dim">LUNNA vuelve a verde cuando las lecturas normales son otra vez mayoría en la mediana de 24 h</span>');
+    if (!S.vivo) return tr(nodo, '<span class="amb">el simulador no está en vivo: pulsa «▶ En vivo» para que Ana transmita</span>');
+    return avisarEspera(nodo, E);
   }
   if (nodo === 'pc' && c === 'ventana' && (arg === 'abrir' || arg === 'cerrar')) { S.enlace = await api('/api/enlace', 'PUT', { abierto: arg === 'abrir' }); pintarEnlace(); return ok(`ventana ${arg === 'abrir' ? 'abierta' : 'cerrada'}`); }
   if (nodo === 'pc' && c === 'retraso' && Number.isFinite(n) && n >= 0) { S.enlace = await api('/api/enlace', 'PUT', { owlt_s: n }); pintarEnlace(); return ok(`retraso = ${n} s`); }
@@ -757,63 +844,151 @@ async function comando(nodo, txt) {
 }
 
 // ═══════════ Fisiología simulada ═══════════
-function valor(v, t, conAnomalias) {
-  const dia = (t - S.lanzamiento) / DIA, base = BASAL[v];
-  const ruido = v === 'spo2' ? 0.006 : 0.035;
-  if (dia < 0) return v === 'temp' ? base + 0.15 * gauss() : base * (1 + ruido * gauss());
-  let x = v === 'temp' ? base + DELTA.temp + 0.2 * gauss() : base * (1 + DELTA[v] + ruido * gauss());
-  if (v === 'fc' && dia < 3) x *= 1 + 0.05 * (1 - dia / 3);
-  if (conAnomalias) {
-    if (v === 'fc') x *= 1 + S.anom.fatiga / 100;
-    if (v === 'fr') x *= 1 + S.anom.taquipnea / 100;
-    if (v === 'spo2') x -= S.anom.hipoxia;
-    if (v === 'temp') x += S.anom.fiebre;
-    if (v === 'sis') x += S.anom.hiper;
-    if (v === 'dia') x += S.anom.hiper * 0.6;
+// TODO ESTO ES UNA APROXIMACIÓN DE SIMULACIÓN, no un modelo clínico: las formas y los tamaños se
+// eligieron para que las curvas se vean verosímiles, no salen de ninguna tabla ni estudio.
+//
+//   lectura = nivel de la persona (basal del backend × su respuesta a la órbita)
+//             × ritmo circadiano × variación lenta (minutos) × ruido del sensor
+//   y se redondea a lo que cabe en la trama: enteros para FC, respiración y presión; 0,01 °C.
+
+// Ritmo circadiano: una onda de 24 h por variable, [amplitud, hora UTC del máximo]. La nave va en
+// UTC y se supone que la tripulación duerme de ~22 a ~06 h: el mínimo de cada onda cae en el
+// sueño (FC, respiración y temperatura más bajas; descenso nocturno de la presión). SpO₂, sin ritmo.
+// Las amplitudes son modestas A PROPÓSITO: LUNNA compara la mediana de 24 h y, en la demo, las
+// lecturas en vivo (una por segundo) pesan enseguida más que la historia (una cada 2 h); la hora
+// del día sola no debe sacar a nadie de su banda (se queda en |z| ≲ 1; LUNNA alerta con |z| ≥ 2).
+const CIRC = { fc: [0.035, 16], fr: [0.04, 16], temp: [0.2, 17], sis: [0.045, 15], dia: [0.045, 15] };
+const onda = (t, pico) => Math.cos(2 * Math.PI * (t / 3600000 - pico) / 24);
+// Variación: [lenta (desv. típica), su tiempo de correlación en s, ruido del sensor, grupo].
+// Relativas, salvo temperatura (°C) y SpO₂ (puntos). La lenta es de la persona, no del aparato: la
+// comparten los sensores que miden lo mismo (FC de playera y reloj; sistólica y diastólica).
+const RUIDO = { fc: [0.012, 90, 0.010], fr: [0.025, 60, 0.025], temp: [0.04, 600, 0.02], spo2: [0.25, 120, 0.3],
+                sis: [0.010, 300, 0.015, 'pa'], dia: [0.010, 300, 0.015, 'pa'] };
+const ABSOLUTA = { temp: true, spo2: true };
+
+function valor(p, v, t, conAnomalias, azar = Math.random) {
+  const dia = (t - S.lanzamiento) / DIA, abs = ABSOLUTA[v], [sLenta, tau, sSensor, grupo = v] = RUIDO[v];
+  let x = p.basal[v];
+  if (dia >= 0) x = v === 'temp' ? x + p.resp.temp : x * (1 + p.resp[v]);     // adaptación a la órbita
+  if (v === 'fc' && dia >= 0 && dia < 3) x *= 1 + 0.05 * (1 - dia / 3);        // redistribución de fluidos
+  if (CIRC[v]) { const c = CIRC[v][0] * onda(t, CIRC[v][1]); x = abs ? x + c : x * (1 + c); }
+  // Variación lenta: proceso autorregresivo; entre dos muestras de la historia (horas) ya es independiente.
+  const l = p.lento[grupo] || (p.lento[grupo] = { x: 0, t: -Infinity });
+  if (t > l.t) { const rho = Math.exp(-(t - l.t) / 1000 / tau); l.x = rho * l.x + Math.sqrt(1 - rho * rho) * gauss(azar); l.t = t; }
+  x = abs ? x + sLenta * l.x : x * (1 + sLenta * l.x);
+  if (conAnomalias && p.id === PROTA) {     // comandos sueltos y escenario: sólo Ana, sólo en vivo
+    const e = efecto(v, t);
+    if (v === 'fc') x *= (1 + S.anom.fatiga / 100) * (1 + e);
+    if (v === 'fr') x *= (1 + S.anom.taquipnea / 100) * (1 + e);
+    if (v === 'spo2') x += e - S.anom.hipoxia;
+    if (v === 'temp') x += e + S.anom.fiebre;
+    if (v === 'sis') x += e + S.anom.hiper;
+    if (v === 'dia') x += e + S.anom.hiper * 0.6;
   }
-  return x;
+  return abs ? x + sSensor * gauss(azar) : x * (1 + sSensor * gauss(azar));
 }
-const lecturaPlayera = (t, a) => [valor('fc', t, a), valor('fr', t, a), valor('temp', t, a)];
-const lecturaBrazalete = (t, a) => [valor('sis', t, a), valor('dia', t, a)];
-function tramaReloj(t, a) {
-  const fc = Math.round(valor('fc', t, a)), spo2 = Math.min(100, Math.round(valor('spo2', t, a) * 10) / 10);
-  const q = { contacto: S.contactoReloj };
-  return { frame: 'eva.telemetry.v1', source: { id: 'reloj-ana', kind: 'wrist' }, subject: 'ana',
-    t_scet: new Date(Math.floor(t / 1000) * 1000).toISOString(), seq: S.seq.reloj++,
+// Resolución del sensor: lo que cabe en la trama.
+const u8 = (x) => Math.min(255, Math.max(0, Math.round(x)));
+const lecturaPlayera = (p, t, a, azar) => [u8(valor(p, 'fc', t, a, azar)), u8(valor(p, 'fr', t, a, azar)), Math.round(valor(p, 'temp', t, a, azar) * 100) / 100];
+const lecturaBrazalete = (p, t, a, azar) => [u8(valor(p, 'sis', t, a, azar)), u8(valor(p, 'dia', t, a, azar))];
+// Artefacto del reloj: de vez en cuando pierde contacto con la piel y la lectura óptica sale
+// degradada. Va marcada con quality.contacto = false: el backend la guarda pero no la evalúa.
+const P_ARTEFACTO = 0.03;
+function tramaReloj(p, t, a, azar = Math.random) {
+  let fc = u8(valor(p, 'fc', t, a, azar)), spo2 = Math.min(100, Math.round(valor(p, 'spo2', t, a, azar)));
+  const artefacto = azar() < P_ARTEFACTO;
+  if (artefacto) { fc = u8(fc + 8 * gauss(azar)); spo2 -= 1 + Math.floor(3 * azar()); }
+  const q = { contacto: !artefacto && !(a && p.id === PROTA && !S.contactoReloj) };
+  return { frame: 'eva.telemetry.v1', source: { id: p.equipo.reloj.clave, kind: 'wrist' }, subject: p.id,
+    t_scet: new Date(Math.floor(t / 1000) * 1000).toISOString(), seq: p.seq.reloj++,
     samples: [{ var: '04:A4', value: fc, unit: 'bpm', origin: 'sensor', quality: q },
               { var: '04:A3', value: spo2, unit: '%', origin: 'sensor', quality: q }] };
 }
 
+// ═══════════ Escenarios clínicos (Ana) ═══════════
+// Cuadros coherentes entre variables que se instalan poco a poco. Por variable: [cambio final,
+// segundos de retardo, segundos que tarda en instalarse]; FC y respiración en fracción, SpO₂ en
+// puntos, temperatura en °C, presión en mmHg. Los tamaños son de simulación: bastan para que la
+// mediana de 24 h salga de la banda personal a cualquier hora del día.
+// `vigia`: la variable por la que LUNNA debería avisar primero y cuántas muestras por segundo le llegan.
+const ESCENARIOS = {
+  fatiga:       { txt: 'fatiga acumulada: la FC en reposo sube poco a poco (~+20 %, unos 11 lpm, en 90 s) y se queda arriba; lo demás no cambia',
+                  curso: { fc: [0.20, 0, 90] }, vigia: ['04:A4', 1.2] },
+  infeccion:    { txt: 'cuadro infeccioso: fiebre (+1,5 °C en 2 min) y, detrás de ella, FC (~+16 %) y respiración (~+30 %) al alza',
+                  curso: { temp: [1.5, 0, 120], fc: [0.16, 15, 120], fr: [0.30, 30, 120] }, vigia: ['04:A1', 1] },
+  hipoxia:      { txt: 'hipoxia: la SpO₂ cae ~7 puntos en 90 s; FC (~+15 %) y respiración (~+35 %) suben para compensar',
+                  curso: { spo2: [-7, 0, 90], fc: [0.15, 15, 90], fr: [0.35, 15, 90] }, vigia: ['04:A3', 0.2] },
+  hipertension: { txt: 'hipertensión: la presión sube ~42/24 mmHg (sistólica/diastólica) en 90 s y se mantiene, en la zona de estadio 2 (≥ 140/90)',
+                  curso: { sis: [42, 0, 90], dia: [24, 0, 90] }, vigia: ['01:V1', 0.2] },
+  normal:       { txt: 'vuelta gradual a lo habitual (~40 s); también pone a cero fatiga, taquipnea, fiebre, hipertension e hipoxia', curso: {} },
+};
+const VUELTA_S = 40;
+const suave = (k) => { k = Math.min(1, Math.max(0, k)); return k * k * (3 - 2 * k); };
+// Desvío que el escenario pone ahora mismo sobre la variable: parte de donde estaba, sin escalones.
+function efecto(v, t) {
+  const e = S.esc; if (!e) return 0;
+  const [meta, retardo, dura] = e.curso[v] || [0, 0, VUELTA_S], de = e.desde[v] || 0;
+  return de + (meta - de) * suave(((t - e.t0) / 1000 - retardo) / dura);
+}
+function ponerEscenario(nombre) {
+  const t = Date.now(), curso = ESCENARIOS[nombre].curso;
+  const desde = Object.fromEntries(Object.keys(VAR).map((v) => [v, efecto(v, t)]));
+  const dura = Math.max(VUELTA_S, ...Object.values(curso).map(([, r, d]) => r + d));
+  S.esc = { nombre, t0: t, desde, curso, dura, completo: false };
+  if (nombre === 'normal') for (const k of Object.keys(S.anom)) S.anom[k] = 0;
+}
+// El criterio personal de LUNNA usa la mediana de la ventana activa (24 h en misión, unos minutos en
+// demostración): avisa cuando las lecturas alteradas son mayoría. Estima la espera.
+async function avisarEspera(nodo, E) {
+  const [variable, porSeg] = E.vigia, [, retardo, dura] = E.curso[Object.keys(VAR).find((k) => VAR[k] === variable)];
+  let n = 5000;
+  try { n = (await api(`/api/muestras?tripulante=${PROTA}&variable=${encodeURIComponent(variable)}&desde=${new Date(Date.now() - S.ventanaMin * 60000).toISOString()}&limite=5000`)).length; } catch {}
+  const seg = Math.round((n / porSeg + 2 * (retardo + 0.45 * dura)) / 10) * 10;
+  const ventana = S.ventanaMin >= 1440 ? '24 h' : `${S.ventanaMin} min`;
+  tr(nodo, `<span class="dim">LUNNA compara la mediana de ${ventana} de ${NOMBRE[variable]}: alertará cuando las lecturas alteradas sean mayoría, en ${n >= 5000 ? 'más de ' : '~'}${seg >= 120 ? `${Math.round(seg / 60)} min` : `${seg} s`} (hay ${n >= 5000 ? '5000 o más' : n} lecturas en la ventana). Si hay umbral clínico, puede saltar antes por él.</span>`);
+}
+
 // ═══════════ Preparar misión: 119 días de historia ═══════════
+const SEMILLA = 20261004;
+const POR_DIA = { [PROTA]: 12 };     // muestras de historia por día; el resto de la tripulación:
+const POR_DIA_RESTO = 6;             //   menos, para que preparar no tarde mucho más (cubren igual las 24 h)
 async function preparar() {
   const b = $('#b-preparar'); b.disabled = true; $('#b-vivo').disabled = true;
   try {
     detener();
-    await api('/api/demo/reiniciar', 'POST');
-    S.colaEsp = []; S.seq = { 401: 0, 201: 0, reloj: 0 };
-    S.lanzamiento = Date.now() - 112 * DIA;
+    await api('/api/demo/reiniciar', 'POST'); S.ventanaMin = 1440;
+    await cargarTripulacion(); await asegurarDispositivos();
+    S.colaEsp = []; S.esc = null;
+    // El despegue cae en una medianoche UTC: las muestras de la historia tocan siempre las mismas
+    // horas de a bordo y, con el generador sembrado, la historia sale idéntica cada vez.
+    S.lanzamiento = Math.floor(Date.now() / DIA) * DIA - 112 * DIA;
     const inicioTierra = new Date(S.lanzamiento - 7 * DIA).toISOString();
     await api('/api/fases', 'POST', { desde: inicioTierra, entorno: 'tierra' });
     await api('/api/fases', 'POST', { desde: new Date(S.lanzamiento).toISOString(), entorno: 'orbita' });
-    for (const d of [401, 201, 302]) await api('/api/asignaciones', 'POST', { dispositivo: d, tripulante: 'ana', desde: inicioTierra });
-    tr('pc', 'dispositivos 401, 201 y 302 asignados a ana · cargando 119 días de historia…');
+    for (const p of S.trip) for (const d of Object.values(p.equipo)) await api('/api/asignaciones', 'POST', { dispositivo: d.id, tripulante: p.id, desde: inicioTierra });
+    tr('pc', `playera, brazalete y reloj asignados a ${S.trip.map((p) => p.id).join(', ')} · cargando 119 días de historia…`);
+    const azar = sembrar(SEMILLA), hasta = Date.now() - 60000;
     let bin = [], json = [], total = 0;
     const enviar = async () => {
       if (bin.length) { await api('/api/tramas/binaria', 'POST', { b64: bin }); total += bin.length; bin = []; }
       if (json.length) { await api('/api/tramas', 'POST', json); total += json.length; json = []; }
     };
-    for (let d = -7; d < 112; d++) {
-      for (let k = 0; k < 12; k++) {
-        const t = S.lanzamiento + d * DIA + (k + 0.5) * (DIA / 12), ts = Math.floor(t / 1000);
-        bin.push(b64(codificar(401, 5, S.seq[401]++, ts, lecturaPlayera(t, false))));
-        bin.push(b64(codificar(201, 2, S.seq[201]++, ts, lecturaBrazalete(t, false))));
-        json.push(tramaReloj(t, false));
+    for (let d = -7; d <= 112; d++) {       // el día 112 es hoy: sólo lo que ya pasó
+      for (const p of S.trip) {
+        const n = POR_DIA[p.id] || POR_DIA_RESTO;
+        for (let k = 0; k < n; k++) {
+          const t = S.lanzamiento + d * DIA + (k + 0.5) * (DIA / n), ts = Math.floor(t / 1000);
+          if (t > hasta) break;
+          bin.push(b64(codificar(p.equipo.playera.id, 5, p.seq.playera++, ts, lecturaPlayera(p, t, false, azar))));
+          bin.push(b64(codificar(p.equipo.brazalete.id, 2, p.seq.brazalete++, ts, lecturaBrazalete(p, t, false, azar))));
+          json.push(tramaReloj(p, t, false, azar));
+        }
       }
       if (bin.length >= 480) { b.textContent = `Rellenando… día ${d}`; await enviar(); }
     }
     await enviar();
-    tr('pc', `<span class="verde">historia cargada: ${total.toLocaleString('es')} tramas · LUNNA calibró a ana con los días 0–13</span>`);
-        $('#b-vivo').disabled = false;
+    tr('pc', `<span class="verde">historia cargada: ${total.toLocaleString('es')} tramas de ${S.trip.length} tripulantes · LUNNA calibró a cada quien con sus días 0–13</span>`);
+    $('#b-vivo').disabled = false;
     iniciar();
   } catch (e) { tr('pc', `<span class="rojo">error al preparar: ${esc(e.message)}</span>`); }
   b.textContent = 'Preparar misión'; b.disabled = false;
@@ -821,16 +996,16 @@ async function preparar() {
 
 // ═══════════ En vivo: cada segundo ═══════════
 function tick() {
-  const t = Date.now(), ts = Math.floor(t / 1000), cada5 = S.tic++ % 5 === 0;
+  const t = Date.now(), ts = Math.floor(t / 1000), cada5 = S.tic++ % 5 === 0, a = ana(), eq = a.equipo;
   // Playera: el ESP32 lee y encola; sólo vacía la cola con Bluetooth.
   if (S.encendido.playera) {
-    const v = lecturaPlayera(t, true); S.colaEsp.push({ ts, v });
+    const v = lecturaPlayera(a, t, true); S.colaEsp.push({ ts, v });
     serie(`lectura fc=${v[0].toFixed(1)} fr=${v[1].toFixed(1)} temp=${v[2].toFixed(2)} -> cola ${S.colaEsp.length}`);
     if (!S.bleConectado) tr('playera', `<span class="amb">sin conexión: trama guardada en cola (${S.colaEsp.length})</span>`);
   }
   if (S.colaEsp.length > 1800) { S.descartadas += S.colaEsp.length - 1800; S.colaEsp.splice(0, S.colaEsp.length - 1800); }
   if (S.bleConectado && S.colaEsp.length) {
-    const tramas = S.colaEsp.splice(0, 40).map((r) => codificar(401, 5, S.seq[401]++, r.ts, r.v));
+    const tramas = S.colaEsp.splice(0, 40).map((r) => codificar(eq.playera.id, 5, a.seq.playera++, r.ts, r.v));
     tramas.forEach((u8) => { serie(`enviada trama seq=${new DataView(u8.buffer).getUint16(7, true)} (${u8.length} B)`); trTrama('playera', u8, t); });
     api('/api/tramas/binaria', 'POST', { b64: tramas.map(b64) }).catch((e) => tr('pc', `<span class="rojo">${esc(e.message)}</span>`));
     paquete(POS.playera, POS.pc, COLOR.playera);
@@ -838,32 +1013,84 @@ function tick() {
   if (S.encendido.playera && S.tic % 10 === 0) serie(`conectado=${S.bleConectado ? 1 : 0} hora=1 pendientes=${S.colaEsp.length} descartadas=${S.descartadas}`);
   // Brazalete: su propia trama, directo a la central.
   if (cada5 && S.encendido.brazalete) {
-    const u8 = codificar(201, 2, S.seq[201]++, ts, lecturaBrazalete(t, true));
+    const u8 = codificar(eq.brazalete.id, 2, a.seq.brazalete++, ts, lecturaBrazalete(a, t, true));
     trTrama('brazalete', u8, t);
     api('/api/tramas/binaria', 'POST', { b64: [b64(u8)] }).catch(() => {});
     paquete(POS.brazalete, POS.pc, COLOR.brazalete);
   }
   // Reloj: JSON, directo a la central.
   if (cada5 && S.encendido.reloj) {
-    const j = tramaReloj(t, true), txt = JSON.stringify(j);
+    const j = tramaReloj(a, t, true), txt = JSON.stringify(j), contacto = j.samples[0].quality.contacto;
+    if (!contacto && S.contactoReloj) tr('reloj', '<span class="amb">pérdida momentánea de contacto con la piel: la lectura va marcada como no fiable</span>');
     tr('reloj', `enviada trama <span class="hx">${esc(txt)}</span>`);
-    tr('pc', `recibida trama de reloj-ana <span class="hx">${esc(txt)}</span>${S.contactoReloj ? '' : ' <span class="amb">(sin contacto: se guarda, no se evalúa)</span>'}`);
+    tr('pc', `recibida trama de reloj-ana <span class="hx">${esc(txt)}</span>${contacto ? '' : ' <span class="amb">(sin contacto: se guarda, no se evalúa)</span>'}`);
     api('/api/tramas', 'POST', j).catch(() => {});
     paquete(POS.reloj, POS.pc, COLOR.reloj);
   }
+  tickResto(t, ts);
+  const e = S.esc;
+  if (e && !e.completo && t >= e.t0 + e.dura * 1000) {
+    e.completo = true;
+    if (e.nombre === 'normal') { S.esc = null; tr('pc', '<span class="verde">escenario normal: Ana está otra vez en sus valores habituales</span>'); }
+    else tr('pc', `<span class="amb">escenario ${e.nombre}: cuadro completo; se mantiene hasta «escenario normal»</span>`);
+  }
+}
+// El resto de la tripulación no se dibuja: transmite en segundo plano, más despacio (playera cada
+// 5 s, brazalete y reloj cada 30 s) y escalonada. Sus tramas sólo se ven llegar a la PC central.
+function tickResto(t, ts) {
+  const bin = [], json = [];
+  const llega = (p, k, crudo, txt) => tr('pc', `<span class="dim">recibida trama de ${p.equipo[k].clave} (${esc(p.nombre)}) ${crudo} ${txt}</span>`);
+  S.trip.forEach((p, i) => {
+    if (p.id === PROTA) return;
+    const fase = S.tic + i;
+    if (fase % 5 === 2) {
+      const u = codificar(p.equipo.playera.id, 5, p.seq.playera++, ts, lecturaPlayera(p, t, false));
+      bin.push(b64(u)); llega(p, 'playera', hex(u), decodificar(u).txt);
+    }
+    if (fase % 30 === 9) {
+      const u = codificar(p.equipo.brazalete.id, 2, p.seq.brazalete++, ts, lecturaBrazalete(p, t, false));
+      bin.push(b64(u)); llega(p, 'brazalete', hex(u), decodificar(u).txt);
+    }
+    if (fase % 30 === 24) {
+      const j = tramaReloj(p, t, false), [fc, spo2] = j.samples;
+      json.push(j); llega(p, 'reloj', `JSON seq=${j.seq}`, `fc=${fc.value} spo2=${spo2.value}${fc.quality.contacto ? '' : ' (sin contacto: se guarda, no se evalúa)'}`);
+    }
+  });
+  if (bin.length) api('/api/tramas/binaria', 'POST', { b64: bin }).catch(() => {});
+  if (json.length) api('/api/tramas', 'POST', json).catch(() => {});
 }
 // Sin asignación el backend rechaza las tramas: no sabría de quién son.
 async function asegurarAsignaciones() {
-  const abiertas = (await api('/api/asignaciones')).filter((a) => a.hasta == null && a.tripulante === 'ana').map((a) => a.dispositivo);
-  for (const d of [401, 201, 302]) {
-    if (abiertas.includes(d)) continue;
-    await api('/api/asignaciones', 'POST', { dispositivo: d, tripulante: 'ana' });
-    tr('pc', `dispositivo ${d} asignado a ana`);
+  const abiertas = (await api('/api/asignaciones')).filter((a) => a.hasta == null);
+  for (const p of S.trip) for (const d of Object.values(p.equipo)) {
+    if (abiertas.some((a) => a.dispositivo === d.id && a.tripulante === p.id)) continue;
+    await api('/api/asignaciones', 'POST', { dispositivo: d.id, tripulante: p.id });
+    tr('pc', `dispositivo ${d.id} (${d.clave}) asignado a ${esc(p.id)}`);
   }
+}
+// ── Modo demostración ──
+// En misión LUNNA evalúa la mediana de 24 h. En una demo de minutos eso hace que una anomalía
+// provocada tarde en notarse y que la vuelta a verde no se vea; por eso, al pasar a «En vivo», el
+// simulador pide una ventana corta y lo dice. «modo mision» vuelve a 24 h.
+const MODO_DEMO_MIN = 5;
+S.ventanaMin = 1440;
+async function fijarModo(min) {
+  const r = await api('/api/lunna/ventana', 'PUT', { minutos: min });
+  S.ventanaMin = r.minutos;
+  tr('pc', r.minutos === r.mision
+    ? '<span class="verde">LUNNA en modo misión: mediana de las últimas 24 h</span>'
+    : `<span class="amb">LUNNA en modo DEMOSTRACIÓN: mediana de los últimos ${r.minutos} min (en misión: 24 h)</span>`);
+  const n = $('#nota-trip');
+  if (n && S.trip.length) n.textContent = `Transmiten ${S.trip.length} tripulantes · la maqueta muestra a ${S.trip[0].nombre}` + (r.minutos === r.mision ? '' : ` · LUNNA en demostración (${r.minutos} min)`);
 }
 async function iniciar() {
   if (S.temporizador) return;
-  try { await asegurarAsignaciones(); } catch (e) { tr('pc', `<span class="rojo">no se pudo asignar: ${esc(e.message)}</span>`); return; }
+  try {
+    if (!S.trip.length) await cargarTripulacion();
+    await asegurarDispositivos(); await asegurarAsignaciones();
+    if (S.ventanaMin === 1440) await fijarModo(MODO_DEMO_MIN);
+  } catch (e) { tr('pc', `<span class="rojo">no se pudo asignar: ${esc(e.message)}</span>`); return; }
+  if (S.temporizador) return;
   S.vivo = true; S.temporizador = setInterval(tick, 1000); $('#b-vivo').textContent = '⏸ Pausar';
 }
 function detener() { clearInterval(S.temporizador); S.temporizador = null; S.vivo = false; $('#b-vivo').textContent = '▶ En vivo'; }
@@ -901,7 +1128,7 @@ function paquete([x0, y0], [x1, y1], color, dur = 900) {
 // ═══════════ Eventos del backend ═══════════
 function conectarEventos() {
   const es = new EventSource('/api/stream');
-  es.addEventListener('muestra', (e) => { const m = JSON.parse(e.data); S.ultimosVar[m.variable] = m.valor; });
+  es.addEventListener('muestra', (e) => { const m = JSON.parse(e.data); (S.ultimosVar[m.tripulante] ||= {})[m.variable] = m.valor; });
   es.addEventListener('alerta', (e) => {
     const a = JSON.parse(e.data), cls = a.estado === 'rojo' ? 'rojo' : a.estado === 'ambar' ? 'amb' : 'verde';
     tr('pc', `<span class="${cls}">alerta LUNNA ${a.estado.toUpperCase()}: ${a.tripulante} · ${NOMBRE[a.variable] || a.variable} ${a.valor} (esperado ${a.esperado}, z=${a.z}, P(normal)=${a.prob_nominal})</span>`);
@@ -935,7 +1162,7 @@ function conectarEventos() {
   es.onerror = () => { $('#d-back').className = 'dot bad'; };
   es.onopen = () => { $('#d-back').className = 'dot ok'; };
 }
-async function refrescar() { try { S.pred = await api('/api/prediccion/ana'); } catch {} }
+async function refrescar(quien = PROTA) { try { S.pred = await api('/api/prediccion/' + encodeURIComponent(quien)); } catch { S.pred = []; } }
 
 // ═══════════ Pintado de la maqueta ═══════════
 function pintarEnlace() {
@@ -1080,8 +1307,8 @@ $('#b-info').addEventListener('click', () => { intro.hidden = false; $('#intro-t
 $('#intro-tour').focus();
 $('#b-vivo').addEventListener('click', () => (S.vivo ? detener() : iniciar()));
 $('#b-reiniciar').addEventListener('click', async () => {
-  detener(); await api('/api/demo/reiniciar', 'POST');
-  S.lanzamiento = null; S.pred = [];
+  detener(); await api('/api/demo/reiniciar', 'POST'); S.ventanaMin = 1440;
+  S.lanzamiento = null; S.pred = []; S.esc = null; S.colaEsp = [];
   for (const k of Object.keys(S.consola)) S.consola[k] = [];
   document.querySelectorAll('.vlog').forEach((l) => { l.innerHTML = ''; });
   $('#b-vivo').disabled = true;
@@ -1096,6 +1323,7 @@ $('#b-reiniciar').addEventListener('click', async () => {
     const orb = (await api('/api/fases')).find((f) => f.entorno === 'orbita');
     if (orb) { S.lanzamiento = Date.parse(orb.desde); $('#b-vivo').disabled = false; }
   } catch { $('#v-back').textContent = 'sin conexión'; $('#d-back').className = 'dot bad'; }
+  try { await cargarTripulacion(); } catch (e) { tr('pc', `<span class="rojo">no se pudo leer la tripulación: ${esc(e.message)}</span>`); }
   tr('pc', `backend v${S.version || '?'} corriendo · esperando tramas`);
   tr('playera', 'hora recibida de pc-central · lista para enviar');
   esp32Arranca();

@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LUNNA · Computadora central de la nave</title>
+<style>
+:root{
+  --bg:#0a0d12; --panel:#10151c; --panel2:#151b24; --line:#1f2733; --fg:#e5e7eb; --dim:#a3adbb; --dim2:#5d6878;
+  --acc:#38bdf8; --rojo:#ef4444; --ambar:#f59e0b; --verde:#22c55e;
+  --mono:ui-monospace,"Cascadia Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:10px 18px;border-bottom:1px solid var(--line);background:#0c1017}
+header h1{margin:0;font-size:1.05rem}
+header h1 small{display:block;font-size:.75rem;font-weight:400;color:var(--dim)}
+#banner{padding:22px 18px;text-align:center;border-bottom:3px solid;background:#222;color:#fff}
+#banner h2{margin:0;font-size:clamp(1.4rem,4vw,2.4rem);letter-spacing:.03em}
+#banner.verde{background:#0f3d20;border-color:var(--verde)}
+#banner.rojo{background:#4a1212;border-color:var(--rojo)}
+#banner.ambar{background:#4a3205;border-color:var(--ambar)}
+#banner.gris{background:#2b313b;border-color:var(--dim2)}
+#detalle{display:flex;flex-wrap:wrap;gap:8px 14px;justify-content:center;padding:10px 18px;background:#0c1017;border-bottom:1px solid var(--line)}
+.chip{padding:4px 10px;border:1px solid var(--line);border-radius:6px;font:13px var(--mono);color:var(--dim)}
+.chip b{color:var(--fg);font-weight:600}
+main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;padding:14px 18px}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;min-width:0}
+.panel h2{margin:0;padding:12px 14px;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--line)}
+.cuerpo{padding:12px 14px;max-height:55vh;overflow:auto}
+.item{padding:9px 10px;margin:0 0 8px;background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--acc);border-radius:6px}
+.item.urgente{border-left-color:var(--rojo);background:#2a1215}
+.item .meta{font:12px var(--mono);color:var(--dim)}
+.item .txt{margin-top:3px;overflow-wrap:anywhere;white-space:pre-wrap}
+.tag{display:inline-block;padding:0 6px;border-radius:4px;font:700 11px var(--mono);background:var(--rojo);color:#fff;margin-right:6px}
+.tag.al{background:var(--ambar);color:#000}
+.ok{color:var(--verde)} .pend{color:var(--ambar)}
+.vacio{color:var(--dim);font-style:italic}
+form{padding:12px 14px;display:grid;gap:10px}
+label{display:grid;gap:4px;font-size:.85rem;color:var(--dim)}
+input[type=text],textarea{width:100%;padding:8px;background:#0a0d12;color:var(--fg);border:1px solid var(--dim2);border-radius:6px;font:inherit}
+input:focus,textarea:focus,button:focus{outline:2px solid var(--acc);outline-offset:1px}
+label.chk{display:flex;align-items:center;gap:8px;color:var(--fg)}
+button{padding:9px 14px;border:0;border-radius:6px;background:var(--acc);color:#001018;font:700 14px inherit;cursor:pointer}
+#msg{min-height:1.3em;font-size:.9rem}
+#msg.err{color:#fca5a5} #msg.okm{color:#86efac}
+footer{padding:14px 18px;color:var(--dim);font-size:.8rem;text-align:center}
+</style>
+</head>
+<body>
+<header><h1>LUNNA · Computadora central de la nave<small>Enlace HTTPS con Tierra y avisos en ambos sentidos</small></h1></header>
+<section id="banner" class="gris" role="status" aria-live="polite"><h2 id="bt">Conectando con la computadora central…</h2></section>
+<div id="detalle" aria-label="Detalle del enlace"></div>
+<main>
+  <section class="panel" aria-labelledby="h1a"><h2 id="h1a">Avisos de Tierra</h2><div class="cuerpo" id="recib"></div></section>
+  <section class="panel" aria-labelledby="h2a"><h2 id="h2a">Enviar aviso a Tierra</h2>
+    <form id="f">
+      <label>De<input type="text" id="de" maxlength="60" required value="Tripulación"></label>
+      <label>Texto (máx. 500)<textarea id="tx" rows="3" maxlength="500" required></textarea></label>
+      <label class="chk"><input type="checkbox" id="urg"> Urgente</label>
+      <button type="submit">Enviar a Tierra</button>
+      <div id="msg" role="status" aria-live="polite"></div>
+    </form>
+  </section>
+  <section class="panel" style="grid-column:1/-1" aria-labelledby="h3a"><h2 id="h3a">Avisos enviados a Tierra</h2><div class="cuerpo" id="env"></div></section>
+</main>
+<footer>Datos de demostración; no es un diagnóstico.</footer>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls) e.className=cls; if(text!==undefined) e.textContent=text; return e; }
+function ms(iso){ if(!iso) return null; const t=Date.parse(iso); return isNaN(t)?null:t; }
+function hora(iso){ const t=ms(iso); return t===null?'—':new Date(t).toLocaleTimeString('es'); }
+function dur(s){
+  s=Math.max(0,Math.round(s));
+  if(s<60) return s+' s';
+  const m=Math.floor(s/60), r=s%60;
+  if(m<60) return m+' min '+r+' s';
+  const h=Math.floor(m/60); return h+' h '+(m%60)+' min';
+}
+function hace(iso, s){
+  if(typeof s!=='number'){ const t=ms(iso); if(t===null) return '—'; s=(Date.now()-t)/1000; }
+  return 'hace '+dur(s);
+}
+function chip(k,v){ const c=el('span','chip',k+': '); c.appendChild(el('b',null,v)); return c; }
+function objDatos(d){
+  if(d && typeof d==='object') return d;
+  if(typeof d==='string'){ try{ const o=JSON.parse(d); return (o&&typeof o==='object')?o:{}; }catch(e){ return {}; } }
+  return {};
+}
+async function getJSON(u){
+  const r=await fetch(u,{cache:'no-store'});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return r.json();
+}
+
+function pintaEstado(e){
+  const b=$('banner'), d=$('detalle');
+  d.textContent='';
+  if(!e){
+    b.className='gris'; $('bt').textContent='SIN RESPUESTA DE LA COMPUTADORA CENTRAL';
+    return;
+  }
+  const con=e.estado==='CONECTADO';
+  if(con){ b.className='verde'; $('bt').textContent='CONECTADO CON TIERRA'; }
+  else{
+    const ventana=/ventana/i.test(e.motivo||'');
+    b.className=ventana?'ambar':'rojo';
+    $('bt').textContent='DESCONECTADO DE TIERRA — '+(e.motivo||'sin motivo');
+  }
+  const ageBase=ms(e.ultimo_ping_ok);
+  d.appendChild(chip('Último ping OK', ageBase===null?'ninguno':hora(e.ultimo_ping_ok)+' ('+hace(e.ultimo_ping_ok)+')'));
+  if(typeof e.retraso_estimado_s==='number'){
+    const r=e.retraso_estimado_s;
+    d.appendChild(chip('Retraso estimado', r<1?Math.round(r*1000)+' ms':r.toFixed(1)+' s'));
+  }
+  if(typeof e.rtt_ms==='number') d.appendChild(chip('RTT', e.rtt_ms+' ms'));
+  if(typeof e.owlt_modelo_s==='number')
+    d.appendChild(chip('OWLT modelo Marte', e.owlt_modelo_s+' s · ventana '+(e.ventana_abierta?'abierta':'cerrada')));
+  d.appendChild(chip('Pendientes de enviar', String(e.pendientes_salida??0)));
+  if(!con){
+    d.appendChild(chip('Próximo reintento', e.proximo_intento?hora(e.proximo_intento):'—'));
+    d.appendChild(chip('Intentos fallidos', String(e.intentos_fallidos??0)));
+  }
+  d.appendChild(chip(con?'Conectado desde':'Desconectado desde', e.desde?hora(e.desde)+' ('+hace(e.desde)+')':'—'));
+  if(e.tierra_url) d.appendChild(chip('Tierra', String(e.tierra_url)));
+  if(e.simular_owlt) d.appendChild(chip('Retraso', 'SIMULADO'));
+}
+
+function pintaRecibidos(l){
+  const c=$('recib'); c.textContent='';
+  if(!Array.isArray(l)||!l.length){ c.appendChild(el('div','vacio','Sin avisos de Tierra.')); return; }
+  for(const a of l){
+    const alerta=a.tipo==='alerta', urg=a.prioridad==='urgente'||alerta;
+    const it=el('div','item'+(urg?' urgente':''));
+    const m=el('div','meta');
+    if(urg) m.appendChild(el('span','tag',alerta?'ALERTA':'URGENTE'));
+    m.appendChild(document.createTextNode((a.de??'?')+' → '+(a.para??'?')+' · '+hora(a.t_evento||a.t_redactado)+' · '+hace(a.t_evento||a.t_redactado)));
+    it.appendChild(m); it.appendChild(el('div','txt',String(a.texto??'')));
+    c.appendChild(it);
+  }
+}
+
+function pintaEnviados(l){
+  const c=$('env'); c.textContent='';
+  if(!Array.isArray(l)||!l.length){ c.appendChild(el('div','vacio','Aún no se han enviado avisos.')); return; }
+  for(const a of l){
+    const d=objDatos(a.datos);
+    const urg=d.prioridad==='urgente';
+    const it=el('div','item'+(urg?' urgente':''));
+    const m=el('div','meta');
+    if(urg) m.appendChild(el('span','tag','URGENTE'));
+    m.appendChild(document.createTextNode('#'+a.seq+' · '+(d.de??'?')+' · '+hace(a.t_scet||a.t_envio, a.antiguedad_s)+' · '));
+    const ok=a.ack===1||a.ack===true;
+    m.appendChild(el('span',ok?'ok':'pend', ok?'confirmado por Tierra ✓ ('+hora(a.t_ack)+')':'pendiente ('+(a.intentos??0)+' intentos)'));
+    it.appendChild(m); it.appendChild(el('div','txt',String(d.texto??'')));
+    c.appendChild(it);
+  }
+}
+
+let ocupado=false;
+async function refresca(){
+  if(ocupado) return; ocupado=true;
+  try{
+    const [e,r,s]=await Promise.allSettled([getJSON('/api/enlace/estado'),getJSON('/api/avisos'),getJSON('/api/nave/avisos')]);
+    pintaEstado(e.status==='fulfilled'?e.value:null);
+    if(r.status==='fulfilled') pintaRecibidos(r.value);
+    if(s.status==='fulfilled') pintaEnviados(s.value);
+  }finally{ ocupado=false; }
+}
+
+$('f').addEventListener('submit', async ev=>{
+  ev.preventDefault();
+  const msg=$('msg'); msg.className=''; msg.textContent='Enviando…';
+  try{
+    const r=await fetch('/api/nave/avisos',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({de:$('de').value.trim(),texto:$('tx').value.trim(),prioridad:$('urg').checked?'urgente':'normal'})});
+    let j={}; try{ j=await r.json(); }catch(e){}
+    if(!r.ok||j.error){ msg.className='err'; msg.textContent='Error: '+(j.error||('HTTP '+r.status)); return; }
+    msg.className='okm'; msg.textContent='Aviso en cola (n.º '+j.seq+'). Se enviará cuando haya enlace.';
+    $('tx').value=''; $('urg').checked=false; refresca();
+  }catch(e){ msg.className='err'; msg.textContent='Error: sin respuesta de la computadora central.'; }
+});
+
+refresca(); setInterval(refresca,2000);
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 """Vista «Configuración»: umbrales del semáforo y pesos / prior_de editables (investigación; no es un diagnóstico).
 
-Lo que se edita aquí va a `datos/modelo/overrides.json` (motor.parametros), queda marcado «modificado por el usuario»,
+Lo que se edita aquí va a `datos/modelo/overrides.json` o, con EVA_DB, a la tabla pesos_usuario (motor.parametros), queda marcado «modificado por el usuario»,
 no tiene fuente y es provisional. Las tablas con fuente (`datos/modelo/*.csv`) nunca se escriben.
 Los botones usan `on_click`: la acción corre antes de re-ejecutar el script, que es el rerun que refresca la vista.
 """
@@ -244,6 +244,7 @@ def _bloque_modificados() -> None:
 def render() -> None:
     st.title("Configuración")
     st.warning(AVISO)
+    st.caption(f"Los cambios se guardan en: {parametros.origen_overrides()}")
     msg = st.session_state.pop(CLAVE_MSG, None)
     if msg:
         {"success": st.success, "error": st.error, "info": st.info}.get(msg[0], st.info)(msg[1])

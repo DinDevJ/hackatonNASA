@@ -1,0 +1,13 @@
+{
+  "name": "eva-simulacion",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Modo simulación de Lunna: el backend de Sistema/ con el simulador visual, el escenario sintético de las interfaces y el generador de telemetría. Todos los datos son SINTÉTICOS.",
+  "engines": { "node": ">=22.6" },
+  "scripts": {
+    "start": "node --experimental-strip-types --disable-warning=ExperimentalWarning ../Sistema/backend/src/servidor.ts --modo simulacion --simulacion .",
+    "generador": "node --experimental-strip-types --disable-warning=ExperimentalWarning generador/simulador.ts",
+    "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test test/*.test.ts"
+  }
+}

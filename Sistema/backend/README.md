@@ -7,10 +7,16 @@ y avisa cuando un signo vital se sale de **lo esperado para esa persona en ese e
 modelo que define "lo esperado".
 
 ```bash
-npm start      # servidor; http://localhost:8787 = estado · /simulador = simulador visual
-npm run sim    # simulador de hardware: 119 días de misión y luego en vivo
-npm test       # 37 pruebas
+npm start      # servidor en modo operativo; http://localhost:8787 = estado
+npm test       # pruebas del backend (las del modo simulación están en Simulacion/test)
 ```
+
+El simulador visual (`/simulador`), el generador de telemetría sintética y el escenario de las interfaces
+viven en [`Simulacion/`](../../Simulacion/README.md): `cd Simulacion && npm start` arranca **este mismo
+servidor** en modo simulación (`--modo simulacion --simulacion <carpeta>`, con su propia base
+`Simulacion/eva-simulacion.db`) y `npm run generador` es el antiguo `npm run sim`. En modo operativo
+`/simulador` y el escenario responden 404 y `POST /api/demo/reiniciar` responde 403; `GET /api/salud`
+dice en qué modo corre.
 
 Requiere **Node 22.6+** y nada más: SQLite y TypeScript vienen integrados en Node.
 **Cero dependencias**, así que no hay `npm install`.
@@ -234,12 +240,13 @@ src/ingesta.ts     tubería: asignación, decodificación, guardado y vigilancia
 src/semillas.ts    configuración inicial e importación del contrato de Leo
 src/enlace.ts      enlace con Tierra: retraso de la luz, ventanas y avisos de vuelta
 src/servidor.ts    API REST y eventos en vivo
-src/simulador.ts   simulador de terminal: 4 tripulantes, 119 días
-web/simulador.html simulador visual (astronauta, dispositivos, PC central, Tierra) en /simulador
-                   el PC abre la computadora central de LUNNA (/app/central.html, de
-                   Leo/maqueta-eva), que lee /api/app, /api/alertas, /api/enlace y /api/stream
-                   y el reloj abre el de Fani (/reloj → /maquetas/Fani/maqueta-reloj/),
-                   con pulso y SpO₂ en vivo de /api/stream
+web/tierra.html    consola de control de misión en /tierra
+web/nave.html      panel del enlace HTTPS de la nave en /nave
+                   /app/ sirve Sistema/interfaces/eva (celular, central, base) y /reloj lleva a
+                   /interfaces/reloj/; /app/config.js dice a las interfaces en qué modo corre el
+                   servidor. Las rutas antiguas /maquetas/Leo/maqueta-eva/… y
+                   /maquetas/Fani/maqueta-reloj/… redirigen (301) a /interfaces/…
+(el simulador visual y el de terminal están en Simulacion/simulador y Simulacion/generador)
 semillas/inicial.json   tripulación, esquemas y priores PROVISIONALES
 ```
 
@@ -256,4 +263,4 @@ semillas/inicial.json   tripulación, esquemas y priores PROVISIONALES
 Foto de la Tierra en el simulador: *Blue Marble*, tomada por la tripulación del Apolo 17
 el 7 de diciembre de 1972 (NASA, dominio público). Descargada de la página de la NASA
 "Blue Marble - Image of the Earth from Apollo 17" (www.nasa.gov) e incrustada en
-`web/simulador.html` para que la maqueta funcione sin internet.
+`Simulacion/simulador/simulador.html` para que la maqueta funcione sin internet.

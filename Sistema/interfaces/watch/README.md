@@ -1,7 +1,7 @@
 # Lunna en el reloj — interfaces
 
 Maqueta de las pantallas del reloj de la tripulación, con el **diseño global de la maqueta de Leo**
-(`Planeacion/Leo/maqueta-eva`): mismas variables de color y vidrio (`estilos.css`, `tema.css`),
+(`Sistema/interfaces/eva`): mismas variables de color y vidrio (`estilos.css`, `tema.css`),
 la misma **Lunna** (`luna.js`) y el mismo **motor** con la tripulación y el escenario (`motor.js`).
 No copia esos archivos: los carga desde su carpeta, así que cualquier cambio de Leo se ve aquí.
 
@@ -11,15 +11,19 @@ un reloj real.
 
 ## Abrir
 
-Doble clic en `index.html` (no necesita servidor ni internet). Debe seguir existiendo
-`Planeacion/Leo/maqueta-eva` en su lugar, porque de ahí toma estilos, Lunna y motor.
+Doble clic en `index.html` (no necesita servidor ni internet): se abre como maqueta, en modo
+simulación. Debe seguir existiendo `../eva` (`Sistema/interfaces/eva`) en su lugar, porque de ahí toma
+estilos, Lunna, motor y `modo.js`.
 
-Con el backend de Julio corriendo (`cd Planeacion/Julio/backend && npm start`):
+Con el backend en modo simulación (`cd Simulacion && npm start`):
 
-- **http://localhost:8787/reloj** — la maqueta completa, servida por el backend.
+- **http://localhost:8787/reloj** — la maqueta completa (lleva a `/interfaces/reloj/`).
 - **En el simulador** (`/simulador`): al hacer clic en el **reloj** de la astronauta se abre esta
   pantalla en su ventana, igual que el smartphone, el PC y la Tierra. *Frontend* es el reloj (solo el
   reloj, `?embebido&persona=MS-2`, porque es el reloj de Ana) y *Backend*, la terminal del reloj.
+
+En modo operativo (`cd Sistema/backend && npm start`), `/reloj` dice «Modo operativo» en lugar de
+mostrar el escenario simulado, del que todavía depende.
 
 ### Enlazado al reloj de la simulación
 

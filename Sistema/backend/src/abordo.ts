@@ -5,7 +5,7 @@
  *   CMO ──consulta──────► Tierra                       por el enlace: bajada, con OWLT
  *   teléfono ──emergencia─► central y Tierra            SOS manual o automático; a Tierra con prioridad 0
  *
- * Lo usan las pantallas de LUNNA (Planeacion/Leo/maqueta-eva): central.html manda avisos y consultas,
+ * Lo usan las pantallas de LUNNA (Sistema/interfaces/eva): central.html manda avisos y consultas,
  * index.html (teléfono) registra emergencias y base.html las recibe en su bandeja.
  */
 import { ahora, json, type BD } from './db.ts';

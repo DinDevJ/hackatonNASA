@@ -1,7 +1,8 @@
 /**
  * Computadora central EVA. HTTP + eventos en vivo (SSE). Cero dependencias.
  *
- *   npm start            → http://localhost:8787
+ *   npm start            → http://localhost:8787 (modo operativo)
+ *   cd ../../Simulacion && npm start   → mismo servidor en modo simulación (simulador y escenario)
  *
  * Contratos completos en ../README.md
  */
@@ -24,15 +25,25 @@ import { estadoApp } from './app.ts';
 import { avisoAbordo, cerrarEmergencia, consultaATierra, leerEmergencias, registrarEmergencia } from './abordo.ts';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
-/** App móvil del equipo (Diana, Katy): se sirve tal cual en /app/. Se puede cambiar con APP_MOVIL. */
-const RAIZ_APP = resolve(process.env.APP_MOVIL ?? join(AQUI, '..', '..', '..', 'Leo', 'maqueta-eva'));
 /**
- * Maquetas que se sirven en /maquetas/<carpeta>/ con la misma estructura que en Planeacion/, para que
- * sus rutas relativas sigan valiendo (el reloj de Fani carga estilos, Lunna y motor de la de Leo).
- * Sólo estas carpetas: nada más de Planeacion/ queda expuesto.
+ * Interfaces de los dispositivos (Sistema/interfaces/), una carpeta por dispositivo y una común. Se
+ * sirven en /<carpeta>/ con la misma estructura que en disco, para que sus rutas relativas
+ * (../comun/…) valgan igual servidas que abiertas como archivo. Sólo estas carpetas quedan expuestas.
+ *   /desktop/          computadora central (desktop/central.html)
+ *   /desktop/tierra    base en Tierra (desktop/base.html)
+ *   /mobile/           celular (mobile/index.html)
+ *   /watch/            reloj (watch/index.html)
+ *   /comun/…           estilos, Lunna, motor, modo.js y config.js
  */
-const RAIZ_PLANEACION = resolve(join(AQUI, '..', '..', '..'));
-const MAQUETAS = ['Leo/maqueta-eva', 'Fani/maqueta-reloj'];
+const RAIZ_INTERFACES = resolve(join(AQUI, '..', '..', 'interfaces'));
+const DISPOSITIVOS: Record<string, string> = { desktop: 'central.html', mobile: 'index.html', watch: 'index.html' };
+const CARPETAS = [...Object.keys(DISPOSITIVOS), 'comun'];
+/** Pantallas con nombre propio dentro de un dispositivo. */
+const PANTALLAS: Record<string, string> = { '/desktop/tierra': 'desktop/base.html' };
+/** Rutas anteriores (/app/…, /reloj, /maquetas/…): redirigen a la ruta nueva equivalente. */
+const ANTIGUAS: Record<string, string> = {
+  '': '/mobile/', 'index.html': '/mobile/', 'central.html': '/desktop/', 'base.html': '/desktop/tierra',
+};
 const TIPOS: Record<string, string> = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png',
@@ -76,13 +87,14 @@ export function anotar(linea: string): void {
 }
 
 /** Lo que se ve al abrir http://localhost:8787: texto plano, se refresca solo. */
-function estadoTexto(db: BD, rol: 'nave' | 'tierra' | null = null): string {
+function estadoTexto(db: BD, rol: 'nave' | 'tierra' | null = null, modo: Modo = 'operativo'): string {
   const n = (sql: string) => (db.prepare(sql).get() as { n: number }).n;
   const e = leerEnlace(db);
   const seg = Math.floor((Date.now() - ARRANQUE) / 1000);
   return [
     `Lunna · computadora central · backend v${VERSION_BACKEND}`,
     `CORRIENDO desde hace ${Math.floor(seg / 60)} min ${seg % 60} s`,
+    modo === 'simulacion' ? 'MODO SIMULACIÓN · los datos de esta base son SINTÉTICOS' : 'modo operativo · sin simulador ni escenario sintético',
     '',
     `entorno actual       ${entornoEn(db, ahora())}`,
     `ventana de LUNNA     ${ventanaPersonal() === VENTANA_PERSONAL_MISION_MIN ? '24 h (misión)' : `${ventanaPersonal()} min · DEMOSTRACIÓN`}`,
@@ -101,7 +113,8 @@ function estadoTexto(db: BD, rol: 'nave' | 'tierra' | null = null): string {
     'actividad reciente',
     ...(recientes.length ? recientes.map((r) => '  ' + r) : ['  (nada todavía)']),
     '',
-    'simulador visual: /simulador · control de misión (Tierra): /tierra · panel de la nave: /nave · app móvil: /app/ · reloj: /reloj',
+    `${modo === 'simulacion' ? 'simulador visual: /simulador · ' : ''}control de misión (Tierra): /tierra · panel de la nave: /nave`,
+    'dispositivos: computadora central /desktop · base en Tierra /desktop/tierra · celular /mobile · reloj /watch',
     'API: /api/salud · /api/estado · /api/app/<tripulante> · /api/alertas · /api/referencias · /api/stream · ver backend/README.md',
   ].join('\n');
 }
@@ -163,7 +176,17 @@ export function registrarActividad(): void {
   bus.on('enlace', (e: Record<string, unknown>) => anotar(`enlace ${e.abierto ? 'abierto' : 'cerrado'}, retraso ${e.owlt_s} s`));
 }
 
+/**
+ * Modo de operación. «operativo» (por defecto): no sirve el simulador, ni el escenario sintético de
+ * las interfaces, ni el reinicio de la demo. «simulacion»: lo arranca Simulacion/ (cd Simulacion &&
+ * npm start) y necesita la carpeta de Simulacion/ para servir esas piezas.
+ */
+export type Modo = 'operativo' | 'simulacion';
+
 export interface OpcionesServidor {
+  modo?: Modo;
+  /** Carpeta Simulacion/ (obligatoria en modo simulación). */
+  simulacion?: string;
   rol?: 'nave' | 'tierra';
   /** Rutas /enlace/* (solo Tierra). Devuelve true si atendió la petición. */
   enlace?: (req: IncomingMessage, res: ServerResponse) => Promise<boolean>;
@@ -177,6 +200,32 @@ const antig = (t: unknown): number | null => {
 
 export function manejador(db: BD, opciones: OpcionesServidor = {}) {
   const rol = opciones.rol ?? null;
+  const modo: Modo = opciones.modo ?? 'operativo';
+  if (modo !== 'operativo' && modo !== 'simulacion') throw new Error(`modo inválido "${modo}": operativo o simulacion`);
+  if (modo === 'simulacion' && !opciones.simulacion) throw new Error('el modo simulación necesita la carpeta Simulacion/ (opción simulacion)');
+  const raizSimulacion = opciones.simulacion ? resolve(opciones.simulacion) : null;
+  const noEnOperativo = 'sólo disponible en modo simulación (cd Simulacion && npm start)';
+
+  /**
+   * Piezas de las interfaces que dependen del modo, en /comun/:
+   *   config.js       window.EVA_CONFIG = { modo, escenario } (lo lee modo.js)
+   *   escenario/<f>   escenario sintético (Simulacion/escenarios/interfaces/<f>), sólo en simulación
+   * Devuelve true si atendió la petición.
+   */
+  const servirDeModo = (res: ServerResponse, rel: string): boolean => {
+    if (rel === 'config.js') {
+      res.writeHead(200, { 'content-type': TIPOS['.js']!, 'cache-control': 'no-cache' })
+        .end(`window.EVA_CONFIG = ${JSON.stringify({ modo, escenario: modo === 'simulacion' ? 'escenario/' : null })};\n`);
+      return true;
+    }
+    if (!rel.startsWith('escenario/')) return false;
+    if (modo !== 'simulacion' || !raizSimulacion) {
+      res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end(`escenario simulado: ${noEnOperativo}`);
+      return true;
+    }
+    servirArchivo(res, join(raizSimulacion, 'escenarios', 'interfaces'), rel.slice('escenario/'.length));
+    return true;
+  };
   // Rutas propias de este manejador: varios servidores en un mismo proceso no se pisan.
   const rutas: Array<{ metodo: string; patron: RegExp; claves: string[]; h: Manejador }> = [];
   const ruta = (metodo: string, camino: string, h: Manejador) => {
@@ -187,7 +236,7 @@ export function manejador(db: BD, opciones: OpcionesServidor = {}) {
   const todos = (sql: string, ...a: Array<string | number | null>) => db.prepare(sql).all(...a);
   const uno = (sql: string, ...a: Array<string | number | null>) => db.prepare(sql).get(...a);
 
-  ruta('GET', '/api/salud', () => ({ ok: true, version: VERSION_BACKEND, hora: ahora(), entorno: entornoEn(db, ahora()),
+  ruta('GET', '/api/salud', () => ({ ok: true, version: VERSION_BACKEND, modo, hora: ahora(), entorno: entornoEn(db, ahora()),
     ventana_personal_min: ventanaPersonal() }));
   // Ventana del criterio personal de LUNNA: 1440 min en misión; se acorta sólo para demostraciones.
   ruta('GET', '/api/lunna/ventana', () => ({ minutos: ventanaPersonal(), mision: VENTANA_PERSONAL_MISION_MIN }));
@@ -451,14 +500,54 @@ export function manejador(db: BD, opciones: OpcionesServidor = {}) {
   ruta('POST', '/api/emergencias', async (req) => conError(async () => registrarEmergencia(db, await cuerpoJson(req))));
   ruta('PUT', '/api/emergencias/:id', async (req, p) => conError(async () => cerrarEmergencia(db, Number(p.id), (await cuerpoJson<{ resultado: string }>(req)).resultado)));
 
-  // ── Sólo para la demo: deja la misión en blanco, conserva la configuración ──
+  // ── Sólo para la demo (modo simulación): deja la misión en blanco, conserva la configuración ──
   ruta('POST', '/api/demo/reiniciar', () => {
+    if (modo !== 'simulacion') throw new ErrorHttp(403, `reiniciar la demo: ${noEnOperativo}`);
     db.exec(`DELETE FROM muestras; DELETE FROM alertas; DELETE FROM asignaciones; DELETE FROM fases;
              DELETE FROM bajada; DELETE FROM subida; DELETE FROM abordo; DELETE FROM emergencias;`);
     fijarVentanaPersonal(VENTANA_PERSONAL_MISION_MIN);
     reiniciarEstados();
     return { ok: true };
   });
+
+  /**
+   * /desktop, /desktop/tierra, /mobile, /watch y /comun, y las rutas anteriores que redirigen a ellas.
+   * Devuelve true si atendió la petición.
+   */
+  const atenderInterfaces = (url: URL, res: ServerResponse): boolean => {
+    const ruta = url.pathname;
+    const a = (destino: string, codigo = 302) => { res.writeHead(codigo, { location: destino + url.search }).end(); return true; };
+    const no = () => { res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end('no encontrado'); return true; };
+
+    // Pantallas con nombre propio (/desktop/tierra) y su variante con barra final.
+    if (PANTALLAS[ruta]) { servirArchivo(res, RAIZ_INTERFACES, PANTALLAS[ruta]); return true; }
+    if (ruta.endsWith('/') && PANTALLAS[ruta.slice(0, -1)]) return a(ruta.slice(0, -1), 301);
+
+    // /<carpeta>/<archivo>: la carpeta sola lleva a su pantalla de inicio.
+    const [, carpeta = '', ...partes] = ruta.split('/');
+    if (CARPETAS.includes(carpeta)) {
+      if (!partes.length) return a(`/${carpeta}/`, 301);
+      const rel = partes.join('/');
+      if (carpeta === 'comun' && servirDeModo(res, rel)) return true;
+      servirArchivo(res, join(RAIZ_INTERFACES, carpeta), rel || DISPOSITIVOS[carpeta] || '');
+      return true;
+    }
+
+    // Rutas anteriores: /app/… y /maquetas/Leo/maqueta-eva/… (celular, central y base juntos).
+    const app = /^\/(?:app|maquetas\/Leo\/maqueta-eva)(?:\/(.*))?$/.exec(ruta);
+    if (app) {
+      const rel = app[1] ?? '';
+      if (rel in ANTIGUAS) return a(ANTIGUAS[rel]!);
+      if (rel === 'config.js' || rel.startsWith('escenario/')) return a('/comun/' + rel);
+      if (!/^[\w.-]+$/.test(rel)) return no();
+      const donde = CARPETAS.find((c) => existsSync(join(RAIZ_INTERFACES, c, rel)));
+      return donde ? a(`/${donde}/${rel}`) : no();
+    }
+    // /reloj y /maquetas/Fani/maqueta-reloj/… → /watch/….
+    const reloj = /^\/(?:reloj|maquetas\/Fani\/maqueta-reloj)(?:\/(.*))?$/.exec(ruta);
+    if (reloj) return a('/watch/' + (reloj[1] ?? ''));
+    return false;
+  };
 
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -470,24 +559,11 @@ export function manejador(db: BD, opciones: OpcionesServidor = {}) {
 
     // Página de estado: al abrir http://localhost:8787 se ve que el backend corre.
     if (req.method === 'GET' && url.pathname === '/') {
-      res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', refresh: '2' }).end(estadoTexto(db, rol));
+      res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', refresh: '2' }).end(estadoTexto(db, rol, modo));
       return;
     }
-    // App móvil: archivos estáticos, sin salir de su carpeta.
-    if (req.method === 'GET' && url.pathname === '/app') { res.writeHead(301, { location: '/app/' }).end(); return; }
-    if (req.method === 'GET' && url.pathname.startsWith('/app/')) { servirArchivo(res, RAIZ_APP, url.pathname.slice(5)); return; }
-    // Reloj de la tripulación (maqueta de Fani): /reloj lleva a su carpeta dentro de /maquetas/.
-    if (req.method === 'GET' && (url.pathname === '/reloj' || url.pathname === '/reloj/')) {
-      res.writeHead(302, { location: '/maquetas/Fani/maqueta-reloj/' + url.search }).end(); return;
-    }
-    if (req.method === 'GET' && url.pathname.startsWith('/maquetas/')) {
-      const resto = url.pathname.slice('/maquetas/'.length);
-      const carpeta = MAQUETAS.find((m) => resto === m || resto.startsWith(m + '/'));
-      if (!carpeta) { res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end('no encontrado'); return; }
-      if (resto === carpeta) { res.writeHead(301, { location: `/maquetas/${carpeta}/${url.search}` }).end(); return; }
-      servirArchivo(res, resolve(RAIZ_PLANEACION, carpeta), resto.slice(carpeta.length + 1));
-      return;
-    }
+    // Interfaces de los dispositivos: archivos estáticos, sin salir de su carpeta.
+    if (req.method === 'GET' && atenderInterfaces(url, res)) return;
     // Panel de la nave (enlace HTTPS): lo escribe otro módulo; si no existe, 404.
     if (req.method === 'GET' && url.pathname === '/nave') {
       const html = join(AQUI, '..', 'web', 'nave.html');
@@ -506,13 +582,15 @@ export function manejador(db: BD, opciones: OpcionesServidor = {}) {
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(readFileSync(html));
       return;
     }
-    // Simulador visual: queda aparcado en /simulador, fuera de la ruta principal.
+    // Simulador visual (Simulacion/simulador/simulador.html): sólo en modo simulación.
     if (req.method === 'GET' && url.pathname === '/simulador') {
-      const html = join(AQUI, '..', 'web', 'simulador.html');
-      if (existsSync(html)) {
-        res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(readFileSync(html));
+      const html = raizSimulacion && modo === 'simulacion' ? join(raizSimulacion, 'simulador', 'simulador.html') : null;
+      if (!html || !existsSync(html)) {
+        res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end(`simulador visual: ${noEnOperativo}`);
         return;
       }
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(readFileSync(html));
+      return;
     }
 
     // Eventos en vivo: muestras, alertas y rechazos.
@@ -552,7 +630,14 @@ export function construir(db: BD, opciones: OpcionesServidor = {}) {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  const db = abrir(process.env.BD ?? join(AQUI, '..', 'eva.db'));
+  // Modo: operativo por defecto. Simulacion/ arranca con --modo simulacion --simulacion <carpeta>.
+  const argumento = (k: string) => { const i = process.argv.indexOf(`--${k}`); return i >= 0 ? process.argv[i + 1] : undefined; };
+  const modo = (argumento('modo') ?? 'operativo') as Modo;
+  const simulacion = argumento('simulacion');
+  if (modo !== 'operativo' && modo !== 'simulacion') { console.error(`✗ --modo "${modo}": operativo o simulacion`); process.exit(1); }
+  if (modo === 'simulacion' && !simulacion) { console.error('✗ el modo simulación necesita --simulacion <carpeta Simulacion/>; usa `cd Simulacion && npm start`'); process.exit(1); }
+  // Cada modo tiene su base: los datos sintéticos nunca caen en la base operativa.
+  const db = abrir(process.env.BD ?? (modo === 'simulacion' ? join(resolve(simulacion!), 'eva-simulacion.db') : join(AQUI, '..', 'eva.db')));
   const { nuevos } = cargarInicial(db, join(AQUI, '..', 'semillas', 'inicial.json'));
   const añadidos = Object.entries(nuevos).filter(([, n]) => n > 0).map(([k, n]) => `${n} ${k}`);
   if (añadidos.length) console.log(`Semillas: añadidos ${añadidos.join(', ')}`);
@@ -560,7 +645,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   migrarSalud(db);
   const sal = sembrarSalud(db);
   console.log(`Salud: ${sal.ausente ? 'sin CSV del modelo' : sal.error ? `error (${sal.error})` : `${sal.padecimientos} padecimientos, ${sal.vinculos} vínculos`}`);
-  const srv = construir(db);
+  const srv = construir(db, { modo, simulacion });
   iniciarEnlace(db);
   registrarActividad();
   srv.on('error', (e: NodeJS.ErrnoException) => {
@@ -572,7 +657,8 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     throw e;
   });
   srv.listen(PUERTO, () => {
-    console.log(`Lunna · backend v${VERSION_BACKEND}`);
+    console.log(`Lunna · backend v${VERSION_BACKEND} · ${modo === 'simulacion' ? 'MODO SIMULACIÓN (datos sintéticos)' : 'modo operativo'}`);
+    if (modo === 'simulacion') console.log(`  simulador visual: http://localhost:${PUERTO}/simulador`);
     console.log(`  estado:           http://localhost:${PUERTO}   (se refresca solo)`);
     console.log(`  eventos en vivo:  http://localhost:${PUERTO}/api/stream`);
   });

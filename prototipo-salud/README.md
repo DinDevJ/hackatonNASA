@@ -223,18 +223,18 @@ decisiones y límites: `motor/DISENO.md`. Instalación sobre una copia existente
 
 ## Base de la nave (eva.db, opcional)
 
-El motor puede leer las muestras de la base de la nave (Planeacion/Julio/backend) y guardar ahí sus evaluaciones y los
-pesos que edite el usuario. Python no crea el esquema: lo crea Node (`npm run migrar` en `Planeacion/Julio/backend`).
+El motor puede leer las muestras de la base de la nave (Sistema/backend) y guardar ahí sus evaluaciones y los
+pesos que edite el usuario. Python no crea el esquema: lo crea Node (`npm run migrar` en `Sistema/backend`).
 
 ```bash
-EVA_DB=../Planeacion/Julio/backend/eva-nave.db streamlit run app.py
-EVA_DB=../Planeacion/Julio/backend/eva-nave.db python -m motor.evadb --evaluar     # guarda en `evaluaciones`
+EVA_DB=../Sistema/backend/eva-nave.db streamlit run app.py
+EVA_DB=../Sistema/backend/eva-nave.db python -m motor.evadb --evaluar     # guarda en `evaluaciones`
 ```
 
 - Con `EVA_DB` y las tablas de salud: la vista Padecimientos usa eva.db (canal real) por defecto y la tripulación
   sintética es una opción rotulada SIMULADO; los pesos y umbrales editados van a la tabla `pesos_usuario`.
 - Sin `EVA_DB` (o sin el archivo / sin las tablas): todo funciona como antes y los cambios van a `datos/modelo/overrides.json`.
-- Los datos de eva.db pueden venir del simulador de hardware (`npm run sim`): en ese caso también son SIMULADOS, y la
+- Los datos de eva.db pueden venir del generador de telemetría sintética (`npm run generador` en `Simulacion/`): en ese caso también son SIMULADOS, y la
   base no permite distinguirlo. La clase de dispositivo se lee como `desconocido` (menor confianza del motor).
 
 ## Verificación (VERIFICACIÓN del encargo)

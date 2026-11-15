@@ -16,31 +16,34 @@ Todos los datos son **simulados**, salvo los eventos solares de **NASA DONKI** y
 
 | Carpeta | Qué es |
 |---|---|
-| [`Planeacion/Leo/maqueta-eva`](Planeacion/Leo/maqueta-eva/README.md) | La app del celular (`index.html`), la computadora central (`central.html`) y la base en Tierra (`base.html`) |
-| [`Planeacion/Julio/backend`](Planeacion/Julio/backend/README.md) | Computadora central: recibe las tramas, guarda, evalúa con el modelo LUNNA y simula el enlace con Tierra. Incluye el simulador visual de la nave |
-| `Planeacion/Julio/esp32`, `Planeacion/Julio/pasarela` | Firmware de la playera (ESP32) y pasarela Bluetooth hacia la central |
-| [`Planeacion/Fani/maqueta-reloj`](Planeacion/Fani/maqueta-reloj/README.md) | Interfaz del reloj, servida por el backend |
-| [`Planeacion/Leo/modelo-pesos`](Planeacion/Leo/modelo-pesos/README.md) | Pesos fisiológicos por padecimiento (de aquí sale `pesos.js`) |
-| `Planeacion/Julio/datos`, `Planeacion/Julio/scripts` | Eventos solares de NASA DONKI y el script que los descarga |
-| `Planeacion/*.csv`, `Planeacion/Iker` | Tablas de variables y padecimientos que citan las semillas del backend |
+| [`Sistema/`](Sistema/README.md) | Lo que correría en la nave y en Tierra: [`backend`](Sistema/backend/README.md) (computadora central y LUNNA), [`interfaces/eva`](Sistema/interfaces/eva/README.md) (celular, computadora central y base en Tierra), [`interfaces/reloj`](Sistema/interfaces/reloj/README.md), `pasarela` (Bluetooth) y `esp32` (firmware de la playera) |
+| [`Simulacion/`](Simulacion/README.md) | Todo lo sintético: simulador visual de la nave, generador de telemetría, escenario de las interfaces (`datos.js`, `demo.js`) y eventos solares de NASA DONKI |
+| `Planeacion/` | Documentos y catálogos: tablas de variables y padecimientos (`*.csv`, `Iker`) que citan las semillas del backend y [`Leo/modelo-pesos`](Planeacion/Leo/modelo-pesos/README.md) (de aquí sale `pesos.js`) |
+| [`prototipo-salud/`](prototipo-salud/README.md) | Prototipo del motor de padecimientos (Python) |
 
 ## Abrir
 
-Requiere **Node 22.6+**, sin `npm install`.
+Requiere **Node 22.6+**, sin `npm install`. Hay dos modos, con las mismas interfaces:
 
 ```bash
-cd Planeacion/Julio/backend
-npm start
+cd Simulacion && npm start       # modo simulación: simulador, escenario y demo (datos sintéticos)
+cd Sistema/backend && npm start  # modo operativo: sin simulador ni escenario sintético
 ```
+
+En modo simulación:
 
 - App del celular: http://localhost:8787/app/
 - Computadora central: http://localhost:8787/app/central.html
 - Base en Tierra: http://localhost:8787/app/base.html
+- Reloj: http://localhost:8787/reloj/
 - Simulador de la nave: http://localhost:8787/simulador
 - **Demo de 30 s en inglés** (para el video de entrega): http://localhost:8787/app/?demo=30&idioma=en ·
   la demo completa en español: http://localhost:8787/app/?demo
 
-Pruebas: `npm test` en el backend y `node --test motor.test.mjs` en `Planeacion/Leo/maqueta-eva`.
+En modo operativo `/simulador` no existe y las pantallas que todavía dependen del escenario simulado lo
+dicen en lugar de mostrarlo.
+
+Pruebas: `npm test` en `Sistema/backend` y en `Simulacion`, y `node --test Sistema/interfaces/eva/motor.test.mjs`.
 
 ## Documentación de planeación
 

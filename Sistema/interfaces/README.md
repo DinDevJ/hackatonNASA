@@ -1,5 +1,20 @@
 # Maqueta LUNNA con Lunna — experiencia de las métricas
 
+## Modo operativo y modo simulación
+
+Esta carpeta (`Sistema/interfaces/eva`) es la misma para los dos modos; lo que cambia es lo que dice el
+backend en `config.js`, que `modo.js` lee antes que todo lo demás:
+
+| Cómo se abre | Modo | Qué se ve |
+|---|---|---|
+| `cd Sistema/backend && npm start` → http://localhost:8787/app/ | **Operativo** | No se carga el escenario sintético (`datos.js`, `demo.js`). El teléfono, la base y el reloj todavía se dibujan con ese escenario, así que dicen «Modo operativo» en lugar de mostrarlo; la central muestra sólo sus bloques en vivo del backend |
+| `cd Simulacion && npm start` → http://localhost:8787/app/ | **Simulación** | Todo, con el escenario que llega de `Simulacion/escenarios/interfaces/` por `/app/escenario/…` y el distintivo **«Simulación · datos sintéticos»** |
+| Abrir `index.html`, `central.html` o `base.html` como archivo | Simulación | La maqueta, con el escenario leído de `../../../Simulacion/escenarios/interfaces/` |
+
+Servida sin backend (por ejemplo con `python -m http.server`) no hay `config.js` y se queda en modo
+operativo: nunca se asume simulación. Pendiente: `motor.js` todavía genera la tripulación y las series
+del escenario por dentro; separarlo y pintar estas pantallas con datos en vivo es un cambio aparte.
+
 ## Estructura de la app (Katy, 14 nov 2026)
 
 Sobre el Cuerpo LUNNA, el motor y la Lunna flotante de Diana. Solo celular. Diseño unificado de
@@ -35,11 +50,10 @@ entre las tres (claves `eva:tema` y `eva:dia`).
 | `central.html` · **computadora central** | La CMO (Mei), a bordo | El diseño del panel médico de Fani en el estilo de LUNNA: **Hoy** (misión, Lunna, tripulación con su cuerpo, avisos, ambiente, clima espacial, historial de advertencias y emergencias), **panel clínico** de cada tripulante (signos contra su normal, Cuerpo LUNNA con sus zonas, sueño y reflejos, metas, dosis, lo que Lunna le dijo, índice por padecimiento, intervención médica), **Estadísticas** (estado por día, lo que más pidió atención, avisos por misión) y **Enlace con Tierra** (cola priorizada, lo recibido y consultas a la base) |
 | `base.html` · **base en Tierra** | El cirujano de vuelo | Casi igual a la central, pero solo con lo que llegó (siempre el pasado, con su SCET y su antigüedad). **Pronósticos**: mapa tripulación × 11 padecimientos con el índice de los pesos de Leo, qué suma cada variable y su tendencia a 3 días. **Mensajes**: avisos y advertencias a la nave con su recorrido (redactado → en camino → a bordo → acuse) |
 
-Abrir (desde esta carpeta, `python -m http.server 8091`):
+Abrir en modo simulación (`cd Simulacion && npm start`):
 
-- Central: **http://localhost:8091/central.html** · panel de Ana: `central.html#tripulante/MS-2`
-- Base: **http://localhost:8091/base.html** · pronósticos: `base.html#pronosticos`
-- Con el backend de Julio corriendo: `http://localhost:8787/app/central.html` y `/app/base.html`
+- Central: **http://localhost:8787/app/central.html** · panel de Ana: `central.html#tripulante/MS-2`
+- Base: **http://localhost:8787/app/base.html** · pronósticos: `base.html#pronosticos`
 
 **Enlace con Tierra.** Sin backend, la central y la base se hablan por este mismo navegador
 (`localStorage`, clave `lunna:enlace`) con el retraso de la luz: el escenario usa 18 min por trayecto y
@@ -77,7 +91,8 @@ Se actualiza sola con los eventos `muestra`, `alerta`, `aviso`, `enlace` y `rech
 cada 5 s. No inventa rutas ni datos: lo que el backend aún no ofrece (Cuerpo LUNNA, 14 días contra su
 normal, índices, ambiente, clima espacial, estadísticas y los mensajes de la CMO, que siguen viajando
 por `localStorage`) queda bajo el rótulo **«Escenario simulado · no viene del backend»**.
-Prueba: `cd Planeacion/Julio/backend && npm test` (`test/central.test.ts`).
+Prueba: `cd Sistema/backend && npm test` (`test/central.test.ts`) y, para el PC del simulador,
+`cd Simulacion && npm test`.
 
 Archivos: `central-vivo.js` (datos en vivo del backend), `consola.css` y `consola.js` (piezas comunes), `central.js`, `base.js`, `iconos.js` (los
 iconos del teléfono más los de las consolas) y `pesos.js` (lo genera `../modelo-pesos/generar_pesos.py`;
@@ -111,17 +126,17 @@ Integra en esta maqueta el panel de salud (módulo 1) que se hizo en `app/`.
 Reglas del motor (`motor.js`): tu normal = 14 días anteriores (mínimo 7), z robusto, variación mínima
 creíble por indicador; una señal sola pide atención con |z| ≥ 3; tu normal nunca da rojo por sí sola.
 
-Pruebas: `node --test Planeacion/Leo/maqueta-eva/motor.test.mjs` (11 pruebas).
+Pruebas: `node --test Sistema/interfaces/eva/motor.test.mjs`.
 
 ## Abrir
 
 ```bash
-cd Planeacion/Leo/maqueta-eva
-python -m http.server 8091
+cd Simulacion
+npm start
 ```
 
-- App: **http://localhost:8091**
-- Demo automática (un día completo, ~3 min): **http://localhost:8091/?demo** (o *Ayuda → Ver demo automática*)
+- App: **http://localhost:8787/app/**
+- Demo automática (un día completo, ~3 min): **http://localhost:8787/app/?demo** (o *Ayuda → Ver demo automática*)
 - Emergencia: botón rojo **SOS** arriba a la derecha, siempre visible.
 
 Funciona sin internet: no usa librerías ni fuentes externas. En escritorio se ve dentro de un marco de
@@ -192,12 +207,13 @@ Paleta: `#B541FA` morado · `#4FD2E9` cian · blanco · `#192584` azul profundo 
 
 ## Archivos
 
-`index.html` · `estilos.css` · `luna.js` (avatar y fases) · `datos.js` (datos simulados con semilla fija) ·
-`app.js` (pantallas, tutoriales, emergencia) · `demo.js` (demo automática).
+`index.html` · `estilos.css` · `luna.js` (avatar y fases) · `app.js` (pantallas, tutoriales, emergencia) ·
+`modo.js` (operativo o simulación). El escenario está en `Simulacion/escenarios/interfaces/`: `datos.js`
+(datos simulados con semilla fija) y `demo.js` (demo automática).
 
 ## Conectada al backend de EVA (notificaciones de Tierra)
 
-Con el backend corriendo (`cd Planeacion/Julio/backend && npm start`), la app se sirve en
+Con el backend corriendo en modo simulación (`cd Simulacion && npm start`), la app se sirve en
 **http://localhost:8787/app/** y también se abre al tocar el smartphone en el simulador
 (`/simulador`, pestaña *Frontend*; *Backend* muestra la terminal del teléfono).
 
@@ -208,7 +224,7 @@ hasta descartarlas; las demás se van solas. Un toque abre el texto completo; el
 pantalla de Tierra.
 
 - La ve la persona activa si el mensaje es para ella o para toda la tripulación; la CMO ve todos.
-- Abierta sola con `python -m http.server`, no hay backend y este archivo no hace nada.
+- Abierta como archivo, no hay backend y este archivo no hace nada.
 
 ### Con el backend de Julio (15 nov 2026)
 

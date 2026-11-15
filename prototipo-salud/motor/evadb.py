@@ -13,7 +13,7 @@
       las de valor NULL también se omiten (no hay sin_dato honesto).
     * context = '' (el `entorno` de la BD no es reposo/sueño/actividad; la FC sin contexto de reposo pasa a 04:A4, G6).
     * method = `metodo` solo si está en el vocabulario del motor; si no, vacío.
-    * simulated = false: la BD no distingue el simulador de hardware (`npm run sim`). Si los datos vienen de él,
+    * simulated = false: la BD no distingue el simulador de hardware (`npm run generador` en Simulacion/). Si los datos vienen de él,
       también son SIMULADOS aunque aquí figuren como reales. notes = 'origen=eva.db; ...'.
     * EXCEPCION: una muestra con procedencia 'modelo_eco' cuyo JSON de calidad trae clase == 'modelo_eco' (la escribe
       `guardar_muestra_eco`) se lee con device_class 'modelo_eco', quality = el del JSON, simulated = `simulado` del JSON
@@ -84,7 +84,7 @@ def faltan(con, necesarias) -> list[str]:
 
 
 def aviso_faltan(f: list[str]) -> str:
-    return (f"la BD no tiene las tablas {', '.join(f)}: ejecute `npm run migrar` en Planeacion/Julio/backend "
+    return (f"la BD no tiene las tablas {', '.join(f)}: ejecute `npm run migrar` en Sistema/backend "
             "(Python no crea el esquema); se trata como «no hay BD» para eso.")
 
 

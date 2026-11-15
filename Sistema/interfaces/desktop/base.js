@@ -8,6 +8,9 @@
  */
 (function () {
   "use strict";
+  // Modo operativo: la consola todavía se dibuja con el escenario simulado; no se muestra.
+  const EM = window.EVA_MODO;
+  if (EM && !EM.simulacion) { EM.operativa(document.getElementById("pagina"), { que: "La consola de la base en Tierra" }); return; }
   const K = window.CONSOLA, M = window.MOTOR;
   const { $, $$, esc, fmt, ic, pastilla, sem, chip, forma } = K;
   const AUTOR = "Cirujano de vuelo";

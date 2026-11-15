@@ -5,6 +5,7 @@
 (function () {
   "use strict";
   const A = window.APP;
+  if (!A) return;                       // sin app (modo operativo): no hay módulos que montar
   const { D, M, $, $$, fmt, ic, ref, mem, aviso, cabecera, lunaGlobo, COLOR, sem, ESTADO_TXT, grafNormal, valorDe, etiquetas, ir } = A;
   const E = A.estado;
   const P = () => A.persona();
@@ -111,7 +112,7 @@
   const apto = (n, p) => { const a = p.sexo === "M" ? "a" : "o"; return n === 2 ? `No apt${a}` : n === 1 ? "En observación" : `Apt${a}`; };
 
   // ---------- Contenido fijo ----------
-  const DONKI = [ // eventos reales SEP 2024 (Planeacion/Julio/datos/donki-sep-2024-01-01_2024-12-31.json); latencia = primera alerta − evento
+  const DONKI = [ // eventos reales SEP 2024 (Simulacion/donki/datos/donki-sep-2024-01-01_2024-12-31.json); latencia = primera alerta − evento
     { id: "2024-05-11T02:10:00-SEP-001", t: "11 may 2024 · 02:10 UTC", inst: "GOES-P: SEISS >100 MeV", lat: 20, modelo: true },
     { id: "2024-05-10T13:35:00-SEP-001", t: "10 may 2024 · 13:35 UTC", inst: "GOES-P: SEISS >10 MeV", lat: 11 },
     { id: "2024-06-08T02:25:00-SEP-001", t: "8 jun 2024 · 02:25 UTC", inst: "GOES-P: SEISS >100 MeV", lat: 11 },

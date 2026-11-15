@@ -11,7 +11,7 @@ import type { BD } from './db.ts';
 const AQUI = dirname(fileURLToPath(import.meta.url));
 
 export const RUTA_MODELO_DEFECTO =
-  process.env.MODELO_SALUD ?? join(AQUI, '..', '..', '..', '..', 'prototipo-salud', 'datos', 'modelo');
+  process.env.MODELO_SALUD ?? join(AQUI, '..', '..', '..', 'prototipo-salud', 'datos', 'modelo');
 
 export const ESQUEMA_SALUD = `
 CREATE TABLE IF NOT EXISTS padecimientos (

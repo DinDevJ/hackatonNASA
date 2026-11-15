@@ -1009,3 +1009,9 @@ body { padding: 2dvh 0; }
 /* ---------------- Filas de solo información (bug 8) ---------------- */
 .lista-fila.lista-fila-fija { cursor: default; }
 .lista-fila.lista-fila-fija:active { background: none; transform: none; }
+
+/* ---------------- Lunna se repliega al hacer scroll (bug 12) ---------------- */
+.luna-boton { transition: opacity 300ms ease, transform 240ms var(--ease-out), left 280ms var(--ease-out), top 280ms var(--ease-out); }
+.luna-boton.replegada.a-la-izq { transform: translateX(-62%); opacity: .6; }
+.luna-boton.replegada.a-la-der { transform: translateX(62%); opacity: .6; }
+@media (prefers-reduced-motion: reduce) { .luna-boton.replegada { transform: none; opacity: .35; } }

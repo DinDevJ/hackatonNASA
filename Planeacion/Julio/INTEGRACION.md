@@ -28,7 +28,7 @@ Cómo funciona, cómo se conecta y dónde están los límites.
 | **Firmware** | `esp32/playera_eva/` | El ESP32 de la playera: lee los sensores, arma tramas, las manda por BLE y las guarda si no hay conexión | C++ (Arduino) |
 | **Pasarela** | `pasarela/` | Encuentra **todos** los dispositivos EVA, se conecta a cada uno, les da la hora y reenvía sus tramas | Python |
 | **Backend** | `backend/` | Atribuye cada dato al tripulante, lo guarda y lo evalúa con LUNNA | TypeScript (Node) |
-| **Simulador** | `backend/web/` | El dibujo de arriba, interactivo, en `http://localhost:8787/simulador` | HTML |
+| **Simulador** | `backend/web/` | El dibujo de arriba, interactivo, en `http://localhost:8787/simulador`. Al dar clic en cada equipo se abre su **consola** (estilo simulador de redes): tramas que manda y recibe en hexadecimal y decodificadas, `show status`, `show interfaces`, `show lunna` y mensajes de enlace caído o levantado | HTML |
 
 ### ¿Los dispositivos van cableados al ESP32?
 

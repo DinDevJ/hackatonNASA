@@ -160,6 +160,11 @@
     cabeza: [150, 28], ojos: [88, 50], corazon: [160, 152], pulmones: [78, 146], abdomen: [156, 206],
     rinones: [78, 252], musculos: [152, 334], piel: [212, 256], radiacion: [214, 102],
   };
+  /** Centro de cada órgano: de ahí sale la línea punteada hasta su marca. */
+  const ANCLA = {
+    cabeza: () => [124, 36], ojos: () => [111.5, 55], corazon: () => [128, 164], pulmones: () => [99, 165], abdomen: () => [132, 212],
+    rinones: () => [95, 239], musculos: () => [137, 324], piel: (s) => { const b = FORMA[s].brazo; return [CX + (b[13][0] + b[6][0]) / 2, 267.5]; },
+  };
   const NOMBRE = {
     cabeza: "Cabeza: sueño, reflejos y ánimo", ojos: "Ojos: se revisan en Tierra", corazon: "Corazón: pulso, HRV y presión",
     pulmones: "Pulmones: oxígeno y respiración", abdomen: "Abdomen: glucosa y agua", rinones: "Riñones y vejiga",
@@ -202,7 +207,15 @@
       <g class="arterias">${arterias(sexo).map((d) => `<path d="${d}"/>`).join("")}</g>
       <g class="arterias flujo">${arterias(sexo).map((d) => `<path d="${d}"/>`).join("")}</g>
       ${["pulmones", "musculos", "rinones", "abdomen", "corazon", "cabeza", "ojos", "piel"].map((r) => `<g ${zona(r)}>${ORGANOS[r](sexo)}</g>`).join("")}
-      ${marcas ? `<g class="marcas" aria-hidden="true">${Object.entries(MARCA).map(([r, [x, y]]) => `<g class="marca${activa === r ? " activa" : ""}"><circle cx="${x}" cy="${y}" r="9.5" class="marca-fondo"/>${forma(regiones[r], x, y)}</g>`).join("")}</g>` : ""}
+      ${marcas ? `<g class="marcas" aria-hidden="true">${Object.entries(MARCA).map(([r, [x, y]]) => {
+        let guia = "";
+        if (ANCLA[r]) {
+          const [ax, ay] = ANCLA[r](sexo), dx = x - ax, dy = y - ay, dist = Math.hypot(dx, dy) || 1;
+          const ex = x - (dx / dist) * 10, ey = y - (dy / dist) * 10; // termina en el borde de la marca
+          guia = `<line class="guia est-${clase(regiones[r])}" x1="${ax}" y1="${ay}" x2="${ex.toFixed(1)}" y2="${ey.toFixed(1)}"/><circle class="guia-punto est-${clase(regiones[r])}" cx="${ax}" cy="${ay}" r="1.5"/>`;
+        }
+        return `<g class="marca${activa === r ? " activa" : ""}">${guia}<circle cx="${x}" cy="${y}" r="9.5" class="marca-fondo"/>${forma(regiones[r], x, y)}</g>`;
+      }).join("")}</g>` : ""}
     </svg>`;
   }
 

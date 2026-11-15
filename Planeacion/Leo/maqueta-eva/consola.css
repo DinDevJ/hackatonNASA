@@ -507,3 +507,53 @@ body.en-hoy .cn-fondo { opacity: 1; }
   .cn-fondo { transition: none; }
   .cn-graf .serie, .cn-graf circle, .cn-graf .proy { animation: none; stroke-dashoffset: 0; opacity: 1; clip-path: none; }
 }
+
+/* ---------------- En vivo: lo que viene del backend de Julio (central-vivo.js) ---------------- */
+[data-vivo]:empty { display: none; }
+[data-vivo] { margin-bottom: 16px; }
+.cn-separa { display: flex; align-items: center; gap: 8px; margin: 4px 2px 12px; }
+.cn-separa::after { content: ""; flex: 1; height: 1px; background: var(--separador); }
+.cn-vivo { border-left: 4px solid var(--verde); }
+.cn-chip.c-vivo { background: var(--verde-suave); color: var(--verde); }
+:root[data-tema="claro"] .cn-chip.c-vivo { color: #17704A; }
+.cn-chip.c-vivo i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: latir 1.6s ease-in-out infinite; }
+.cn-vivo-pildora.error { background: var(--rojo-suave); color: var(--rojo); border-color: transparent; }
+:root[data-tema="claro"] .cn-vivo-pildora.error { color: #A51E2E; }
+.cn-vivo-pildora.error .vivo { background: var(--rojo); box-shadow: none; animation: none; }
+.cn-vivo-pildora.conectando .vivo { background: var(--ambar); box-shadow: 0 0 8px var(--ambar); }
+.cn-vivo-error { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: flex-start; padding: 12px 14px; margin-bottom: 12px; border-radius: 16px; background: var(--rojo-suave); border: 1px solid var(--rojo); font-size: 13px; }
+.cn-vivo-error > .ic { color: var(--rojo); flex: none; margin-top: 2px; }
+.cn-vivo-error > div { flex: 1; min-width: 220px; display: grid; gap: 2px; }
+.cn-vivo-error p { margin: 0; color: var(--texto-2); overflow-wrap: anywhere; }
+.cn-vivo-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.cn-vivo-trip { display: grid; gap: 8px; padding: 12px; border-radius: 18px; background: var(--vidrio); border: 1px solid var(--vidrio-borde); border-top: 3px solid var(--estado, var(--separador)); min-width: 0; }
+.cn-vivo-cab { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-bottom: 4px; }
+summary.cn-vivo-cab { cursor: pointer; list-style: none; margin: 0; border-radius: 12px; }
+summary.cn-vivo-cab::-webkit-details-marker { display: none; }
+summary.cn-vivo-cab:focus-visible { outline: 2px solid var(--acento); outline-offset: 3px; }
+.cn-vivo-flecha { transition: transform 160ms ease-out; }
+details[open] > summary .cn-vivo-flecha { transform: rotate(90deg); }
+details[open] > summary.cn-vivo-cab { margin-bottom: 8px; }
+.cn-vivo-trip { border-top-width: 1px !important; border-left: 4px solid var(--estado, var(--separador)); padding: 10px 12px !important; }
+.cn-vivo-cab > div { display: grid; line-height: 1.25; min-width: 0; }
+.cn-vivo-cab small { color: var(--texto-2); font-size: 11.5px; }
+.cn-vivo-tabla th small, .cn-vivo-tabla td small { font-weight: 500; }
+.cn-vivo-tabla th[scope="row"] { font-weight: 600; }
+.cn-vivo-tabla td.num, .cn-vivo-tabla .num { font-family: var(--mono); white-space: nowrap; }
+.cn-vivo-tabla .cn-chips { margin-top: 3px; }
+.cn-vivo-tabla.compacta { font-size: 12.5px; }
+.cn-vivo-tabla.compacta th, .cn-vivo-tabla.compacta td { padding: 5px 6px; }
+.cn-vivo-tabla.compacta th[scope="row"] { font-weight: 500; }
+.cn-vivo .oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.cn-vivo-sub { display: flex; align-items: baseline; gap: 8px; font-size: 13.5px; font-weight: 650; margin: 16px 0 8px; }
+.cn-vivo-sub .tenue { font-size: 12px; font-weight: 500; }
+.cn-vivo-pie { display: flex; gap: 6px; align-items: flex-start; margin-top: 12px; }
+.cn-vivo-pie .ic { flex: none; margin-top: 2px; }
+.cn-vivo-rechazo { display: flex; gap: 6px; align-items: flex-start; margin-bottom: 10px; color: var(--ambar); overflow-wrap: anywhere; }
+:root[data-tema="claro"] .cn-vivo-rechazo { color: #8A5600; }
+.cn-vivo code { font: 500 11.5px var(--mono); }
+.cn-vivo-chispa { width: 84px; height: 22px; display: block; }
+.cn-vivo-chispa polyline { fill: none; stroke: var(--acento); stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.cn-vivo-chispa circle { fill: var(--acento); }
+@media (max-width: 720px) { .cn-vivo-lista { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { .cn-chip.c-vivo i { animation: none !important; } }

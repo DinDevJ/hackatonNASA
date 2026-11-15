@@ -36,7 +36,8 @@
   const TEMAS = { auto: "Automático", claro: "Claro", oscuro: "Azul marino" };
   function aplicarTema() {
     const t = mem.leer("tema", "auto");
-    const real = t === "auto" ? (matchMedia("(prefers-color-scheme: dark)").matches ? "oscuro" : "claro") : t;
+    const soloOscuro = document.documentElement.hasAttribute("data-solo-oscuro"); // la base en Tierra
+    const real = soloOscuro ? "oscuro" : t === "auto" ? (matchMedia("(prefers-color-scheme: dark)").matches ? "oscuro" : "claro") : t;
     document.documentElement.dataset.tema = real;
     const m = $('meta[name="theme-color"]');
     if (m) m.content = real === "oscuro" ? "#070C2E" : "#EEF0FF";
@@ -188,12 +189,44 @@
     </div>`;
   }
 
+  /** Estado tranquilo dicho en positivo, con su ícono (en vez de "Sin …"). */
+  const positivo = (icono, titulo, texto) => `<div class="cn-positivo">${pastilla(icono, "#3DD68C", "#119B5A")}<span><b>${titulo}</b>${texto ? `<small>${texto}</small>` : ""}</span></div>`;
+  /** Escena de fondo de la misión (decorativa): estrellas que pasan y la cola del cohete, del alto de la
+   * tarjeta, con su propulsión cruzándola. Al hacer scroll las estrellas giran (variable --giro). */
+  function cohete() {
+    const part = Array.from({ length: 18 }, (_, i) => {
+      const y = 50 + Math.sin(i * 2.3) * 13, dur = 2.2 + (i % 5) * 0.4, ret = -(i * 0.33).toFixed(2), tam = 3 + (i % 4);
+      return `<i style="--y:${y.toFixed(1)}%;--dur:${dur.toFixed(2)}s;--ret:${ret}s;--tam:${tam}px"></i>`;
+    }).join("");
+    return `<div class="cn-propulsion" aria-hidden="true">
+      <div class="cn-orbita"><span class="capa lejos"></span><span class="capa media"></span><span class="capa cerca"></span></div>
+      ${part}
+      <svg class="cn-cohete" viewBox="0 0 320 120">
+        <path class="llama" d="M46 60 L0 40 Q16 60 0 80 Z"/>
+        <path class="llama interior" d="M46 60 L18 50 Q28 60 18 70 Z"/>
+        <path class="tobera" d="M44 44 L62 38 V82 L44 76 Z"/>
+        <path class="aleta" d="M76 30 L58 6 L120 30 Z M76 90 L58 114 L120 90 Z"/>
+        <path class="casco" d="M62 30 H250 Q300 34 320 60 Q300 86 250 90 H62 Q56 60 62 30 Z"/>
+        <path class="franja" d="M104 30 V90 M112 30 V90"/>
+        <circle class="ventana" cx="168" cy="60" r="12"/>
+      </svg></div>`;
+  }
+
+  // Al hacer scroll se gira alrededor de Marte: una sola variable para toda la página.
+  let giroPendiente = false;
+  window.addEventListener("scroll", () => {
+    if (giroPendiente) return;
+    giroPendiente = true;
+    requestAnimationFrame(() => { document.documentElement.style.setProperty("--giro", `${(window.scrollY * 0.09).toFixed(2)}deg`); giroPendiente = false; });
+  }, { passive: true });
+
   /** Tarjeta de la misión (la usan la central y la base). */
   function tarjetaMision(o) {
     const g = general();
     const n = [0, 1, 2].map((x) => PERSONAS.filter((p) => ev(p.id).general === x).length);
     const conteo = [[0, "en su normal"], [1, "en atención"], [2, "actúa ahora"]].filter(([x]) => n[x]).map(([x, t]) => sem(x, `${n[x]} ${t}`)).join("");
     return `<section class="tarjeta cn-mision es-${g}" aria-labelledby="t-mision">
+      ${cohete()}
       <div>
         <p class="cn-etq">${o.etq}</p>
         <h1 id="t-mision">${MISION.nombre}</h1>
@@ -219,7 +252,7 @@
       ${cuerpoMini(p, e)}
       <div class="cn-trip-cab"><span class="avatar" style="--c:${p.color}">${p.nombre[0]}</span><div><b>${esc(p.nombre)}</b><small>${p.id} · ${esc(p.rol)}</small></div></div>
       <div>${sem(e.general)}</div>
-      <div class="cn-chips">${alertas}${extras}${!alertas && !extras ? chip(0, "Sin avisos") : ""}</div>
+      <div class="cn-chips">${alertas}${extras}${!alertas && !extras ? chip(0, "Todo en orden", "check") : ""}</div>
       <div class="cn-trip-pie"><span>${pie || "Ver panel clínico"}</span>${ic("chevron", "ic-sm")}</div>
     </a>`;
   }
@@ -442,9 +475,11 @@
       <text x="${x(dias[0])}" y="${H - 6}">D${dias[0]}</text><text x="${x(dd + 3)}" y="${H - 6}" text-anchor="end">D${dd + 3}</text>
       ${series.map((s) => {
         const ult = s.serie.filter((p) => p.v != null).slice(-1)[0];
-        return `<path class="serie" d="${linea(s.serie)}" stroke="${s.c}"/>
+        const pts = s.serie.filter((p) => p.v != null), x0 = pts.length ? x(pts[0].d) : 0, x1 = ult ? x(ult.d) : 1;
+        const retraso = (px) => (((px - x0) / Math.max(1, x1 - x0)) * 1.1).toFixed(2); // el punto aparece cuando la línea llega
+        return `<path class="serie" pathLength="1" d="${linea(s.serie)}" stroke="${s.c}"/>
           ${ult && s.proy.length ? `<path class="proy" d="M${x(ult.d).toFixed(1)},${y(ult.v).toFixed(1)}${s.proy.map((p) => `L${x(p.d).toFixed(1)},${y(p.v).toFixed(1)}`).join("")}" stroke="${s.c}"/>` : ""}
-          ${s.serie.filter((p) => p.v != null).map((p) => `<circle cx="${x(p.d).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="${p.d === dd ? 4.2 : 2.6}" fill="${s.c}"/>`).join("")}`;
+          ${pts.map((p) => `<circle cx="${x(p.d).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="${p.d === dd ? 4.2 : 2.6}" fill="${s.c}" style="animation-delay:${retraso(x(p.d))}s"/>`).join("")}`;
       }).join("")}
     </svg>
     <div class="cn-leyenda-graf">${series.map((s) => `<span><i style="--c:${s.c}"></i>${esc(MALESTARES.find((m) => m.id === s.mid).corto)} ${RUMBO[s.rumbo][0]}</span>`).join("")}
@@ -515,11 +550,48 @@
       backend = { version: s.version, owlt_s: +e.owlt_s || 20, abierto: e.abierto !== false };
     } catch { backend = null; }
     pintarEnlacePildora();
+    if (backend) abrirFlujo();
     return backend;
   }
-  /** Manda un aviso de Tierra por el backend de Julio (si está corriendo). */
+  // ---- puente con el backend de Julio (solo si corre) ----
+  const DESDE_BACKEND = Object.fromEntries(Object.entries(BACKEND_ID).map(([pid, id]) => [id, pid]));
+  const oyentesBk = {};
+  let flujo = null, nombresVar = {};
+  const enviarBk = async (ruta, cuerpo, metodo) => {
+    if (!backend) return null;
+    try {
+      const r = await fetch(ruta, { method: metodo || "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cuerpo) });
+      return r.ok ? await r.json() : null;
+    } catch { return null; }
+  };
+  const leerBk = async (ruta) => { if (!backend) return null; try { const r = await fetch(ruta, { cache: "no-store" }); return r.ok ? await r.json() : null; } catch { return null; } };
+  /** Eventos en vivo del backend: "tierra" (lo que llega a Tierra), "aviso", "emergencia"… */
+  function alEventoBk(tipo, f) {
+    (oyentesBk[tipo] = oyentesBk[tipo] || []).push(f);
+    if (flujo && !flujo._oye[tipo]) escuchar(tipo);
+  }
+  function escuchar(tipo) {
+    flujo._oye[tipo] = true;
+    flujo.addEventListener(tipo, (e) => { let d; try { d = JSON.parse(e.data); } catch { return; } (oyentesBk[tipo] || []).forEach((f) => f(d)); });
+  }
+  async function abrirFlujo() {
+    if (!backend || flujo) return;
+    flujo = new EventSource("/api/stream"); flujo._oye = {};
+    Object.keys(oyentesBk).forEach(escuchar);
+    const vars = await leerBk("/api/variables");
+    if (Array.isArray(vars)) nombresVar = Object.fromEntries(vars.map((v) => [v.id, v.nombre]));
+  }
+  const nombreVar = (id) => nombresVar[id] || (IND[id] && IND[id].nombre) || id;
+  /** Aviso de la CMO al teléfono de un tripulante, por la central real. */
+  const avisoAbordoBk = (m) => enviarBk("/api/abordo/avisos", { para: BACKEND_ID[m.pid] || "todos", texto: m.texto, nivel: (NIVEL_MSJ[m.nivel] || NIVEL_MSJ.aviso).backend, de: m.de || "CMO" });
+  /** Consulta de la central a Tierra: baja por el enlace real, con su retraso. */
+  const consultaBk = (m) => enviarBk("/api/central/consultas", { sobre: BACKEND_ID[m.pid] || null, texto: m.texto, nivel: (NIVEL_MSJ[m.nivel] || NIVEL_MSJ.aviso).backend, de: m.de || "CMO" });
+  const emergenciasBk = () => leerBk("/api/emergencias");
+  const bandejaBk = () => leerBk("/api/tierra/bandeja");
+
+  /** Manda un aviso de Tierra por el backend de Julio (si está corriendo). Devuelve su id o null. */
   async function avisoBackend(m) {
-    if (!backend) return false;
+    if (!backend) return null;
     const nivel = NIVEL_MSJ[m.nivel] || NIVEL_MSJ.aviso;
     const cuerpo = { tipo: nivel.backend ? "alerta" : "aviso", para: BACKEND_ID[m.pid] || "todos", texto: m.texto, de: m.de || "Cirujano de vuelo" };
     // Variable con el id del catálogo que usa el backend (signos de la playera y el brazalete).
@@ -527,8 +599,8 @@
     if (nivel.backend) { cuerpo.nivel = nivel.backend; if (m.variable) cuerpo.variable = VAR_BACKEND[m.variable] || (IND[m.variable] && IND[m.variable].varId) || m.variable; }
     try {
       const r = await fetch("/api/tierra/avisos", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cuerpo) });
-      return r.ok;
-    } catch { return false; }
+      return r.ok ? (await r.json()).id : null;
+    } catch { return null; }
   }
 
   // ---------------------------------------------------------------- escenario (lo mismo que cuenta el teléfono)
@@ -566,6 +638,80 @@
     ];
   }
 
+
+  // ---------------------------------------------------------------- Marte de fondo (solo en Hoy)
+  // La cámara orbita alrededor de Marte: no es el planeta el que gira, somos nosotros. Lo dan tres cosas
+  // que dependen del mismo ángulo de órbita (despacio solo y más rápido al hacer scroll):
+  //   · las estrellas se desplazan en tres capas, las cercanas más rápido que las lejanas (profundidad);
+  //   · la superficie de Marte pasa frente a nosotros;
+  //   · la luz del Sol (que nunca aparece en pantalla) cambia de lado: de día pleno a creciente a noche.
+  const ANCHO_SUP = 760; // una vuelta completa de la superficie, en unidades del dibujo
+  function marteFondo() {
+    const manchas = (dx) => `<g transform="translate(${dx} 0)">
+        <path class="m-mar" d="M10 170 Q70 140 130 160 T250 150 Q300 145 330 170 Q300 205 250 198 T130 205 Q60 212 10 195 Z"/>
+        <path class="m-mar" d="M300 240 Q360 225 420 245 Q470 262 520 248 L540 286 Q470 300 400 292 Q340 286 300 270 Z"/>
+        <path class="m-mar" d="M470 120 Q540 104 610 128 Q660 146 740 132 L760 160 Q690 178 620 166 Q540 152 470 150 Z"/>
+        <path class="m-polvo" d="M80 260 Q150 246 210 268 Q240 282 200 300 Q140 312 90 292 Z"/>
+        <path class="m-polvo" d="M560 210 Q620 196 680 214 Q700 230 660 240 Q600 246 560 232 Z"/>
+        <path class="m-valle" d="M150 214 Q230 202 300 216 Q360 228 420 214"/>
+        ${[[60, 120, 14], [200, 110, 9], [350, 130, 12], [520, 190, 10], [640, 280, 13], [250, 300, 8], [430, 320, 11], [700, 90, 7]]
+          .map(([x, y, r]) => `<circle class="m-crater" cx="${x}" cy="${y}" r="${r}"/>`).join("")}
+      </g>`;
+    const el = document.createElement("div");
+    el.className = "cn-fondo";
+    el.setAttribute("aria-hidden", "true");
+    el.innerHTML = `<div class="cn-cielo lejos"></div><div class="cn-cielo media"></div><div class="cn-cielo cerca"></div><div class="cn-sol-luz"></div>
+      <div class="cn-fondo-marte"><svg viewBox="0 0 400 400">
+        <defs>
+          <radialGradient id="fm-base" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#D96A43"/><stop offset=".7" stop-color="#B4482C"/><stop offset="1" stop-color="#7A2A18"/></radialGradient>
+          <radialGradient id="fm-luz" cx="50%" cy="40%" r="75%"><stop offset="0" stop-color="#FFD9B5" stop-opacity=".40"/><stop offset=".42" stop-color="#FFD9B5" stop-opacity="0"/><stop offset=".7" stop-color="#05081E" stop-opacity=".25"/><stop offset="1" stop-color="#05081E" stop-opacity=".95"/></radialGradient>
+          <linearGradient id="fm-noche" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#03061A" stop-opacity="0"/><stop offset=".5" stop-color="#03061A" stop-opacity=".92"/><stop offset="1" stop-color="#03061A" stop-opacity=".92"/></linearGradient>
+          <radialGradient id="fm-atm" cx="50%" cy="50%" r="50%"><stop offset=".88" stop-color="#FF8A5A" stop-opacity="0"/><stop offset=".95" stop-color="#FF8A5A" stop-opacity=".4"/><stop offset="1" stop-color="#FF8A5A" stop-opacity="0"/></radialGradient>
+          <clipPath id="fm-clip"><circle cx="200" cy="200" r="180"/></clipPath>
+        </defs>
+        <circle cx="200" cy="200" r="200" fill="url(#fm-atm)" id="fm-atm-c"/>
+        <circle cx="200" cy="200" r="180" fill="url(#fm-base)"/>
+        <g clip-path="url(#fm-clip)">
+          <g id="fm-sup">${manchas(0)}${manchas(ANCHO_SUP)}</g>
+          <ellipse cx="200" cy="26" rx="90" ry="26" class="m-polo"/>
+          <circle cx="200" cy="200" r="180" fill="url(#fm-luz)"/>
+          <rect id="fm-sombra" x="-200" y="0" width="800" height="400" fill="url(#fm-noche)"/>
+        </g>
+      </svg></div>`;
+    document.body.prepend(el);
+    const sup = el.querySelector("#fm-sup"), luz = el.querySelector("#fm-luz"), sombra = el.querySelector("#fm-sombra");
+    const atm = el.querySelector("#fm-atm-c"), solLuz = el.querySelector(".cn-sol-luz");
+    const capas = [[el.querySelector(".lejos"), 3], [el.querySelector(".media"), 9], [el.querySelector(".cerca"), 26]];
+    const reducir = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let propio = 0, suave = 0;
+    const paso = () => {
+      if (document.body.classList.contains("en-hoy")) {
+        if (!reducir) propio += 0.012;
+        const meta = propio + window.scrollY * 0.07;           // ángulo de órbita en grados
+        suave += (meta - suave) * (reducir ? 1 : 0.08);       // la cámara frena suave, no a saltos
+        const th = suave, rad = (th * Math.PI) / 180;
+        // estrellas: paralaje en tres profundidades
+        for (const [c, k] of capas) c.style.backgroundPosition = `${(-th * k).toFixed(1)}px ${(Math.sin(rad) * k * 0.6).toFixed(1)}px`;
+        // la superficie pasa frente a la cámara (una órbita = una vuelta de superficie)
+        sup.setAttribute("transform", `translate(${(-((th / 360) * ANCHO_SUP) % ANCHO_SUP).toFixed(2)} 0)`);
+        // luz del Sol: el lado iluminado se corre con la órbita; de espaldas al Sol queda creciente
+        const lado = Math.sin(rad), frente = Math.cos(rad);
+        luz.setAttribute("cx", `${(50 - 38 * lado).toFixed(1)}%`);
+        luz.setAttribute("r", `${(62 + 18 * frente).toFixed(1)}%`);
+        const corte = 200 + 190 * frente;                       // borde día/noche (terminador)
+        sombra.setAttribute("x", (corte - 400).toFixed(1));                      // noche del lado contrario al Sol
+        sombra.setAttribute("transform", lado >= 0 ? "" : "translate(400 0) scale(-1 1)");
+        sombra.setAttribute("opacity", Math.min(0.92, Math.max(0, (1 - frente) * 0.8)).toFixed(2));
+        atm.setAttribute("opacity", (0.55 + 0.45 * Math.max(0, -frente)).toFixed(2));  // a contraluz brilla el borde
+        // resplandor del Sol fuera de cuadro, del lado del que viene la luz
+        solLuz.style.left = `${(50 - 70 * lado).toFixed(1)}%`;
+        solLuz.style.opacity = (0.18 + 0.22 * Math.max(0, frente)).toFixed(2);
+      }
+      requestAnimationFrame(paso);
+    };
+    requestAnimationFrame(paso);
+  }
+
   // ---------------------------------------------------------------- avisos flotantes
   function toast(o) {
     let pila = $(".cn-toast-pila");
@@ -591,7 +737,6 @@
     $("small", c).textContent = fechaDia(dia);
     $("[data-dia='-1']", c).disabled = dia <= DIA_MIN;
     $("[data-dia='1']", c).disabled = dia >= DIA_MAX;
-    $$("#cn-hitos button").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.hito === dia)));
     if (lunaMarca) {
       const g = general();
       lunaMarca.poner(g === 2 ? (M.cabina(dia).solar ? "radiacion" : "alerta") : g === 1 ? "tranquila" : "feliz");
@@ -626,15 +771,13 @@
         <div class="cn-dia" id="cn-dia" role="group" aria-label="Día de la misión (simulación)">
           <button type="button" data-dia="-1" aria-label="Día anterior">‹</button><span><b></b><small></small></span><button type="button" data-dia="1" aria-label="Día siguiente">›</button>
         </div>
-        <div class="cn-hitos" id="cn-hitos" aria-label="Momentos del escenario">${HITOS.map(([d, t]) => `<button type="button" data-hito="${d}"><b>${d}</b>${t}</button>`).join("")}</div>
         ${otros.map(([h, i, t, tt]) => `<a class="cn-boton" href="${h}" title="${tt}">${ic(i, "ic-sm")}${t}</a>`).join("")}
-        <button type="button" class="cn-boton solo-ic" id="cn-tema" aria-label="Cambiar tema"></button>
+        ${document.documentElement.hasAttribute("data-solo-oscuro") ? "" : `<button type="button" class="cn-boton solo-ic" id="cn-tema" aria-label="Cambiar tema"></button>`}
       </div>
       <nav class="cn-pestanas" aria-label="Vistas">${o.pestanas.map((p) => `<a href="${p.href}" data-pestana="${p.id}">${ic(p.icono)}${p.texto}<span class="cuenta" data-cuenta="${p.id}" hidden></span></a>`).join("")}</nav>
     </div>`;
     $$("#cn-dia [data-dia]").forEach((b) => b.addEventListener("click", () => ponerDia(dia + +b.dataset.dia)));
-    $$("#cn-hitos [data-hito]").forEach((b) => b.addEventListener("click", () => ponerDia(+b.dataset.hito)));
-    $("#cn-tema").addEventListener("click", siguienteTema);
+    if ($("#cn-tema")) $("#cn-tema").addEventListener("click", siguienteTema);
     if (window.LUNA) lunaMarca = window.LUNA.crear($("#cn-luna"), { cara: "tranquila", tam: 40, fase: 1 });
     aplicarTema();
     pintarDia();
@@ -647,6 +790,7 @@
     const ir = () => {
       const [nombre, arg] = (location.hash.slice(1) || porDefecto).split("/");
       const f = tabla[nombre] || tabla[porDefecto];
+      document.body.classList.toggle("en-hoy", (tabla[nombre] ? nombre : porDefecto) === "hoy");
       const pag = $("#pagina");
       f(pag, arg ? decodeURIComponent(arg) : null);
       pag.focus({ preventScroll: true });
@@ -659,16 +803,18 @@
 
   aplicarTema();
   revisarLlegadas();
+  marteFondo();
 
   window.CONSOLA = {
     $, $$, esc, fmt, ic, pastilla, zTxt, horaReal, mem,
     get dia() { return dia; }, ponerDia, alCambiarDia: (f) => oyentesDia.push(f), fechaDia, DIA_MIN, DIA_MAX,
     PERSONAS, persona, CMO, BACKEND_ID, ev, general,
     ESTADO_TXT, claseN, sem, forma, chip, NOMBRE_ALERTA,
-    IND, valorDe, grafNormal, MISION, barraMision, tarjetaMision, cuerpoMini, tarjetaTripulante,
+    IND, valorDe, grafNormal, MISION, barraMision, tarjetaMision, positivo, cuerpoMini, tarjetaTripulante,
     filaVital, filaAnimo, anillo, metasYDosis, panelRegion, centroCuerpo, conectarCuerpo,
     MALESTARES, NOMBRE_VAR, indice, indices, tendencia, RUMBO, barrasIndice, detalleIndice, grafIndice,
     OWLT_ESCENARIO_MIN, owltSeg, get backend() { return backend; }, detectarBackend, avisoBackend,
+    DESDE_BACKEND, alEventoBk, nombreVar, avisoAbordoBk, consultaBk, emergenciasBk, bandejaBk,
     leerEnlace, enviarEnlace, etapa, llegados, enCamino, segTxt, NIVEL_MSJ,
     alLlegar: (f) => oyentesLlegada.push(f), alTicEnlace: (f) => oyentesEnlace.push(f),
     paquetesEscenario, notasTierra, ambiente, toast,

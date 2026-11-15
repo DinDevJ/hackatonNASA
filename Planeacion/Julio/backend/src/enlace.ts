@@ -36,9 +36,9 @@ export function escribirEnlace(db: BD, e: Partial<Enlace>): Enlace {
 
 const mas = (iso: string, s: number) => new Date(Date.parse(iso) + s * 1000).toISOString();
 
-export function encolarBajada(db: BD, tipo: string, datos: unknown, tScet: string, prioridad: number): void {
-  db.prepare(`INSERT INTO bajada (tipo, datos, prioridad, t_scet) VALUES (?,?,?,?)`)
-    .run(tipo, json(datos), prioridad, tScet);
+export function encolarBajada(db: BD, tipo: string, datos: unknown, tScet: string, prioridad: number): number {
+  return Number(db.prepare(`INSERT INTO bajada (tipo, datos, prioridad, t_scet) VALUES (?,?,?,?)`)
+    .run(tipo, json(datos), prioridad, tScet).lastInsertRowid);
 }
 
 export interface Redaccion {

@@ -209,3 +209,13 @@ pantalla de Tierra.
 
 - La ve la persona activa si el mensaje es para ella o para toda la tripulación; la CMO ve todos.
 - Abierta sola con `python -m http.server`, no hay backend y este archivo no hace nada.
+
+### Con el backend de Julio (15 nov 2026)
+
+Abiertas desde `http://localhost:8787/app/…`, las tres pantallas usan la central real además del escenario:
+
+| Pantalla | Qué manda o recibe del backend |
+|---|---|
+| Teléfono (`telefono-vivo.js`) | Tarjeta **En vivo** en Hoy con sus signos reales (`GET /api/app/:tripulante`, se actualiza con `muestra` y `alerta`). El SOS o la emergencia automática se registran (`POST /api/emergencias`) y se cierran al salir (`PUT`). Los avisos de Tierra y de la CMO le llegan por `/api/stream` |
+| Central | «Enviar a …» va por `POST /api/abordo/avisos` y «Consultar a Tierra» por `POST /api/central/consultas`. Las emergencias del teléfono salen en el historial con aviso flotante (evento `emergencia`) |
+| Base en Tierra | La bandeja muestra lo que de verdad bajó por el enlace (`GET /api/tierra/bandeja` y evento `tierra`): alertas de LUNNA, consultas de la CMO, emergencias, el último resumen y las tramas crudas. Sus mensajes van por `POST /api/tierra/avisos` y marcan el **acuse** real cuando vuelve |

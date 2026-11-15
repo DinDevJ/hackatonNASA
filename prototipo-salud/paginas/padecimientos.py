@@ -19,7 +19,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from motor import evaluar_todo, parametros
+from motor import evadb, evaluar_todo, parametros
 from paginas import estilo
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,6 +36,9 @@ DISCLAIMER = ("No es un diagnóstico. El semáforo ordena qué revisar primero y
               "evidencia insuficiente.")
 SIN_REALES = ("No hay mediciones reales guardadas (outputs/raw vacío y sin sensores cargados). Se muestra la "
               "tripulación SIMULADA para ejercitar el flujo.")
+NOTA_EVA_DB = ("Los datos de eva.db pueden venir del simulador de hardware (`npm run sim`); en ese caso también son "
+               "SIMULADOS (la base no permite distinguirlo).")
+CLAVE_EVA = "pad_eva"
 TEXTO_SIMULADO = ("Datos sintéticos generados para probar el flujo. No son fisiología real ni datos de astronautas "
                   "ni de vuelo.")
 FASES = {"PRE": "prevuelo (PRE)", "VT": "vuelo temprano (VT)", "VTa": "vuelo tardío (VTa)", "POST": "postvuelo (POST)"}
@@ -93,10 +96,7 @@ def derivar_contexto(ctx: dict):
 # Cálculo con caché en st.session_state
 # ---------------------------------------------------------------------------------------------------
 def _firma_overrides():
-    try:
-        return parametros.RUTA_OVERRIDES.stat().st_mtime_ns
-    except OSError:
-        return None
+    return parametros.firma_overrides()
 
 
 def dir_raw() -> Path:
@@ -144,6 +144,20 @@ def obtener_resultado(forzar: bool = False) -> dict:
         with st.spinner("Evaluando padecimientos…"):
             st.session_state[CLAVE_CACHE] = {"clave": clave, "res": _calcular(sdf, ctx)}
     return st.session_state[CLAVE_CACHE]["res"]
+
+
+def _eva_db_hay() -> bool:
+    return evadb.ruta_eva_db() is not None and evadb.tabla_pesos_usuario_disponible()
+
+
+def obtener_eva(forzar: bool = False) -> dict:
+    """Evaluación del canal real con los datos de eva.db (sin guardar), en caché por firma de la BD."""
+    firma = (evadb.firma_bd(), parametros.firma_overrides())
+    c = st.session_state.get(CLAVE_EVA)
+    if forzar or c is None or c.get("firma") != firma:
+        with st.spinner("Evaluando desde eva.db…"):
+            st.session_state[CLAVE_EVA] = {"firma": firma, "r": evadb.evaluar_eva_db(guardar=False)}
+    return st.session_state[CLAVE_EVA]["r"]
 
 
 # ---------------------------------------------------------------------------------------------------
@@ -401,14 +415,27 @@ def render() -> None:
     st.caption("Semáforo por padecimiento. Prototipo de investigación")
     st.warning(DISCLAIMER)
 
+    hay_bd = _eva_db_hay()
+    st.caption(NOTA_EVA_DB)
+    ver_sim = True
+    if hay_bd:
+        st.caption(f"Fuente por defecto: eva.db (canal real) · {evadb.ruta_eva_db()}")
+        ver_sim = st.checkbox("Incluir la tripulación sintética (SIMULADO)", value=False, key="pad_ver_sim")
+
     if st.button("Recalcular", key="pad_recalcular"):
         st.session_state.pop(CLAVE_CACHE, None)
-    res = obtener_resultado()
+        st.session_state.pop(CLAVE_EVA, None)
+    res = obtener_resultado() if ver_sim else {"real": None, "simulado": None, "avisos": []}
+    if hay_bd:
+        eva = obtener_eva()
+        res = {**res, "real": eva["resultado"], "avisos": list(eva["avisos"]) + list(res.get("avisos") or [])}
+        if eva["resultado"] is None:
+            st.info("eva.db no tiene muestras utilizables todavía.")
 
     reales = sorted((res.get("real") or {}).get("personas", {}))
-    simuladas = sorted((res.get("simulado") or {}).get("personas", {}))
+    simuladas = sorted((res.get("simulado") or {}).get("personas", {})) if ver_sim else []
     opciones = [f"real|{s}" for s in reales] + [f"simulado|{s}" for s in simuladas]
-    if not reales:
+    if not reales and not hay_bd:
         st.info(SIN_REALES)
     if not opciones:
         st.error("El motor no devolvió ninguna persona.")
@@ -424,8 +451,13 @@ def render() -> None:
 
     if canal == "simulado":
         _rotulo_simulado()
+    elif hay_bd:
+        st.caption("Perfil (edad, sexo) y lanzamiento: lo que tenga eva.db; sin dato, se evalúa como PRE.")
     else:
         _contexto_persona(sid)
+    if hay_bd and st.button("Guardar evaluación en eva.db", key="pad_guardar_eva"):
+        n = evadb.guardar_evaluaciones(res[canal], canal="SIMULADO" if canal == "simulado" else "real")
+        st.success(f"Se guardaron {n} filas en `evaluaciones` (canal {'SIMULADO' if canal == 'simulado' else 'real'}).")
 
     _resumen(pers)
     _lista(pers)

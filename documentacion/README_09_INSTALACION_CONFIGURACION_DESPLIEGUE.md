@@ -37,7 +37,7 @@ node --version
 ## 2. Instalación
 
 ```powershell
-git clone https://github.com/DinDevJ/hackatonNASA.git
+git clone https://github.com/DinDevJ/lunna.git
 Set-Location hackatonNASA
 ```
 

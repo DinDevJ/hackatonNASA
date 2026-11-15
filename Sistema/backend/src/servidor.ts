@@ -25,25 +25,17 @@ import { estadoApp } from './app.ts';
 import { avisoAbordo, cerrarEmergencia, consultaATierra, leerEmergencias, registrarEmergencia } from './abordo.ts';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
+/** Interfaces de la tripulación, la central y Tierra (Sistema/interfaces/eva): se sirven en /app/. Se puede cambiar con APP_MOVIL. */
+const RAIZ_APP = resolve(process.env.APP_MOVIL ?? join(AQUI, '..', '..', 'interfaces', 'eva'));
 /**
- * Interfaces de los dispositivos (Sistema/interfaces/), una carpeta por dispositivo y una común. Se
- * sirven en /<carpeta>/ con la misma estructura que en disco, para que sus rutas relativas
- * (../comun/…) valgan igual servidas que abiertas como archivo. Sólo estas carpetas quedan expuestas.
- *   /desktop/          computadora central (desktop/central.html)
- *   /desktop/tierra    base en Tierra (desktop/base.html)
- *   /mobile/           celular (mobile/index.html)
- *   /watch/            reloj (watch/index.html)
- *   /comun/…           estilos, Lunna, motor, modo.js y config.js
+ * Interfaces que se sirven en /interfaces/<carpeta>/ con la misma estructura que en Sistema/interfaces/,
+ * para que sus rutas relativas sigan valiendo (el reloj carga estilos, Lunna y motor de eva/).
+ * Sólo estas carpetas: nada más del repositorio queda expuesto.
  */
 const RAIZ_INTERFACES = resolve(join(AQUI, '..', '..', 'interfaces'));
-const DISPOSITIVOS: Record<string, string> = { desktop: 'central.html', mobile: 'index.html', watch: 'index.html' };
-const CARPETAS = [...Object.keys(DISPOSITIVOS), 'comun'];
-/** Pantallas con nombre propio dentro de un dispositivo. */
-const PANTALLAS: Record<string, string> = { '/desktop/tierra': 'desktop/base.html' };
-/** Rutas anteriores (/app/…, /reloj, /maquetas/…): redirigen a la ruta nueva equivalente. */
-const ANTIGUAS: Record<string, string> = {
-  '': '/mobile/', 'index.html': '/mobile/', 'central.html': '/desktop/', 'base.html': '/desktop/tierra',
-};
+const INTERFACES = ['eva', 'reloj'];
+/** Rutas antiguas (/maquetas/…, cuando las interfaces vivían en Planeacion/): redirigen a /interfaces/…. */
+const MAQUETAS_ANTIGUAS: Record<string, string> = { 'Leo/maqueta-eva': 'eva', 'Fani/maqueta-reloj': 'reloj' };
 const TIPOS: Record<string, string> = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png',
@@ -113,8 +105,7 @@ function estadoTexto(db: BD, rol: 'nave' | 'tierra' | null = null, modo: Modo = 
     'actividad reciente',
     ...(recientes.length ? recientes.map((r) => '  ' + r) : ['  (nada todavía)']),
     '',
-    `${modo === 'simulacion' ? 'simulador visual: /simulador · ' : ''}control de misión (Tierra): /tierra · panel de la nave: /nave`,
-    'dispositivos: computadora central /desktop · base en Tierra /desktop/tierra · celular /mobile · reloj /watch',
+    `${modo === 'simulacion' ? 'simulador visual: /simulador · ' : ''}control de misión (Tierra): /tierra · panel de la nave: /nave · app móvil: /app/ · reloj: /reloj`,
     'API: /api/salud · /api/estado · /api/app/<tripulante> · /api/alertas · /api/referencias · /api/stream · ver backend/README.md',
   ].join('\n');
 }
@@ -207,7 +198,7 @@ export function manejador(db: BD, opciones: OpcionesServidor = {}) {
   const noEnOperativo = 'sólo disponible en modo simulación (cd Simulacion && npm start)';
 
   /**
-   * Piezas de las interfaces que dependen del modo, en /comun/:
+   * Piezas de las interfaces que dependen del modo, en /app/ y /interfaces/eva/:
    *   config.js       window.EVA_CONFIG = { modo, escenario } (lo lee modo.js)
    *   escenario/<f>   escenario sintético (Simulacion/escenarios/interfaces/<f>), sólo en simulación
    * Devuelve true si atendió la petición.
@@ -510,45 +501,6 @@ export function manejador(db: BD, opciones: OpcionesServidor = {}) {
     return { ok: true };
   });
 
-  /**
-   * /desktop, /desktop/tierra, /mobile, /watch y /comun, y las rutas anteriores que redirigen a ellas.
-   * Devuelve true si atendió la petición.
-   */
-  const atenderInterfaces = (url: URL, res: ServerResponse): boolean => {
-    const ruta = url.pathname;
-    const a = (destino: string, codigo = 302) => { res.writeHead(codigo, { location: destino + url.search }).end(); return true; };
-    const no = () => { res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end('no encontrado'); return true; };
-
-    // Pantallas con nombre propio (/desktop/tierra) y su variante con barra final.
-    if (PANTALLAS[ruta]) { servirArchivo(res, RAIZ_INTERFACES, PANTALLAS[ruta]); return true; }
-    if (ruta.endsWith('/') && PANTALLAS[ruta.slice(0, -1)]) return a(ruta.slice(0, -1), 301);
-
-    // /<carpeta>/<archivo>: la carpeta sola lleva a su pantalla de inicio.
-    const [, carpeta = '', ...partes] = ruta.split('/');
-    if (CARPETAS.includes(carpeta)) {
-      if (!partes.length) return a(`/${carpeta}/`, 301);
-      const rel = partes.join('/');
-      if (carpeta === 'comun' && servirDeModo(res, rel)) return true;
-      servirArchivo(res, join(RAIZ_INTERFACES, carpeta), rel || DISPOSITIVOS[carpeta] || '');
-      return true;
-    }
-
-    // Rutas anteriores: /app/… y /maquetas/Leo/maqueta-eva/… (celular, central y base juntos).
-    const app = /^\/(?:app|maquetas\/Leo\/maqueta-eva)(?:\/(.*))?$/.exec(ruta);
-    if (app) {
-      const rel = app[1] ?? '';
-      if (rel in ANTIGUAS) return a(ANTIGUAS[rel]!);
-      if (rel === 'config.js' || rel.startsWith('escenario/')) return a('/comun/' + rel);
-      if (!/^[\w.-]+$/.test(rel)) return no();
-      const donde = CARPETAS.find((c) => existsSync(join(RAIZ_INTERFACES, c, rel)));
-      return donde ? a(`/${donde}/${rel}`) : no();
-    }
-    // /reloj y /maquetas/Fani/maqueta-reloj/… → /watch/….
-    const reloj = /^\/(?:reloj|maquetas\/Fani\/maqueta-reloj)(?:\/(.*))?$/.exec(ruta);
-    if (reloj) return a('/watch/' + (reloj[1] ?? ''));
-    return false;
-  };
-
   return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', 'content-type');
@@ -562,8 +514,35 @@ export function manejador(db: BD, opciones: OpcionesServidor = {}) {
       res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', refresh: '2' }).end(estadoTexto(db, rol, modo));
       return;
     }
-    // Interfaces de los dispositivos: archivos estáticos, sin salir de su carpeta.
-    if (req.method === 'GET' && atenderInterfaces(url, res)) return;
+    // Interfaces (celular, central, base en Tierra): archivos estáticos, sin salir de su carpeta.
+    if (req.method === 'GET' && url.pathname === '/app') { res.writeHead(301, { location: '/app/' }).end(); return; }
+    if (req.method === 'GET' && url.pathname.startsWith('/app/')) {
+      const rel = url.pathname.slice(5);
+      if (!servirDeModo(res, rel)) servirArchivo(res, RAIZ_APP, rel);
+      return;
+    }
+    // Reloj de la tripulación: /reloj lleva a su carpeta dentro de /interfaces/.
+    if (req.method === 'GET' && (url.pathname === '/reloj' || url.pathname === '/reloj/')) {
+      res.writeHead(302, { location: '/interfaces/reloj/' + url.search }).end(); return;
+    }
+    if (req.method === 'GET' && url.pathname.startsWith('/interfaces/')) {
+      const resto = url.pathname.slice('/interfaces/'.length);
+      const carpeta = INTERFACES.find((m) => resto === m || resto.startsWith(m + '/'));
+      if (!carpeta) { res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end('no encontrado'); return; }
+      if (resto === carpeta) { res.writeHead(301, { location: `/interfaces/${carpeta}/${url.search}` }).end(); return; }
+      const rel = resto.slice(carpeta.length + 1);
+      if (carpeta === 'eva' && servirDeModo(res, rel)) return;
+      servirArchivo(res, resolve(RAIZ_INTERFACES, carpeta), rel);
+      return;
+    }
+    // Compatibilidad: /maquetas/Leo/maqueta-eva/… y /maquetas/Fani/maqueta-reloj/… → /interfaces/….
+    if (req.method === 'GET' && url.pathname.startsWith('/maquetas/')) {
+      const resto = url.pathname.slice('/maquetas/'.length);
+      const vieja = Object.keys(MAQUETAS_ANTIGUAS).find((m) => resto === m || resto.startsWith(m + '/'));
+      if (!vieja) { res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end('no encontrado'); return; }
+      res.writeHead(301, { location: `/interfaces/${MAQUETAS_ANTIGUAS[vieja]}${resto.slice(vieja.length) || '/'}${url.search}` }).end();
+      return;
+    }
     // Panel de la nave (enlace HTTPS): lo escribe otro módulo; si no existe, 404.
     if (req.method === 'GET' && url.pathname === '/nave') {
       const html = join(AQUI, '..', 'web', 'nave.html');

@@ -7,10 +7,10 @@
   <meta name="description" content="Lunna en el reloj: carátula con el estado de la persona, ritmo cardiaco, SpO₂, temperatura, sueño y estrés. Datos simulados." />
   <title>Lunna · Reloj</title>
   <!-- Diseño global de la maqueta de Leo: las mismas variables, la misma Lunna y el mismo motor. -->
-  <script src="../comun/config.js"></script>
-  <script src="../comun/modo.js?v=1"></script>
-  <link rel="stylesheet" href="../comun/estilos.css?v=51" />
-  <link rel="stylesheet" href="../comun/tema.css?v=51" />
+  <script src="../eva/config.js"></script>
+  <script src="../eva/modo.js?v=1"></script>
+  <link rel="stylesheet" href="../eva/estilos.css?v=51" />
+  <link rel="stylesheet" href="../eva/tema.css?v=51" />
   <link rel="stylesheet" href="reloj.css?v=4" />
   <script>try{var t=localStorage.getItem("eva:tema");t=t?JSON.parse(t):"auto";document.documentElement.dataset.tema=t==="auto"?(matchMedia("(prefers-color-scheme: dark)").matches?"oscuro":"claro"):t}catch(e){document.documentElement.dataset.tema="oscuro"}</script>
 </head>
@@ -60,8 +60,8 @@
   <footer class="rj-pie"><p><b>Lunna · reloj.</b> Todos los datos son simulados con el motor de la maqueta de Leo (<code>motor.js</code>), salvo el evento solar de NASA DONKI que sirve de modelo al día 115.
     No diagnostica. Equipo Monarcas · proyecto para NASA Space Apps Challenge 2026; no usa el logotipo ni cuenta con el respaldo de NASA.</p></footer>
 
-  <script src="../comun/motor.js?v=51"></script>
-  <script src="../comun/luna.js?v=51"></script>
+  <script src="../eva/motor.js?v=51"></script>
+  <script src="../eva/luna.js?v=51"></script>
   <script src="reloj.js?v=3"></script>
 </body>
 </html>

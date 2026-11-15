@@ -1,7 +1,7 @@
 /**
- * Las interfaces de los dispositivos (Sistema/interfaces/) servidas por el backend desde el mismo
- * origen: /desktop (central), /desktop/tierra (base), /mobile y /watch; la central sólo usa rutas que
- * el backend ofrece de verdad. Las ventanas del simulador se prueban en Simulacion/test/.
+ * La computadora central de LUNNA (Sistema/interfaces/eva/central.html) servida por el backend
+ * desde el mismo origen (/app/central.html); la pantalla sólo usa rutas que el backend ofrece de
+ * verdad. Las ventanas del simulador se prueban en Simulacion/test/.
  */
 import { test, beforeEach } from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -28,47 +28,30 @@ async function conServidor(f: (base: string) => Promise<void>) {
   finally { await new Promise((ok) => srv.close(ok)); }
 }
 
-/** Recursos .js y .css que carga una página, resueltos contra su URL. */
-const recursosDe = (html: string, pagina: string) =>
-  [...html.matchAll(/(?:src|href)="([^"#:]+\.(?:js|css))(?:\?[^"]*)?"/g)].map((m) => ({ rel: m[1]!, url: new URL(m[1]!, pagina).href }));
-
-test('dispositivos: /desktop, /desktop/tierra, /mobile y /watch sirven su pantalla y todos sus archivos', async () => {
+test('central: el backend sirve la pantalla y todos sus archivos', async () => {
   await conServidor(async (base) => {
-    for (const [ruta, titulo, propios] of [
-      ['/desktop/', /Computadora central/, ['central-vivo.js', 'central.js', 'consola.js']],
-      ['/desktop/tierra', /Base en Tierra/i, ['base.js', 'consola.js']],
-      ['/mobile/', /Lunna/, ['app.js', 'modulos.js', 'telefono-vivo.js']],
-      ['/watch/', /Lunna · Reloj/, ['reloj.js', 'reloj.css']],
-    ] as const) {
-      const r = await fetch(`${base}${ruta}`);
-      assert.equal(r.status, 200, ruta);
-      assert.match(r.headers.get('content-type') ?? '', /text\/html/, ruta);
-      const html = await r.text();
-      assert.match(html, titulo, ruta);
-      const recursos = recursosDe(html, `${base}${ruta}`);
-      for (const p of propios) assert.ok(recursos.some((x) => x.rel === p), `${ruta} carga ${p}`);
-      assert.ok(recursos.some((x) => x.rel === '../comun/modo.js'), `${ruta} carga ../comun/modo.js`);
-      for (const rec of recursos) {
-        const x = await fetch(rec.url);
-        assert.equal(x.status, 200, `${ruta} → ${rec.rel}`);
-        await x.arrayBuffer();
-      }
-    }
-    // Sin barra final llevan a la ruta con barra (las rutas relativas dependen de ella).
-    for (const [p, destino] of [['/desktop', '/desktop/'], ['/mobile', '/mobile/'], ['/watch', '/watch/'], ['/desktop/tierra/', '/desktop/tierra']]) {
-      const x = await fetch(`${base}${p}`, { redirect: 'manual' });
-      assert.equal(x.status, 301, p);
-      assert.equal(x.headers.get('location'), destino, p);
+    const r = await fetch(`${base}/app/central.html`);
+    assert.equal(r.status, 200);
+    assert.match(r.headers.get('content-type') ?? '', /text\/html/);
+    const html = await r.text();
+    const recursos = [...html.matchAll(/(?:src|href)="([^"#:]+\.(?:js|css))(?:\?[^"]*)?"/g)].map((m) => m[1]!);
+    assert.ok(recursos.includes('central-vivo.js') && recursos.includes('central.js'));
+    for (const rec of recursos) {
+      const x = await fetch(`${base}/app/${rec}`);
+      assert.equal(x.status, 200, `/app/${rec}`);
       await x.arrayBuffer();
     }
-    const t = await fetch(`${base}/tierra`);
-    assert.equal(t.status, 200);
-    await t.arrayBuffer();
+    // Lo que no debe romperse: el teléfono y la base en Tierra.
+    for (const p of ['/app/', '/app/base.html', '/tierra']) {
+      const x = await fetch(`${base}${p}`);
+      assert.equal(x.status, 200, p);
+      await x.arrayBuffer();
+    }
   });
 });
 
 test('central: sólo llama a rutas del backend que existen, con la forma que espera', async () => {
-  const fuente = readFileSync(ruta('../../interfaces/desktop/central-vivo.js'), 'utf8');
+  const fuente = readFileSync(ruta('../../interfaces/eva/central-vivo.js'), 'utf8');
   // Todas las rutas /api/… que aparecen en llamadas del código (no en comentarios).
   const usadas = new Set([...fuente.matchAll(/["'`](\/api\/[a-z/]+)/g)].map((m) => m[1]!.replace(/\/$/, '')));
   assert.deepEqual([...usadas].sort(),
@@ -111,11 +94,24 @@ test('central: sólo llama a rutas del backend que existen, con la forma que esp
   });
 });
 
-test('interfaces: sólo sus carpetas quedan expuestas', async () => {
+test('reloj: /reloj sirve el reloj con los estilos, la Lunna y el motor de eva/', async () => {
   await conServidor(async (base) => {
-    for (const p of ['/desktop/..%2F..%2Fbackend%2Fpackage.json', '/comun/..%2F..%2Fbackend%2Fpackage.json',
-      '/watch/..%2Fdesktop%2F..%2F..%2Fbackend%2Fpackage.json', '/interfaces/desktop/central.html', '/backend/package.json',
-      '/app/..%2F..%2Fbackend%2Fpackage.json', '/app/no-existe.js', '/maquetas/Julio/backend/package.json']) {
+    const r = await fetch(`${base}/reloj/?embebido&persona=MS-2`, { redirect: 'manual' });
+    assert.equal(r.status, 302);
+    assert.equal(r.headers.get('location'), '/interfaces/reloj/?embebido&persona=MS-2');
+    const pagina = `${base}/interfaces/reloj/`;
+    const html = await (await fetch(pagina)).text();
+    assert.match(html, /<title>Lunna · Reloj<\/title>/);
+    const recursos = [...html.matchAll(/(?:src|href)="([^"#:]+\.(?:js|css))(?:\?[^"]*)?"/g)].map((m) => m[1]!);
+    assert.ok(recursos.some((x) => x === '../eva/luna.js') && recursos.includes('reloj.js'));
+    for (const rec of recursos) {
+      const x = await fetch(new URL(rec, pagina));
+      assert.equal(x.status, 200, rec);
+      await x.arrayBuffer();
+    }
+    // Sólo las carpetas de las interfaces: nada más del repositorio queda expuesto.
+    for (const p of ['/interfaces/backend/package.json', '/interfaces/reloj/..%2F..%2Fbackend%2Fpackage.json',
+      '/interfaces/eva/..%2F..%2Fbackend%2Fpackage.json', '/maquetas/Julio/backend/package.json', '/maquetas/Leo/ingesta/package.json']) {
       const x = await fetch(`${base}${p}`);
       assert.equal(x.status, 404, p);
       await x.arrayBuffer();
@@ -123,48 +119,34 @@ test('interfaces: sólo sus carpetas quedan expuestas', async () => {
   });
 });
 
-test('compatibilidad: /app/…, /reloj y /maquetas/… llevan a la ruta nueva', async () => {
+test('compatibilidad: las rutas antiguas /maquetas/… llevan a /interfaces/…', async () => {
   await conServidor(async (base) => {
     for (const [vieja, nueva] of [
-      ['/app', '/mobile/'], ['/app/', '/mobile/'], ['/app/?demo=30&idioma=en', '/mobile/?demo=30&idioma=en'],
-      ['/app/index.html', '/mobile/'], ['/app/central.html', '/desktop/'], ['/app/base.html', '/desktop/tierra'],
-      ['/app/central.html#tripulante/MS-2', '/desktop/'],
-      ['/app/central-vivo.js', '/desktop/central-vivo.js'], ['/app/app.js', '/mobile/app.js'], ['/app/motor.js', '/comun/motor.js'],
-      ['/app/config.js', '/comun/config.js'],
-      ['/reloj', '/watch/'], ['/reloj/', '/watch/'], ['/reloj/?embebido&persona=MS-2', '/watch/?embebido&persona=MS-2'],
-      ['/maquetas/Fani/maqueta-reloj/reloj.js', '/watch/reloj.js'], ['/maquetas/Leo/maqueta-eva/central.html', '/desktop/'],
+      ['/maquetas/Fani/maqueta-reloj/?embebido', '/interfaces/reloj/?embebido'],
+      ['/maquetas/Fani/maqueta-reloj', '/interfaces/reloj/'],
+      ['/maquetas/Fani/maqueta-reloj/reloj.js', '/interfaces/reloj/reloj.js'],
+      ['/maquetas/Leo/maqueta-eva/central.html', '/interfaces/eva/central.html'],
     ]) {
       const r = await fetch(`${base}${vieja}`, { redirect: 'manual' });
-      assert.equal(r.status, 302, vieja);
+      assert.equal(r.status, 301, vieja);
       assert.equal(r.headers.get('location'), nueva, vieja);
       await r.arrayBuffer();
-      const fin = await fetch(`${base}${vieja}`);
-      assert.equal(fin.status, 200, `${vieja} termina en 200`);
-      await fin.arrayBuffer();
     }
+    const x = await fetch(`${base}/interfaces/eva/central.html`);
+    assert.equal(x.status, 200);
+    await x.arrayBuffer();
   });
-});
-
-test('vista limpia: los controles de la simulación se quitan en modo.js, salvo en la demo', () => {
-  const modo = readFileSync(ruta('../../interfaces/comun/modo.js'), 'utf8');
-  assert.match(modo, /classList\.add\("vista-limpia"\)/);
-  for (const sel of ['.cn-pildora.sim', '#cn-enlace', '#cn-dia', '.cn-ctrl a.cn-boton', '.cn-separa', '.aj-demo']) {
-    assert.ok(modo.includes(`html.vista-limpia ${sel}`), sel);
-  }
-  assert.match(modo, /if \(sim && !limpia\)/);     // el cintillo de simulación sólo en ?demo
-  const reloj = readFileSync(ruta('../../interfaces/watch/reloj.js'), 'utf8');
-  assert.match(reloj, /classList\.contains\("vista-limpia"\)/);
 });
 
 test('modo operativo (por defecto): sin simulador, sin escenario sintético y sin reinicio de la demo', async () => {
   await conServidor(async (base) => {
     const salud = await (await fetch(`${base}/api/salud`)).json() as { modo: string };
     assert.equal(salud.modo, 'operativo');
-    const config = await (await fetch(`${base}/comun/config.js`)).text();
+    const config = await (await fetch(`${base}/app/config.js`)).text();
     assert.match(config, /"modo":"operativo"/);
     assert.match(config, /"escenario":null/);
-    for (const p of ['/simulador', '/comun/escenario/datos.js', '/comun/escenario/demo.js', '/app/escenario/datos.js',
-      '/app/datos.js', '/app/demo.js', '/mobile/datos.js', '/desktop/datos.js']) {
+    for (const p of ['/simulador', '/app/escenario/datos.js', '/app/escenario/demo.js', '/interfaces/eva/escenario/datos.js',
+      '/app/datos.js', '/app/demo.js']) {
       const x = await fetch(`${base}${p}`);
       assert.equal(x.status, 404, p);
       await x.arrayBuffer();
@@ -173,7 +155,7 @@ test('modo operativo (por defecto): sin simulador, sin escenario sintético y si
     assert.equal(r.status, 403);
     await r.arrayBuffer();
     // Ninguna página carga el escenario por su cuenta: sólo a través de modo.js.
-    for (const p of ['/mobile/', '/desktop/', '/desktop/tierra', '/watch/']) {
+    for (const p of ['/app/', '/app/central.html', '/app/base.html', '/interfaces/reloj/']) {
       const html = await (await fetch(`${base}${p}`)).text();
       assert.doesNotMatch(html, /src="[^"]*(datos|demo)\.js/, p);
       assert.match(html, /modo\.js/, p);

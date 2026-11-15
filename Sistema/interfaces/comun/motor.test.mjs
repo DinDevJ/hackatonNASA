@@ -1,4 +1,4 @@
-// Pruebas del motor de la maqueta. Correr con:  node --test Planeacion/Leo/maqueta-eva/motor.test.mjs
+// Pruebas del motor de la maqueta. Correr con:  node --test Sistema/interfaces/eva/motor.test.mjs
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { test } from 'node:test';

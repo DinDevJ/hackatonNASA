@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#192584" />
   <title>Lunna · Salud a bordo</title>
-  <script src="idioma-en.js?v=5"></script>
-  <script src="idioma.js?v=3"></script>
-  <link rel="stylesheet" href="estilos.css?v=52" />
-  <link rel="stylesheet" href="cuerpo.css?v=52" />
-  <link rel="stylesheet" href="tema.css?v=64" />
+  <script src="../comun/config.js"></script>
+  <script src="../comun/modo.js?v=1"></script>
+  <script src="../comun/idioma-en.js?v=5"></script>
+  <script src="../comun/idioma.js?v=3"></script>
+  <link rel="stylesheet" href="../comun/estilos.css?v=52" />
+  <link rel="stylesheet" href="../comun/cuerpo.css?v=52" />
+  <link rel="stylesheet" href="../comun/tema.css?v=64" />
   <script>try{var t=localStorage.getItem("eva:tema");t=t?JSON.parse(t):"auto";document.documentElement.dataset.tema=t==="auto"?(matchMedia("(prefers-color-scheme: dark)").matches?"oscuro":"claro"):t}catch(e){document.documentElement.dataset.tema="claro"}</script>
 </head>
 <body>
@@ -116,13 +118,13 @@
 
   <div id="aviso" class="aviso" role="status" aria-live="polite"></div>
 
-  <script src="datos.js?v=52"></script>
-  <script src="motor.js?v=52"></script>
-  <script src="cuerpo.js?v=52"></script>
-  <script src="luna.js?v=52"></script>
+  <script>EVA_MODO.escenario("datos.js?v=52")</script>
+  <script src="../comun/motor.js?v=52"></script>
+  <script src="../comun/cuerpo.js?v=52"></script>
+  <script src="../comun/luna.js?v=52"></script>
   <script src="app.js?v=56"></script>
   <script src="modulos.js?v=52y"></script>
-  <script src="demo.js?v=52d"></script>
+  <script>EVA_MODO.escenario("demo.js?v=52d")</script>
   <script src="notificaciones.js?v=52"></script>
   <script src="telefono-vivo.js?v=2"></script>
 </body>

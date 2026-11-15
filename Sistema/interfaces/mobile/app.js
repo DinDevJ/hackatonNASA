@@ -1,6 +1,12 @@
 /* App Lunna con su asistente Lunna · maqueta interactiva. Todo es SIMULADO: no recibe datos reales todavía. */
 (function () {
   "use strict";
+  // Modo operativo (o sin escenario): la app todavía se dibuja con el escenario simulado; no se muestra.
+  const EM = window.EVA_MODO;
+  if (!window.DATOS || (EM && !EM.simulacion)) {
+    if (EM) EM.operativa(document.getElementById("pantalla"), { que: "La app del teléfono" });
+    return;
+  }
   const D = window.DATOS;
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => [...(r || document).querySelectorAll(s)];

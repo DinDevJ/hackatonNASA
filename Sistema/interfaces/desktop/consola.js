@@ -758,7 +758,7 @@
    */
   function montarBarra(o) {
     const otros = [
-      ["index.html", "telefono", "Teléfono", "Abrir la app del teléfono (Lunna)"],
+      ["../mobile/index.html", "telefono", "Teléfono", "Abrir la app del teléfono (Lunna)"],
       ["central.html", "monitor", "Central", "Computadora central · panel médico"],
       ["base.html", "tierra", "Base", "Base en Tierra · control de misión"],
     ].filter(([h]) => !h.startsWith(o.app));

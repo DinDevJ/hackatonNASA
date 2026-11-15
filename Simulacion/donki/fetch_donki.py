@@ -7,7 +7,7 @@ automaticamente, junta los resultados y elimina duplicados.
 
 Uso:
     export NASA_API_KEY="tu_llave"
-    python3 scripts/fetch_donki.py --desde 2024-01-01 --hasta 2024-12-31
+    python3 Simulacion/donki/fetch_donki.py --desde 2024-01-01 --hasta 2024-12-31
 
 La llave se lee de la variable de entorno NASA_API_KEY o del archivo .env.
 Nunca se escribe en disco ni queda en el JSON de salida.
@@ -22,7 +22,7 @@ ID = {"SEP": "sepID", "RBE": "rbeID"}   # endpoints verificados
 def leer_llave():
     llave = os.environ.get("NASA_API_KEY")
     if not llave:
-        env = pathlib.Path(__file__).resolve().parents[3] / ".env"
+        env = pathlib.Path(__file__).resolve().parents[2] / ".env"
         if env.exists():
             for linea in env.read_text().splitlines():
                 linea = linea.strip()
@@ -101,7 +101,7 @@ def main():
 
     todos.sort(key=lambda e: e.get("eventTime", ""))
     destino = pathlib.Path(a.salida or
-        pathlib.Path(__file__).resolve().parents[1] /
+        pathlib.Path(__file__).resolve().parent /
         "datos" / f"donki-{a.endpoint.lower()}-{d0}_{d1}.json")
     destino.parent.mkdir(parents=True, exist_ok=True)
     destino.write_text(json.dumps(todos, indent=2, ensure_ascii=False))

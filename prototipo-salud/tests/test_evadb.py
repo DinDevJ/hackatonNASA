@@ -9,7 +9,7 @@ import pytest
 from motor import evadb, parametros, tablas
 
 RAIZ = Path(__file__).resolve().parents[1]
-BACKEND = RAIZ.parent / "Planeacion" / "Julio" / "backend"
+BACKEND = RAIZ.parent / "Sistema" / "backend"
 
 pytestmark = pytest.mark.skipif(shutil.which("node") is None or not (BACKEND / "src" / "migrar.ts").exists(),
                                 reason="sin node o sin migrar.ts")

@@ -5,15 +5,16 @@
  * tramas JSON como las que reenviaría un celular. Las manda a la computadora
  * central por HTTP, como lo haría la pasarela Bluetooth.
  *
- *   npm run sim                         rellena 112 días y sigue en vivo
- *   npm run sim -- --dias 20 --sin-vivo sólo historia, para pruebas rápidas
+ *   npm run generador                         (en Simulacion/) rellena 112 días y sigue en vivo
+ *   npm run generador -- --dias 20 --sin-vivo sólo historia, para pruebas rápidas
+ * Mándalo a un backend en modo simulación (cd Simulacion && npm start), nunca a la base operativa.
  *
  * ⚠️ TODOS los datos son SINTÉTICOS. El escenario está escrito a propósito:
  *   - días 0–3: redistribución de fluidos (FC un poco más alta)
  *   - Ana: su FC baja ~8 % en órbita (en su misión anterior bajó 10 %)
  *   - Ana, día 109 en adelante: fatiga acumulada, la FC sube cada día
  */
-import { codificar, type Esquema } from './esquema.ts';
+import { codificar, type Esquema } from '../../Sistema/backend/src/esquema.ts';
 
 const arg = (k: string, def: string) => {
   const i = process.argv.indexOf(`--${k}`);

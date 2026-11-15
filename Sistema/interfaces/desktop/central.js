@@ -10,6 +10,16 @@
  */
 (function () {
   "use strict";
+  // Modo operativo: el panel todavía se dibuja con el escenario simulado; sólo quedan los bloques en vivo.
+  const EM = window.EVA_MODO;
+  if (EM && !EM.simulacion) {
+    EM.operativa(document.getElementById("pagina"), {
+      que: "El panel de la computadora central",
+      extra: '<p>Lo que sí llega del backend:</p><div data-vivo="hoy"></div><div data-vivo="tierra" style="margin-top:16px"></div>',
+    });
+    if (window.VIVO) window.VIVO.pintar();
+    return;
+  }
   const K = window.CONSOLA, M = window.MOTOR, C = window.CUERPO;
   const { $, $$, esc, fmt, ic, pastilla, sem, chip, forma } = K;
   const AUTOR = "CMO (Mei)";
@@ -247,7 +257,7 @@
         <span class="avatar grande" style="--c:${x.color}">${x.nombre[0]}</span>
         <div><h1>${esc(x.nombre)}</h1><p class="sub">${x.id} · ${esc(x.rol)} · panel clínico · día ${d}</p></div>
         ${sem(e.general)}<span class="cn-chips">${alertas}</span>
-        <a class="cn-boton cn-empuja" href="index.html" id="abrir-tel" title="Abre la app del teléfono como ${esc(x.nombre)}, el mismo día">${ic("telefono", "ic-sm")}Ver su app</a>
+        <a class="cn-boton cn-empuja" href="../mobile/index.html" id="abrir-tel" title="Abre la app del teléfono como ${esc(x.nombre)}, el mismo día">${ic("telefono", "ic-sm")}Ver su app</a>
       </header>
       <p class="cn-etq cn-separa">${ic("planeta", "ic-sm")} Escenario simulado · día ${d} · no viene del backend</p>
       <div class="cn-hud">

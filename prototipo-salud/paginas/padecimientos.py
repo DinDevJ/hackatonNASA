@@ -36,7 +36,7 @@ DISCLAIMER = ("No es un diagnóstico. El semáforo ordena qué revisar primero y
               "evidencia insuficiente.")
 SIN_REALES = ("No hay mediciones reales guardadas (outputs/raw vacío y sin sensores cargados). Se muestra la "
               "tripulación SIMULADA para ejercitar el flujo.")
-NOTA_EVA_DB = ("Los datos de eva.db pueden venir del simulador de hardware (`npm run sim`); en ese caso también son "
+NOTA_EVA_DB = ("Los datos de eva.db pueden venir del simulador de hardware (`npm run generador` en Simulacion/); en ese caso también son "
                "SIMULADOS (la base no permite distinguirlo).")
 CLAVE_EVA = "pad_eva"
 TEXTO_SIMULADO = ("Datos sintéticos generados para probar el flujo. No son fisiología real ni datos de astronautas "

@@ -2,7 +2,7 @@
 import { test, beforeEach } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import assert from 'node:assert/strict';
@@ -205,8 +205,31 @@ test('evaluar: BD en memoria → 409; cuerpo no booleano → 400', async () => {
     assert.equal(r.estado, 409);
     assert.match(r.j.error, /memoria/);
     assert.equal((await enviar(b, 'POST', '/api/padecimientos/evaluar', '{"simulado": "si"}')).estado, 400);
+    const o = await enviar(b, 'POST', '/api/padecimientos/evaluar', '{"origen_simulador": "si"}');
+    assert.equal(o.estado, 400);
+    assert.match(o.j.error, /origen_simulador debe ser booleano/);
+    assert.equal((await enviar(b, 'POST', '/api/padecimientos/evaluar', '{"origen_simulador": true}')).estado, 409);
     assert.equal((await enviar(b, 'POST', '/api/padecimientos/evaluar')).estado, 409);
   });
+});
+
+test('correrMotor: origenSimulador añade --origen-simulador y el canal cae a SIMULADO (python falso)', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'eva-sem-'));
+  try {
+    const falso = join(dir, 'falso.mjs');
+    writeFileSync(falso, "console.log('args=' + process.argv.slice(2).join(' '));\n");
+    const py = { cmd: process.execPath, args: [falso] };
+    const r = await correrMotor(join(dir, 'eva.db'), false, { python: py, cwd: dir, origenSimulador: true });
+    assert.match(r.salida, /--origen-simulador/);
+    assert.match(r.comando, /--origen-simulador/);
+    assert.equal(r.canal, 'SIMULADO');
+    const n = await correrMotor(join(dir, 'eva.db'), false, { python: py, cwd: dir });
+    assert.doesNotMatch(n.salida, /--origen-simulador/);
+    assert.equal(n.canal, 'real');
+    const s = await correrMotor(join(dir, 'eva.db'), true, { python: py, cwd: dir, origenSimulador: true });
+    assert.doesNotMatch(s.salida, /--origen-simulador/);
+    assert.match(s.salida, /--simulado/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 const hayPandas = (() => { try { execFileSync('python3', ['-c', 'import pandas'], { stdio: 'ignore' }); return true; } catch { return false; } })();

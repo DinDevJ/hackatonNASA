@@ -74,6 +74,32 @@ def test_evaluar_escribe_filas(bd):
     assert evadb.main(["--evaluar"]) == 0
 
 
+def test_origen_simulador_guarda_como_simulado(bd, capsys):
+    _poblar(bd)
+    r = evadb.evaluar_eva_db(guardar=True, origen_simulador=True)
+    assert r["filas_escritas"] > 0 and any("declarados del simulador" in a for a in r["avisos"])
+    con = sqlite3.connect(bd)
+    assert {c for (c,) in con.execute("SELECT DISTINCT canal FROM evaluaciones")} == {"SIMULADO"}
+    dets = [json.loads(d) for (d,) in con.execute("SELECT detalle FROM evaluaciones")]
+    assert all(d["simulated"] is True for d in dets)
+    refs = [x for d in dets for x in d["referencias"].values()]
+    assert refs and all(x["simulado"] is True for x in refs)
+    con.execute("DELETE FROM evaluaciones")
+    con.commit()
+    con.close()
+    assert evadb.main(["--evaluar", "--origen-simulador"]) == 0
+    assert "(canal SIMULADO)" in capsys.readouterr().out
+    con = sqlite3.connect(bd)
+    con.execute("DELETE FROM evaluaciones")
+    con.commit()
+    con.close()
+    assert evadb.main(["--evaluar"]) == 0
+    assert "(canal real)" in capsys.readouterr().out
+    con = sqlite3.connect(bd)
+    assert {c for (c,) in con.execute("SELECT DISTINCT canal FROM evaluaciones")} == {"real"}
+    con.close()
+
+
 def test_simulado_se_guarda_como_simulado(bd):
     r = evadb.evaluar_eva_db(guardar=True, simulado=True)
     assert r["filas_escritas"] > 0

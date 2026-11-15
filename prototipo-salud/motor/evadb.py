@@ -17,8 +17,8 @@
     * simulated = false: la BD no distingue el simulador de hardware (`npm run generador` en Simulacion/). Si los datos vienen de él,
 =======
     * simulated = false: la BD no distingue el simulador de hardware (`npm run sim`). Si los datos vienen de él,
->>>>>>> 6ec76403a8d197667ae003cc72dccb525361203c
-      también son SIMULADOS aunque aquí figuren como reales. notes = 'origen=eva.db; ...'.
+      también son SIMULADOS aunque aquí figuren como reales (el operador puede declararlo con `origen_simulador=True` /
+      `--origen-simulador`: se evalúa igual pero se guarda con canal SIMULADO). notes = 'origen=eva.db; ...'.
     * EXCEPCION: una muestra con procedencia 'modelo_eco' cuyo JSON de calidad trae clase == 'modelo_eco' (la escribe
       `guardar_muestra_eco`) se lee con device_class 'modelo_eco', quality = el del JSON, simulated = `simulado` del JSON
       y modelo/checkpoint/archivo en notes. Sigue siendo N4 (modelo de investigación, no diagnóstico).
@@ -402,12 +402,14 @@ def _detalle(item: dict, pers: dict, canal: str) -> dict:
     return d
 
 
-def evaluar_eva_db(ruta=None, guardar=True, simulado=False, ruta_estado=None) -> dict:
+def evaluar_eva_db(ruta=None, guardar=True, simulado=False, ruta_estado=None, origen_simulador=False) -> dict:
     """Evalúa y, si `guardar`, escribe una fila por (tripulante, padecimiento) en `evaluaciones`.
 
     Canal real: datos de eva.db (filas simulated=false). `simulado=True`: tripulación sintética del prototipo
     (`entradas.cargar_simulado`), guardada con canal='SIMULADO'. El estado de calibración solo se escribe a disco si
     se pasa `ruta_estado` (por defecto no se toca `datos/estado/`).
+    `origen_simulador=True` (sin `simulado`): los datos de eva.db vienen del simulador de hardware; se evalúan exactamente
+    como el canal real pero se guardan con canal SIMULADO.
     Devuelve {"hay", "avisos", "resultado", "filas_escritas", "basales", "ruta"}."""
     from . import entradas, evaluacion
     info = reunir(ruta)
@@ -426,16 +428,20 @@ def evaluar_eva_db(ruta=None, guardar=True, simulado=False, ruta_estado=None) ->
         obs, rech, av = entradas.desde_nativo(info["nativo"])
         out["avisos"] += av
         mision, perfiles, canal = info["mision"], info["perfiles"], "real"
+        if origen_simulador:
+            out["avisos"].append("datos de eva.db declarados del simulador: se guardan con canal SIMULADO")
     if not len(obs):
         return out
     res = evaluacion.evaluar(obs, mision=mision or None, perfiles=perfiles or None, canal=canal, rechazadas=rech,
                              ruta_estado=ruta_estado, guardar=ruta_estado is not None)
     out["resultado"] = res
+    canal_guardado = "SIMULADO" if (simulado or origen_simulador) else "real"
+    out["canal_guardado"] = canal_guardado
     if guardar:
         if not info["hay"]:
             out["avisos"].append("no hay eva.db con tablas de salud: la evaluación no se guardó.")
             return out
-        out["filas_escritas"] = guardar_evaluaciones(res, ruta, "SIMULADO" if simulado else "real")
+        out["filas_escritas"] = guardar_evaluaciones(res, ruta, canal_guardado)
     return out
 
 
@@ -469,18 +475,20 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python -m motor.evadb", description="Puente con eva.db (no es un diagnóstico).")
     ap.add_argument("--evaluar", action="store_true", help="evalúa el canal real de eva.db y guarda en `evaluaciones`")
     ap.add_argument("--simulado", action="store_true", help="evalúa la tripulación SIMULADA y la guarda con canal SIMULADO")
+    ap.add_argument("--origen-simulador", action="store_true",
+                    help="los datos de eva.db vienen del simulador (npm run sim): se evalúan como eva.db pero se guardan con canal SIMULADO")
     ap.add_argument("--db", help="ruta de la BD (si no, EVA_DB)")
     a = ap.parse_args(argv)
     if not a.evaluar:
         ap.print_help()
         return 0
-    r = evaluar_eva_db(ruta=a.db, guardar=True, simulado=a.simulado)
+    r = evaluar_eva_db(ruta=a.db, guardar=True, simulado=a.simulado, origen_simulador=a.origen_simulador)
     for av in r["avisos"]:
         print(f"aviso: {av}", file=sys.stderr)
     if not r["hay"]:
         print("No hay eva.db utilizable; no se escribió nada.")
         return 1
-    print(f"Filas escritas en evaluaciones: {r['filas_escritas']} (canal {'SIMULADO' if a.simulado else 'real'}). "
+    print(f"Filas escritas en evaluaciones: {r['filas_escritas']} (canal {r.get('canal_guardado', 'real')}). "
           f"{parametros.AVISO}")
     return 0
 

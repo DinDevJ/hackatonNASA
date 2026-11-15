@@ -221,33 +221,28 @@ vuelo) que solo ejercita el flujo y nunca se mezcla con datos reales. **Todos lo
 validado en astronautas y nada es un diagnóstico**; las reglas R1–R5 y la FEVE no mueven este semáforo. Interfaces,
 decisiones y límites: `motor/DISENO.md`. Instalación sobre una copia existente: `NOTA-INSTALACION-PADECIMIENTOS.md`.
 
+### Validación y ejemplos (`validacion/`)
+- `python -m validacion.inspiration4 [--rellenar-simulado]`: prueba con laboratorios abiertos de Inspiration4 (OSDR OSD-569/575).
+  Solo reales: todo GRIS (3 tomas prevuelo < 5). Con relleno SIMULADO: ningún ROJO; coincide en el potasio bajo de C003 en R+1.
+  No prueba nada clínico. Ver `validacion/README.md`.
+- `python -m validacion.ejemplo_aprende`: autocalibración personal con datos SIMULADO. La misma FC de 85 lpm da z personal 9.17
+  (alerta) en SIM-A, con base 58.1 lpm, y 0.43 (normal) en SIM-B, con base 83.6 lpm; z poblacional 1.32 en ambos.
+
 ## Base de la nave (eva.db, opcional)
 
-<<<<<<< HEAD
-El motor puede leer las muestras de la base de la nave (Sistema/backend) y guardar ahí sus evaluaciones y los
-pesos que edite el usuario. Python no crea el esquema: lo crea Node (`npm run migrar` en `Sistema/backend`).
-
-```bash
-EVA_DB=../Sistema/backend/eva-nave.db streamlit run app.py
-EVA_DB=../Sistema/backend/eva-nave.db python -m motor.evadb --evaluar     # guarda en `evaluaciones`
-=======
 El motor puede leer las muestras de la base de la nave (Planeacion/Julio/backend) y guardar ahí sus evaluaciones y los
 pesos que edite el usuario. Python no crea el esquema: lo crea Node (`npm run migrar` en `Planeacion/Julio/backend`).
 
 ```bash
 EVA_DB=../Planeacion/Julio/backend/eva-nave.db streamlit run app.py
 EVA_DB=../Planeacion/Julio/backend/eva-nave.db python -m motor.evadb --evaluar     # guarda en `evaluaciones`
->>>>>>> 6ec76403a8d197667ae003cc72dccb525361203c
+EVA_DB=... python -m motor.evadb --evaluar --origen-simulador   # eva.db viene de `npm run sim`: se evalúa igual, se guarda con canal SIMULADO
 ```
 
 - Con `EVA_DB` y las tablas de salud: la vista Padecimientos usa eva.db (canal real) por defecto y la tripulación
   sintética es una opción rotulada SIMULADO; los pesos y umbrales editados van a la tabla `pesos_usuario`.
 - Sin `EVA_DB` (o sin el archivo / sin las tablas): todo funciona como antes y los cambios van a `datos/modelo/overrides.json`.
-<<<<<<< HEAD
-- Los datos de eva.db pueden venir del generador de telemetría sintética (`npm run generador` en `Simulacion/`): en ese caso también son SIMULADOS, y la
-=======
 - Los datos de eva.db pueden venir del simulador de hardware (`npm run sim`): en ese caso también son SIMULADOS, y la
->>>>>>> 6ec76403a8d197667ae003cc72dccb525361203c
   base no permite distinguirlo. La clase de dispositivo se lee como `desconocido` (menor confianza del motor).
 
 ## Verificación (VERIFICACIÓN del encargo)

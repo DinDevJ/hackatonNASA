@@ -604,6 +604,7 @@
           <p>${h.frase}</p>
           <ul>${h.evidencia.map((x) => `<li>${x}</li>`).join("")}</ul>
           <div class="hacer">${ic("check", "ic-sm")}<span>${h.hacer}</span></div>
+          ${h.referencia ? `<div class="pie ref-alerta"><b>Referencia:</b> ${h.referencia}</div>` : ""}
           <div class="pie">Umbral: ${h.umbral}${h.simulado ? " · dato simulado" : ""}</div>
         </article>`).join("");
       const velo = document.createElement("div");

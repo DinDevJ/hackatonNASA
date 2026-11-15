@@ -315,6 +315,7 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
         <div class="tarjeta"><h3>${ic("candado")} Diario privado</h3><textarea class="area" rows="3" id="diario" placeholder="Solo tú lo ves. La CMO, solo con tu permiso.">${E.diario}</textarea></div>`;
       void e;
       $("#estres", p).addEventListener("input", (x) => { E.estres = +x.target.value; $("#estres-v", p).textContent = E.estres; });
+      $("#estres", p).addEventListener("change", () => { M.registrar(P().id, E.dia, "animo", E.estres, ahora()); aviso("Estrés registrado: ya cuenta en Inicio"); ir("mente"); });
       const carga = () => { const h = +$("#horas", p).value, k = +$("#kss", p).value; $("#carga", p).innerHTML = `${sem(h > 60 ? 2 : h > 50 ? 1 : 0, h + " h por semana")} ${sem(k > 6 ? 1 : 0, "KSS " + k)}`; };
       carga(); $$("#horas, #kss", p).forEach((i) => i.addEventListener("input", carga));
       $("#diario", p).addEventListener("input", (x) => { E.diario = x.target.value; });
@@ -433,6 +434,7 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
         const lapsos = rts.filter((r) => r >= 355).length, vel = rts.length ? (rts.reduce((s, r) => s + 1000 / r, 0) / rts.length).toFixed(2) : "–";
         res.innerHTML = `<div class="dato">Estímulos <b>${rts.length}</b></div><div class="dato">Lapsos <b>${lapsos}</b></div><div class="dato">Velocidad media <b>${fmt(vel)} 1/s</b></div><div class="dato">Toques antes de tiempo <b>${pronto}</b></div>`;
         E.pvtHoy = { lapsos, n: rts.length };
+        M.registrar(P().id, E.dia, "lapsos", lapsos, ahora());
         E.registros.unshift({ t: "Prueba de reflejos", v: `${lapsos} lapsos`, hora: ahora(), ic: "rayo" });
       };
       const tocar = () => {
@@ -593,8 +595,8 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
   const FORM = {
     presion: () => abrirHoja(`<h2>Presión arterial</h2><p class="tenue-12">Con el manguito, sentada/o y en reposo. Umbral AHA [T].</p>
       <div class="campo-fila"><label>Sistólica<input id="f-s" type="number" inputmode="numeric"/></label><label>Diastólica<input id="f-d" type="number" inputmode="numeric"/></label></div>
-      <button class="btn btn-ancho" id="f-ok">Guardar</button>`, (h) => $("#f-ok", h).addEventListener("click", () => { const s = +$("#f-s", h).value, d = +$("#f-d", h).value; if (s < 60 || s > 250 || d < 30 || d > 160) return aviso("Revisa los números"); guardar("Presión", `${s}/${d} mmHg`, s < 70 ? "Sistólica < 70: posible presíncope [A]. Avisa a la CMO." : s >= 140 ? "≥ 140: coméntalo hoy con la CMO [T]" : undefined, "corazon"); })),
-    temp: () => abrirHoja(`<h2>Temperatura</h2><div class="campo"><input id="f-t" type="number" step="0.1" inputmode="decimal" placeholder="°C" aria-label="°C"/><button class="btn" id="f-ok">Guardar</button></div>`, (h) => $("#f-ok", h).addEventListener("click", () => { const t = +$("#f-t", h).value; if (t < 34 || t > 43) return aviso("Revisa el número"); guardar("Temperatura", fmt(t) + " °C", t >= 39.4 ? "≥ 39,4 °C: contacta a la CMO (umbral propuesto)" : undefined, "fuego"); })),
+      <button class="btn btn-ancho" id="f-ok">Guardar</button>`, (h) => $("#f-ok", h).addEventListener("click", () => { const s = +$("#f-s", h).value, d = +$("#f-d", h).value; if (s < 60 || s > 250 || d < 30 || d > 160) return aviso("Revisa los números"); M.registrar(P().id, E.dia, "presion", s, ahora()); M.registrar(P().id, E.dia, "diastolica", d, ahora()); guardar("Presión", `${s}/${d} mmHg`, s < 70 ? "Sistólica < 70: posible presíncope [A]. Avisa a la CMO." : s >= 140 ? "≥ 140: coméntalo hoy con la CMO [T]" : undefined, "corazon"); })),
+    temp: () => abrirHoja(`<h2>Temperatura</h2><div class="campo"><input id="f-t" type="number" step="0.1" inputmode="decimal" placeholder="°C" aria-label="°C"/><button class="btn" id="f-ok">Guardar</button></div>`, (h) => $("#f-ok", h).addEventListener("click", () => { const t = +$("#f-t", h).value; if (t < 34 || t > 43) return aviso("Revisa el número"); M.registrar(P().id, E.dia, "temp_central", t, ahora()); guardar("Temperatura", fmt(t) + " °C", t >= 39.4 ? "≥ 39,4 °C: contacta a la CMO (umbral propuesto)" : undefined, "fuego"); })),
     agua: () => abrirHoja(`<h2>Agua</h2><p class="tenue-12">Meta: al menos 32 mL por kg al día [A].</p><div class="chips">${[150, 250, 500].map((m) => `<button class="chip" data-ml="${m}">+${m} mL</button>`).join("")}</div>`, (h) => $$("[data-ml]", h).forEach((b) => b.addEventListener("click", () => { E.agua += +b.dataset.ml; guardar("Agua", `+${b.dataset.ml} mL`, `Llevas ${E.agua} mL registrados hoy`, "gota"); }))),
     masa: () => abrirHoja(`<h2>Masa corporal</h2><p class="tenue-12">Del equipo de masa de la nave. Basal: ${P().masaKg} kg.</p><div class="campo"><input id="f-m" type="number" step="0.1" inputmode="decimal" placeholder="kg" aria-label="kg"/><button class="btn" id="f-ok">Guardar</button></div>`, (h) => $("#f-ok", h).addEventListener("click", () => { const m = +$("#f-m", h).value; if (m < 30 || m > 150) return aviso("Revisa el número"); guardar("Masa corporal", fmt(m) + " kg", (P().masaKg - m) / P().masaKg > 0.033 ? "Bajó más de 3,3 % de tu basal [A]: revisa tu energía con la CMO" : undefined, "pesa"); })),
     orina: () => abrirHoja(`<h2>Tira de orina</h2><p class="tenue-12">Toma una foto de la tira junto a su tabla de colores.</p>

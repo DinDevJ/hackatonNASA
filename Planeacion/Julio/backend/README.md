@@ -52,14 +52,18 @@ Requiere **Node 22.6+** y nada más: SQLite y TypeScript vienen integrados en No
 | Ponerse un dispositivo | `POST /api/asignaciones` `{ dispositivo, tripulante }` |
 | Fases de la misión | `GET/POST /api/fases` `{ desde, entorno }` |
 | Enlace con Tierra | `GET/PUT /api/enlace` `{ owlt_s, abierto }` |
-| Lo que ha llegado a Tierra | `GET /api/tierra/bandeja[?tipo=resumen\|alerta\|crudos\|acuse]` (con la antigüedad de cada cosa) |
+| Lo que ha llegado a Tierra | `GET /api/tierra/bandeja[?tipo=resumen\|alerta\|crudos\|acuse\|consulta\|emergencia]` (con la antigüedad de cada cosa) |
 | Tierra manda un aviso | `POST /api/tierra/avisos` `{ para, texto, prioridad }` |
 | Tierra manda una alerta manual | `POST /api/tierra/avisos` `{ tipo: "alerta", nivel: "ambar"\|"rojo", para, variable?, texto }` |
 | Consola de control de misión | `GET /tierra` |
 | Avisos ya llegados a la nave | `GET /api/avisos` |
+| La CMO avisa a un tripulante (a bordo, sin retraso) | `POST /api/abordo/avisos` `{ para, texto, nivel?: "ambar"\|"rojo", de? }` · `GET /api/abordo/avisos` |
+| La central consulta a Tierra (baja por el enlace) | `POST /api/central/consultas` `{ sobre?, texto, nivel?, de? }` → paquete `consulta` en la bandeja |
+| El teléfono registra una emergencia | `POST /api/emergencias` `{ tripulante, modo: "SOS manual"\|"automático", causa?, disparadores? }` · `PUT /api/emergencias/:id` `{ resultado }` · `GET /api/emergencias[?tripulante=]` → paquete `emergencia` (prioridad 0) |
 
 Eventos de `/api/stream`: `muestra`, `alerta`, `rechazo`, `tierra` (algo llegó a Tierra),
-`aviso` (un aviso de Tierra llegó a la nave) y `enlace`.
+`aviso` (un aviso de Tierra llegó a la nave, o uno de la CMO con `origen: "abordo"`), `enlace` y
+`emergencia` (se abrió o se cerró una emergencia). Lo de a bordo vive en `src/abordo.ts`.
 
 ```js
 const es = new EventSource('http://localhost:8787/api/stream');

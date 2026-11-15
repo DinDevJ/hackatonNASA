@@ -167,6 +167,13 @@ def leer_muestras(con, avisos: list | None = None) -> pd.DataFrame:
             sim = "true" if q.get("simulado") is True else "false"
             notas += (f"; modelo={q.get('modelo')}; checkpoint={q.get('checkpoint')}; archivo={q.get('archivo_origen')}"
                       f"; modelo de investigacion, no diagnostico")
+        elif isinstance(q, dict) and q.get("clase") == "ecg_adaptador" and r["procedencia"] == "modelo_ecg":
+            clase, calidad = "ecg_adaptador", str(q.get("quality") or "")
+            sim = "true" if q.get("simulado") is True else "false"
+            if q.get("ventana_s"):                           # primero: ventana_declarada_s lee la primera coincidencia
+                notas += f"; ventana={float(q['ventana_s']):g} s"
+            notas += (f"; modelo={q.get('modelo')}; run={q.get('run_id')}; archivo={q.get('archivo_origen')}"
+                      f"; algoritmo de senal experimental, no diagnostico")
         out.append({
             "subject_id": r["tripulante"], "timestamp": r["t_scet"], "variable_id": r["variable"], "value": r["valor"],
             "unit": r["unidad"] or "", "device_class": clase, "quality": calidad, "context": "",
@@ -219,6 +226,56 @@ def guardar_muestra_eco(feve, *, subject_id, timestamp, modelo, simulado, qualit
             return {"guardada": True, "existente": False, "id": cur.lastrowid, "t_scet": t_scet}
     except sqlite3.Error as e:
         return {"guardada": False, "error": f"{type(e).__name__}: {e}"}
+    finally:
+        con.close()
+
+
+def guardar_muestras_ecg(filas, *, subject_id, timestamp, simulado, archivo_origen=None, run_id=None, ruta=None) -> dict:
+    """Guarda en `muestras` (procedencia 'modelo_ecg') las métricas ECG ya pasadas por la puerta de calidad. `filas`: lista
+    de dicts {variable_id, valor, unidad, metrica, quality, nivel, experimental, con_liga, ventana_s}. Una transacción;
+    idempotente por (tripulante, variable, t_scet, procedencia). No crea esquema ni lanza si falta la tabla.
+    Devuelve {"resultados": [{guardada, existente, id}|{guardada:False, error}...]} alineado con `filas`, o {"error"}."""
+    if not isinstance(simulado, bool):
+        raise ValueError("`simulado` debe ser bool")
+    con = conectar(ruta)
+    if con is None:
+        return {"error": "no hay BD (EVA_DB sin definir o archivo inexistente)"}
+    try:
+        f = faltan(con, ("muestras",))
+        if f:
+            return {"error": aviso_faltan(f)}
+        ts = pd.Timestamp(timestamp)
+        ts = ts.tz_localize("UTC") if ts.tzinfo is None else ts.tz_convert("UTC")
+        t_scet = ts.strftime("%Y-%m-%dT%H:%M:%SZ")
+        ahora = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        res = []
+        with _transaccion(con):
+            for fl in filas:
+                v = fl.get("valor")
+                if not fl.get("variable_id") or v is None or v != v:
+                    res.append({"guardada": False, "error": "fila sin variable o sin valor"})
+                    continue
+                ya = con.execute("SELECT id FROM muestras WHERE tripulante=? AND variable=? AND t_scet=? "
+                                 "AND procedencia='modelo_ecg'", (str(subject_id), fl["variable_id"], t_scet)).fetchone()
+                if ya:
+                    res.append({"guardada": False, "existente": True, "id": ya["id"]})
+                    continue
+                q = {"clase": "ecg_adaptador", "quality": (fl.get("quality") or "").strip() or "sin_calidad_declarada",
+                     "modelo": "ecg", "metrica": fl.get("metrica"), "checkpoint": None, "archivo_origen": archivo_origen,
+                     "run_id": run_id, "simulado": simulado, "nivel": fl.get("nivel"),
+                     "experimental": bool(fl.get("experimental")), "con_liga": bool(fl.get("con_liga")),
+                     "aviso": "algoritmo de señal experimental, no diagnóstico"}
+                if fl.get("ventana_s"):
+                    q["ventana_s"] = float(fl["ventana_s"])
+                cur = con.execute(
+                    "INSERT INTO muestras (tripulante, variable, valor, unidad, procedencia, calidad, t_scet, t_recibida, "
+                    "dispositivo, seq) VALUES (?,?,?,?,?,?,?,?,NULL,NULL)",
+                    (str(subject_id), fl["variable_id"], float(v), fl.get("unidad") or "", "modelo_ecg",
+                     json.dumps(q, ensure_ascii=False), t_scet, ahora))
+                res.append({"guardada": True, "existente": False, "id": cur.lastrowid, "t_scet": t_scet})
+        return {"resultados": res}
+    except sqlite3.Error as e:
+        return {"error": f"{type(e).__name__}: {e}"}
     finally:
         con.close()
 

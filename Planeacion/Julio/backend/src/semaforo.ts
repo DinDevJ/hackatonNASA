@@ -32,7 +32,8 @@ export function rutaBd(db: BD): string {
   return f?.file ? String(f.file) : '';
 }
 
-const dirPrototipo = () => resolve(process.env.PROTOTIPO_SALUD ?? join(AQUI, '..', '..', '..', '..', 'prototipo-salud'));
+/** Carpeta de prototipo-salud: PROTOTIPO_DIR, luego PROTOTIPO_SALUD, luego la del repo. */
+export const dirPrototipo = () => resolve(process.env.PROTOTIPO_DIR ?? process.env.PROTOTIPO_SALUD ?? join(AQUI, '..', '..', '..', '..', 'prototipo-salud'));
 
 export function comoPoblar(db: BD) {
   const bd = rutaBd(db) || 'eva.db';
@@ -218,15 +219,15 @@ let corriendo = false;
 export interface SalidaMotor { canal: 'real' | 'SIMULADO'; filas_escritas: number; salida: string; avisos: string[]; comando: string }
 
 /** Corre `python3 -m motor.evadb --evaluar` sobre la BD en archivo. No bloquea el servidor. */
-export function correrMotor(ruta: string, simulado: boolean): Promise<SalidaMotor> {
+export function correrMotor(ruta: string, simulado: boolean, opc: { python?: { cmd: string; args: string[] }; cwd?: string } = {}): Promise<SalidaMotor> {
   if (!ruta) return Promise.reject(new ErrorSemaforo(409, 'La BD está en memoria: hace falta eva.db en archivo para que el motor Python la lea.'));
   if (corriendo) return Promise.reject(new ErrorSemaforo(409, 'Ya hay una evaluación en curso.'));
-  const py = process.env.PYTHON ?? (process.platform === 'win32' ? 'python' : 'python3');
-  const args = ['-m', 'motor.evadb', '--evaluar', ...(simulado ? ['--simulado'] : []), '--db', ruta];
+  const py = opc.python?.cmd ?? process.env.PYTHON ?? (process.platform === 'win32' ? 'python' : 'python3');
+  const args = [...(opc.python?.args ?? []), '-m', 'motor.evadb', '--evaluar', ...(simulado ? ['--simulado'] : []), '--db', ruta];
   const comando = `cd prototipo-salud && EVA_DB=${ruta} ${py} ${args.join(' ')}`;
   corriendo = true;
   return new Promise((ok, mal) => {
-    execFile(py, args, { cwd: dirPrototipo(), env: { ...process.env, EVA_DB: ruta }, timeout: 120_000, maxBuffer: 10_000_000 }, (err, stdout, stderr) => {
+    execFile(py, args, { cwd: opc.cwd ?? dirPrototipo(), env: { ...process.env, EVA_DB: ruta }, timeout: 120_000, maxBuffer: 10_000_000 }, (err, stdout, stderr) => {
       corriendo = false;
       const lineas = (t: string) => t.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
       const e = err as (NodeJS.ErrnoException & { killed?: boolean }) | null;

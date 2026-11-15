@@ -1,6 +1,6 @@
 /* LUNNA · reloj: las interfaces del reloj de la tripulación.
  *
- * Usa las piezas comunes de las interfaces (Sistema/interfaces/comun) sin copiarlas:
+ * Usa las piezas de la maqueta de Leo (Sistema/interfaces/eva) sin copiarlas:
  *   MOTOR (motor.js)  tripulación, días 106–115, «tu normal», semáforo, FATIGA-03 y evento solar
  *   LUNA  (luna.js)   la carita de Lunna; su cara cambia con el estado de la persona:
  *                       bien → feliz · mal → preocupada · crítico → alerta · dormido → dormida (zzz)
@@ -15,8 +15,6 @@
   // Modo operativo: el reloj todavía se dibuja con el escenario simulado; no se muestra.
   const EM = window.EVA_MODO;
   if (EM && !EM.simulacion) {
-    // Vista limpia: sólo la pantalla del reloj, sin cabecera ni galerías de la maqueta.
-    if (document.documentElement.classList.contains("vista-limpia")) document.documentElement.classList.add("embebido");
     EM.operativa(document.querySelector(".rj-main"), { que: "El reloj" });
     const pil = document.querySelector(".rj-pildora");
     if (pil) { pil.textContent = "Modo operativo"; pil.title = "Sin escenario simulado"; }
@@ -44,8 +42,7 @@
 
   // ?embebido → solo el reloj (así lo abre el simulador) · ?persona=MS-2 → persona fija (el reloj es de Ana)
   const Q = new URLSearchParams(location.search);
-  // Vista limpia (modo.js): sólo el reloj, sin el panel de la simulación ni las galerías.
-  const EMBEBIDO = Q.has("embebido") || document.documentElement.classList.contains("vista-limpia");
+  const EMBEBIDO = Q.has("embebido");
   document.documentElement.classList.toggle("embebido", EMBEBIDO);
   const valida = (pid) => M.PERSONAS.some((p) => p.id === pid);
   const S = {

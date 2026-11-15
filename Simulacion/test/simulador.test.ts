@@ -29,51 +29,44 @@ async function conServidor(f: (base: string) => Promise<void>) {
   finally { await new Promise((ok) => srv.close(ok)); }
 }
 
-test('simulador: cada dispositivo abre su ruta limpia desde el mismo origen', async () => {
+test('simulador: el PC abre la computadora central desde el mismo origen, sin quitar las otras interfaces', async () => {
   await conServidor(async (base) => {
     const r = await fetch(`${base}/simulador`);
     assert.equal(r.status, 200);
     const html = await r.text();
-    assert.match(html, /pc:\s*\{\s*url:\s*'\/desktop\/'/);
-    assert.match(html, /cel:\s*\{\s*url:\s*'\/mobile\/'/);
-    assert.match(html, /tierra:\s*\{\s*url:\s*'\/desktop\/tierra'/);
+    assert.match(html, /pc:\s*\{\s*url:\s*'\/app\/central\.html'/);
+    assert.match(html, /cel:\s*\{\s*url:\s*'\/app\/'/);
+    assert.match(html, /tierra:\s*\{\s*url:\s*'\/app\/base\.html'/);
     assert.match(html, /class="equipo" data-id="pc"/);
-    assert.match(html, /reloj:\s*\{\s*url:\s*'\/watch\/\?persona=MS-2'/);
+    assert.match(html, /reloj:\s*\{\s*url:\s*'\/reloj\/\?embebido&persona=MS-2'/);
     assert.match(html, /id="b-compartida"/);
-    assert.match(html, /src="\/desktop\/"[^>]*title="Pantalla de la laptop/);
-    assert.match(html, /src="\/desktop\/tierra"[^>]*title="Pantalla de Tierra/);
-    assert.doesNotMatch(html, /['"]\/app\//);
-    for (const p of ['/desktop/', '/desktop/tierra', '/mobile/', '/watch/?persona=MS-2']) {
-      const x = await fetch(`${base}${p}`);
-      assert.equal(x.status, 200, p);
-      await x.arrayBuffer();
-    }
+    assert.match(html, /src="\/app\/central\.html"[^>]*title="Pantalla de la laptop/);
+    assert.match(html, /src="\/app\/base\.html"[^>]*title="Pantalla de Tierra/);
   });
 });
 
-test('escenario: las interfaces reciben el escenario sintético sólo por /comun/escenario/', async () => {
+test('escenario: las interfaces reciben el escenario sintético sólo por /escenario/, rotulado como simulación', async () => {
   await conServidor(async (base) => {
     const salud = await (await fetch(`${base}/api/salud`)).json() as { modo: string };
     assert.equal(salud.modo, 'simulacion');
-    assert.match(await (await fetch(`${base}/comun/config.js`)).text(), /"modo":"simulacion","escenario":"escenario\/"/);
-    for (const p of ['/comun/escenario/datos.js']) {
+    assert.match(await (await fetch(`${base}/app/config.js`)).text(), /"modo":"simulacion","escenario":"escenario\/"/);
+    for (const p of ['/app/escenario/datos.js', '/interfaces/eva/escenario/datos.js']) {
       const x = await fetch(`${base}${p}`);
       assert.equal(x.status, 200, p);
       assert.match(await x.text(), /SIMULADOS[\s\S]*window\.DATOS =/, p);
     }
-    const demo = await fetch(`${base}/comun/escenario/demo.js`);
+    const demo = await fetch(`${base}/app/escenario/demo.js`);
     assert.equal(demo.status, 200);
     await demo.arrayBuffer();
     // Nada fuera de escenarios/interfaces/.
-    for (const p of ['/comun/escenario/..%2F..%2Fpackage.json', '/comun/escenario/..%2F..%2F..%2FSistema%2Fbackend%2Fpackage.json']) {
+    for (const p of ['/app/escenario/..%2F..%2Fpackage.json', '/app/escenario/..%2F..%2F..%2FSistema%2Fbackend%2Fpackage.json']) {
       const x = await fetch(`${base}${p}`);
       assert.equal(x.status, 404, p);
       await x.arrayBuffer();
     }
-    // El distintivo de simulación (modo.js) sólo sale en la demo: las pantallas de los dispositivos van limpias.
-    const modo = await (await fetch(`${base}/comun/modo.js`)).text();
+    // El distintivo de simulación lo pone modo.js, que cargan todas las pantallas.
+    const modo = await (await fetch(`${base}/app/modo.js`)).text();
     assert.match(modo, /Simulación · datos sintéticos/);
-    assert.match(modo, /if \(sim && !limpia\)/);
   });
 });
 

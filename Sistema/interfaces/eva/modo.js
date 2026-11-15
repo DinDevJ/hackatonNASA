@@ -4,14 +4,10 @@
  *   - operativo (Sistema/: npm start)       no se carga el escenario sintético; las pantallas que
  *                                           todavía dependen de él lo dicen en lugar de mostrarlo.
  *   - simulación (Simulacion/: npm start)   el escenario (datos.js, demo.js) llega desde
- *                                           Simulacion/escenarios/interfaces/.
- * Abierta como archivo (sin backend) es la maqueta, en modo simulación, con el escenario leído de la
- * carpeta Simulacion/ del repositorio.
- *
- * Vista limpia (siempre, salvo ?demo): las pantallas de los dispositivos (/desktop, /mobile, /watch)
- * no muestran los controles de la simulación (píldoras «Simulado», enlace simulado, selector de día,
- * cambio de dispositivo o de persona, separadores «Escenario simulado») ni un distintivo de modo. La
- * simulación se controla sólo desde /simulador. ?demo los deja, porque la demo automática los toca.
+ *                                           Simulacion/escenarios/interfaces/ y la página lleva el
+ *                                           distintivo «SIMULACIÓN · datos sintéticos».
+ * Abierta como archivo (sin backend) no hay nada real que mostrar: es la maqueta, en modo simulación,
+ * con el escenario leído de la carpeta Simulacion/ del repositorio.
  *
  * Uso en el HTML, en el lugar exacto donde iba cada script del escenario:
  *   <script>EVA_MODO.escenario("datos.js?v=52")</script>
@@ -33,8 +29,6 @@
     base = null;
   }
   var sim = modo === "simulacion";
-  var limpia = !/[?&]demo(=|&|$)/.test(location.search);
-  if (limpia) document.documentElement.classList.add("vista-limpia");
 
   /** Carga un archivo del escenario sintético en este punto de la página, sólo en simulación. */
   function escenario(archivo) {
@@ -54,14 +48,7 @@
       "border:1px solid var(--vidrio-borde,rgba(88,200,255,.35));background:var(--tarjeta,rgba(10,18,64,.6));color:inherit}" +
       ".eva-operativo h2{margin:0 0 8px;font:700 11px/1.3 ui-monospace,Consolas,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--hud-cian,#2F6FD6)}" +
       ".eva-operativo p{margin:6px 0;line-height:1.45}" +
-      ".eva-operativo code{font-family:ui-monospace,Consolas,monospace}" +
-      // Vista limpia: fuera los controles de la simulación.
-      // Computadora central y base en Tierra (consola.js, central.js)
-      "html.vista-limpia .cn-pildora.sim,html.vista-limpia #cn-enlace,html.vista-limpia #cn-dia," +
-      "html.vista-limpia .cn-ctrl a.cn-boton,html.vista-limpia #abrir-tel,html.vista-limpia .cn-separa," +
-      // Teléfono (modulos.js, Ajustes): ver la app como otra persona, día de misión y demo
-      "html.vista-limpia .aj-perfil>div:has(.aj-chips),html.vista-limpia .tarjeta:has(>.aj-dia)," +
-      "html.vista-limpia .aj-demo{display:none!important}";
+      ".eva-operativo code{font-family:ui-monospace,Consolas,monospace}";
     (document.head || document.documentElement).appendChild(s);
   }
 
@@ -82,8 +69,7 @@
       (o.extra || "") + "</section>";
   }
 
-  ponerEstilos();
-  if (sim && !limpia) {
+  if (sim) {
     var marcar = function () {
       ponerEstilos();
       if (document.querySelector(".eva-sim")) return;

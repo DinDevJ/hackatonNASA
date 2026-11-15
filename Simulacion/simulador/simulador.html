@@ -570,7 +570,7 @@ button.sec:hover{border-color:rgba(88,200,255,.55);box-shadow:0 0 0 3px rgba(88,
           <button class="maxim" type="button" data-compartida-max title="Maximizar laptop" aria-label="Maximizar laptop">□</button>
           <button class="cerrar" type="button" data-compartida-cerrar title="Cerrar vista compartida" aria-label="Cerrar vista compartida">×</button>
         </div>
-        <iframe class="compartida-panel-visor" src="/desktop/" title="Pantalla de la laptop: computadora central LUNNA"></iframe>
+        <iframe class="compartida-panel-visor" src="/app/central.html" title="Pantalla de la laptop: computadora central LUNNA"></iframe>
         <div class="compartida-panel-log" aria-label="Terminal de la laptop"></div>
       </article>
       <article class="compartida-panel" data-nodo="tierra" aria-labelledby="titulo-tierra">
@@ -580,7 +580,7 @@ button.sec:hover{border-color:rgba(88,200,255,.55);box-shadow:0 0 0 3px rgba(88,
           <button class="maxim" type="button" data-compartida-max title="Maximizar Tierra" aria-label="Maximizar Tierra">□</button>
           <button class="cerrar" type="button" data-compartida-cerrar title="Cerrar vista compartida" aria-label="Cerrar vista compartida">×</button>
         </div>
-        <iframe class="compartida-panel-visor" src="/desktop/tierra" title="Pantalla de Tierra: base de control de misión"></iframe>
+        <iframe class="compartida-panel-visor" src="/app/base.html" title="Pantalla de Tierra: base de control de misión"></iframe>
         <div class="compartida-panel-log" aria-label="Terminal de Tierra"></div>
       </article>
     </div>
@@ -759,10 +759,10 @@ let zTop = 10, abiertas = 0;
 // «Frontend» (la interfaz) y con un clic pasa a «Backend» (la terminal de ese equipo).
 //   forma: 'grande' (escritorio, centrada) o 'movil' (proporción de teléfono)
 const INTERFACES = {
-  tierra: { url: '/desktop/tierra', titulo: 'Tierra — base en Tierra LUNNA', forma: 'grande' },
-  cel: { url: '/mobile/', titulo: 'Smartphone', forma: 'movil' },
-  pc: { url: '/desktop/', titulo: 'PC central — computadora central LUNNA', forma: 'grande' },
-  reloj: { url: '/watch/?persona=MS-2', titulo: 'Reloj de Ana — Lunna', forma: 'movil' },
+  tierra: { url: '/app/base.html', titulo: 'Tierra — base en Tierra LUNNA', forma: 'grande' },
+  cel: { url: '/app/', titulo: 'Smartphone', forma: 'movil' },
+  pc: { url: '/app/central.html', titulo: 'PC central — computadora central LUNNA', forma: 'grande' },
+  reloj: { url: '/reloj/?embebido&persona=MS-2', titulo: 'Reloj de Ana — Lunna', forma: 'movil' },
 };
 const vistaCompartida = $('#vista-compartida');
 function sincronizarLogsCompartidos() {

@@ -257,7 +257,7 @@
         <span class="avatar grande" style="--c:${x.color}">${x.nombre[0]}</span>
         <div><h1>${esc(x.nombre)}</h1><p class="sub">${x.id} · ${esc(x.rol)} · panel clínico · día ${d}</p></div>
         ${sem(e.general)}<span class="cn-chips">${alertas}</span>
-        <a class="cn-boton cn-empuja" href="../mobile/index.html" id="abrir-tel" title="Abre la app del teléfono como ${esc(x.nombre)}, el mismo día">${ic("telefono", "ic-sm")}Ver su app</a>
+        <a class="cn-boton cn-empuja" href="index.html" id="abrir-tel" title="Abre la app del teléfono como ${esc(x.nombre)}, el mismo día">${ic("telefono", "ic-sm")}Ver su app</a>
       </header>
       <p class="cn-etq cn-separa">${ic("planeta", "ic-sm")} Escenario simulado · día ${d} · no viene del backend</p>
       <div class="cn-hud">

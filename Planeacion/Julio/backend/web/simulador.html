@@ -636,10 +636,13 @@ function conectarEventos() {
   es.addEventListener('aviso', (e) => {
     const a = JSON.parse(e.data);
     paquete(POS.tierra, POS.pc, COLOR.tierra, 1600);
-    tr('pc', `recibido aviso de Tierra para ${a.para}: «${esc(a.texto)}»`);
+    const manual = a.tipo === 'alerta', nivel = a.datos?.nivel, cls = nivel === 'rojo' ? 'rojo' : 'amb';
+    const que = manual ? `<span class="${cls}">ALERTA DE TIERRA ${String(nivel).toUpperCase()}${a.datos?.variable ? ` · ${NOMBRE[a.datos.variable] || a.datos.variable}` : ''}</span>` : 'aviso de Tierra';
+    tr('pc', `recibida ${que} para ${a.para}: «${esc(a.texto)}»`);
+    tr('pc', '<span class="dim">enviado acuse de recibo a Tierra</span>');
     if (S.encendido.cel) {
-      tr('pc', 'enviado aviso al smartphone');
-      tr('cel', `recibido aviso de ${esc(a.de)}: <span class="az">«${esc(a.texto)}»</span> <span class="dim">· redactado a las ${hora(Date.parse(a.t_redactado))}</span>`);
+      tr('pc', `enviada ${manual ? 'alerta' : 'aviso'} al smartphone`);
+      tr('cel', `recibida ${que} de ${esc(a.de)}: <span class="${manual ? cls : 'az'}">«${esc(a.texto)}»</span> <span class="dim">· redactado a las ${hora(Date.parse(a.t_redactado))}</span>`);
       setTimeout(() => { paquete(POS.pc, POS.cel, COLOR.aviso, 700); if (!$('.ventana[data-nodo="cel"]')) $('#cel-badge').setAttribute('r', 6); }, 1600);
     }
   });
@@ -735,6 +738,7 @@ $('#b-reiniciar').addEventListener('click', async () => {
   tr('playera', 'hora recibida de pc-central · lista para enviar');
   esp32Arranca();
   tr('tierra', 'control de misión en línea · escribe «ayuda»');
+  tr('tierra', '<span class="dim">consola completa del cirujano de vuelo: </span><a href="/tierra" target="_blank" style="color:#7dd3fc">/tierra</a>');
   conectarEventos(); pintarEnlacesLocales(); pintarEnlace();
 })();
 </script>

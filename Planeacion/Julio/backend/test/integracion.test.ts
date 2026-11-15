@@ -105,3 +105,39 @@ test('enlace con Tierra: retraso de la luz, ventana cerrada y avisos de vuelta',
   assert.equal((db.prepare(`SELECT entregado FROM subida`).get() as { entregado: number }).entregado, 1);
   assert.equal((db.prepare(`SELECT notificado FROM bajada`).get() as { notificado: number }).notificado, 1);
 });
+
+test('alerta manual de Tierra: llega a bordo y la nave manda acuse', async () => {
+  const { escribirEnlace, pulso, redactarAviso } = await import('../src/enlace.ts');
+  const { bus } = await import('../src/ingesta.ts');
+  escribirEnlace(db, { owlt_s: 20, abierto: true });
+  assert.throws(() => redactarAviso(db, { para: 'ana', texto: 'x', tipo: 'alerta' }), /nivel/);
+  assert.throws(() => redactarAviso(db, { para: 'nadie', texto: 'x' }), /no existe/);
+  const id = redactarAviso(db, { para: 'ana', texto: 'FC alta sostenida: descansa', tipo: 'alerta', nivel: 'rojo', variable: '04:A4' });
+
+  const recibidas: Array<Record<string, unknown>> = [];
+  const oir = (a: Record<string, unknown>) => recibidas.push(a);
+  bus.on('aviso', oir);
+  pulso(db, '2027-01-01T10:00:00.000Z');          // sale de Tierra
+  pulso(db, '2027-01-01T10:00:20.000Z');          // llega a bordo
+  bus.off('aviso', oir);
+  assert.equal(recibidas.length, 1);
+  assert.deepEqual(recibidas[0]!.datos, { nivel: 'rojo', variable: '04:A4' });
+
+  const acuse = db.prepare(`SELECT tipo, prioridad, datos FROM bajada WHERE tipo = 'acuse'`).get() as { tipo: string; prioridad: number; datos: string };
+  assert.equal(acuse.prioridad, 0, 'el acuse viaja con la prioridad más alta');
+  assert.equal(JSON.parse(acuse.datos).id, id);
+});
+
+test('cada trama aceptada se avisa tal como llegó (para bajarla cruda a Tierra)', async () => {
+  const { bus } = await import('../src/ingesta.ts');
+  const vistas: Array<Record<string, unknown>> = [];
+  const oir = (t: Record<string, unknown>) => vistas.push(t);
+  bus.on('trama', oir);
+  const buf = trama(1, '2027-01-02T10:00:00Z', 72);
+  ingerirBinaria(db, buf);
+  ingerirBinaria(db, buf);                         // duplicada: no se vuelve a avisar
+  bus.off('trama', oir);
+  assert.equal(vistas.length, 1);
+  assert.equal(vistas[0]!.hex, Buffer.from(buf).toString('hex'));
+  assert.equal((vistas[0]!.valores as Record<string, number>).fc, 72);
+});

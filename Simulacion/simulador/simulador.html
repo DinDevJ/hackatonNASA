@@ -1,0 +1,1451 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lunna · Simulación de la nave</title>
+<style>
+:root{
+  --bg:#070b14; --line:#22304a; --fg:#e7eef9; --dim:#8a9bb8;
+  --ok:#34d399; --bad:#f87171; --acc:#60a5fa; --earth:#38bdf8;
+  --dev:#f43f5e; --cuerpo:#dbe4f0;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:fixed;inset:0 0 auto 0;height:52px;z-index:5;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--line);background:rgba(7,11,20,.92);backdrop-filter:blur(6px)}
+header h1{font-size:1rem;margin:0;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctrl{display:flex;gap:8px;align-items:center;flex:none}
+button{background:var(--acc);color:#04111f;border:0;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;font-size:.82rem}
+button.sec{background:transparent;color:var(--fg);border:1px solid var(--line)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;border:1px solid var(--line);font-size:.76rem;color:var(--dim);white-space:nowrap}
+.pill b{color:var(--fg)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)}
+@media(max-width:820px){.pill{display:none} header h1{font-size:.85rem}}
+
+/* ── maqueta a pantalla completa ── */
+#escena{position:fixed;inset:52px 0 0 0;background:#c5dbe7}
+#escena svg{display:block;width:100%;height:100%}
+.rotulo{fill:#e0f2fe;font:700 13px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em}
+.rotulo.verde{fill:#4ade80;font-size:11px}
+.cuerpo{fill:#f8fafc;stroke:#1e293b;stroke-width:2;stroke-linejoin:round}
+.disp,.equipo{cursor:pointer}
+.disp .forma{transition:opacity .2s}
+.disp:hover .forma,.disp.abierto .forma{opacity:.75}
+.disp:focus,.equipo:focus{outline:none}
+.disp:focus-visible .forma,.equipo:focus-visible .marco{outline:2px solid #0369a1}
+.disp.apagado .forma{opacity:.2}
+.equipo .marco{transition:stroke .2s}
+.equipo:hover .marco,.equipo.abierto .marco{stroke:#0ea5e9}
+.lbl{fill:#0f2233;font-size:13px;font-weight:650}
+.sub{fill:#3b5568;font-size:11px}
+.lbl.claro{fill:#fff} .sub.claro{fill:#9fb6c8}
+.lbl,.sub{pointer-events:none;paint-order:stroke;stroke:rgba(224,237,244,.85);stroke-width:3px;stroke-linejoin:round}
+.lbl.claro,.sub.claro{stroke:none}
+.guia{stroke:#3b5568;stroke-width:1;pointer-events:none}
+.ondas path{fill:none;stroke:#1d5f7a;stroke-width:1.8;stroke-linecap:round;pointer-events:none}
+.ondas.cortado path{stroke:#b91c1c;opacity:.6}
+.enl{fill:none;stroke-width:1.4;stroke-dasharray:3 5;stroke:#1d5f7a}
+.enl.cortado{stroke:#b91c1c}
+
+/* ── lo que se puede abrir, parpadea en rojo ── */
+@keyframes latido{0%,100%{filter:drop-shadow(0 0 0 rgba(225,29,72,0))}50%{filter:drop-shadow(0 0 7px rgba(225,29,72,1)) drop-shadow(0 0 2px rgba(225,29,72,1))}}
+@keyframes contorno{0%,100%{stroke:#1d3b4f}50%{stroke:#e11d48}}
+@keyframes contornoT{0%,100%{stroke:rgba(225,29,72,0)}50%{stroke:#e11d48}}
+.disp .forma{animation:latido 1.6s ease-in-out infinite}
+.equipo .marco{animation:contorno 1.6s ease-in-out infinite;stroke-width:3}
+.equipo[data-id="tierra"] .marco{animation-name:contornoT}
+.disp.apagado .forma{animation:none}
+@media (prefers-reduced-motion:reduce){.disp .forma,.equipo .marco{animation:none} .disp .forma{filter:drop-shadow(0 0 4px rgba(225,29,72,.9))} .equipo .marco{stroke:#e11d48}}
+
+/* ── presentación al abrir ── */
+#intro{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:rgba(4,10,18,.55);backdrop-filter:blur(3px);animation:aparece .35s ease-out}
+#intro[hidden]{display:none}
+@keyframes aparece{from{opacity:0}to{opacity:1}}
+.tarjeta{width:min(600px,100%);max-height:calc(100vh - 32px);overflow:auto;background:#fff;color:#0f2233;border-radius:14px;padding:28px 30px;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.tarjeta .eyebrow{margin:0 0 8px;font:600 11px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.12em;text-transform:uppercase;color:#0369a1}
+.tarjeta h2{margin:0 0 12px;font-size:1.45rem;line-height:1.25}
+.tarjeta p{margin:0 0 14px;color:#334a5c}
+.tarjeta ol{margin:0 0 16px;padding:0;list-style:none;display:grid;gap:10px}
+.tarjeta li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;color:#334a5c}
+.tarjeta li span{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#e0f2fe;color:#0369a1;font-weight:700;font-size:.85rem}
+.tarjeta li b{color:#0f2233}
+.tarjeta .como{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:10px;background:#fff1f2;color:#881337;font-size:.88rem}
+.tarjeta .como i{flex:none;width:12px;height:12px;border-radius:50%;background:#e11d48;animation:punto 1.6s ease-in-out infinite}
+@keyframes punto{0%,100%{box-shadow:0 0 0 0 rgba(225,29,72,.6)}50%{box-shadow:0 0 0 6px rgba(225,29,72,0)}}
+.tarjeta .acciones{display:flex;justify-content:flex-end;margin-top:18px}
+.tarjeta .acciones button{padding:10px 18px;font-size:.92rem;background:#0369a1;color:#fff}
+
+/* ── terminales flotantes ── */
+.ventana{position:fixed;z-index:10;width:min(580px,calc(100vw - 16px));height:min(320px,calc(100vh - 80px));min-width:300px;min-height:150px;
+  display:flex;flex-direction:column;background:#0b0e13;border:1px solid #2b3340;border-radius:8px;overflow:hidden;resize:both;
+  box-shadow:0 16px 40px rgba(0,0,0,.55)}
+.vbarra{display:flex;align-items:center;gap:10px;padding:0 4px 0 12px;height:32px;background:#151a22;border-bottom:1px solid #232a35;cursor:grab;user-select:none;touch-action:none;flex:none}
+.vbarra:active{cursor:grabbing}
+.vtitulo{flex:1;font:600 12px ui-monospace,Menlo,Consolas,monospace;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cerrar{flex:none;width:28px;height:26px;padding:0;border:0;border-radius:5px;background:transparent;color:#94a3b8;font:400 18px/1 system-ui,sans-serif;cursor:pointer}
+.cerrar:hover{background:#dc2626;color:#fff}
+.maxim{flex:none;width:28px;height:26px;padding:0;border:0;border-radius:5px;background:transparent;color:#94a3b8;font:400 14px/1 system-ui,sans-serif;cursor:pointer}
+.maxim:hover{background:#273142;color:#fff}
+.ventana.ui{width:min(1240px,calc(100vw - 32px));height:min(760px,calc(100vh - 84px))}
+.ventana.ui.movil{width:min(400px,calc(100vw - 16px));height:min(820px,calc(100vh - 84px))}
+.ventana.ui .vlog,.ventana.ui .vcmd{display:none}
+.ventana.ui.ver-back .vlog,.ventana.ui.ver-back .vcmd{display:flex}
+.ventana.ui.ver-back .vlog{display:block}
+.ventana.ui.ver-back iframe{display:none}
+.modo{display:flex;flex:none;padding:2px;border:1px solid #2b3340;border-radius:6px;background:#0b0e13}
+.modo button{border:0;background:none;color:#94a3b8;font:600 11px ui-monospace,Menlo,Consolas,monospace;padding:3px 8px;border-radius:4px;cursor:pointer}
+.modo button[aria-pressed="true"]{background:#e2e8f0;color:#0b0e13}
+.ventana.ui iframe{flex:1;width:100%;border:0;background:#0a0d12}
+.ventana.ui .vpie{flex:none;height:16px;background:#151a22;border-top:1px solid #232a35}
+.ventana.max{left:0!important;top:52px!important;width:100vw!important;height:calc(100vh - 52px)!important;border-radius:0;resize:none}
+.vlog{flex:1;overflow:auto;padding:8px 12px;font:12.5px/1.6 ui-monospace,"Cascadia Mono",Menlo,Consolas,monospace;color:#d4d8de;overflow-wrap:anywhere}
+.vlog .t{color:#6b7280} .vlog .hx{color:#7dd3fc} .vlog .dim{color:#6b7280} .vlog .rojo{color:#f87171} .vlog .amb{color:#fbbf24}
+.vlog .verde{color:#4ade80} .vlog .az{color:#7dd3fc} .vlog .cmd{color:#fff}
+.vcmd{display:flex;gap:8px;align-items:center;padding:6px 12px 8px;border-top:1px solid #1a2029;font:12.5px ui-monospace,Menlo,Consolas,monospace;color:#94a3b8;flex:none}
+.vcmd input{flex:1;background:transparent;border:0;outline:0;color:#e5e7eb;font:inherit}
+
+/* ── vista compartida: laptop y Tierra con las interfaces reales ── */
+#vista-compartida[hidden]{display:none}
+#vista-compartida{position:fixed;inset:52px 0 0;z-index:30;padding:18px;background:rgba(3,7,22,.82);backdrop-filter:blur(18px) saturate(125%);-webkit-backdrop-filter:blur(18px) saturate(125%)}
+.compartida{width:min(1640px,100%);height:100%;margin:0 auto;display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid var(--vidrio-borde);border-radius:22px;background:linear-gradient(150deg,rgba(17,31,78,.9),rgba(6,13,39,.92));box-shadow:0 28px 80px rgba(2,6,23,.65),inset 0 1px 0 rgba(255,255,255,.12)}
+.compartida-barra{display:flex;align-items:center;gap:12px;flex:none}
+.compartida-titulo{flex:1;min-width:0}
+.compartida-titulo b{display:block;color:#fff;font-size:16px;letter-spacing:-.015em}
+.compartida-titulo span{display:block;color:var(--dim);font-size:12px;margin-top:2px}
+.compartida-cerrar{flex:none}
+.compartida-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;min-height:0;flex:1}
+.compartida-panel{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;border:1px solid rgba(160,205,255,.2);border-radius:16px;background:#070d26;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.compartida-panel .vbarra{cursor:default}
+.compartida-panel .vtitulo{font-size:12px}
+.compartida-panel .maxim,.compartida-panel .cerrar{display:block}
+.compartida-panel-visor{display:block;width:100%;height:100%;min-height:0;flex:1;border:0;background:#070c2e}
+.compartida-panel-log{display:none;flex:1;min-height:0;overflow:auto;padding:10px 12px;font:12.5px/1.6 var(--mono);color:#d4d8de;overflow-wrap:anywhere}
+.compartida-panel.ver-back .compartida-panel-visor{display:none}
+.compartida-panel.ver-back .compartida-panel-log{display:block}
+.compartida-panel.panel-max{grid-column:1 / -1}
+.compartida-grid:has(.panel-max) .compartida-panel:not(.panel-max){display:none}
+#vista-compartida.panel-max{inset:0;padding:8px;background:rgba(3,7,22,.92)}
+#vista-compartida.panel-max .compartida{padding:0;border:0;border-radius:0;background:#070c2e}
+#vista-compartida.panel-max .compartida-barra{display:none}
+#vista-compartida.panel-max .compartida-grid{gap:0}
+#vista-compartida.panel-max .compartida-panel{border:1px solid rgba(160,205,255,.2);border-radius:10px}
+@media(max-width:900px){
+  #vista-compartida{padding:8px}
+  .compartida{padding:10px;border-radius:16px}
+  .compartida-grid{grid-template-columns:1fr;grid-template-rows:repeat(2,minmax(260px,1fr));overflow:auto}
+  .compartida-panel{min-height:260px}
+}
+@media(max-width:620px){
+  .compartida-titulo span{display:none}
+  .compartida-barra{gap:8px}
+  .compartida-titulo b{font-size:14px}
+}
+
+/* ════════════ Rediseño: vidrio, letra de la app y escena tecnológica ════════════ */
+:root{
+  --letra:-apple-system,"SF Pro Text","Segoe UI Variable Text","Inter","Helvetica Neue","Segoe UI",system-ui,sans-serif;
+  --mono:ui-monospace,"Cascadia Mono",Menlo,Consolas,monospace;
+  --cian:#58C8FF; --vidrio:rgba(14,26,70,.5); --vidrio-borde:rgba(150,200,255,.22);
+  --fg:#EEF4FF; --dim:#9FB2D6; --line:rgba(150,200,255,.18);
+}
+html,body{font-family:var(--letra);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;background:#040818}
+
+/* Barra superior de vidrio */
+header{background:rgba(6,12,36,.58);backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);
+  border-bottom:1px solid var(--vidrio-borde);box-shadow:0 10px 30px rgba(2,6,23,.35),inset 0 -1px 0 rgba(255,255,255,.04)}
+header h1{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;letter-spacing:-.01em;color:var(--fg)}
+header h1 .marca-l{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:16px;letter-spacing:-.02em;
+  background:linear-gradient(135deg,#BAE6FD,#58C8FF 45%,#3B82F6);-webkit-background-clip:text;background-clip:text;color:transparent}
+header h1 .marca-l svg{width:18px;height:18px;flex:none}
+header h1 .marca-sep{width:1px;height:16px;background:var(--vidrio-borde)}
+header h1 .marca-sub{color:var(--dim);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+button{border-radius:12px;padding:8px 14px;font:600 13px var(--letra);color:#fff;
+  background:linear-gradient(135deg,#3B82F6,#2563EB 55%,#0EA5E9);box-shadow:0 6px 18px rgba(37,99,235,.35),inset 0 1px 0 rgba(255,255,255,.25);
+  transition:transform .16s cubic-bezier(.22,1,.36,1),box-shadow .2s ease,opacity .2s ease}
+button:hover{box-shadow:0 8px 24px rgba(37,99,235,.5),inset 0 1px 0 rgba(255,255,255,.3)}
+button:active{transform:scale(.96)}
+button.sec{background:rgba(255,255,255,.06);color:var(--fg);border:1px solid var(--vidrio-borde);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+button.sec:hover{border-color:rgba(88,200,255,.55);box-shadow:0 0 0 3px rgba(88,200,255,.12)}
+.pill{background:rgba(255,255,255,.05);border-color:var(--vidrio-borde);color:var(--dim);font-size:12px}
+.dot.ok{box-shadow:0 0 8px #34d399}.dot.bad{box-shadow:0 0 8px #f87171}
+
+/* Escena: cabina en modo nocturno con acentos de luz */
+#escena{background:radial-gradient(120% 90% at 50% 8%,#13265e 0%,#081133 55%,#040818 100%)}
+#escena .nave{filter:brightness(.4) saturate(1.3) contrast(1.12) hue-rotate(6deg)}
+#escena svg > rect,#escena svg > ellipse{filter:brightness(.48) saturate(1.25)}
+#escena .cuerpo{fill:#E3ECFF;stroke:#0B1A3F}
+.lbl{fill:#EEF4FF;font-family:var(--letra);font-weight:650;stroke:rgba(4,9,32,.9)}
+.sub{fill:#A9BEE4;font-family:var(--letra);stroke:rgba(4,9,32,.9)}
+.lbl.claro{fill:#fff}.sub.claro{fill:#BFD3F5}
+.guia{stroke:rgba(150,200,255,.45)}
+/* Lo que se puede abrir brilla en cian (antes parpadeaba en rojo) */
+@keyframes latidoC{0%,100%{filter:drop-shadow(0 0 1px rgba(88,200,255,.35))}50%{filter:drop-shadow(0 0 8px rgba(88,200,255,.95)) drop-shadow(0 0 2px rgba(88,200,255,1))}}
+@keyframes contornoC{0%,100%{stroke:rgba(88,200,255,.35)}50%{stroke:#58C8FF}}
+@keyframes contornoTC{0%,100%{stroke:rgba(88,200,255,0)}50%{stroke:#58C8FF}}
+.disp .forma{animation:latidoC 2s ease-in-out infinite}
+.equipo .marco{animation:contornoC 2s ease-in-out infinite;stroke-width:2.5}
+.equipo[data-id="tierra"] .marco{animation-name:contornoTC}
+.equipo:hover .marco,.equipo.abierto .marco{stroke:#BAE6FD;filter:drop-shadow(0 0 6px rgba(88,200,255,.9))}
+/* Enlaces y ondas: la información fluye */
+.enl{stroke:#58C8FF;stroke-dasharray:4 7;stroke-width:1.6;animation:fluir 1.1s linear infinite;filter:drop-shadow(0 0 3px rgba(88,200,255,.8))}
+.enl.cortado{stroke:#F87171;animation:none;filter:none}
+@keyframes fluir{to{stroke-dashoffset:-22}}
+.ondas path{stroke:#58C8FF;stroke-width:1.8;animation:onda 1.8s ease-in-out infinite;filter:drop-shadow(0 0 3px rgba(88,200,255,.7))}
+.ondas path:nth-child(2){animation-delay:.25s}.ondas path:nth-child(3){animation-delay:.5s}
+.ondas.cortado path{stroke:#F87171;animation:none;opacity:.55;filter:none}
+@keyframes onda{0%,100%{opacity:.2}50%{opacity:1}}
+.paquete .halo{filter:blur(1.5px)}
+.paquete .estela{stroke-width:2.4;stroke-linecap:round;opacity:.55}
+/* Capa HUD: viñeta, líneas finas, esquinas tácticas y barrido */
+.hud-marco{position:fixed;inset:52px 0 0 0;pointer-events:none;z-index:4;
+  background:
+    repeating-linear-gradient(0deg,transparent 0 3px,rgba(88,200,255,.022) 3px 4px),
+    radial-gradient(ellipse at center,transparent 55%,rgba(2,6,23,.6) 100%)}
+.hud-marco::before,.hud-marco::after{content:"";position:absolute;width:34px;height:34px;border:2px solid rgba(88,200,255,.6)}
+.hud-marco::before{top:14px;left:14px;border-right:0;border-bottom:0;border-radius:10px 0 0 0}
+.hud-marco::after{bottom:14px;right:14px;border-left:0;border-top:0;border-radius:0 0 10px 0}
+.hud-marco i{position:absolute;left:0;right:0;height:120px;top:-120px;
+  background:linear-gradient(180deg,transparent,rgba(88,200,255,.06) 70%,rgba(88,200,255,.22) 98%,transparent);animation:barrido 7s linear infinite}
+@keyframes barrido{to{transform:translateY(calc(100vh + 120px))}}
+/* Terminales de vidrio */
+.ventana{background:rgba(7,13,38,.8);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);
+  border:1px solid var(--vidrio-borde);border-radius:16px;box-shadow:0 24px 60px rgba(2,6,23,.6),inset 0 1px 0 rgba(255,255,255,.08)}
+.vbarra{background:rgba(255,255,255,.04);border-bottom-color:var(--vidrio-borde);height:36px}
+.vtitulo{font:600 13px var(--letra);color:var(--fg)}
+.vcmd{border-top-color:var(--vidrio-borde)}
+.modo{background:rgba(255,255,255,.04);border-color:var(--vidrio-borde);border-radius:9px}
+.modo button{font:600 11.5px var(--letra);box-shadow:none;border-radius:7px}
+.modo button[aria-pressed="true"]{background:#58C8FF;color:#04122E}
+.cerrar,.maxim{box-shadow:none;background:transparent}
+
+/* ════════════ Bienvenida ════════════ */
+#intro{z-index:50;background:rgba(3,7,22,.42);backdrop-filter:blur(12px) saturate(.9);-webkit-backdrop-filter:blur(12px) saturate(.9)}
+.bienvenida{position:relative;width:min(580px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:30px 30px 26px;border-radius:28px;color:var(--fg);
+  background:linear-gradient(160deg,rgba(34,58,130,.55),rgba(9,17,52,.6));backdrop-filter:blur(26px) saturate(175%);-webkit-backdrop-filter:blur(26px) saturate(175%);
+  border:1px solid rgba(160,205,255,.26);box-shadow:0 30px 80px rgba(2,6,23,.6),inset 0 1px 0 rgba(255,255,255,.18);
+  animation:entra .45s cubic-bezier(.22,1,.36,1);scrollbar-width:none}
+.bienvenida::-webkit-scrollbar{display:none}
+.bienvenida::before,.bienvenida::after{content:"";position:absolute;width:20px;height:20px;border:2px solid rgba(88,200,255,.7);pointer-events:none}
+.bienvenida::before{top:12px;left:12px;border-right:0;border-bottom:0;border-radius:8px 0 0 0}
+.bienvenida::after{bottom:12px;right:12px;border-left:0;border-top:0;border-radius:0 0 8px 0}
+@keyframes entra{from{opacity:0;transform:translateY(10px) scale(.97)}}
+.bv-marca{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.bv-luna{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#1e3a8a,#0b1640);
+  box-shadow:inset 0 0 0 1px rgba(150,200,255,.3),0 0 22px rgba(88,200,255,.35)}
+.bv-luna svg{width:24px;height:24px}
+.bv-marca b{display:block;font-size:17px;letter-spacing:-.02em}
+.bv-marca small{display:block;color:var(--dim);font-size:12.5px}
+.bienvenida h2{margin:0 0 10px;font-size:26px;line-height:1.18;font-weight:650;letter-spacing:-.03em}
+.bienvenida p{margin:0 0 16px;color:#C9D6F2;font-size:14.5px;line-height:1.5}
+.bienvenida p b{color:#fff}
+.bv-pasos{display:grid;gap:10px;margin:0 0 16px;padding:0;list-style:none}
+.bv-pasos li{display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:center;padding:12px 14px;border-radius:18px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(160,205,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+  animation:entra .5s cubic-bezier(.22,1,.36,1) both}
+.bv-pasos li:nth-child(2){animation-delay:.07s}.bv-pasos li:nth-child(3){animation-delay:.14s}
+.bv-pasos .ico{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:#7DD3FC;background:rgba(88,200,255,.1);border:1px solid rgba(88,200,255,.25)}
+.bv-pasos .ico svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.bv-pasos b{display:block;font-size:14.5px;color:#fff}
+.bv-pasos span{display:block;font-size:13px;color:#B7C7E8;line-height:1.4}
+.bv-nota{display:flex;gap:10px;align-items:center;padding:11px 14px;border-radius:16px;font-size:13px;color:#CFE8FF;
+  background:rgba(88,200,255,.08);border:1px solid rgba(88,200,255,.22)}
+.bv-nota i{flex:none;width:10px;height:10px;border-radius:50%;background:#58C8FF;box-shadow:0 0 0 0 rgba(88,200,255,.6);animation:respira 1.8s ease-in-out infinite}
+@keyframes respira{50%{box-shadow:0 0 0 7px rgba(88,200,255,0)}}
+.bv-acciones{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:18px}
+.bv-acciones button{padding:11px 18px;font-size:14px}
+
+/* ════════════ Recorrido guiado: lo demás se oscurece y se desenfoca ════════════ */
+@property --rx{syntax:"<length>";inherits:false;initial-value:50vw}
+@property --ry{syntax:"<length>";inherits:false;initial-value:50vh}
+@property --rw{syntax:"<length>";inherits:false;initial-value:0px}
+@property --rh{syntax:"<length>";inherits:false;initial-value:0px}
+.rv-velo{position:fixed;inset:0;z-index:60;background:rgba(3,7,22,.68);
+  backdrop-filter:blur(7px) saturate(.6) brightness(.85);-webkit-backdrop-filter:blur(7px) saturate(.6) brightness(.85);
+  -webkit-mask:radial-gradient(ellipse var(--rw) var(--rh) at var(--rx) var(--ry),transparent 62%,#000 100%);
+          mask:radial-gradient(ellipse var(--rw) var(--rh) at var(--rx) var(--ry),transparent 62%,#000 100%);
+  transition:--rx .55s cubic-bezier(.65,0,.35,1),--ry .55s cubic-bezier(.65,0,.35,1),--rw .55s cubic-bezier(.65,0,.35,1),--rh .55s cubic-bezier(.65,0,.35,1),opacity .3s ease;
+  animation:aparece .3s ease-out}
+.rv-aro{position:fixed;z-index:61;pointer-events:none;border-radius:20px;border:1.5px solid #58C8FF;
+  box-shadow:0 0 0 4px rgba(88,200,255,.14),0 0 28px rgba(88,200,255,.55),inset 0 0 18px rgba(88,200,255,.18);
+  transition:left .55s cubic-bezier(.65,0,.35,1),top .55s cubic-bezier(.65,0,.35,1),width .55s cubic-bezier(.65,0,.35,1),height .55s cubic-bezier(.65,0,.35,1);
+  animation:aro 2s ease-in-out infinite}
+@keyframes aro{50%{box-shadow:0 0 0 10px rgba(88,200,255,.05),0 0 44px rgba(88,200,255,.75),inset 0 0 22px rgba(88,200,255,.25)}}
+.rv-tarjeta{position:fixed;z-index:62;width:min(350px,calc(100vw - 32px));padding:18px 18px 16px;border-radius:22px;color:var(--fg);
+  background:linear-gradient(160deg,rgba(34,58,130,.62),rgba(9,17,52,.7));backdrop-filter:blur(24px) saturate(175%);-webkit-backdrop-filter:blur(24px) saturate(175%);
+  border:1px solid rgba(160,205,255,.28);box-shadow:0 24px 60px rgba(2,6,23,.6),inset 0 1px 0 rgba(255,255,255,.16);
+  transition:left .55s cubic-bezier(.65,0,.35,1),top .55s cubic-bezier(.65,0,.35,1)}
+.rv-tarjeta.cambia .rv-cuerpo{animation:rv-txt .4s cubic-bezier(.22,1,.36,1)}
+@keyframes rv-txt{from{opacity:0;transform:translateY(6px);filter:blur(2px)}}
+.rv-num{font-size:12px;color:#7DD3FC;font-weight:600}
+.rv-tarjeta h3{margin:4px 0 6px;font-size:18px;font-weight:650;letter-spacing:-.02em}
+.rv-tarjeta p{margin:0;font-size:14px;line-height:1.5;color:#C9D6F2}
+.rv-tarjeta p b{color:#fff}
+.rv-segs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;margin:14px 0 12px}
+.rv-segs i{height:3px;border-radius:99px;background:rgba(255,255,255,.14);transition:background .3s,box-shadow .3s}
+.rv-segs i.on{background:#58C8FF;box-shadow:0 0 8px rgba(88,200,255,.8)}
+.rv-acc{display:flex;align-items:center;gap:8px}
+.rv-acc .espacio{flex:1}
+.rv-saltar{background:none;border:0;box-shadow:none;color:var(--dim);padding:6px 4px;font-weight:500}
+.rv-saltar:hover{color:#fff;box-shadow:none}
+/* Detalles de la nave y traje */
+#escena .cuerpo{fill:url(#traje)}
+.nave-tec,.traje-extra,.casco{pointer-events:none}
+.tec-txt{fill:rgba(186,230,253,.7);font:600 9px var(--letra);letter-spacing:.02em}
+.tec-led{animation:tecLed 2.4s ease-in-out infinite}
+@keyframes tecLed{0%,100%{opacity:1}50%{opacity:.25}}
+.tec-barra{transform-box:fill-box;transform-origin:50% 100%;animation:tecBarra 1.6s ease-in-out infinite alternate}
+@keyframes tecBarra{from{transform:scaleY(.25)}to{transform:scaleY(1)}}
+.tec-flujo{animation:tecFlujo 1.6s linear infinite}
+@keyframes tecFlujo{to{stroke-dashoffset:-32}}
+.tec-traza{stroke-dasharray:140 60;animation:tecTraza 3s linear infinite}
+@keyframes tecTraza{from{stroke-dashoffset:200}to{stroke-dashoffset:0}}
+.tec-orbita{animation:tecGiro 9s linear infinite}
+@keyframes tecGiro{to{transform:rotate(360deg)}}
+.tec-polvo{animation:tecPolvo 14s ease-in-out infinite alternate}
+@keyframes tecPolvo{to{transform:translate(16px,-24px)}}
+@media (prefers-reduced-motion:reduce){.tec-led,.tec-barra,.tec-flujo,.tec-traza,.tec-orbita,.tec-polvo{animation:none}}
+
+@media(max-width:700px){
+  .rv-tarjeta{left:16px!important;right:16px;top:auto!important;bottom:16px;width:auto}
+  .bienvenida{padding:24px 20px 20px}.bienvenida h2{font-size:22px}
+}
+@media (prefers-reduced-motion:reduce){
+  .disp .forma,.equipo .marco,.enl,.ondas path,.hud-marco i,.rv-aro,.bv-nota i{animation:none}
+  .rv-velo,.rv-aro,.rv-tarjeta{transition:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="marca-l"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 4a8 8 0 1 0 4.5 14.6A6.6 6.6 0 0 1 15.5 4z" fill="#7DD3FC"/></svg>Lunna</span><span class="marca-sep"></span><span class="marca-sub">Simulación de la nave</span></h1>
+  <div class="ctrl">
+    <span class="pill"><span class="dot" id="d-back"></span> backend <b id="v-back">…</b></span>
+    <button id="b-info" class="sec" title="Qué es esta simulación" aria-label="Qué es esta simulación">?</button>
+    <button id="b-compartida" class="sec" type="button" title="Ver laptop y Tierra juntas">Laptop + Tierra</button>
+    <button id="b-preparar">Preparar misión</button>
+    <button id="b-vivo" class="sec" disabled>▶ En vivo</button>
+    <button id="b-reiniciar" class="sec">Reiniciar</button>
+  </div>
+</header>
+
+<section id="escena">
+  <svg viewBox="-60 -40 1260 720" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Interior de la nave: astronauta, PC central y smartphone; la Tierra por la ventana">
+    <defs>
+      <pattern id="rayado" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)">
+        <rect width="7" height="7" fill="rgba(244,63,94,.14)"/>
+        <line x1="0" y1="0" x2="0" y2="7" stroke="#e11d48" stroke-width="1.4"/>
+      </pattern>
+      <pattern id="peligro" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="16" height="16" fill="#facc15"/><rect width="8" height="16" fill="#1f2937"/>
+      </pattern>
+      <clipPath id="recorteCuerpo"><path d="M0,0 C5.7,0.0 12.3,0.7 17,3 C21.7,5.3 25.5,9.3 28,14 C30.5,18.7 31.5,25.2 32,31 C32.5,36.8 32.0,43.7 31,49 C30.0,54.3 28.2,59.0 26,63 C23.8,67.0 19.8,70.3 18,73 C16.2,75.7 15.5,76.0 15,79 C14.5,82.0 13.5,87.8 15,91 C16.5,94.2 19.2,95.8 24,98 C28.8,100.2 37.7,102.2 44,104 C50.3,105.8 57.0,106.8 62,109 C67.0,111.2 70.8,113.3 74,117 C77.2,120.7 79.3,124.7 81,131 C82.7,137.3 83.0,147.5 84,155.0 C85.0,162.5 86.0,169.1 87,176.2 C88.0,183.3 88.8,189.7 90,197.4 C91.2,205.1 92.7,213.9 94,222.2 C95.3,230.4 96.7,238.7 98,246.9 C99.3,255.2 100.8,264.0 102,271.7 C103.2,279.4 104.2,287.0 105,292.9 C105.8,298.8 105.8,302.0 107,307.0 C108.2,312.0 110.5,317.0 112,323 C113.5,329.0 115.7,336.3 116,343 C116.3,349.7 115.5,357.7 114,363 C112.5,368.3 109.5,373.2 107,375 C104.5,376.8 101.2,376.2 99,374 C96.8,371.8 95.3,366.8 94,362 C92.7,357.2 92.3,349.5 91,345 C89.7,340.5 86.5,339.0 86,335 C85.5,331.0 87.3,325.7 88,321 C88.7,316.3 90.0,312.3 90,307.0 C90.0,301.7 89.0,296.4 88,289.3 C87.0,282.2 85.3,272.9 84,264.6 C82.7,256.4 81.3,248.1 80,239.8 C78.7,231.6 77.3,223.1 76,215.1 C74.7,207.1 73.3,198.4 72,191.8 C70.7,185.2 69.3,179.1 68,175.5 C66.7,171.9 65.2,167.9 64,170 C62.8,172.1 62.0,180.5 61,188 C60.0,195.5 59.0,205.5 58,215 C57.0,224.5 55.2,235.0 55,245 C54.8,255.0 55.7,265.0 57,275 C58.3,285.0 61.7,295.0 63,305 C64.3,315.0 65.0,323.3 65,335 C65.0,346.7 63.8,361.7 63,375 C62.2,388.3 61.2,401.2 60,415 C58.8,428.8 57.3,443.8 56,458 C54.7,472.2 53.3,487.7 52,500 C50.7,512.3 48.0,524.0 48,532 C48.0,540.0 50.8,543.0 52,548 C53.2,553.0 55.3,558.0 55,562 C54.7,566.0 53.8,569.8 50,572 C46.2,574.2 37.0,575.3 32,575 C27.0,574.7 22.3,573.2 20,570 C17.7,566.8 18.0,561.3 18,556 C18.0,550.7 19.7,547.3 20,538 C20.3,528.7 20.3,513.0 20,500 C19.7,487.0 18.7,473.3 18,460 C17.3,446.7 17.0,433.3 16,420 C15.0,406.7 13.3,392.0 12,380 C10.7,368.0 9.5,355.8 8,348 C6.5,340.2 4.3,336.2 3,333 C1.7,329.8 1.0,329.0 0,329 C-1.0,329.0 -1.7,329.8 -3,333 C-4.3,336.2 -6.5,340.2 -8,348 C-9.5,355.8 -10.7,368.0 -12,380 C-13.3,392.0 -15.0,406.7 -16,420 C-17.0,433.3 -17.3,446.7 -18,460 C-18.7,473.3 -19.7,487.0 -20,500 C-20.3,513.0 -20.3,528.7 -20,538 C-19.7,547.3 -18.0,550.7 -18,556 C-18.0,561.3 -17.7,566.8 -20,570 C-22.3,573.2 -27.0,574.7 -32,575 C-37.0,575.3 -46.2,574.2 -50,572 C-53.8,569.8 -54.7,566.0 -55,562 C-55.3,558.0 -53.2,553.0 -52,548 C-50.8,543.0 -48.0,540.0 -48,532 C-48.0,524.0 -50.7,512.3 -52,500 C-53.3,487.7 -54.7,472.2 -56,458 C-57.3,443.8 -58.8,428.8 -60,415 C-61.2,401.2 -62.2,388.3 -63,375 C-63.8,361.7 -65.0,346.7 -65,335 C-65.0,323.3 -64.3,315.0 -63,305 C-61.7,295.0 -58.3,285.0 -57,275 C-55.7,265.0 -54.8,255.0 -55,245 C-55.2,235.0 -57.0,224.5 -58,215 C-59.0,205.5 -60.0,195.5 -61,188 C-62.0,180.5 -62.8,172.1 -64,170 C-65.2,167.9 -66.7,171.9 -68,175.5 C-69.3,179.1 -70.7,185.2 -72,191.8 C-73.3,198.4 -74.7,207.1 -76,215.1 C-77.3,223.1 -78.7,231.6 -80,239.8 C-81.3,248.1 -82.7,256.4 -84,264.6 C-85.3,272.9 -87.0,282.2 -88,289.3 C-89.0,296.4 -90.0,301.7 -90,307.0 C-90.0,312.3 -88.7,316.3 -88,321 C-87.3,325.7 -85.5,331.0 -86,335 C-86.5,339.0 -89.7,340.5 -91,345 C-92.3,349.5 -92.7,357.2 -94,362 C-95.3,366.8 -96.8,371.8 -99,374 C-101.2,376.2 -104.5,376.8 -107,375 C-109.5,373.2 -112.5,368.3 -114,363 C-115.5,357.7 -116.3,349.7 -116,343 C-115.7,336.3 -113.5,329.0 -112,323 C-110.5,317.0 -108.2,312.0 -107,307.0 C-105.8,302.0 -105.8,298.8 -105,292.9 C-104.2,287.0 -103.2,279.4 -102,271.7 C-100.8,264.0 -99.3,255.2 -98,246.9 C-96.7,238.7 -95.3,230.4 -94,222.2 C-92.7,213.9 -91.2,205.1 -90,197.4 C-88.8,189.7 -88.0,183.3 -87,176.2 C-86.0,169.1 -85.0,162.5 -84,155.0 C-83.0,147.5 -82.7,137.3 -81,131 C-79.3,124.7 -77.2,120.7 -74,117 C-70.8,113.3 -67.0,111.2 -62,109 C-57.0,106.8 -50.3,105.8 -44,104 C-37.7,102.2 -28.8,100.2 -24,98 C-19.2,95.8 -16.5,94.2 -15,91 C-13.5,87.8 -14.5,82.0 -15,79 C-15.5,76.0 -16.2,75.7 -18,73 C-19.8,70.3 -23.8,67.0 -26,63 C-28.2,59.0 -30.0,54.3 -31,49 C-32.0,43.7 -32.5,36.8 -32,31 C-31.5,25.2 -30.5,18.7 -28,14 C-25.5,9.3 -21.7,5.3 -17,3 C-12.3,0.7 -5.7,0.0 0,0Z"/></clipPath>
+      <clipPath id="vidrio"><rect x="557" y="180" width="236" height="146" rx="12"/></clipPath>
+      <clipPath id="tragaluz"><ellipse cx="600" cy="-20" rx="290" ry="72"/></clipPath>
+      <clipPath id="discoTierra"><circle cx="690" cy="262" r="62"/></clipPath>
+      <linearGradient id="traje" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#AEBEDA"/><stop offset=".3" stop-color="#E6EDF9"/><stop offset=".5" stop-color="#F4F7FD"/><stop offset=".7" stop-color="#E6EDF9"/><stop offset="1" stop-color="#AEBEDA"/>
+      </linearGradient>
+      <radialGradient id="casco" cx=".36" cy=".28" r=".8">
+        <stop offset="0" stop-color="#E0F2FE" stop-opacity=".34"/><stop offset=".55" stop-color="#7DD3FC" stop-opacity=".1"/><stop offset="1" stop-color="#38BDF8" stop-opacity=".3"/>
+      </radialGradient>
+      <radialGradient id="luzTierra"><stop offset="0" stop-color="#58C8FF" stop-opacity=".2"/><stop offset="1" stop-color="#58C8FF" stop-opacity="0"/></radialGradient>
+      <filter id="brillo" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+
+    <!-- ═══ interior de la nave (perspectiva central) ═══ -->
+    <g class="nave">
+      <polygon points="-60,-40 1200,-40 820,150 380,150" fill="#d5e6ef"/>
+      <polygon points="-60,-40 380,150 380,430 -60,690" fill="#c5dbe7"/>
+      <polygon points="1200,-40 820,150 820,430 1200,690" fill="#b9d2e0"/>
+      <rect x="380" y="150" width="440" height="280" fill="#e0edf4"/>
+      <polygon points="380,430 820,430 838,442 359,442" fill="#b8cdda"/><polygon points="359,442 838,442 863,458 331,458" fill="#c3d6e2"/><polygon points="331,458 863,458 893,478 296,478" fill="#b8cdda"/><polygon points="296,478 893,478 931,503 252,503" fill="#c3d6e2"/><polygon points="252,503 931,503 977,533 199,533" fill="#b8cdda"/><polygon points="199,533 977,533 1031,569 135,569" fill="#c3d6e2"/><polygon points="135,569 1031,569 1095,611 61,611" fill="#b8cdda"/><polygon points="61,611 1095,611 1170,660 -25,660" fill="#c3d6e2"/><polygon points="-25,660 1170,660 1215,690 -78,690" fill="#b8cdda"/>
+      <g fill="none" stroke="#94b6c9" stroke-width="2">
+        <polyline points="-60,-40 380,150 820,150 1200,-40"/><polyline points="-60,690 380,430 820,430 1200,690"/>
+        <line x1="380" y1="150" x2="380" y2="430"/><line x1="820" y1="150" x2="820" y2="430"/>
+      </g>
+
+      <!-- tragaluz del techo -->
+      <ellipse cx="600" cy="-20" rx="304" ry="84" fill="#2f7fa3"/>
+      <ellipse cx="600" cy="-20" rx="290" ry="72" fill="#0b1f4a"/>
+      <g id="estrellas-cielo" clip-path="url(#tragaluz)"></g>
+
+      <!-- pared izquierda: paneles y rótulo -->
+      <polygon points="-40,380 160,300 160,400 -40,505" fill="#b3cddc"/>
+      <polygon points="-40,395 140,323 140,385 -40,470" fill="#a3c2d3"/>
+      <rect x="10" y="20" width="58" height="34" rx="4" fill="#1d3b4f"/>
+      <text x="39" y="44" text-anchor="middle" class="rotulo">M1</text>
+
+      <!-- pared del fondo: escotilla, ventana y franja de seguridad -->
+      <rect x="398" y="178" width="124" height="246" rx="22" fill="#c7dce8" stroke="#2f7fa3" stroke-width="4"/>
+      <circle cx="460" cy="236" r="24" fill="#0b1f4a" stroke="#2f7fa3" stroke-width="4"/>
+      <rect x="408" y="300" width="104" height="10" rx="3" fill="#2f7fa3" opacity=".5"/>
+      <rect x="545" y="168" width="260" height="170" rx="18" fill="#2f7fa3"/>
+      <rect x="557" y="180" width="236" height="146" rx="12" fill="#0b1f4a"/>
+      <g id="estrellas-ventana" clip-path="url(#vidrio)"></g>
+      <rect x="640" y="410" width="165" height="12" fill="url(#peligro)"/>
+      <rect x="735" y="350" width="70" height="26" rx="4" fill="#1d3b4f"/>
+      <text x="770" y="368" text-anchor="middle" class="rotulo verde">O₂ 21%</text>
+
+      <!-- pared derecha: panel grande y cables -->
+      <polygon points="1050,40 1180,-20 1180,330 1050,330" fill="#a7c5d6"/>
+      <polygon points="1065,70 1165,24 1165,150 1065,170" fill="#1d5f7a"/>
+      <path d="M826 162 C 930 118, 1040 66, 1200 -6" fill="none" stroke="#dc2626" stroke-width="3"/>
+      <path d="M826 170 C 935 126, 1045 76, 1200 4" fill="none" stroke="#16a34a" stroke-width="3"/>
+      <path d="M826 178 C 940 134, 1050 86, 1200 14" fill="none" stroke="#1d3b4f" stroke-width="3"/>
+    </g>
+
+    <!-- ═══ detalles de la nave: luces, pantallas y equipo ═══ -->
+    <g class="nave-tec" aria-hidden="true">
+      <ellipse cx="675" cy="255" rx="250" ry="160" fill="url(#luzTierra)"/>
+      <g filter="url(#brillo)" fill="none" stroke="#58C8FF" stroke-width="1.4" opacity=".4">
+        <polyline points="-60,-40 380,150 820,150 1200,-40"/><polyline points="-60,690 380,430 820,430 1200,690"/>
+        <line x1="380" y1="150" x2="380" y2="430"/><line x1="820" y1="150" x2="820" y2="430"/>
+      </g>
+      <ellipse cx="600" cy="-20" rx="304" ry="84" fill="none" stroke="#7DD3FC" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="1 21" opacity=".7" filter="url(#brillo)"/>
+      <g filter="url(#brillo)"><line x1="500" y1="150" x2="443.7" y2="82" stroke="#BAE6FD" stroke-width="4" stroke-linecap="round" opacity=".5"/><line x1="732" y1="150" x2="788.3" y2="82" stroke="#BAE6FD" stroke-width="4" stroke-linecap="round" opacity=".5"/></g>
+      <rect x="545" y="168" width="260" height="170" rx="18" fill="none" stroke="#58C8FF" stroke-width="1.4" opacity=".45" filter="url(#brillo)"/>
+      <circle cx="460" cy="236" r="29" fill="none" stroke="#58C8FF" stroke-width="1.4" opacity=".5" filter="url(#brillo)"/>
+      <rect x="408" y="300" width="104" height="10" rx="3" fill="none" stroke="#7DD3FC" stroke-width="1" opacity=".55"/>
+      <g filter="url(#brillo)"><circle class="tec-led" cx="412" cy="163" r="2" fill="#34D399" style="animation-delay:-0.00s"/><circle class="tec-led" cx="428" cy="163" r="2" fill="#58C8FF" style="animation-delay:-0.37s"/><circle class="tec-led" cx="444" cy="163" r="2" fill="#58C8FF" style="animation-delay:-0.74s"/><circle class="tec-led" cx="460" cy="163" r="2" fill="#FBBF24" style="animation-delay:-1.11s"/><circle class="tec-led" cx="476" cy="163" r="2" fill="#58C8FF" style="animation-delay:-1.48s"/><circle class="tec-led" cx="492" cy="163" r="2" fill="#58C8FF" style="animation-delay:-1.85s"/><circle class="tec-led" cx="508" cy="163" r="2" fill="#34D399" style="animation-delay:-2.22s"/></g>
+      <text x="460" y="414" text-anchor="middle" class="tec-txt">Esclusa</text>
+      <rect x="592" y="346" width="134" height="54" rx="5" fill="#061230" stroke="rgba(88,200,255,.4)" stroke-width="1.2"/>
+      <rect class="tec-barra" x="600" y="360" width="5" height="32" rx="1" fill="#34D399" opacity=".75" style="animation-delay:-0.00s"/><rect class="tec-barra" x="608" y="360" width="5" height="32" rx="1" fill="#58C8FF" opacity=".75" style="animation-delay:-0.23s"/><rect class="tec-barra" x="616" y="360" width="5" height="32" rx="1" fill="#58C8FF" opacity=".75" style="animation-delay:-0.46s"/><rect class="tec-barra" x="624" y="360" width="5" height="32" rx="1" fill="#34D399" opacity=".75" style="animation-delay:-0.69s"/><rect class="tec-barra" x="632" y="360" width="5" height="32" rx="1" fill="#58C8FF" opacity=".75" style="animation-delay:-0.92s"/><rect class="tec-barra" x="640" y="360" width="5" height="32" rx="1" fill="#58C8FF" opacity=".75" style="animation-delay:-1.15s"/><rect class="tec-barra" x="648" y="360" width="5" height="32" rx="1" fill="#34D399" opacity=".75" style="animation-delay:-1.38s"/><rect class="tec-barra" x="656" y="360" width="5" height="32" rx="1" fill="#58C8FF" opacity=".75" style="animation-delay:-1.61s"/>
+      <polyline class="tec-traza" points="668,374 674,374 678,362 683,388 688,370 692,378 698,378 702,366 707,384 711,374 718,374" fill="none" stroke="#58C8FF" stroke-width="1.3"/>
+      <text x="668" y="394" class="tec-txt">Soporte vital</text>
+      <g filter="url(#brillo)"><polygon points="850,180 1030,95 1030,255 850,270" fill="#081631" stroke="rgba(88,200,255,.35)" stroke-width="1.2"/><polygon points="862,198 1018,131.7 1018,159.7 862,214.2" fill="#0C2246" stroke="rgba(88,200,255,.18)"/><circle class="tec-led" cx="874" cy="197.5" r="2.2" fill="#58C8FF" style="animation-delay:-0.00s"/><circle class="tec-led" cx="892" cy="191" r="2.2" fill="#58C8FF" style="animation-delay:-0.37s"/><circle class="tec-led" cx="910" cy="184.5" r="2.2" fill="#34D399" style="animation-delay:-0.74s"/><circle class="tec-led" cx="928" cy="178.1" r="2.2" fill="#58C8FF" style="animation-delay:-1.11s"/><circle class="tec-led" cx="946" cy="171.6" r="2.2" fill="#FBBF24" style="animation-delay:-1.48s"/><circle class="tec-led" cx="964" cy="165.1" r="2.2" fill="#58C8FF" style="animation-delay:-1.85s"/><circle class="tec-led" cx="982" cy="158.7" r="2.2" fill="#34D399" style="animation-delay:-2.22s"/><circle class="tec-led" cx="1000" cy="152.2" r="2.2" fill="#58C8FF" style="animation-delay:-0.19s"/><polygon points="862,220.5 1018,170.6 1018,198.5 862,236.7" fill="#0C2246" stroke="rgba(88,200,255,.18)"/><circle class="tec-led" cx="874" cy="222.3" r="2.2" fill="#58C8FF" style="animation-delay:-0.00s"/><circle class="tec-led" cx="892" cy="217.6" r="2.2" fill="#58C8FF" style="animation-delay:-0.37s"/><circle class="tec-led" cx="910" cy="212.9" r="2.2" fill="#34D399" style="animation-delay:-0.74s"/><circle class="tec-led" cx="928" cy="208.1" r="2.2" fill="#58C8FF" style="animation-delay:-1.11s"/><circle class="tec-led" cx="946" cy="203.4" r="2.2" fill="#FBBF24" style="animation-delay:-1.48s"/><circle class="tec-led" cx="964" cy="198.7" r="2.2" fill="#58C8FF" style="animation-delay:-1.85s"/><circle class="tec-led" cx="982" cy="194" r="2.2" fill="#34D399" style="animation-delay:-2.22s"/><circle class="tec-led" cx="1000" cy="189.3" r="2.2" fill="#58C8FF" style="animation-delay:-0.19s"/><polygon points="862,243 1018,209.4 1018,237.4 862,259.2" fill="#0C2246" stroke="rgba(88,200,255,.18)"/><circle class="tec-led" cx="874" cy="247.1" r="2.2" fill="#58C8FF" style="animation-delay:-0.00s"/><circle class="tec-led" cx="892" cy="244.2" r="2.2" fill="#58C8FF" style="animation-delay:-0.37s"/><circle class="tec-led" cx="910" cy="241.2" r="2.2" fill="#34D399" style="animation-delay:-0.74s"/><circle class="tec-led" cx="928" cy="238.2" r="2.2" fill="#58C8FF" style="animation-delay:-1.11s"/><circle class="tec-led" cx="946" cy="235.3" r="2.2" fill="#FBBF24" style="animation-delay:-1.48s"/><circle class="tec-led" cx="964" cy="232.3" r="2.2" fill="#58C8FF" style="animation-delay:-1.85s"/><circle class="tec-led" cx="982" cy="229.3" r="2.2" fill="#34D399" style="animation-delay:-2.22s"/><circle class="tec-led" cx="1000" cy="226.3" r="2.2" fill="#58C8FF" style="animation-delay:-0.19s"/></g>
+      <g transform="translate(1115 98) scale(1 .62)">
+        <circle r="30" fill="none" stroke="rgba(88,200,255,.45)" stroke-width="1.2" stroke-dasharray="3 4"/>
+        <circle r="9" fill="#1E5BA8" stroke="#7DD3FC" stroke-width="1"/>
+        <g class="tec-orbita"><circle cx="30" r="3" fill="#BAE6FD" filter="url(#brillo)"/></g>
+      </g>
+      <polyline class="tec-traza" points="1072,152 1084,150 1090,140 1098,156 1106,146 1118,145 1158,138" fill="none" stroke="#34D399" stroke-width="1.3"/>
+      <g filter="url(#brillo)"><circle class="tec-led" cx="-10" cy="395" r="2.2" fill="#34D399" style="animation-delay:-0.00s"/><circle class="tec-led" cx="15" cy="385" r="2.2" fill="#58C8FF" style="animation-delay:-0.37s"/><circle class="tec-led" cx="40" cy="375" r="2.2" fill="#58C8FF" style="animation-delay:-0.74s"/><circle class="tec-led" cx="65" cy="365" r="2.2" fill="#FBBF24" style="animation-delay:-1.11s"/><circle class="tec-led" cx="90" cy="355" r="2.2" fill="#58C8FF" style="animation-delay:-1.48s"/><circle class="tec-led" cx="115" cy="345" r="2.2" fill="#34D399" style="animation-delay:-1.85s"/><line class="tec-flujo" x1="-30" y1="438" x2="128" y2="364" stroke="#58C8FF" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="10 6" opacity=".55"/><line x1="-40" y1="590" x2="290" y2="439.1" stroke="#1C3556" stroke-width="7" stroke-linecap="round"/><line x1="-40" y1="588" x2="290" y2="437.1" stroke="rgba(125,211,252,.35)" stroke-width="1.2"/><line x1="20" y1="562.6" x2="20" y2="574.6" stroke="#1C3556" stroke-width="4"/><line x1="140" y1="507.7" x2="140" y2="519.7" stroke="#1C3556" stroke-width="4"/><line x1="250" y1="457.4" x2="250" y2="469.4" stroke="#1C3556" stroke-width="4"/></g>
+      <g filter="url(#brillo)"><line class="tec-flujo" x1="480" y1="432" x2="232.9" y2="690" stroke="#58C8FF" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 14" opacity=".55"/><line class="tec-flujo" x1="752" y1="432" x2="999.1" y2="690" stroke="#58C8FF" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 14" opacity=".55"/></g>
+      <circle class="tec-polvo" cx="663" cy="174" r="1.3" fill="#BAE6FD" opacity="0.45" style="animation-delay:-0s;animation-duration:12s"/><circle class="tec-polvo" cx="1097" cy="116" r="1.3" fill="#BAE6FD" opacity="0.45" style="animation-delay:-0s;animation-duration:19s"/><circle class="tec-polvo" cx="439" cy="58" r="1" fill="#BAE6FD" opacity="0.35" style="animation-delay:-6s;animation-duration:12s"/><circle class="tec-polvo" cx="492" cy="112" r="1.6" fill="#BAE6FD" opacity="0.35" style="animation-delay:-0s;animation-duration:12s"/><circle class="tec-polvo" cx="457" cy="83" r="1.6" fill="#BAE6FD" opacity="0.45" style="animation-delay:-6s;animation-duration:11s"/><circle class="tec-polvo" cx="452" cy="67" r="1.6" fill="#BAE6FD" opacity="0.25" style="animation-delay:-4s;animation-duration:17s"/><circle class="tec-polvo" cx="295" cy="573" r="1" fill="#BAE6FD" opacity="0.45" style="animation-delay:-4s;animation-duration:19s"/><circle class="tec-polvo" cx="370" cy="125" r="1.6" fill="#BAE6FD" opacity="0.45" style="animation-delay:-10s;animation-duration:14s"/><circle class="tec-polvo" cx="762" cy="119" r="1.6" fill="#BAE6FD" opacity="0.45" style="animation-delay:-1s;animation-duration:11s"/><circle class="tec-polvo" cx="421" cy="528" r="1.6" fill="#BAE6FD" opacity="0.45" style="animation-delay:-6s;animation-duration:16s"/><circle class="tec-polvo" cx="953" cy="484" r="1.3" fill="#BAE6FD" opacity="0.35" style="animation-delay:-3s;animation-duration:13s"/><circle class="tec-polvo" cx="499" cy="103" r="1.6" fill="#BAE6FD" opacity="0.35" style="animation-delay:-8s;animation-duration:18s"/><circle class="tec-polvo" cx="703" cy="479" r="1.3" fill="#BAE6FD" opacity="0.45" style="animation-delay:-1s;animation-duration:12s"/><circle class="tec-polvo" cx="1048" cy="448" r="1" fill="#BAE6FD" opacity="0.35" style="animation-delay:-2s;animation-duration:18s"/>
+    </g>
+
+    <!-- ═══ Tierra, por la ventana ═══ -->
+    <!-- Foto real: "Blue Marble", tripulación del Apolo 17, 7 dic 1972. NASA, dominio público. -->
+    <g class="equipo" data-id="tierra" tabindex="0" role="button" aria-label="Tierra: abrir terminal">
+      <image href="data:image/jpeg;base64,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" x="628" y="200" width="124" height="124" clip-path="url(#discoTierra)" preserveAspectRatio="xMidYMid slice"/>
+      <circle class="marco" cx="690" cy="262" r="62" fill="none" stroke="transparent" stroke-width="2"/>
+      <text x="570" y="200" class="lbl claro">Tierra</text>
+      <text x="570" y="214" class="sub claro" id="t-owlt">retraso —</text>
+    </g>
+
+    <path id="c-tierra" class="enl" d="M930 340 L748 280"/>
+    <path id="c-cel" class="enl" d="M1064 432 L1036 420"/>
+
+    <!-- ═══ astronauta ═══ -->
+    <g transform="translate(330,40)">
+      <g class="traje-extra" aria-hidden="true">
+        <rect x="-56" y="82" width="112" height="170" rx="16" fill="#8C9CB8" stroke="#0B1A3F" stroke-width="2"/>
+        <circle class="tec-led" cx="-44" cy="92" r="2.4" fill="#34D399"/><circle class="tec-led" cx="44" cy="92" r="2.4" fill="#58C8FF" style="animation-delay:-1.1s"/>
+      </g>
+      <path class="cuerpo" d="M0,0 C5.7,0.0 12.3,0.7 17,3 C21.7,5.3 25.5,9.3 28,14 C30.5,18.7 31.5,25.2 32,31 C32.5,36.8 32.0,43.7 31,49 C30.0,54.3 28.2,59.0 26,63 C23.8,67.0 19.8,70.3 18,73 C16.2,75.7 15.5,76.0 15,79 C14.5,82.0 13.5,87.8 15,91 C16.5,94.2 19.2,95.8 24,98 C28.8,100.2 37.7,102.2 44,104 C50.3,105.8 57.0,106.8 62,109 C67.0,111.2 70.8,113.3 74,117 C77.2,120.7 79.3,124.7 81,131 C82.7,137.3 83.0,147.5 84,155.0 C85.0,162.5 86.0,169.1 87,176.2 C88.0,183.3 88.8,189.7 90,197.4 C91.2,205.1 92.7,213.9 94,222.2 C95.3,230.4 96.7,238.7 98,246.9 C99.3,255.2 100.8,264.0 102,271.7 C103.2,279.4 104.2,287.0 105,292.9 C105.8,298.8 105.8,302.0 107,307.0 C108.2,312.0 110.5,317.0 112,323 C113.5,329.0 115.7,336.3 116,343 C116.3,349.7 115.5,357.7 114,363 C112.5,368.3 109.5,373.2 107,375 C104.5,376.8 101.2,376.2 99,374 C96.8,371.8 95.3,366.8 94,362 C92.7,357.2 92.3,349.5 91,345 C89.7,340.5 86.5,339.0 86,335 C85.5,331.0 87.3,325.7 88,321 C88.7,316.3 90.0,312.3 90,307.0 C90.0,301.7 89.0,296.4 88,289.3 C87.0,282.2 85.3,272.9 84,264.6 C82.7,256.4 81.3,248.1 80,239.8 C78.7,231.6 77.3,223.1 76,215.1 C74.7,207.1 73.3,198.4 72,191.8 C70.7,185.2 69.3,179.1 68,175.5 C66.7,171.9 65.2,167.9 64,170 C62.8,172.1 62.0,180.5 61,188 C60.0,195.5 59.0,205.5 58,215 C57.0,224.5 55.2,235.0 55,245 C54.8,255.0 55.7,265.0 57,275 C58.3,285.0 61.7,295.0 63,305 C64.3,315.0 65.0,323.3 65,335 C65.0,346.7 63.8,361.7 63,375 C62.2,388.3 61.2,401.2 60,415 C58.8,428.8 57.3,443.8 56,458 C54.7,472.2 53.3,487.7 52,500 C50.7,512.3 48.0,524.0 48,532 C48.0,540.0 50.8,543.0 52,548 C53.2,553.0 55.3,558.0 55,562 C54.7,566.0 53.8,569.8 50,572 C46.2,574.2 37.0,575.3 32,575 C27.0,574.7 22.3,573.2 20,570 C17.7,566.8 18.0,561.3 18,556 C18.0,550.7 19.7,547.3 20,538 C20.3,528.7 20.3,513.0 20,500 C19.7,487.0 18.7,473.3 18,460 C17.3,446.7 17.0,433.3 16,420 C15.0,406.7 13.3,392.0 12,380 C10.7,368.0 9.5,355.8 8,348 C6.5,340.2 4.3,336.2 3,333 C1.7,329.8 1.0,329.0 0,329 C-1.0,329.0 -1.7,329.8 -3,333 C-4.3,336.2 -6.5,340.2 -8,348 C-9.5,355.8 -10.7,368.0 -12,380 C-13.3,392.0 -15.0,406.7 -16,420 C-17.0,433.3 -17.3,446.7 -18,460 C-18.7,473.3 -19.7,487.0 -20,500 C-20.3,513.0 -20.3,528.7 -20,538 C-19.7,547.3 -18.0,550.7 -18,556 C-18.0,561.3 -17.7,566.8 -20,570 C-22.3,573.2 -27.0,574.7 -32,575 C-37.0,575.3 -46.2,574.2 -50,572 C-53.8,569.8 -54.7,566.0 -55,562 C-55.3,558.0 -53.2,553.0 -52,548 C-50.8,543.0 -48.0,540.0 -48,532 C-48.0,524.0 -50.7,512.3 -52,500 C-53.3,487.7 -54.7,472.2 -56,458 C-57.3,443.8 -58.8,428.8 -60,415 C-61.2,401.2 -62.2,388.3 -63,375 C-63.8,361.7 -65.0,346.7 -65,335 C-65.0,323.3 -64.3,315.0 -63,305 C-61.7,295.0 -58.3,285.0 -57,275 C-55.7,265.0 -54.8,255.0 -55,245 C-55.2,235.0 -57.0,224.5 -58,215 C-59.0,205.5 -60.0,195.5 -61,188 C-62.0,180.5 -62.8,172.1 -64,170 C-65.2,167.9 -66.7,171.9 -68,175.5 C-69.3,179.1 -70.7,185.2 -72,191.8 C-73.3,198.4 -74.7,207.1 -76,215.1 C-77.3,223.1 -78.7,231.6 -80,239.8 C-81.3,248.1 -82.7,256.4 -84,264.6 C-85.3,272.9 -87.0,282.2 -88,289.3 C-89.0,296.4 -90.0,301.7 -90,307.0 C-90.0,312.3 -88.7,316.3 -88,321 C-87.3,325.7 -85.5,331.0 -86,335 C-86.5,339.0 -89.7,340.5 -91,345 C-92.3,349.5 -92.7,357.2 -94,362 C-95.3,366.8 -96.8,371.8 -99,374 C-101.2,376.2 -104.5,376.8 -107,375 C-109.5,373.2 -112.5,368.3 -114,363 C-115.5,357.7 -116.3,349.7 -116,343 C-115.7,336.3 -113.5,329.0 -112,323 C-110.5,317.0 -108.2,312.0 -107,307.0 C-105.8,302.0 -105.8,298.8 -105,292.9 C-104.2,287.0 -103.2,279.4 -102,271.7 C-100.8,264.0 -99.3,255.2 -98,246.9 C-96.7,238.7 -95.3,230.4 -94,222.2 C-92.7,213.9 -91.2,205.1 -90,197.4 C-88.8,189.7 -88.0,183.3 -87,176.2 C-86.0,169.1 -85.0,162.5 -84,155.0 C-83.0,147.5 -82.7,137.3 -81,131 C-79.3,124.7 -77.2,120.7 -74,117 C-70.8,113.3 -67.0,111.2 -62,109 C-57.0,106.8 -50.3,105.8 -44,104 C-37.7,102.2 -28.8,100.2 -24,98 C-19.2,95.8 -16.5,94.2 -15,91 C-13.5,87.8 -14.5,82.0 -15,79 C-15.5,76.0 -16.2,75.7 -18,73 C-19.8,70.3 -23.8,67.0 -26,63 C-28.2,59.0 -30.0,54.3 -31,49 C-32.0,43.7 -32.5,36.8 -32,31 C-31.5,25.2 -30.5,18.7 -28,14 C-25.5,9.3 -21.7,5.3 -17,3 C-12.3,0.7 -5.7,0.0 0,0Z"/>
+      <g class="traje-extra" clip-path="url(#recorteCuerpo)" aria-hidden="true">
+        <rect x="66" y="226" width="54" height="10" rx="3" fill="#9AAAC6"/><rect x="-120" y="226" width="54" height="10" rx="3" fill="#9AAAC6"/>
+        <rect x="76" y="316" width="52" height="66" fill="#53658A"/><rect x="-128" y="316" width="52" height="66" fill="#53658A"/>
+        <rect x="76" y="313" width="52" height="5" fill="#7DD3FC" opacity=".6"/><rect x="-128" y="313" width="52" height="5" fill="#7DD3FC" opacity=".6"/>
+        <rect x="-72" y="316" width="144" height="8" fill="#9AAAC6"/>
+        <line x1="36" y1="336" x2="34" y2="520" stroke="rgba(30,45,80,.28)" stroke-width="1.5"/><line x1="-36" y1="336" x2="-34" y2="520" stroke="rgba(30,45,80,.28)" stroke-width="1.5"/>
+        <rect x="12" y="424" width="56" height="26" rx="8" fill="#A8B7D0"/><rect x="-68" y="424" width="56" height="26" rx="8" fill="#A8B7D0"/>
+        <rect x="-72" y="522" width="144" height="60" fill="#2E3B57"/>
+        <rect x="-72" y="522" width="144" height="3" fill="#7DD3FC" opacity=".5"/>
+        <circle cx="75" cy="158" r="7" fill="#0B1A3F" stroke="#7DD3FC" stroke-width="1.2"/>
+        <path d="M77.5,153.5 a5 5 0 1 0 2.5 8 a4 4 0 0 1 -2.5 -8z" fill="#BAE6FD"/>
+      </g>
+      <g class="disp" data-id="playera" tabindex="0" role="button" aria-label="Playera con sensores: abrir terminal">
+        <g class="forma">
+          <path clip-path="url(#recorteCuerpo)" fill="url(#rayado)" stroke="#f43f5e" stroke-width="1.5"
+                d="M0,104 L13,92 L28,99 L62,109 L76,120 L84,145 L90,184 L69,190 L66,178 L60,215 L58,260 L62,306 L0,311 L-62,306 L-58,260 L-60,215 L-66,178 L-69,190 L-90,184 L-84,145 L-76,120 L-62,109 L-28,99 L-13,92 Z"/>
+          <circle cx="-20" cy="148" r="5" fill="#fff1f2" stroke="#e11d48" stroke-width="2"/>
+          <circle cx="20" cy="148" r="5" fill="#fff1f2" stroke="#e11d48" stroke-width="2"/>
+          <path d="M-57,196 Q0,206 57,196" fill="none" stroke="#fff1f2" stroke-width="2.5" stroke-dasharray="5 3"/>
+          <circle cx="48" cy="172" r="4" fill="#fde68a" stroke="#e11d48" stroke-width="1.5"/>
+        </g>
+      </g>
+      <g class="disp" data-id="esp32" tabindex="0" role="button" aria-label="ESP32 de la playera: abrir monitor serie">
+        <g class="forma">
+          <rect x="-52" y="250" width="32" height="22" rx="3" fill="#0b1220" stroke="#fff1f2" stroke-width="1.5"/>
+          <rect x="-46" y="256" width="9" height="10" fill="#f43f5e"/>
+          <line x1="-33" y1="257" x2="-25" y2="257" stroke="#94a3b8"/><line x1="-33" y1="261" x2="-25" y2="261" stroke="#94a3b8"/><line x1="-33" y1="265" x2="-25" y2="265" stroke="#94a3b8"/>
+        </g>
+      </g>
+      <g class="disp" data-id="brazalete" tabindex="0" role="button" aria-label="Brazalete de presión: abrir terminal">
+        <g class="forma"><rect x="-92" y="194" width="24" height="18" rx="4" fill="#f43f5e" stroke="#fff1f2" stroke-width="1.5" transform="rotate(4 -80 203)"/></g>
+      </g>
+      <g class="disp" data-id="reloj" tabindex="0" role="button" aria-label="Reloj inteligente: abrir la pantalla del reloj y su terminal">
+        <g class="forma">
+          <rect x="87" y="299" width="23" height="16" rx="3" fill="#f43f5e" stroke="#fff1f2" stroke-width="1.5" transform="rotate(-4 98 307)"/>
+          <rect x="93" y="303" width="11" height="8" rx="2" fill="#0b1220"/>
+        </g>
+      </g>
+      <g class="casco" aria-hidden="true">
+        <ellipse cx="0" cy="38" rx="45" ry="50" fill="url(#casco)" stroke="#BAE6FD" stroke-opacity=".85" stroke-width="2"/>
+        <path d="M-31,12 A40 46 0 0 1 2,-7" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="22" cy="5" r="2.5" fill="#fff" opacity=".55"/>
+        <rect x="-50" y="27" width="6" height="13" rx="2" fill="#0B1A3F" stroke="#7DD3FC" stroke-width="1"/><rect x="44" y="27" width="6" height="13" rx="2" fill="#0B1A3F" stroke="#7DD3FC" stroke-width="1"/>
+        <rect x="-28" y="81" width="56" height="13" rx="6" fill="#A9B8D2" stroke="#0B1A3F" stroke-width="2"/>
+        <line x1="-22" y1="87.5" x2="22" y2="87.5" stroke="#58C8FF" stroke-width="1.4" opacity=".8"/>
+      </g>
+    </g>
+
+    <g class="disp etq" data-id="playera">
+      <line class="guia" x1="218" y1="146" x2="300" y2="178"/>
+      <text x="214" y="140" text-anchor="end" class="lbl">Playera con sensores</text>
+      <text x="214" y="155" text-anchor="end" class="sub">FC (ECG) · respiración · temperatura</text>
+    </g>
+    <g class="disp etq" data-id="brazalete">
+      <line class="guia" x1="218" y1="243" x2="238" y2="243"/>
+      <text x="214" y="237" text-anchor="end" class="lbl">Brazalete de presión</text>
+      <text x="214" y="252" text-anchor="end" class="sub">opcional · PA sistólica y diastólica</text>
+    </g>
+    <g class="disp etq" data-id="esp32">
+      <line class="guia" x1="218" y1="330" x2="278" y2="306"/>
+      <text x="214" y="326" text-anchor="end" class="lbl">ESP32 de la playera</text>
+      <text x="214" y="341" text-anchor="end" class="sub">clic: monitor serie</text>
+    </g>
+    <g class="disp etq" data-id="reloj">
+      <line class="guia" x1="442" y1="356" x2="468" y2="374"/>
+      <text x="472" y="380" class="lbl">Reloj inteligente</text>
+      <text x="472" y="395" class="sub">opcional · FC (PPG) · SpO₂</text>
+    </g>
+    <text x="400" y="608" class="sub">Tripulante: Ana</text>
+    <text x="400" y="622" class="sub" id="nota-trip">La tripulación completa transmite · la maqueta muestra a Ana</text>
+
+    <!-- ═══ consola: escritorio, PC central y smartphone ═══ -->
+    <ellipse cx="975" cy="600" rx="170" ry="16" fill="#8fa9b9" opacity=".6"/>
+    <rect x="850" y="478" width="250" height="118" rx="4" fill="#3b8db0"/>
+    <rect x="864" y="494" width="100" height="40" rx="3" fill="#2f7fa3"/><rect x="980" y="494" width="104" height="40" rx="3" fill="#2f7fa3"/>
+    <rect x="864" y="546" width="220" height="36" rx="3" fill="#2f7fa3"/>
+    <rect x="838" y="464" width="274" height="16" rx="3" fill="#1d5f7a"/>
+
+    <g id="ondas"></g>
+
+    <g class="equipo" data-id="pc" tabindex="0" role="button" aria-label="Computadora central: abrir panel médico de LUNNA y su terminal">
+      <rect class="marco" x="885" y="330" width="150" height="102" rx="7" fill="#1d3b4f" stroke="#1d3b4f" stroke-width="2"/>
+      <rect x="893" y="338" width="134" height="86" rx="3" fill="#0f2233"/>
+      <polyline id="pc-onda" points="902,378 930,378 938,362 948,394 958,378 1018,378" fill="none" stroke="#34d399" stroke-width="1.8"/>
+      <text id="pc-con" x="960" y="414" text-anchor="middle" class="sub claro">— conectados</text>
+      <rect x="952" y="432" width="16" height="26" fill="#1d3b4f"/>
+      <rect x="928" y="456" width="64" height="8" rx="3" fill="#1d3b4f"/>
+      <text x="960" y="300" text-anchor="middle" class="lbl">PC central</text>
+      <text x="960" y="315" text-anchor="middle" class="sub">backend · LUNNA</text>
+    </g>
+
+    <g class="equipo" data-id="cel" tabindex="0" role="button" aria-label="Smartphone: abrir terminal">
+      <rect x="1060" y="456" width="40" height="8" rx="2" fill="#1d3b4f"/>
+      <rect class="marco" x="1065" y="404" width="30" height="54" rx="5" fill="#1d3b4f" stroke="#1d3b4f" stroke-width="2"/>
+      <rect x="1069" y="410" width="22" height="38" rx="2" fill="#0f2233"/>
+      <circle id="cel-badge" cx="1094" cy="405" r="0" fill="#0ea5e9"/>
+      <text x="1080" y="378" text-anchor="middle" class="lbl">Smartphone</text>
+      <text x="1080" y="393" text-anchor="middle" class="sub">opcional · avisos</text>
+    </g>
+
+    <g id="paquetes"></g>
+  </svg>
+</section>
+
+<div class="hud-marco" aria-hidden="true"><i></i></div>
+
+<section id="vista-compartida" hidden aria-labelledby="compartida-titulo">
+  <div class="compartida">
+    <div class="compartida-barra">
+      <div class="compartida-titulo" id="compartida-titulo">
+        <b>Laptop + Tierra · vista compartida</b>
+        <span>Las dos pantallas se cargan desde las interfaces reales de esta misma simulación.</span>
+      </div>
+      <button id="b-cerrar-compartida" class="sec compartida-cerrar" type="button">Volver a la nave</button>
+    </div>
+    <div class="compartida-grid">
+      <article class="compartida-panel" data-nodo="pc" aria-labelledby="titulo-laptop">
+        <div class="vbarra">
+          <span class="vtitulo" id="titulo-laptop">PC central — computadora central LUNNA</span>
+          <span class="modo" role="group" aria-label="Vista de la laptop"><button type="button" data-compartida-modo="front" aria-pressed="true">Frontend</button><button type="button" data-compartida-modo="back" aria-pressed="false">Backend</button></span>
+          <button class="maxim" type="button" data-compartida-max title="Maximizar laptop" aria-label="Maximizar laptop">□</button>
+          <button class="cerrar" type="button" data-compartida-cerrar title="Cerrar vista compartida" aria-label="Cerrar vista compartida">×</button>
+        </div>
+        <iframe class="compartida-panel-visor" src="/app/central.html" title="Pantalla de la laptop: computadora central LUNNA"></iframe>
+        <div class="compartida-panel-log" aria-label="Terminal de la laptop"></div>
+      </article>
+      <article class="compartida-panel" data-nodo="tierra" aria-labelledby="titulo-tierra">
+        <div class="vbarra">
+          <span class="vtitulo" id="titulo-tierra">Tierra — base en Tierra LUNNA</span>
+          <span class="modo" role="group" aria-label="Vista de Tierra"><button type="button" data-compartida-modo="front" aria-pressed="true">Frontend</button><button type="button" data-compartida-modo="back" aria-pressed="false">Backend</button></span>
+          <button class="maxim" type="button" data-compartida-max title="Maximizar Tierra" aria-label="Maximizar Tierra">□</button>
+          <button class="cerrar" type="button" data-compartida-cerrar title="Cerrar vista compartida" aria-label="Cerrar vista compartida">×</button>
+        </div>
+        <iframe class="compartida-panel-visor" src="/app/base.html" title="Pantalla de Tierra: base de control de misión"></iframe>
+        <div class="compartida-panel-log" aria-label="Terminal de Tierra"></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<div id="intro" role="dialog" aria-modal="true" aria-labelledby="intro-t">
+  <div class="bienvenida">
+    <div class="bv-marca">
+      <span class="bv-luna"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 4a8 8 0 1 0 4.5 14.6A6.6 6.6 0 0 1 15.5 4z" fill="#BAE6FD"/></svg></span>
+      <div><b>Lunna</b><small>Simulación · Equipo Monarcas · NASA Space Apps 2026</small></div>
+    </div>
+    <h2 id="intro-t">Así trabajaría Lunna dentro de una nave</h2>
+    <p>Los sensores, sus lecturas y la tripulación de esta maqueta son <b>simulados</b>. Lo real es el software: cada trama llega al <b>backend</b> que correría en la computadora central, y <b>Lunna</b> la evalúa.</p>
+    <ol class="bv-pasos">
+      <li><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg></span><div><b>Sensores puestos</b><span>La playera (con su ESP32), el brazalete y el reloj miden signos vitales y los mandan por Bluetooth. Toda la tripulación lleva el mismo equipo; la maqueta muestra a Ana.</span></div></li>
+      <li><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span><div><b>Computadora central</b><span>Sabe quién lleva cada dispositivo, guarda los datos y Lunna los compara con lo esperado para esa persona.</span></div></li>
+      <li><span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span><div><b>Tierra</b><span>Recibe las alertas con el retraso de la luz y responde con avisos a la tripulación.</span></div></li>
+    </ol>
+    <div class="bv-nota"><i></i><div>Lo que <b>brilla en cian</b> se puede abrir: toca un dispositivo para ver su terminal y las tramas que envía.</div></div>
+    <div class="bv-acciones">
+      <button id="intro-ok" class="sec" type="button">Entrar sin recorrido</button>
+      <button id="intro-tour" type="button">Ver recorrido guiado</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ═══════════ Estado ═══════════
+const DIA = 86400000;
+const S = {
+  lanzamiento: null, vivo: false, temporizador: null, tic: 0,
+  encendido: { playera: true, brazalete: true, reloj: true, cel: true },
+  bleConectado: true, colaEsp: [], descartadas: 0,
+  trip: [],     // tripulación, la carga cargarTripulacion() del backend; Ana va primero
+  anom: { fatiga: 0, taquipnea: 0, fiebre: 0, hipoxia: 0, hiper: 0 },
+  esc: null,    // escenario clínico en curso (sólo Ana)
+  contactoReloj: true, ultimosVar: {}, version: '',
+  enlace: { owlt_s: 20, abierto: true }, pred: [],
+  consola: { playera: [], esp32: [], brazalete: [], reloj: [], cel: [], pc: [], tierra: [] },
+};
+const NOMBRE = { '04:A4': 'frecuencia cardiaca', '04:A3': 'SpO₂', '04:A2': 'frec. respiratoria', '04:A1': 'temperatura', '01:V1': 'PA sistólica', 'X:PAD': 'PA diastólica', 'X:PAM': 'PA media' };
+const CORTO = { '04:A4': 'fc', '04:A3': 'spo2', '04:A2': 'fr', '04:A1': 'temp', '01:V1': 'pa_sis', 'X:PAD': 'pa_dia', 'X:PAM': 'pa_media' };
+const NODO = { esp32: 'esp32', playera: 'playera-01', brazalete: 'brazalete-201', reloj: 'reloj-ana', cel: 'smartphone', pc: 'pc-central', tierra: 'tierra' };
+const COLOR = { playera: '#58C8FF', brazalete: '#58C8FF', reloj: '#58C8FF', tierra: '#A5F3FC', aviso: '#FBBF24' };
+const POS = { playera: [294, 302], brazalete: [250, 243], reloj: [429, 347], cel: [1080, 430], pc: [960, 380], tierra: [690, 262] };
+const $ = (q, r = document) => r.querySelector(q);
+const api = async (ruta, metodo = 'GET', cuerpo) => {
+  const r = await fetch(ruta, { method: metodo, headers: { 'content-type': 'application/json' }, body: cuerpo ? JSON.stringify(cuerpo) : undefined });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || r.status);
+  return j;
+};
+// Generador con semilla (mulberry32): la HISTORIA sale idéntica cada vez; el vivo usa Math.random.
+const sembrar = (a) => () => {
+  a = (a + 0x6D2B79F5) | 0;
+  let x = Math.imul(a ^ (a >>> 15), 1 | a);
+  x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+  return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+};
+const gauss = (azar = Math.random) => Math.sqrt(-2 * Math.log(1 - azar())) * Math.cos(2 * Math.PI * azar());
+const hora = (ms) => new Date(ms).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// ═══════════ Perfil EVA (igual que esquema.ts y trama_eva.h) ═══════════
+const ESQ = {
+  5: [['fc', 'u8', 1], ['fr', 'u8', 1], ['temp', 'i16', 0.01]],   // playera
+  2: [['sis', 'u8', 1], ['dia', 'u8', 1]],                          // brazalete (pa_media la calcula la central)
+};
+const RANGO = { u8: [0, 255], i16: [-32768, 32767] };
+function codificar(idDisp, idEsq, seq, tSeg, valores) {
+  const campos = ESQ[idEsq];
+  const b = new Uint8Array(13 + campos.reduce((s, [, t]) => s + (t === 'u8' ? 1 : 2), 0)), dv = new DataView(b.buffer);
+  dv.setUint8(0, 1); dv.setUint32(1, idDisp, true); dv.setUint16(5, idEsq, true);
+  dv.setUint16(7, seq & 0xffff, true); dv.setUint32(9, tSeg, true);
+  let off = 13;
+  campos.forEach(([, t, e], i) => {
+    const [lo, hi] = RANGO[t];
+    const crudo = Math.min(hi, Math.max(lo, Math.floor(valores[i] / e + 0.5)));
+    if (t === 'u8') { dv.setUint8(off, crudo); off += 1; } else { dv.setInt16(off, crudo, true); off += 2; }
+  });
+  return b;
+}
+function decodificar(b) {
+  const dv = new DataView(b.buffer), campos = ESQ[dv.getUint16(5, true)];
+  let off = 13; const v = [];
+  for (const [k, t, e] of campos) { const x = t === 'u8' ? dv.getUint8(off) : +(dv.getInt16(off, true) * e).toFixed(2); off += t === 'u8' ? 1 : 2; v.push(`${k}=${x}`); }
+  return { t: dv.getUint32(9, true) * 1000, txt: v.join(' ') };
+}
+const b64 = (u8) => btoa(String.fromCharCode(...u8));
+const hex = (u8) => [...u8].map((x) => x.toString(16).padStart(2, '0')).join(' ');
+
+// ═══════════ Tripulación ═══════════
+// Quién lleva qué. Los ids y claves de los equipos son del simulador; nombres y basales salen del
+// backend (GET /api/tripulantes y /api/tripulantes/:id). La maqueta dibuja a Ana; los demás
+// transmiten en segundo plano y sólo se les ve llegar a la PC central.
+const PROTA = 'ana';
+const EQUIPO = {
+  ana:   { playera: [401, 'playera-01'], brazalete: [201, 'brazalete-1'],   reloj: [302, 'reloj-ana'] },
+  tomas: { playera: [402, 'playera-02'], brazalete: [202, 'brazalete-202'], reloj: [303, 'reloj-tomas'] },
+  mei:   { playera: [403, 'playera-03'], brazalete: [203, 'brazalete-203'], reloj: [304, 'reloj-mei'] },
+  luis:  { playera: [404, 'playera-04'], brazalete: [204, 'brazalete-204'], reloj: [305, 'reloj-luis'] },
+};
+const TIPO_EQUIPO = {
+  playera:   { tipo: 'chest', perfil: 'eva', esquema_id: 5, nombre: 'Playera con sensores (ESP32 integrado): FC, respiración, temperatura' },
+  brazalete: { tipo: 'wrist', perfil: 'eva', esquema_id: 2, nombre: 'Brazalete de presión' },
+  reloj:     { tipo: 'wrist', perfil: 'json', nombre: 'Reloj (BLE directo a la central)' },
+};
+// Respuesta «real» de cada persona a la órbita (Δ relativo; temperatura en °C). SINTÉTICA: es el
+// guion de la simulación, con los mismos valores que src/simulador.ts. LUNNA no la conoce: la aprende.
+const RESPUESTA = {
+  ana:   { fc: -0.08, spo2: -0.005, fr: -0.04, temp: 1.0, sis: -0.06, dia: -0.10 },
+  tomas: { fc: -0.05, spo2: -0.005, fr: -0.05, temp: 0.9, sis: -0.07, dia: -0.11 },
+  mei:   { fc: -0.03, spo2: -0.004, fr: -0.06, temp: 0.8, sis: -0.08, dia: -0.12 },
+  luis:  { fc: -0.06, spo2: -0.006, fr: -0.05, temp: 1.1, sis: -0.07, dia: -0.11 },
+};
+const VAR = { fc: '04:A4', spo2: '04:A3', fr: '04:A2', temp: '04:A1', sis: '01:V1', dia: 'X:PAD' };
+const ana = () => S.trip.find((p) => p.id === PROTA);
+
+async function cargarTripulacion() {
+  const trip = [];
+  for (const { id, nombre } of await api('/api/tripulantes')) {
+    if (!EQUIPO[id]) continue;
+    const det = await api('/api/tripulantes/' + encodeURIComponent(id));
+    const basales = Object.fromEntries(det.basales.map((b) => [b.variable, b.valor]));
+    const basal = Object.fromEntries(Object.entries(VAR).map(([k, v]) => [k, basales[v]]));
+    if (Object.values(basal).some((x) => !Number.isFinite(x))) { tr('pc', `<span class="amb">${esc(id)}: le faltan basales en el backend; no transmite</span>`); continue; }
+    const equipo = Object.fromEntries(Object.entries(EQUIPO[id]).map(([k, [n, clave]]) => [k, { id: n, clave }]));
+    trip.push({ id, nombre, basal, resp: RESPUESTA[id], equipo, seq: { playera: 0, brazalete: 0, reloj: 0 }, lento: {} });
+  }
+  if (!trip.some((p) => p.id === PROTA)) throw new Error(`el backend no tiene a la tripulante «${PROTA}»`);
+  trip.sort((a, b) => (b.id === PROTA) - (a.id === PROTA));
+  S.trip = trip;
+  $('#nota-trip').textContent = `Transmiten ${trip.length} tripulantes · la maqueta muestra a ${trip[0].nombre}`;
+}
+// Registra en el backend los equipos que falten. Se puede repetir: lo que ya existe no se toca.
+async function asegurarDispositivos() {
+  const hay = await api('/api/dispositivos');
+  for (const p of S.trip) for (const [k, d] of Object.entries(p.equipo)) {
+    const mismo = hay.find((x) => x.clave === d.clave);
+    if (mismo) { d.id = mismo.id; continue; }              // ya registrado (aunque sea con otro id): se usa ése
+    while (hay.some((x) => x.id === d.id)) d.id++;          // id ocupado por otro equipo: el siguiente libre
+    const { nombre, ...resto } = TIPO_EQUIPO[k];
+    hay.push(await api('/api/dispositivos', 'POST', { id: d.id, clave: d.clave, nombre: `${nombre} · ${p.nombre}`, ...resto }));
+    tr('pc', `dispositivo ${d.id} (${d.clave}) registrado para ${esc(p.id)}`);
+  }
+}
+
+// ═══════════ Terminales ═══════════
+function tr(nodo, html) {
+  const linea = `<div><span class="t">${hora(Date.now())}</span> ${html}</div>`;
+  const c = S.consola[nodo]; c.push(linea); if (c.length > 500) c.splice(0, c.length - 500);
+  const logs = document.querySelectorAll(`.ventana[data-nodo="${nodo}"] .vlog, .compartida-panel[data-nodo="${nodo}"] .compartida-panel-log`);
+  logs.forEach((log) => {
+    const abajo = log.scrollHeight - log.scrollTop - log.clientHeight < 60;
+    log.insertAdjacentHTML('beforeend', linea);
+    while (log.children.length > 500) log.firstChild.remove();
+    if (abajo) log.scrollTop = log.scrollHeight;
+  });
+}
+function trTrama(nodo, u8, ahora) {
+  const d = decodificar(u8), tarde = Math.round((ahora - d.t) / 1000);
+  tr(nodo, `enviada trama <span class="hx">${hex(u8)}</span> <span class="dim">${d.txt}${tarde > 1 ? ` · medida a las ${hora(d.t)}` : ''}</span>`);
+  tr('pc', `recibida trama de ${NODO[nodo]} <span class="hx">${hex(u8)}</span> <span class="dim">${d.txt}</span>`);
+}
+
+// Monitor serie: los mismos mensajes que imprime esp32/playera_eva/playera_eva.ino.
+const serie = (txt) => tr('esp32', esc(txt));
+function esp32Conecta() { serie('PC central conectada'); serie(`hora recibida: ${Math.floor(Date.now() / 1000)} (UTC)`); }
+function esp32Arranca() { serie('Playera Lunna lista como "EVA-PLAYERA-01". Esperando a la PC central…'); if (S.bleConectado) esp32Conecta(); }
+
+let zTop = 10, abiertas = 0;
+// ── Interfaces integradas ──
+// Cada equipo que tenga una interfaz real se integra aquí con una línea. Su ventana abre en
+// «Frontend» (la interfaz) y con un clic pasa a «Backend» (la terminal de ese equipo).
+//   forma: 'grande' (escritorio, centrada) o 'movil' (proporción de teléfono)
+const INTERFACES = {
+  tierra: { url: '/app/base.html', titulo: 'Tierra — base en Tierra LUNNA', forma: 'grande' },
+  cel: { url: '/app/', titulo: 'Smartphone', forma: 'movil' },
+  pc: { url: '/app/central.html', titulo: 'PC central — computadora central LUNNA', forma: 'grande' },
+  reloj: { url: '/reloj/?embebido&persona=MS-2', titulo: 'Reloj de Ana — Lunna', forma: 'movil' },
+};
+const vistaCompartida = $('#vista-compartida');
+function sincronizarLogsCompartidos() {
+  vistaCompartida.querySelectorAll('.compartida-panel[data-nodo]').forEach((panel) => {
+    const log = $('.compartida-panel-log', panel), nodo = panel.dataset.nodo;
+    log.innerHTML = S.consola[nodo].join('');
+    log.scrollTop = log.scrollHeight;
+  });
+}
+function abrirVistaCompartida() {
+  vistaCompartida.hidden = false;
+  sincronizarLogsCompartidos();
+  $('#b-compartida').setAttribute('aria-expanded', 'true');
+  $('#b-cerrar-compartida').focus();
+}
+function cerrarVistaCompartida() {
+  vistaCompartida.classList.remove('panel-max');
+  vistaCompartida.querySelectorAll('.compartida-panel.panel-max').forEach((panel) => panel.classList.remove('panel-max'));
+  vistaCompartida.hidden = true;
+  $('#b-compartida').setAttribute('aria-expanded', 'false');
+  $('#b-compartida').focus();
+}
+$('#b-compartida').addEventListener('click', abrirVistaCompartida);
+$('#b-cerrar-compartida').addEventListener('click', cerrarVistaCompartida);
+vistaCompartida.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarVistaCompartida(); });
+vistaCompartida.querySelectorAll('.compartida-panel').forEach((panel) => {
+  panel.querySelectorAll('[data-compartida-modo]').forEach((b) => b.addEventListener('click', () => {
+    const back = b.dataset.compartidaModo === 'back';
+    panel.classList.toggle('ver-back', back);
+    panel.querySelectorAll('[data-compartida-modo]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    if (back) $('.compartida-panel-log', panel).scrollTop = $('.compartida-panel-log', panel).scrollHeight;
+  }));
+  $('[data-compartida-max]', panel).addEventListener('click', () => {
+    const max = panel.classList.toggle('panel-max');
+    vistaCompartida.classList.toggle('panel-max', max);
+    const button = $('[data-compartida-max]', panel);
+    button.textContent = max ? '❐' : '□';
+    button.title = max ? 'Restaurar' : `Maximizar ${panel.dataset.nodo === 'tierra' ? 'Tierra' : 'laptop'}`;
+    button.setAttribute('aria-label', button.title);
+  });
+  $('[data-compartida-cerrar]', panel).addEventListener('click', cerrarVistaCompartida);
+});
+// Avisa a la interfaz embebida si su equipo está encendido (la app no notifica si está apagado).
+function avisarEnergia(nodo) {
+  const f = $(`.ventana[data-nodo="${nodo}"] iframe`);
+  if (f && f.contentWindow) f.contentWindow.postMessage({ eva: 'energia', encendido: S.encendido[nodo] !== false }, location.origin);
+}
+function abrirTerminal(nodo, ev) {
+  let w = $(`.ventana[data-nodo="${nodo}"]`);
+  if (w) { w.style.zIndex = ++zTop; $('input', w)?.focus(); return; }
+  const ui = INTERFACES[nodo];
+  w = document.createElement('div');
+  w.className = 'ventana' + (ui ? ` ui ${ui.forma}` : ''); w.dataset.nodo = nodo; w.style.zIndex = ++zTop;
+  const titulo = ui ? ui.titulo : nodo === 'esp32' ? 'ESP32 de la playera — monitor serie · 115200 baudios' : NODO[nodo];
+  // Con interfaz: «Frontend» (la interfaz real, por defecto) o «Backend» (su terminal con lo que recibe).
+  w.innerHTML = `<div class="vbarra"><span class="vtitulo">${titulo}</span>
+      ${ui ? `<span class="modo" role="group" aria-label="Vista"><button type="button" data-modo="front" aria-pressed="true">Frontend</button><button type="button" data-modo="back" aria-pressed="false">Backend</button></span>` : ''}
+      <button class="maxim" type="button" title="Maximizar" aria-label="Maximizar ventana de ${NODO[nodo]}">□</button>
+      <button class="cerrar" type="button" title="Cerrar" aria-label="Cerrar ventana de ${NODO[nodo]}">×</button></div>` +
+    (ui ? `<iframe src="${ui.url}" title="${esc(ui.titulo)}"></iframe>` : '') +
+    `<div class="vlog">${S.consola[nodo].join('')}</div>
+     <form class="vcmd"><span>${NODO[nodo]}$</span><input autocomplete="off" spellcheck="false" placeholder="escribe «ayuda»" aria-label="Comando para ${NODO[nodo]}"></form>` +
+    (ui ? '<div class="vpie"></div>' : '');
+  document.body.appendChild(w);
+  const ancho = w.offsetWidth, alto = w.offsetHeight;
+  if (ui && ui.forma !== 'movil') {        // grande y centrada
+    w.style.left = Math.max(8, (innerWidth - ancho) / 2) + 'px';
+    w.style.top = Math.max(60, 52 + (innerHeight - 52 - alto) / 2) + 'px';
+  } else {                                 // junto al equipo que se pulsó, sin salirse de la pantalla
+    const x0 = (ev?.clientX ?? innerWidth / 2) + 24 + (abiertas % 4) * 18, y0 = (ev?.clientY ?? innerHeight / 2) - 40 + (abiertas % 4) * 18;
+    w.style.left = Math.max(8, Math.min(innerWidth - ancho - 8, x0 + ancho > innerWidth ? x0 - ancho - 48 : x0)) + 'px';
+    w.style.top = Math.max(60, Math.min(innerHeight - alto - 8, ui ? 60 : y0)) + 'px';
+    abiertas++;
+  }
+  const log = $('.vlog', w); log.scrollTop = log.scrollHeight;
+  $('form', w).addEventListener('submit', (e) => { e.preventDefault(); const i = $('input', w); comando(nodo, i.value.trim()); i.value = ''; });
+  if (ui) {
+    const marco = $('iframe', w);
+    marco.addEventListener('load', () => avisarEnergia(nodo));
+    w.querySelectorAll('.modo button').forEach((b) => b.addEventListener('click', () => {
+      const back = b.dataset.modo === 'back';
+      w.classList.toggle('ver-back', back);
+      w.querySelectorAll('.modo button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      if (back) { log.scrollTop = log.scrollHeight; $('input', w).focus(); }
+    }));
+  }
+  w.addEventListener('pointerdown', () => { w.style.zIndex = ++zTop; });
+  $('.cerrar', w).addEventListener('click', () => { w.remove(); marcarAbiertos(); });
+  const maxim = $('.maxim', w);
+  const alternar = () => {
+    const m = w.classList.toggle('max');
+    maxim.textContent = m ? '❐' : '□'; maxim.title = m ? 'Restaurar' : 'Maximizar';
+    maxim.setAttribute('aria-label', `${m ? 'Restaurar' : 'Maximizar'} ventana de ${NODO[nodo]}`);
+  };
+  maxim.addEventListener('click', alternar);
+  $('.vbarra', w).addEventListener('dblclick', (e) => { if (!e.target.closest('button')) alternar(); });
+  arrastrable(w, $('.vbarra', w));
+  marcarAbiertos();
+  if (nodo === 'cel') $('#cel-badge').setAttribute('r', 0);
+}
+function arrastrable(w, asa) {
+  let dx = 0, dy = 0;
+  asa.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('button') || w.classList.contains('max')) return;
+    dx = e.clientX - w.offsetLeft; dy = e.clientY - w.offsetTop; asa.setPointerCapture(e.pointerId);
+  });
+  asa.addEventListener('pointermove', (e) => {
+    if (!asa.hasPointerCapture(e.pointerId)) return;
+    w.style.left = Math.max(-w.offsetWidth + 80, Math.min(innerWidth - 80, e.clientX - dx)) + 'px';
+    w.style.top = Math.max(52, Math.min(innerHeight - 36, e.clientY - dy)) + 'px';
+  });
+}
+function marcarAbiertos() {
+  document.querySelectorAll('.disp,.equipo').forEach((g) => g.classList.toggle('abierto', !!$(`.ventana[data-nodo="${g.dataset.id}"]`)));
+}
+
+// ── Comandos: la única forma de tocar algo sin interfaz gráfica ──
+const AYUDA = {
+  esp32: ['reiniciar             (reinicia el ESP32: la cola en RAM se pierde)'],
+  tierra: [],
+  playera: ['apagar | encender', 'ble off | ble on      (cortar o recuperar el Bluetooth)', 'fatiga N              (FC +N %)', 'taquipnea N           (respiración +N %)', 'fiebre N              (temperatura +N °C)'],
+  brazalete: ['apagar | encender', 'hipertension N        (presión +N mmHg)'],
+  reloj: ['apagar | encender', 'contacto off | contacto on', 'hipoxia N             (SpO₂ −N puntos)'],
+  cel: ['apagar | encender'],
+  pc: ['lunna [tripulante]    (lo esperado vs lo medido; sin nombre, Ana)',
+       'escenario NOMBRE      (cuadro clínico gradual en Ana: fatiga | infeccion | hipoxia | hipertension | normal)',
+       'modo demo N | modo mision   (ventana de la mediana de LUNNA: N min para demostrar · 24 h en misión)',
+       'ventana abrir | ventana cerrar   (enlace con Tierra)', 'retraso N             (segundos por trayecto a Tierra)'],
+};
+async function comando(nodo, txt) {
+  if (!txt) return;
+  tr(nodo, `<span class="cmd">$ ${esc(txt)}</span>`);
+  const [c, ...resto] = txt.split(/\s+/), arg = resto.join(' '), n = Number(resto[0]);
+  const ok = (m) => tr(nodo, `<span class="verde">${m}</span>`), mal = (m) => tr(nodo, `<span class="rojo">${m}</span>`);
+  const num = (k, uni, max) => { if (!Number.isFinite(n) || n < 0 || n > max) return mal(`uso: ${c} N (0–${max})`); S.anom[k] = n; ok(`${k} = ${n} ${uni}`); };
+  if (c === 'ayuda' || c === 'help') return [...(AYUDA[nodo] || []), 'limpiar'].forEach((l) => tr(nodo, `<span class="dim">  ${esc(l)}</span>`));
+  if (c === 'limpiar' || c === 'clear') { S.consola[nodo] = []; $(`.ventana[data-nodo="${nodo}"] .vlog`).innerHTML = ''; return; }
+  if ((c === 'apagar' || c === 'encender') && nodo in S.encendido) {
+    S.encendido[nodo] = c === 'encender'; pintarEnlacesLocales(); ok(c === 'encender' ? 'encendido' : 'apagado');
+    if (nodo === 'playera') { if (c === 'encender') esp32Arranca(); else { S.colaEsp = []; if (ana()) ana().seq.playera = 0; } }
+    avisarEnergia(nodo);
+    tr('pc', `<span class="${c === 'encender' ? 'verde' : 'amb'}">${NODO[nodo]} ${c === 'encender' ? 'conectado' : 'desconectado'}</span>`); return;
+  }
+  if (nodo === 'playera' && c === 'ble' && (arg === 'on' || arg === 'off')) {
+    S.bleConectado = arg === 'on'; pintarEnlacesLocales();
+    if (S.bleConectado) { ok(`Bluetooth conectado: se envían ${S.colaEsp.length} tramas guardadas`); tr('pc', '<span class="verde">playera-01 reconectada</span>'); esp32Conecta(); }
+    else { tr(nodo, '<span class="amb">Bluetooth cortado: las tramas se guardan en cola</span>'); tr('pc', '<span class="amb">playera-01 sin conexión</span>'); serie('PC central desconectada; anunciandose de nuevo'); }
+    return;
+  }
+  if (nodo === 'esp32' && c === 'reiniciar') {
+    const perdidas = S.colaEsp.length; S.colaEsp = []; if (ana()) ana().seq.playera = 0;
+    tr(nodo, `<span class="amb">reinicio: ${perdidas} lecturas en cola perdidas (estaban en RAM)</span>`);
+    if (S.encendido.playera) esp32Arranca();
+    return;
+  }
+  if (nodo === 'playera' && ['fatiga', 'taquipnea', 'fiebre'].includes(c)) return num(c, { fatiga: '%', taquipnea: '%', fiebre: '°C' }[c], { fatiga: 60, taquipnea: 100, fiebre: 4 }[c]);
+  if (nodo === 'brazalete' && c === 'hipertension') return num('hiper', 'mmHg', 60);
+  if (nodo === 'reloj' && c === 'hipoxia') return num('hipoxia', 'puntos', 15);
+  if (nodo === 'reloj' && c === 'contacto' && (arg === 'on' || arg === 'off')) { S.contactoReloj = arg === 'on'; return ok(`contacto con la piel: ${arg === 'on' ? 'sí' : 'no'}`); }
+  if (nodo === 'pc' && c === 'modo' && (resto[0] === 'mision' || resto[0] === 'demo')) {
+    const min = resto[0] === 'mision' ? 1440 : Number(resto[1] ?? MODO_DEMO_MIN);
+    try { await fijarModo(min); } catch (e) { return mal(esc(e.message)); }
+    return;
+  }
+  if (nodo === 'pc' && c === 'lunna') {
+    const quien = (resto[0] || PROTA).toLowerCase(), ult = S.ultimosVar[quien] || {};
+    if (S.trip.length && !S.trip.some((p) => p.id === quien)) return mal(`tripulante desconocido: ${esc(quien)} · hay ${S.trip.map((p) => p.id).join(', ')}`);
+    await refrescar(quien);
+    if (!S.pred.length) return mal('sin datos: pulsa «Preparar misión»');
+    tr(nodo, `<span class="dim">LUNNA · ${esc(quien)}</span>`);
+    tr(nodo, `<span class="dim">${`${'variable'.padEnd(10)}${'medido'.padEnd(9)}${'esperado'.padEnd(10)}banda 95 %`.replace(/ /g, '&nbsp;')}</span>`);
+    for (const p of S.pred) {
+      const act = ult[p.variable], fuera = act != null && (act < p.banda[0] || act > p.banda[1]);
+      tr(nodo, `${(CORTO[p.variable] || p.variable).padEnd(10)}${String(act ?? '—').padEnd(9)}${p.esperado.toFixed(1).padEnd(10)}${p.banda[0].toFixed(1)}–${p.banda[1].toFixed(1)}`.replace(/ /g, '&nbsp;') + (fuera ? ' <span class="amb">fuera*</span>' : ''));
+    }
+    return tr(nodo, '<span class="dim">* lectura suelta; LUNNA sólo alerta si se sale la mediana de 24 h</span>');
+  }
+  if (nodo === 'pc' && c === 'escenario') {
+    const nombre = (resto[0] || '').toLowerCase(), E = ESCENARIOS[nombre];
+    if (!E) {
+      if (nombre) mal(`escenario desconocido: ${esc(nombre)}`);
+      tr(nodo, `<span class="dim">en curso: ${S.esc ? S.esc.nombre : 'normal'} · uso: escenario NOMBRE</span>`);
+      return Object.entries(ESCENARIOS).forEach(([k, e]) => tr(nodo, `<span class="dim">  ${k.padEnd(13).replace(/ /g, '&nbsp;')}${esc(e.txt)}</span>`));
+    }
+    ponerEscenario(nombre);
+    ok(`escenario ${nombre} (Ana): ${esc(E.txt)}`);
+    if (nombre === 'normal') return tr(nodo, '<span class="dim">LUNNA vuelve a verde cuando las lecturas normales son otra vez mayoría en la mediana de 24 h</span>');
+    if (!S.vivo) return tr(nodo, '<span class="amb">el simulador no está en vivo: pulsa «▶ En vivo» para que Ana transmita</span>');
+    return avisarEspera(nodo, E);
+  }
+  if (nodo === 'pc' && c === 'ventana' && (arg === 'abrir' || arg === 'cerrar')) { S.enlace = await api('/api/enlace', 'PUT', { abierto: arg === 'abrir' }); pintarEnlace(); return ok(`ventana ${arg === 'abrir' ? 'abierta' : 'cerrada'}`); }
+  if (nodo === 'pc' && c === 'retraso' && Number.isFinite(n) && n >= 0) { S.enlace = await api('/api/enlace', 'PUT', { owlt_s: n }); pintarEnlace(); return ok(`retraso = ${n} s`); }
+  mal(`comando no reconocido: ${esc(c)} · escribe «ayuda»`);
+}
+
+// ═══════════ Fisiología simulada ═══════════
+// TODO ESTO ES UNA APROXIMACIÓN DE SIMULACIÓN, no un modelo clínico: las formas y los tamaños se
+// eligieron para que las curvas se vean verosímiles, no salen de ninguna tabla ni estudio.
+//
+//   lectura = nivel de la persona (basal del backend × su respuesta a la órbita)
+//             × ritmo circadiano × variación lenta (minutos) × ruido del sensor
+//   y se redondea a lo que cabe en la trama: enteros para FC, respiración y presión; 0,01 °C.
+
+// Ritmo circadiano: una onda de 24 h por variable, [amplitud, hora UTC del máximo]. La nave va en
+// UTC y se supone que la tripulación duerme de ~22 a ~06 h: el mínimo de cada onda cae en el
+// sueño (FC, respiración y temperatura más bajas; descenso nocturno de la presión). SpO₂, sin ritmo.
+// Las amplitudes son modestas A PROPÓSITO: LUNNA compara la mediana de 24 h y, en la demo, las
+// lecturas en vivo (una por segundo) pesan enseguida más que la historia (una cada 2 h); la hora
+// del día sola no debe sacar a nadie de su banda (se queda en |z| ≲ 1; LUNNA alerta con |z| ≥ 2).
+const CIRC = { fc: [0.035, 16], fr: [0.04, 16], temp: [0.2, 17], sis: [0.045, 15], dia: [0.045, 15] };
+const onda = (t, pico) => Math.cos(2 * Math.PI * (t / 3600000 - pico) / 24);
+// Variación: [lenta (desv. típica), su tiempo de correlación en s, ruido del sensor, grupo].
+// Relativas, salvo temperatura (°C) y SpO₂ (puntos). La lenta es de la persona, no del aparato: la
+// comparten los sensores que miden lo mismo (FC de playera y reloj; sistólica y diastólica).
+const RUIDO = { fc: [0.012, 90, 0.010], fr: [0.025, 60, 0.025], temp: [0.04, 600, 0.02], spo2: [0.25, 120, 0.3],
+                sis: [0.010, 300, 0.015, 'pa'], dia: [0.010, 300, 0.015, 'pa'] };
+const ABSOLUTA = { temp: true, spo2: true };
+
+function valor(p, v, t, conAnomalias, azar = Math.random) {
+  const dia = (t - S.lanzamiento) / DIA, abs = ABSOLUTA[v], [sLenta, tau, sSensor, grupo = v] = RUIDO[v];
+  let x = p.basal[v];
+  if (dia >= 0) x = v === 'temp' ? x + p.resp.temp : x * (1 + p.resp[v]);     // adaptación a la órbita
+  if (v === 'fc' && dia >= 0 && dia < 3) x *= 1 + 0.05 * (1 - dia / 3);        // redistribución de fluidos
+  if (CIRC[v]) { const c = CIRC[v][0] * onda(t, CIRC[v][1]); x = abs ? x + c : x * (1 + c); }
+  // Variación lenta: proceso autorregresivo; entre dos muestras de la historia (horas) ya es independiente.
+  const l = p.lento[grupo] || (p.lento[grupo] = { x: 0, t: -Infinity });
+  if (t > l.t) { const rho = Math.exp(-(t - l.t) / 1000 / tau); l.x = rho * l.x + Math.sqrt(1 - rho * rho) * gauss(azar); l.t = t; }
+  x = abs ? x + sLenta * l.x : x * (1 + sLenta * l.x);
+  if (conAnomalias && p.id === PROTA) {     // comandos sueltos y escenario: sólo Ana, sólo en vivo
+    const e = efecto(v, t);
+    if (v === 'fc') x *= (1 + S.anom.fatiga / 100) * (1 + e);
+    if (v === 'fr') x *= (1 + S.anom.taquipnea / 100) * (1 + e);
+    if (v === 'spo2') x += e - S.anom.hipoxia;
+    if (v === 'temp') x += e + S.anom.fiebre;
+    if (v === 'sis') x += e + S.anom.hiper;
+    if (v === 'dia') x += e + S.anom.hiper * 0.6;
+  }
+  return abs ? x + sSensor * gauss(azar) : x * (1 + sSensor * gauss(azar));
+}
+// Resolución del sensor: lo que cabe en la trama.
+const u8 = (x) => Math.min(255, Math.max(0, Math.round(x)));
+const lecturaPlayera = (p, t, a, azar) => [u8(valor(p, 'fc', t, a, azar)), u8(valor(p, 'fr', t, a, azar)), Math.round(valor(p, 'temp', t, a, azar) * 100) / 100];
+const lecturaBrazalete = (p, t, a, azar) => [u8(valor(p, 'sis', t, a, azar)), u8(valor(p, 'dia', t, a, azar))];
+// Artefacto del reloj: de vez en cuando pierde contacto con la piel y la lectura óptica sale
+// degradada. Va marcada con quality.contacto = false: el backend la guarda pero no la evalúa.
+const P_ARTEFACTO = 0.03;
+function tramaReloj(p, t, a, azar = Math.random) {
+  let fc = u8(valor(p, 'fc', t, a, azar)), spo2 = Math.min(100, Math.round(valor(p, 'spo2', t, a, azar)));
+  const artefacto = azar() < P_ARTEFACTO;
+  if (artefacto) { fc = u8(fc + 8 * gauss(azar)); spo2 -= 1 + Math.floor(3 * azar()); }
+  const q = { contacto: !artefacto && !(a && p.id === PROTA && !S.contactoReloj) };
+  return { frame: 'eva.telemetry.v1', source: { id: p.equipo.reloj.clave, kind: 'wrist' }, subject: p.id,
+    t_scet: new Date(Math.floor(t / 1000) * 1000).toISOString(), seq: p.seq.reloj++,
+    samples: [{ var: '04:A4', value: fc, unit: 'bpm', origin: 'sensor', quality: q },
+              { var: '04:A3', value: spo2, unit: '%', origin: 'sensor', quality: q }] };
+}
+
+// ═══════════ Escenarios clínicos (Ana) ═══════════
+// Cuadros coherentes entre variables que se instalan poco a poco. Por variable: [cambio final,
+// segundos de retardo, segundos que tarda en instalarse]; FC y respiración en fracción, SpO₂ en
+// puntos, temperatura en °C, presión en mmHg. Los tamaños son de simulación: bastan para que la
+// mediana de 24 h salga de la banda personal a cualquier hora del día.
+// `vigia`: la variable por la que LUNNA debería avisar primero y cuántas muestras por segundo le llegan.
+const ESCENARIOS = {
+  fatiga:       { txt: 'fatiga acumulada: la FC en reposo sube poco a poco (~+20 %, unos 11 lpm, en 90 s) y se queda arriba; lo demás no cambia',
+                  curso: { fc: [0.20, 0, 90] }, vigia: ['04:A4', 1.2] },
+  infeccion:    { txt: 'cuadro infeccioso: fiebre (+1,5 °C en 2 min) y, detrás de ella, FC (~+16 %) y respiración (~+30 %) al alza',
+                  curso: { temp: [1.5, 0, 120], fc: [0.16, 15, 120], fr: [0.30, 30, 120] }, vigia: ['04:A1', 1] },
+  hipoxia:      { txt: 'hipoxia: la SpO₂ cae ~7 puntos en 90 s; FC (~+15 %) y respiración (~+35 %) suben para compensar',
+                  curso: { spo2: [-7, 0, 90], fc: [0.15, 15, 90], fr: [0.35, 15, 90] }, vigia: ['04:A3', 0.2] },
+  hipertension: { txt: 'hipertensión: la presión sube ~42/24 mmHg (sistólica/diastólica) en 90 s y se mantiene, en la zona de estadio 2 (≥ 140/90)',
+                  curso: { sis: [42, 0, 90], dia: [24, 0, 90] }, vigia: ['01:V1', 0.2] },
+  normal:       { txt: 'vuelta gradual a lo habitual (~40 s); también pone a cero fatiga, taquipnea, fiebre, hipertension e hipoxia', curso: {} },
+};
+const VUELTA_S = 40;
+const suave = (k) => { k = Math.min(1, Math.max(0, k)); return k * k * (3 - 2 * k); };
+// Desvío que el escenario pone ahora mismo sobre la variable: parte de donde estaba, sin escalones.
+function efecto(v, t) {
+  const e = S.esc; if (!e) return 0;
+  const [meta, retardo, dura] = e.curso[v] || [0, 0, VUELTA_S], de = e.desde[v] || 0;
+  return de + (meta - de) * suave(((t - e.t0) / 1000 - retardo) / dura);
+}
+function ponerEscenario(nombre) {
+  const t = Date.now(), curso = ESCENARIOS[nombre].curso;
+  const desde = Object.fromEntries(Object.keys(VAR).map((v) => [v, efecto(v, t)]));
+  const dura = Math.max(VUELTA_S, ...Object.values(curso).map(([, r, d]) => r + d));
+  S.esc = { nombre, t0: t, desde, curso, dura, completo: false };
+  if (nombre === 'normal') for (const k of Object.keys(S.anom)) S.anom[k] = 0;
+}
+// El criterio personal de LUNNA usa la mediana de la ventana activa (24 h en misión, unos minutos en
+// demostración): avisa cuando las lecturas alteradas son mayoría. Estima la espera.
+async function avisarEspera(nodo, E) {
+  const [variable, porSeg] = E.vigia, [, retardo, dura] = E.curso[Object.keys(VAR).find((k) => VAR[k] === variable)];
+  let n = 5000;
+  try { n = (await api(`/api/muestras?tripulante=${PROTA}&variable=${encodeURIComponent(variable)}&desde=${new Date(Date.now() - S.ventanaMin * 60000).toISOString()}&limite=5000`)).length; } catch {}
+  const seg = Math.round((n / porSeg + 2 * (retardo + 0.45 * dura)) / 10) * 10;
+  const ventana = S.ventanaMin >= 1440 ? '24 h' : `${S.ventanaMin} min`;
+  tr(nodo, `<span class="dim">LUNNA compara la mediana de ${ventana} de ${NOMBRE[variable]}: alertará cuando las lecturas alteradas sean mayoría, en ${n >= 5000 ? 'más de ' : '~'}${seg >= 120 ? `${Math.round(seg / 60)} min` : `${seg} s`} (hay ${n >= 5000 ? '5000 o más' : n} lecturas en la ventana). Si hay umbral clínico, puede saltar antes por él.</span>`);
+}
+
+// ═══════════ Preparar misión: 119 días de historia ═══════════
+const SEMILLA = 20261004;
+const POR_DIA = { [PROTA]: 12 };     // muestras de historia por día; el resto de la tripulación:
+const POR_DIA_RESTO = 6;             //   menos, para que preparar no tarde mucho más (cubren igual las 24 h)
+async function preparar() {
+  const b = $('#b-preparar'); b.disabled = true; $('#b-vivo').disabled = true;
+  try {
+    detener();
+    await api('/api/demo/reiniciar', 'POST'); S.ventanaMin = 1440;
+    await cargarTripulacion(); await asegurarDispositivos();
+    S.colaEsp = []; S.esc = null;
+    // El despegue cae en una medianoche UTC: las muestras de la historia tocan siempre las mismas
+    // horas de a bordo y, con el generador sembrado, la historia sale idéntica cada vez.
+    S.lanzamiento = Math.floor(Date.now() / DIA) * DIA - 112 * DIA;
+    const inicioTierra = new Date(S.lanzamiento - 7 * DIA).toISOString();
+    await api('/api/fases', 'POST', { desde: inicioTierra, entorno: 'tierra' });
+    await api('/api/fases', 'POST', { desde: new Date(S.lanzamiento).toISOString(), entorno: 'orbita' });
+    for (const p of S.trip) for (const d of Object.values(p.equipo)) await api('/api/asignaciones', 'POST', { dispositivo: d.id, tripulante: p.id, desde: inicioTierra });
+    tr('pc', `playera, brazalete y reloj asignados a ${S.trip.map((p) => p.id).join(', ')} · cargando 119 días de historia…`);
+    const azar = sembrar(SEMILLA), hasta = Date.now() - 60000;
+    let bin = [], json = [], total = 0;
+    const enviar = async () => {
+      if (bin.length) { await api('/api/tramas/binaria', 'POST', { b64: bin }); total += bin.length; bin = []; }
+      if (json.length) { await api('/api/tramas', 'POST', json); total += json.length; json = []; }
+    };
+    for (let d = -7; d <= 112; d++) {       // el día 112 es hoy: sólo lo que ya pasó
+      for (const p of S.trip) {
+        const n = POR_DIA[p.id] || POR_DIA_RESTO;
+        for (let k = 0; k < n; k++) {
+          const t = S.lanzamiento + d * DIA + (k + 0.5) * (DIA / n), ts = Math.floor(t / 1000);
+          if (t > hasta) break;
+          bin.push(b64(codificar(p.equipo.playera.id, 5, p.seq.playera++, ts, lecturaPlayera(p, t, false, azar))));
+          bin.push(b64(codificar(p.equipo.brazalete.id, 2, p.seq.brazalete++, ts, lecturaBrazalete(p, t, false, azar))));
+          json.push(tramaReloj(p, t, false, azar));
+        }
+      }
+      if (bin.length >= 480) { b.textContent = `Rellenando… día ${d}`; await enviar(); }
+    }
+    await enviar();
+    tr('pc', `<span class="verde">historia cargada: ${total.toLocaleString('es')} tramas de ${S.trip.length} tripulantes · LUNNA calibró a cada quien con sus días 0–13</span>`);
+    $('#b-vivo').disabled = false;
+    iniciar();
+  } catch (e) { tr('pc', `<span class="rojo">error al preparar: ${esc(e.message)}</span>`); }
+  b.textContent = 'Preparar misión'; b.disabled = false;
+}
+
+// ═══════════ En vivo: cada segundo ═══════════
+function tick() {
+  const t = Date.now(), ts = Math.floor(t / 1000), cada5 = S.tic++ % 5 === 0, a = ana(), eq = a.equipo;
+  // Playera: el ESP32 lee y encola; sólo vacía la cola con Bluetooth.
+  if (S.encendido.playera) {
+    const v = lecturaPlayera(a, t, true); S.colaEsp.push({ ts, v });
+    serie(`lectura fc=${v[0].toFixed(1)} fr=${v[1].toFixed(1)} temp=${v[2].toFixed(2)} -> cola ${S.colaEsp.length}`);
+    if (!S.bleConectado) tr('playera', `<span class="amb">sin conexión: trama guardada en cola (${S.colaEsp.length})</span>`);
+  }
+  if (S.colaEsp.length > 1800) { S.descartadas += S.colaEsp.length - 1800; S.colaEsp.splice(0, S.colaEsp.length - 1800); }
+  if (S.bleConectado && S.colaEsp.length) {
+    const tramas = S.colaEsp.splice(0, 40).map((r) => codificar(eq.playera.id, 5, a.seq.playera++, r.ts, r.v));
+    tramas.forEach((u8) => { serie(`enviada trama seq=${new DataView(u8.buffer).getUint16(7, true)} (${u8.length} B)`); trTrama('playera', u8, t); });
+    api('/api/tramas/binaria', 'POST', { b64: tramas.map(b64) }).catch((e) => tr('pc', `<span class="rojo">${esc(e.message)}</span>`));
+    paquete(POS.playera, POS.pc, COLOR.playera);
+  }
+  if (S.encendido.playera && S.tic % 10 === 0) serie(`conectado=${S.bleConectado ? 1 : 0} hora=1 pendientes=${S.colaEsp.length} descartadas=${S.descartadas}`);
+  // Brazalete: su propia trama, directo a la central.
+  if (cada5 && S.encendido.brazalete) {
+    const u8 = codificar(eq.brazalete.id, 2, a.seq.brazalete++, ts, lecturaBrazalete(a, t, true));
+    trTrama('brazalete', u8, t);
+    api('/api/tramas/binaria', 'POST', { b64: [b64(u8)] }).catch(() => {});
+    paquete(POS.brazalete, POS.pc, COLOR.brazalete);
+  }
+  // Reloj: JSON, directo a la central.
+  if (cada5 && S.encendido.reloj) {
+    const j = tramaReloj(a, t, true), txt = JSON.stringify(j), contacto = j.samples[0].quality.contacto;
+    if (!contacto && S.contactoReloj) tr('reloj', '<span class="amb">pérdida momentánea de contacto con la piel: la lectura va marcada como no fiable</span>');
+    tr('reloj', `enviada trama <span class="hx">${esc(txt)}</span>`);
+    tr('pc', `recibida trama de reloj-ana <span class="hx">${esc(txt)}</span>${contacto ? '' : ' <span class="amb">(sin contacto: se guarda, no se evalúa)</span>'}`);
+    api('/api/tramas', 'POST', j).catch(() => {});
+    paquete(POS.reloj, POS.pc, COLOR.reloj);
+  }
+  tickResto(t, ts);
+  const e = S.esc;
+  if (e && !e.completo && t >= e.t0 + e.dura * 1000) {
+    e.completo = true;
+    if (e.nombre === 'normal') { S.esc = null; tr('pc', '<span class="verde">escenario normal: Ana está otra vez en sus valores habituales</span>'); }
+    else tr('pc', `<span class="amb">escenario ${e.nombre}: cuadro completo; se mantiene hasta «escenario normal»</span>`);
+  }
+}
+// El resto de la tripulación no se dibuja: transmite en segundo plano, más despacio (playera cada
+// 5 s, brazalete y reloj cada 30 s) y escalonada. Sus tramas sólo se ven llegar a la PC central.
+function tickResto(t, ts) {
+  const bin = [], json = [];
+  const llega = (p, k, crudo, txt) => tr('pc', `<span class="dim">recibida trama de ${p.equipo[k].clave} (${esc(p.nombre)}) ${crudo} ${txt}</span>`);
+  S.trip.forEach((p, i) => {
+    if (p.id === PROTA) return;
+    const fase = S.tic + i;
+    if (fase % 5 === 2) {
+      const u = codificar(p.equipo.playera.id, 5, p.seq.playera++, ts, lecturaPlayera(p, t, false));
+      bin.push(b64(u)); llega(p, 'playera', hex(u), decodificar(u).txt);
+    }
+    if (fase % 30 === 9) {
+      const u = codificar(p.equipo.brazalete.id, 2, p.seq.brazalete++, ts, lecturaBrazalete(p, t, false));
+      bin.push(b64(u)); llega(p, 'brazalete', hex(u), decodificar(u).txt);
+    }
+    if (fase % 30 === 24) {
+      const j = tramaReloj(p, t, false), [fc, spo2] = j.samples;
+      json.push(j); llega(p, 'reloj', `JSON seq=${j.seq}`, `fc=${fc.value} spo2=${spo2.value}${fc.quality.contacto ? '' : ' (sin contacto: se guarda, no se evalúa)'}`);
+    }
+  });
+  if (bin.length) api('/api/tramas/binaria', 'POST', { b64: bin }).catch(() => {});
+  if (json.length) api('/api/tramas', 'POST', json).catch(() => {});
+}
+// Sin asignación el backend rechaza las tramas: no sabría de quién son.
+async function asegurarAsignaciones() {
+  const abiertas = (await api('/api/asignaciones')).filter((a) => a.hasta == null);
+  for (const p of S.trip) for (const d of Object.values(p.equipo)) {
+    if (abiertas.some((a) => a.dispositivo === d.id && a.tripulante === p.id)) continue;
+    await api('/api/asignaciones', 'POST', { dispositivo: d.id, tripulante: p.id });
+    tr('pc', `dispositivo ${d.id} (${d.clave}) asignado a ${esc(p.id)}`);
+  }
+}
+// ── Modo demostración ──
+// En misión LUNNA evalúa la mediana de 24 h. En una demo de minutos eso hace que una anomalía
+// provocada tarde en notarse y que la vuelta a verde no se vea; por eso, al pasar a «En vivo», el
+// simulador pide una ventana corta y lo dice. «modo mision» vuelve a 24 h.
+const MODO_DEMO_MIN = 5;
+S.ventanaMin = 1440;
+async function fijarModo(min) {
+  const r = await api('/api/lunna/ventana', 'PUT', { minutos: min });
+  S.ventanaMin = r.minutos;
+  tr('pc', r.minutos === r.mision
+    ? '<span class="verde">LUNNA en modo misión: mediana de las últimas 24 h</span>'
+    : `<span class="amb">LUNNA en modo DEMOSTRACIÓN: mediana de los últimos ${r.minutos} min (en misión: 24 h)</span>`);
+  const n = $('#nota-trip');
+  if (n && S.trip.length) n.textContent = `Transmiten ${S.trip.length} tripulantes · la maqueta muestra a ${S.trip[0].nombre}` + (r.minutos === r.mision ? '' : ` · LUNNA en demostración (${r.minutos} min)`);
+}
+async function iniciar() {
+  if (S.temporizador) return;
+  try {
+    if (!S.trip.length) await cargarTripulacion();
+    await asegurarDispositivos(); await asegurarAsignaciones();
+    if (S.ventanaMin === 1440) await fijarModo(MODO_DEMO_MIN);
+  } catch (e) { tr('pc', `<span class="rojo">no se pudo asignar: ${esc(e.message)}</span>`); return; }
+  if (S.temporizador) return;
+  S.vivo = true; S.temporizador = setInterval(tick, 1000); $('#b-vivo').textContent = '⏸ Pausar';
+}
+function detener() { clearInterval(S.temporizador); S.temporizador = null; S.vivo = false; $('#b-vivo').textContent = '▶ En vivo'; }
+
+// ═══════════ Ondas y paquetes ═══════════
+const NS = 'http://www.w3.org/2000/svg';
+function ondas(id, [cx, cy], [tx, ty], clase = '', radios = [12, 20, 28], abre = 0.5) {
+  const g = document.createElementNS(NS, 'g'); g.id = 'o-' + id; g.setAttribute('class', 'ondas ' + clase); g.dataset.clase = clase;
+  const a = Math.atan2(ty - cy, tx - cx);
+  for (const r of radios) {
+    const p = document.createElementNS(NS, 'path');
+    const x1 = cx + r * Math.cos(a - abre), y1 = cy + r * Math.sin(a - abre), x2 = cx + r * Math.cos(a + abre), y2 = cy + r * Math.sin(a + abre);
+    p.setAttribute('d', `M${x1.toFixed(1)} ${y1.toFixed(1)} A${r} ${r} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)}`);
+    g.appendChild(p);
+  }
+  $('#ondas').appendChild(g);
+}
+function paquete([x0, y0], [x1, y1], color, dur = 900) {
+  // Un punto de luz con halo y una estela corta detrás.
+  const g = document.createElementNS(NS, 'g'); g.setAttribute('class', 'paquete');
+  g.innerHTML = `<line class="estela" stroke="${color}"/><circle class="halo" r="8" fill="${color}" opacity=".28"/><circle r="3.4" fill="${color}"/><circle r="1.6" fill="#fff"/>`;
+  $('#paquetes').appendChild(g);
+  const estela = g.querySelector('.estela'), cuerpo = [...g.querySelectorAll('circle')];
+  const pos = (k) => { const e = k * k * (3 - 2 * k); return [x0 + (x1 - x0) * e, y0 + (y1 - y0) * e]; };
+  const t0 = performance.now();
+  (function paso(ahora) {
+    const k = Math.min(1, (ahora - t0) / dur), [x, y] = pos(k), [xa, ya] = pos(Math.max(0, k - 0.14));
+    cuerpo.forEach((c) => { c.setAttribute('cx', x.toFixed(1)); c.setAttribute('cy', y.toFixed(1)); });
+    estela.setAttribute('x1', xa.toFixed(1)); estela.setAttribute('y1', ya.toFixed(1)); estela.setAttribute('x2', x.toFixed(1)); estela.setAttribute('y2', y.toFixed(1));
+    g.setAttribute('opacity', k < 0.88 ? 1 : (1 - k) / 0.12);
+    if (k < 1) requestAnimationFrame(paso); else g.remove();
+  })(t0);
+}
+
+// ═══════════ Eventos del backend ═══════════
+function conectarEventos() {
+  const es = new EventSource('/api/stream');
+  es.addEventListener('muestra', (e) => { const m = JSON.parse(e.data); (S.ultimosVar[m.tripulante] ||= {})[m.variable] = m.valor; });
+  es.addEventListener('alerta', (e) => {
+    const a = JSON.parse(e.data), cls = a.estado === 'rojo' ? 'rojo' : a.estado === 'ambar' ? 'amb' : 'verde';
+    tr('pc', `<span class="${cls}">alerta LUNNA ${a.estado.toUpperCase()}: ${a.tripulante} · ${NOMBRE[a.variable] || a.variable} ${a.valor} (esperado ${a.esperado}, z=${a.z}, P(normal)=${a.prob_nominal})</span>`);
+    $('#pc-onda').setAttribute('stroke', a.estado === 'rojo' ? '#f87171' : a.estado === 'ambar' ? '#fbbf24' : '#34d399');
+  });
+  es.addEventListener('rechazo', (e) => tr('pc', `<span class="rojo">trama rechazada: ${esc(JSON.parse(e.data).slice(0, 2).join(' · '))}</span>`));
+  es.addEventListener('tierra', (e) => {
+    const b = JSON.parse(e.data), edad = Math.round((Date.parse(b.t_ert) - Date.parse(b.t_scet)) / 1000);
+    const que = b.tipo === 'alerta' ? `alerta ${b.datos.estado} de ${b.datos.tripulante}: ${NOMBRE[b.datos.variable] || b.datos.variable} ${b.datos.valor}` : `resumen de ${b.datos.length} variables`;
+    paquete(POS.pc, POS.tierra, COLOR.tierra, 1600);
+    tr('pc', `enviado a Tierra: ${que}`);
+    tr('tierra', `recibido${b.tipo === 'alerta' ? '' : ''} <span class="${b.tipo === 'alerta' ? 'rojo' : 'az'}">${que}</span> <span class="dim">· ocurrió a las ${hora(Date.parse(b.t_scet))}, llegó con ${edad} s de retraso</span>`);
+  });
+  es.addEventListener('aviso', (e) => {
+    const a = JSON.parse(e.data);
+    paquete(POS.tierra, POS.pc, COLOR.tierra, 1600);
+    const manual = a.tipo === 'alerta', nivel = a.datos?.nivel, cls = nivel === 'rojo' ? 'rojo' : 'amb';
+    const que = manual ? `<span class="${cls}">ALERTA DE TIERRA ${String(nivel).toUpperCase()}${a.datos?.variable ? ` · ${NOMBRE[a.datos.variable] || a.datos.variable}` : ''}</span>` : 'aviso de Tierra';
+    tr('pc', `recibida ${que} para ${a.para}: «${esc(a.texto)}»`);
+    tr('pc', '<span class="dim">enviado acuse de recibo a Tierra</span>');
+    if (S.encendido.cel) {
+      tr('pc', `enviada ${manual ? 'alerta' : 'aviso'} al smartphone`);
+      tr('cel', `recibida ${que} de ${esc(a.de)}: <span class="${manual ? cls : 'az'}">«${esc(a.texto)}»</span> <span class="dim">· redactado a las ${hora(Date.parse(a.t_redactado))}</span>`);
+      setTimeout(() => { paquete(POS.pc, POS.cel, COLOR.aviso, 700); if (!$('.ventana[data-nodo="cel"]')) $('#cel-badge').setAttribute('r', 6); }, 1600);
+    }
+  });
+  es.addEventListener('enlace', (e) => {
+    const antes = S.enlace.abierto; S.enlace = JSON.parse(e.data); pintarEnlace();
+    if (antes !== S.enlace.abierto) ['pc', 'tierra'].forEach((n) => tr(n, `<span class="${S.enlace.abierto ? 'verde' : 'amb'}">ventana con Tierra ${S.enlace.abierto ? 'abierta' : 'cerrada: todo se guarda en cola'}</span>`));
+  });
+  es.onerror = () => { $('#d-back').className = 'dot bad'; };
+  es.onopen = () => { $('#d-back').className = 'dot ok'; };
+}
+async function refrescar(quien = PROTA) { try { S.pred = await api('/api/prediccion/' + encodeURIComponent(quien)); } catch { S.pred = []; } }
+
+// ═══════════ Pintado de la maqueta ═══════════
+function pintarEnlace() {
+  const e = S.enlace;
+  $('#t-owlt').textContent = e.abierto ? `retraso ${e.owlt_s} s` : 'ventana CERRADA';
+  for (const id of ['#o-antena']) $(id)?.setAttribute('class', 'ondas ' + (e.abierto ? '' : 'cortado'));
+  $('#c-tierra').setAttribute('class', 'enl ' + (e.abierto ? '' : 'cortado'));
+}
+function pintarEnlacesLocales() {
+  const a = { playera: S.encendido.playera && S.bleConectado, brazalete: S.encendido.brazalete, reloj: S.encendido.reloj, cel: S.encendido.cel };
+  for (const k of Object.keys(a)) { const g = $('#o-' + k); if (g) g.setAttribute('class', `ondas ${g.dataset.clase} ${a[k] ? '' : 'cortado'}`); }
+  $('#c-cel').setAttribute('class', 'enl ' + (S.encendido.cel ? '' : 'cortado'));
+  for (const k of ['playera', 'brazalete', 'reloj']) document.querySelectorAll(`.disp[data-id="${k}"]`).forEach((g) => g.classList.toggle('apagado', !S.encendido[k]));
+  $('#pc-con').textContent = `${Object.values(a).filter(Boolean).length} conectados`;
+}
+
+// ═══════════ Arranque ═══════════
+// En pantallas anchas la nave llena todo; en verticales se ve completa.
+const ajustar = () => $('#escena svg').setAttribute('preserveAspectRatio', innerWidth / Math.max(1, innerHeight - 52) > 1.45 ? 'xMidYMid slice' : 'xMidYMid meet');
+ajustar(); addEventListener('resize', ajustar);
+(function estrellas() {
+  let x = 7; const azar = () => ((x = (x * 16807) % 2147483647) / 2147483647);
+  const poner = (id, x0, y0, w, h, n) => {
+    const g = $(id);
+    for (let i = 0; i < n; i++) {
+      const c = document.createElementNS(NS, 'circle');
+      c.setAttribute('cx', (x0 + azar() * w).toFixed(1)); c.setAttribute('cy', (y0 + azar() * h).toFixed(1));
+      c.setAttribute('r', (0.5 + azar() * 1.2).toFixed(2)); c.setAttribute('fill', '#fff'); c.setAttribute('opacity', (0.35 + azar() * 0.6).toFixed(2));
+      g.appendChild(c);
+    }
+  };
+  poner('#estrellas-cielo', 310, -92, 580, 144, 70);
+  poner('#estrellas-ventana', 557, 180, 236, 146, 40);
+})();
+ondas('playera', POS.playera, POS.pc);
+ondas('brazalete', POS.brazalete, [POS.brazalete[0] + 100, POS.brazalete[1] - 120], '', [10, 17, 24]);
+ondas('reloj', POS.reloj, POS.pc);
+ondas('cel', [1064, 420], POS.pc, '', [8, 14]);
+ondas('antena', [890, 345], POS.tierra, '', [12, 20, 28], 0.5);
+
+document.querySelectorAll('.etq').forEach((g) => {
+  const bb = g.getBBox(), r = document.createElementNS(NS, 'rect');
+  r.setAttribute('x', bb.x - 6); r.setAttribute('y', bb.y - 4); r.setAttribute('width', bb.width + 12); r.setAttribute('height', bb.height + 8);
+  r.setAttribute('fill', 'transparent'); g.insertBefore(r, g.firstChild);
+});
+document.querySelectorAll('.disp,.equipo').forEach((g) => {
+  g.addEventListener('click', (e) => abrirTerminal(g.dataset.id, e));
+  g.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault(); const r = g.getBoundingClientRect();
+    abrirTerminal(g.dataset.id, { clientX: r.right, clientY: r.top + r.height / 2 });
+  });
+});
+$('#b-preparar').addEventListener('click', preparar);
+// ═══════════ Bienvenida y recorrido guiado ═══════════
+// La bienvenida aparece al abrir y se vuelve a ver con «?». El recorrido señala cada parte de la
+// nave: lo demás se oscurece y se desenfoca, y un aro de luz se mueve hasta lo que se explica.
+const intro = $('#intro');
+const PASOS = [
+  { sel: '.disp[data-id="playera"] .forma', t: 'Playera con sensores', x: 'Tres sensores cosidos: <b>ECG</b>, <b>banda respiratoria</b> y <b>termómetro</b>. Mide pulso, respiración y temperatura sin que Ana haga nada.' },
+  { sel: '.disp[data-id="esp32"]:not(.etq)', t: 'ESP32 de la playera', x: 'Lee los sensores y arma la trama binaria. Si se corta el Bluetooth, <b>guarda hasta 1 800 lecturas</b> y las envía al reconectar.' },
+  { sel: '.disp[data-id="brazalete"]:not(.etq)', t: 'Brazalete de presión', x: 'Mide la presión arterial <b>sistólica y diastólica</b> y la manda en su propia trama, directo a la computadora central.' },
+  { sel: '.disp[data-id="reloj"]:not(.etq)', t: 'Reloj inteligente', x: 'Envía pulso y <b>oxígeno en sangre</b>. Si pierde contacto con la piel, el dato se guarda pero no se evalúa.' },
+  { sel: '.equipo[data-id="pc"]', t: 'Computadora central', x: 'Aquí corre el backend. Sabe quién lleva cada dispositivo y <b>Lunna</b> compara cada dato con lo normal para esa persona.' },
+  { sel: '.equipo[data-id="cel"]', t: 'Smartphone', x: 'Opcional. Recibe los <b>avisos</b> que manda Tierra para la tripulación.' },
+  { sel: '.equipo[data-id="tierra"]', t: 'Tierra', x: 'Recibe alertas y resúmenes <b>con el retraso de la luz</b>. Si la ventana de comunicación se cierra, todo espera en cola.' },
+  { sel: '#b-preparar', t: 'Preparar misión', x: 'Carga <b>119 días de historia</b> para que Lunna conozca a Ana antes de empezar.' },
+  { sel: '#b-vivo', t: 'En vivo', x: 'Una vez preparada, las tramas fluyen <b>cada segundo</b>. Toca cualquier dispositivo para ver su terminal.' },
+];
+let pasoRv = -1, velo = null, aro = null, tarjeta = null;
+const visibleRv = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+function colocarPaso(cambia) {
+  const p = PASOS[pasoRv];
+  const el = [...document.querySelectorAll(p.sel)].find(visibleRv);
+  const r = el ? el.getBoundingClientRect() : { left: innerWidth / 2 - 40, top: innerHeight / 2 - 40, width: 80, height: 80 };
+  // El margen se encoge pegado a los bordes para que el aro siga centrado (botones del encabezado).
+  const pad = Math.max(3, Math.min(12, r.left - 3, r.top - 3)), L = Math.max(3, r.left - pad), T = Math.max(3, r.top - pad);
+  const W = Math.min(innerWidth - L - 4, r.width + pad * 2), H = Math.min(innerHeight - T - 4, r.height + pad * 2);
+  const cx = L + W / 2, cy = T + H / 2;
+  velo.style.setProperty('--rx', `${cx}px`); velo.style.setProperty('--ry', `${cy}px`);
+  velo.style.setProperty('--rw', `${W * 0.78 + 30}px`); velo.style.setProperty('--rh', `${H * 0.78 + 30}px`);
+  Object.assign(aro.style, { left: `${L}px`, top: `${T}px`, width: `${W}px`, height: `${H}px` });
+  // La tarjeta va a un lado del objetivo, donde quepa; en celular, abajo.
+  tarjeta.querySelector('.rv-num').textContent = `${pasoRv + 1} de ${PASOS.length}`;
+  tarjeta.querySelector('h3').textContent = p.t;
+  tarjeta.querySelector('p').innerHTML = p.x;
+  tarjeta.querySelectorAll('.rv-segs i').forEach((s, i) => s.classList.toggle('on', i <= pasoRv));
+  tarjeta.querySelector('#rv-atras').disabled = pasoRv === 0;
+  tarjeta.querySelector('#rv-sig').textContent = pasoRv === PASOS.length - 1 ? 'Empezar' : 'Siguiente';
+  // Prueba a la derecha, a la izquierda, abajo y arriba; se queda con el primer lugar que no tape el objetivo.
+  const tw = tarjeta.offsetWidth, th = tarjeta.offsetHeight, m = 16, arriba = 64;
+  const ajX = (x) => Math.min(Math.max(m, x), innerWidth - tw - m), ajY = (y) => Math.min(Math.max(arriba, y), innerHeight - th - m);
+  const opciones = [
+    [L + W + m, ajY(cy - th / 2)], [L - tw - m, ajY(cy - th / 2)],
+    [ajX(cx - tw / 2), T + H + m], [ajX(cx - tw / 2), T - th - m],
+  ];
+  const cabe = ([x, y]) => x >= m && y >= arriba && x + tw <= innerWidth - m && y + th <= innerHeight - m;
+  const tapa = ([x, y]) => !(x + tw <= L || x >= L + W || y + th <= T || y >= T + H);
+  const [x, y] = opciones.find((o) => cabe(o) && !tapa(o)) || opciones.find(cabe) || [ajX(cx - tw / 2), ajY(T + H + m)];
+  Object.assign(tarjeta.style, { left: `${x}px`, top: `${y}px` });
+  if (cambia) { tarjeta.classList.remove('cambia'); void tarjeta.offsetWidth; tarjeta.classList.add('cambia'); }
+}
+function irPaso(i) { pasoRv = Math.max(0, Math.min(PASOS.length - 1, i)); colocarPaso(true); tarjeta.querySelector('#rv-sig').focus({ preventScroll: true }); }
+function abrirRecorrido() {
+  intro.hidden = true;
+  velo = document.createElement('div'); velo.className = 'rv-velo';
+  aro = document.createElement('div'); aro.className = 'rv-aro';
+  tarjeta = document.createElement('section'); tarjeta.className = 'rv-tarjeta'; tarjeta.setAttribute('role', 'dialog'); tarjeta.setAttribute('aria-live', 'polite');
+  tarjeta.innerHTML = `<div class="rv-cuerpo"><span class="rv-num"></span><h3></h3><p></p></div>
+    <div class="rv-segs" aria-hidden="true">${PASOS.map(() => '<i></i>').join('')}</div>
+    <div class="rv-acc"><button class="rv-saltar" id="rv-saltar" type="button">Saltar</button><span class="espacio"></span>
+      <button class="sec" id="rv-atras" type="button">Atrás</button><button id="rv-sig" type="button">Siguiente</button></div>`;
+  document.body.append(velo, aro, tarjeta);
+  tarjeta.querySelector('#rv-saltar').addEventListener('click', cerrarRecorrido);
+  tarjeta.querySelector('#rv-atras').addEventListener('click', () => irPaso(pasoRv - 1));
+  tarjeta.querySelector('#rv-sig').addEventListener('click', () => (pasoRv === PASOS.length - 1 ? cerrarRecorrido() : irPaso(pasoRv + 1)));
+  velo.addEventListener('click', () => irPaso(pasoRv + 1 < PASOS.length ? pasoRv + 1 : pasoRv));
+  pasoRv = 0;
+  requestAnimationFrame(() => colocarPaso(true));
+  tarjeta.querySelector('#rv-sig').focus({ preventScroll: true });
+}
+function cerrarRecorrido() {
+  [velo, aro, tarjeta].forEach((n) => n && n.remove());
+  velo = aro = tarjeta = null; pasoRv = -1;
+  $('#b-preparar').focus({ preventScroll: true });
+}
+const cerrarIntro = () => { intro.hidden = true; };
+$('#intro-ok').addEventListener('click', cerrarIntro);
+$('#intro-tour').addEventListener('click', abrirRecorrido);
+intro.addEventListener('click', (e) => { if (e.target === intro) cerrarIntro(); });
+addEventListener('keydown', (e) => {
+  if (pasoRv >= 0) {
+    if (e.key === 'Escape') cerrarRecorrido();
+    else if (e.key === 'ArrowRight') irPaso(pasoRv + 1);
+    else if (e.key === 'ArrowLeft') irPaso(pasoRv - 1);
+    return;
+  }
+  if (e.key === 'Escape' && !intro.hidden) cerrarIntro();
+});
+addEventListener('resize', () => { if (pasoRv >= 0) colocarPaso(false); });
+$('#b-info').addEventListener('click', () => { intro.hidden = false; $('#intro-tour').focus(); });
+$('#intro-tour').focus();
+$('#b-vivo').addEventListener('click', () => (S.vivo ? detener() : iniciar()));
+$('#b-reiniciar').addEventListener('click', async () => {
+  detener(); await api('/api/demo/reiniciar', 'POST'); S.ventanaMin = 1440;
+  S.lanzamiento = null; S.pred = []; S.esc = null; S.colaEsp = [];
+  for (const k of Object.keys(S.consola)) S.consola[k] = [];
+  document.querySelectorAll('.vlog').forEach((l) => { l.innerHTML = ''; });
+  $('#b-vivo').disabled = true;
+  tr('pc', 'misión reiniciada');
+});
+
+(async () => {
+  try {
+    const s = await api('/api/salud'); S.version = s.version;
+    $('#v-back').textContent = 'v' + s.version; $('#d-back').className = 'dot ok';
+    S.enlace = await api('/api/enlace'); pintarEnlace();
+    const orb = (await api('/api/fases')).find((f) => f.entorno === 'orbita');
+    if (orb) { S.lanzamiento = Date.parse(orb.desde); $('#b-vivo').disabled = false; }
+  } catch { $('#v-back').textContent = 'sin conexión'; $('#d-back').className = 'dot bad'; }
+  try { await cargarTripulacion(); } catch (e) { tr('pc', `<span class="rojo">no se pudo leer la tripulación: ${esc(e.message)}</span>`); }
+  tr('pc', `backend v${S.version || '?'} corriendo · esperando tramas`);
+  tr('playera', 'hora recibida de pc-central · lista para enviar');
+  esp32Arranca();
+  tr('tierra', 'control de misión en línea · escribe «ayuda»');
+  tr('tierra', '<span class="dim">consola de control de misión de Julio: </span><a href="/tierra" target="_blank" style="color:#7dd3fc">/tierra</a>');
+  conectarEventos(); pintarEnlacesLocales(); pintarEnlace();
+})();
+</script>
+</body>
+</html>

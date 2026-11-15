@@ -18,18 +18,20 @@
   document.body.classList.add("modo-demo");
   document.body.append(dedo);
 
+  // ?demo=30 → versión de 30 s para el video de entrega (en inglés con &idioma=en): solo la historia de Ana.
+  const CORTO = new URLSearchParams(location.search).get("demo") === "30";
   let pausado = false, paso = 0;
-  const TOTAL = 34;
+  const TOTAL = CORTO ? 5 : 34;
   controles.querySelector('[data-d="pausa"]').addEventListener("click", (e) => { pausado = !pausado; e.currentTarget.textContent = pausado ? "▶" : "❚❚"; });
   controles.querySelector('[data-d="reiniciar"]').addEventListener("click", () => location.reload());
 
   const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
   async function espera(ms) { let t = 0; while (t < ms) { await dormir(50); if (!pausado) t += 50; } }
   const avanzar = () => { paso++; controles.querySelector(".demo-progreso i").style.width = Math.min(100, (paso / TOTAL) * 100) + "%"; };
-  async function escena(hora, texto) {
+  async function escena(hora, texto, ms) {
     leyenda.innerHTML = `<b>${hora}</b> ${texto}`;
     leyenda.classList.remove("ver"); void leyenda.offsetWidth; leyenda.classList.add("ver");
-    await espera(2000);
+    await espera(ms || 2000);
   }
   async function buscar(sel, ms) {
     const fin = Date.now() + (ms || 5000);
@@ -133,5 +135,36 @@
     dedo.style.opacity = "0";
     controles.querySelector(".demo-progreso i").style.width = "100%";
   }
-  guion().catch((e) => { leyenda.innerHTML = `<b>Demo detenida</b> ${e.message}`; console.error(e); });
+  /** 30 s: la historia de Ana. Los textos van en inglés porque es el video de entrega (Space Apps pide inglés). */
+  async function guionCorto() {
+    const A = window.APP;
+    const saltar = (dia) => { A.estado.dia = dia; A.ir("hoy"); };
+    A.estado.persona = "MS-2";
+    saltar(112);
+    await espera(200);
+    await escena("Day 112", "Ana, mission specialist. 98 days from Mars, 20 light-minutes from Earth.", 2300);
+    await tocar('.esc-regiones [data-region="cabeza"]');
+    await espera(800);
+    try { await tocar(".hud .hud-x", 2500); } catch { /* sin animación (pestaña oculta): sigue sin el panel */ }
+
+    await escena("07:32", "No single signal is alarming. Sleep, reflexes and resting pulse drifting together from <i>her own</i> 14-day normal are.", 2900);
+    await tocar('.aviso-card[data-ir="alertas"]');
+    await escena("07:33", "Lunna explains the evidence and opens a protocol. The CMO decides, on board, without waiting for Earth.", 2500);
+    await tocar("#aceptar");
+
+    // Primero cambia el día y luego sale el texto, para que la pantalla ya muestre lo que dice la leyenda.
+    saltar(114);
+    await escena("Day 114", "Two days later, back in her normal: cleared for the spacewalk.", 2200);
+
+    saltar(115);
+    await escena("Day 115", "Solar particle event, modeled on a real NASA DONKI event. Everyone to the shelter.", 2000);
+    await tocar('.aviso-card[data-ir="solar"]');
+    await espera(300);
+
+    leyenda.innerHTML = `<b>Lunna</b> Your own normal · decisions on board · NASA data. Team Monarcas, NASA Space Apps 2026. <button class="demo-otra">Watch again ↺</button>`;
+    leyenda.querySelector(".demo-otra").addEventListener("click", () => location.reload());
+    dedo.style.opacity = "0";
+    controles.querySelector(".demo-progreso i").style.width = "100%";
+  }
+  (CORTO ? guionCorto() : guion()).catch((e) => { leyenda.innerHTML = `<b>Demo detenida</b> ${e.message}`; console.error(e); });
 })();

@@ -1210,3 +1210,105 @@ body { padding: 12px 0; }
 /* Idioma (Ajustes): dos opciones, con el código grande como en los temas. */
 .aj-idioma { grid-template-columns: repeat(2, 1fr); }
 .aj-idioma .aj-cod { font: 700 15px/1 var(--letra); letter-spacing: .04em; color: var(--acento, #2C5BD6); padding: 6px 0 2px; }
+
+/* ================= Zoom al órgano, fluido (15 nov) =================
+ * Todo lo que se mueve es transform u opacity: la tarjeta gráfica lo anima a 60 fps.
+ * 1) Un anillo late sobre el órgano. 2) La figura se acerca (transform en app.js, no viewBox).
+ * 3) El panel brota del órgano como una burbuja que crece hasta cubrir la pantalla; su vidrio
+ *    (backdrop-filter) se enciende solo cuando terminó de crecer (.listo). */
+.hud, .hud.abierto { clip-path: none; }
+.hud {
+  transform-origin: var(--ox, 50%) var(--oy, 50%);
+  transform: scale(.06); opacity: 0; border-radius: 48px;
+  transition: transform 560ms cubic-bezier(.22, 1, .36, 1), opacity 240ms ease, border-radius 560ms cubic-bezier(.22, 1, .36, 1);
+  will-change: transform, opacity;
+}
+.hud.abierto { transform: none; opacity: 1; border-radius: 0; }
+.hud:not(.listo), :root[data-tema] .hud:not(.listo) { backdrop-filter: none; -webkit-backdrop-filter: none; }
+.hud.sin-trans, .hud.sin-trans > * { transition: none !important; }
+/* Al cerrar se recoge más rápido que al abrir. */
+.hud:not(.abierto) { transition-duration: 420ms, 260ms, 420ms; transition-timing-function: cubic-bezier(.65, 0, .35, 1), ease, cubic-bezier(.65, 0, .35, 1); }
+/* El contenido entra en cascada un poco después de que la burbuja ya cubrió casi todo. */
+.hud.abierto > *:not(.hud-cab) { transition-delay: 200ms; }
+.hud.abierto > *:nth-child(3) { transition-delay: 260ms; } .hud.abierto > *:nth-child(4) { transition-delay: 310ms; }
+.hud.abierto > *:nth-child(5) { transition-delay: 360ms; } .hud.abierto > *:nth-child(n+6) { transition-delay: 410ms; }
+.hud > *:not(.hud-cab) { transform: translateY(14px) scale(.98); }
+.hud.abierto > * { transform: none; }
+
+/* La figura acercándose: sin redibujar mientras se mueve. */
+.esc-lienzo .cuerpo-svg { will-change: transform; backface-visibility: hidden; }
+.cuerpo-svg.con-foco .org.activa, .cuerpo-svg.con-foco .halo.activa { opacity: 1; }
+
+/* Anillo de luz sobre el órgano. */
+.org-pulso {
+  position: absolute; z-index: 31; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; pointer-events: none;
+  --c: #58C8FF; border: 2px solid var(--c);
+  box-shadow: 0 0 22px var(--c), inset 0 0 18px var(--c);
+  transform: scale(.15); opacity: 0;
+  animation: org-pulso 760ms cubic-bezier(.22, 1, .36, 1) forwards;
+}
+.org-pulso::after { content: ""; position: absolute; inset: 38%; border-radius: 50%; background: var(--c); filter: blur(6px); opacity: .8; }
+.org-pulso.es-0 { --c: #3DD68C; } .org-pulso.es-1 { --c: #FFC23D; } .org-pulso.es-2 { --c: #FF5A6E; }
+@keyframes org-pulso {
+  0% { transform: scale(.15); opacity: 0; }
+  25% { opacity: 1; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hud, .hud > * { transition: none !important; transform: none !important; }
+  .org-pulso { display: none; }
+}
+/* Atenuar los demás órganos de golpe (no con transición): si cambian mientras la figura se mueve, el SVG se
+   redibuja en cada cuadro. Al cerrar sí regresan suave, cuando la figura ya está quieta. */
+.cuerpo-svg.con-foco .org, .cuerpo-svg.con-foco .halo, .cuerpo-svg.con-foco .marcas { transition: none; }
+/* Mientras se acerca, la figura no se sale de su lienzo (no tapa el título «Tu cuerpo hoy»). */
+.esc-lienzo:has(.cuerpo-svg.con-foco) { overflow: hidden; border-radius: 18px; }
+/* En tema claro el panel era 82 % opaco y, mientras crece sin desenfoque, se veía Inicio detrás. */
+:root[data-tema="claro"] .hud { background: var(--brillo), linear-gradient(rgba(238, 244, 255, .97), rgba(238, 244, 255, .97)); }
+
+/* ================= Zoom al órgano · detalles (15 nov) ================= */
+/* Línea de escaneo que barre la figura mientras se acerca. */
+.esc-escaneo {
+  position: absolute; left: -10%; right: -10%; top: 0; height: 70px; z-index: 2; pointer-events: none;
+  --c: 88, 200, 255;
+  background: linear-gradient(180deg, transparent, rgba(var(--c), .10) 60%, rgba(var(--c), .55) 96%, rgba(var(--c), .9) 100%);
+  border-bottom: 1px solid rgba(var(--c), .95); box-shadow: 0 6px 18px rgba(var(--c), .45);
+  transform: translateY(-80px); animation: esc-escaneo 760ms cubic-bezier(.45, 0, .2, 1) forwards;
+}
+.esc-escaneo.es-0 { --c: 61, 214, 140; } .esc-escaneo.es-1 { --c: 255, 194, 61; } .esc-escaneo.es-2 { --c: 255, 90, 110; }
+@keyframes esc-escaneo { 0% { transform: translateY(-80px); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translateY(440px); opacity: 0; } }
+
+/* Las gráficas se dibujan de izquierda a derecha y el punto de hoy aparece al final. */
+.hud.abierto .hud-dato .normal-graf { animation: graf-dibujar 820ms cubic-bezier(.22, 1, .36, 1) both; animation-delay: 380ms; }
+@keyframes graf-dibujar { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+.hud.abierto .hud-dato .normal-graf .hoy { transform-box: fill-box; transform-origin: center; animation: graf-hoy 420ms cubic-bezier(.34, 1.56, .64, 1) both; animation-delay: 1100ms; }
+@keyframes graf-hoy { from { transform: scale(0); } to { transform: scale(1); } }
+
+/* Asa para deslizar hacia abajo y cerrar. */
+.hud-cab { position: relative; }
+.hud-asa { position: absolute; top: -8px; left: 50%; width: 38px; height: 4px; margin-left: -19px; border-radius: 99px; background: var(--hud-tenue, rgba(255, 255, 255, .4)); opacity: .55; }
+.hud.arrastrando { transition: none !important; cursor: grabbing; }
+.hud.arrastrando > * { transition: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .esc-escaneo { display: none; }
+  .hud.abierto .hud-dato .normal-graf, .hud.abierto .hud-dato .normal-graf .hoy { animation: none; }
+}
+/* El panel ya es 90–97 % opaco: su desenfoque de fondo casi no se nota y obligaba a recalcularlo mientras los
+   números cuentan y las gráficas se dibujan. Fuera, para que todo vaya a 60 fps. */
+.hud, :root[data-tema] .hud, :root[data-tema] .hud.listo { backdrop-filter: none; -webkit-backdrop-filter: none; }
+:root[data-tema="oscuro"] .hud { background: var(--brillo), linear-gradient(rgba(6, 14, 46, .96), rgba(4, 9, 32, .98)); }
+
+/* ================= Ciclo: lo registrado se pinta (15 nov) =================
+ * Un día con sangrado anotado se ve rojo aunque la predicción diga otra fase.
+ * Manchado (0) = aro rojo · ligero (1) · medio (2) · abundante (3) = rojo sólido cada vez más intenso. */
+.ciclo-anillo .cd-real circle:not(.cd-aro):not(.cd-reg) { fill: #FF5A75; }
+.ciclo-anillo .cd-flujo-0 circle:not(.cd-aro):not(.cd-reg) { fill: rgba(255, 90, 117, .14); stroke: #FF3B5C; stroke-width: 2.6; }
+.ciclo-anillo .cd-flujo-1 circle:not(.cd-aro):not(.cd-reg) { fill: #FF7A90; }
+.ciclo-anillo .cd-flujo-2 circle:not(.cd-aro):not(.cd-reg) { fill: #FF3B5C; }
+.ciclo-anillo .cd-flujo-3 circle:not(.cd-aro):not(.cd-reg) { fill: #D9183E; }
+.ciclo-anillo .cd-real circle:not(.cd-aro):not(.cd-reg) { filter: drop-shadow(0 0 4px rgba(255, 59, 92, .55)); }
+.sem-dia .cd-real { background: #FF3B5C; color: #fff; }
+.sem-dia .cd-flujo-0 { background: rgba(255, 90, 117, .14); color: #E0284A; box-shadow: inset 0 0 0 2px #FF3B5C; }
+.sem-dia .cd-flujo-1 { background: #FF7A90; } .sem-dia .cd-flujo-3 { background: #D9183E; }
+:root[data-tema="oscuro"] .sem-dia .cd-flujo-0 { color: #FF8FA3; }

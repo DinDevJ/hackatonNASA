@@ -37,6 +37,8 @@ npm start
 - Computadora central: http://localhost:8787/app/central.html
 - Base en Tierra: http://localhost:8787/app/base.html
 - Simulador de la nave: http://localhost:8787/simulador
+- **Demo de 30 s en inglés** (para el video de entrega): http://localhost:8787/app/?demo=30&idioma=en ·
+  la demo completa en español: http://localhost:8787/app/?demo
 
 Pruebas: `npm test` en el backend y `node --test motor.test.mjs` en `Planeacion/Leo/maqueta-eva`.
 

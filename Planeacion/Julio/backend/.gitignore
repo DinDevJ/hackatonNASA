@@ -1,3 +1,10 @@
 eva.db
 eva.db-*
 node_modules/
+# Enlace HTTPS: bases por rol y certificados de desarrollo (llave privada: nunca al repo)
+eva-*.db
+eva-*.db-*
+certs/
+*.pem
+*.crt
+*.key

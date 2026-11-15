@@ -1,0 +1,84 @@
+{
+  "key": "panecho",
+  "nombre": "PanEcho",
+  "repo": "vendor/PanEcho",
+  "repo_url": "https://github.com/CarDS-Yale/PanEcho",
+  "repo_commit": "836c46ef6bc4eace50b7dc36704ecef2d33affde",
+  "entrypoint": "adapters/panecho/infer.py",
+  "env": {
+    "dir": "envs/panecho",
+    "python": "3.11",
+    "torch": "2.5.1",
+    "torchvision": "0.20.1",
+    "torch_index_url": "https://download.pytorch.org/whl/cu124",
+    "requirements_in": "adapters/panecho/requirements.in",
+    "lock_windows": "adapters/panecho/requirements-win.lock.txt",
+    "install_vars": {},
+    "editable": [],
+    "notas": "Desviaciones respecto al repo: el panecho.yml fija Python 3.10, torch 2.1.0/torchvision 0.16.0 (cu118), timm 0.9.10, numpy 1.23.5, pandas 1.5.2; aqui Python 3.11, torch 2.5.1/torchvision 0.20.1 (cu124) por la decision de entornos del contrato; timm 0.9.10 se mantiene, numpy 1.26.4 y pandas 2.2.3 (wheels cp311). huggingface-hub se fija en 0.26.5 porque timm 0.9.10 usa la API 0.x. Solo se instalan las dependencias de inferencia (no las ~200 del yml). Probado en Linux CPU con torch 2.5.1+cpu (prueba de carga dummy); NO se ha corrido inferencia real."
+  },
+  "pesos": [
+    {
+      "archivo": "weights/panecho/panecho.pt",
+      "url": "https://github.com/CarDS-Yale/PanEcho/releases/download/v1.0/panecho.pt",
+      "tamano_bytes": 505054604,
+      "tamano_fuente": "HEAD (curl -sIL) Content-Length 2026-11-14 tras redireccion a release-assets.githubusercontent.com, HTTP 200 sin login (no se descargo)",
+      "sha256": null,
+      "acceso": "publico",
+      "licencia": "CC BY-NC-SA 4.0 (pesos, segun LICENSES.md del repo); codigo AGPLv3",
+      "pasos_manuales": null,
+      "descomprimir_en": null
+    }
+  ],
+  "muestras": [
+    {
+      "archivo": "samples/echoclip_example_video.avi",
+      "fuente": "vendor/echo_CLIP/example_video.avi (MJPEG 224x224, 113 frames): es 224x224, usa el preprocesamiento oficial sin adaptar",
+      "licencia": "Academic Software License de Cedars-Sinai (solo uso academico/sin fines de lucro, sin transferir); ver samples/FUENTES.md",
+      "modalidad": "video_2d",
+      "vista": "desconocida"
+    },
+    {
+      "archivo": "samples/echonet_dynamic_Example1.mp4",
+      "fuente": "vendor/dynamic/docs/media/Example1.mp4 (582x582, A4C): no es 224x224, se marca preprocesamiento_adaptado",
+      "licencia": "ver samples/FUENTES.md",
+      "modalidad": "video_2d",
+      "vista": "A4C"
+    }
+  ],
+  "modalidades_admitidas": [
+    "video_2d"
+  ],
+  "vistas_admitidas": [
+    "cualquiera"
+  ],
+  "entrada": "Video 2D modo B de ecocardiografia (AVI/MP4/MOV...), cualquier vista (PanEcho es view-agnostic). Archivo o carpeta con varios videos de un mismo estudio. No admite imagen 2D, volumen 3D ni Doppler (se rechaza con 'analisis no implementado'; Doppler color sospechado por saturacion se rechaza salvo options.permitir_color).",
+  "salidas": [
+    "40 tareas (content/tasks.pkl y tasks.md coinciden en 40; el README dice 39): se exponen todas",
+    "clasificacion multiclase: una fila probabilidad_clase por clase, metric '<tarea>:<clase>', unit probabilidad_modelo_0_1 (softmax del modelo, no probabilidad clinica calibrada)",
+    "clasificacion binaria: una fila probabilidad_clase para la clase positiva de tasks.md",
+    "regresion (EF %, GLS %, LVEDV/LVESV/LVSV cm^3, IVSd, LVPWd, LVIDs, LVIDd, LVOTDiam, RVIDd, TAPSE, LAIDs2D, RADimensionM-L cm, RVSP/TVPkGrad mmHg, RVSVel cm/s, AVPkVel m/s, LAVol cm^3, E/e'): tipo medicion, notes 'estimacion del modelo; no calculada desde pixeles'; GLS value = -1 x salida cruda (tasks.md)",
+    "raw_output: salida por clip y media por video sin redondear, claves missing/unexpected al cargar pesos, n_parametros, vram_pico_mb",
+    "carpeta con varios videos: filas por video y, como hace el repo (utils.py L211, README L15), agregacion a nivel estudio = media de videos, etiquetada nivel_estudio_agregado"
+  ],
+  "requiere_prompt": false,
+  "opciones": {
+    "device": "auto",
+    "num_clips": 4,
+    "clip_len": 16,
+    "permitir_color": false,
+    "torch_load_weights_only": true,
+    "prueba_carga_dummy": false
+  },
+  "vram_estimada": {
+    "gb": 2.0,
+    "base": "estimacion: 42,063,514 parametros medidos (prueba de carga) x 4 B = 160.5 MB + activaciones de un clip de 16 frames 224x224 en fp32 sin gradiente (~1-1.5 GB, estimado, no medido en GPU; los clips se procesan de uno en uno)",
+    "cabe_en_6gb": "probable"
+  },
+  "licencia": "Codigo AGPLv3; pesos CC BY-NC-SA 4.0 (no comercial, atribucion, compartir igual). Resultados de investigacion, no diagnosticos.",
+  "estado": "pendiente de probar en PC",
+  "motivo_estado": "En Linux solo se probo la prueba de carga dummy (arquitectura sin pesos + tensor aleatorio), el rechazo de modalidad y el error limpio por pesos faltantes. NO se ha corrido inferencia real: faltan los pesos (505 MB) y una GPU/CPU en la PC de Iker.",
+  "preprocesamiento": "Oficial: vendor/PanEcho/src/dataset.py EchoDataset L389-505 (BGR sin convertir, clips de 16 frames consecutivos, 4 clips, CenterCrop 224, /255, Normalize ImageNet). Si el video no es 224x224 se aplica resize 256x256 INTER_AREA antes del crop (como dataset.py L103/L221) y la salida queda marcada preprocesamiento_adaptado.",
+  "no_implementado": [],
+  "timeout_s": 1800
+}

@@ -46,6 +46,9 @@ Requiere **Node 22.6+** y nada más: SQLite y TypeScript vienen integrados en No
 | Estado actual de la tripulación | `GET /api/estado` |
 | Gráfica de una variable | `GET /api/muestras?tripulante=ana&variable=04:A4&desde=…` |
 | Predicción y banda esperada | `GET /api/prediccion/ana` |
+| **Todo lo de un tripulante, ya evaluado** (lo usan el celular y la central) | `GET /api/app/:tripulante` — por variable: último valor, mediana, esperado, banda, z, `estado`, `motivo`, umbral clínico, serie de 14 días; más sus alertas y avisos |
+| Umbrales clínicos de referencia | `GET /api/referencias` (de `semillas/medibles.json`) |
+| Ventana de LUNNA (sólo demostraciones) | `GET/PUT /api/lunna/ventana` `{ minutos }` — 1440 en misión |
 | Alertas | `GET /api/alertas` |
 | Editar variables · esquemas · dispositivos | `GET/POST /api/variables` · `/api/esquemas` · `/api/dispositivos` |
 | Tripulantes, basales e historial | `GET/POST /api/tripulantes` · `PUT …/:id/basales` · `POST …/:id/historial` |
@@ -173,8 +176,24 @@ Sin datos propios manda la literatura; con una misión previa, su historial; tra
 calibración, sus datos. **La predicción siempre trae su banda del 95 %**, y cada alerta su
 `prob_nominal`: la probabilidad de ver esa desviación si la persona siguiera normal.
 
-Relación con la fórmula de Bayes del cuaderno, firmware del ESP32 y pasarela Bluetooth:
-**[../INTEGRACION.md](../INTEGRACION.md)**.
+### Dos criterios, el peor manda
+
+| Criterio | Qué compara | Para qué |
+|---|---|---|
+| **Personal** (LUNNA) | Mediana de 24 h contra lo esperado para **esa** persona en ese entorno | Derivas lentas que un rango genérico no ve (fatiga, desacondicionamiento) |
+| **Umbral clínico** | Mediana de las últimas 5 muestras válidas (≤ 10 min) contra el límite de `semillas/medibles.json` | Lo agudo: una SpO₂ de 87 % es grave aunque sea «normal para ti». Vale también en calibración |
+
+Cada alerta dice su `motivo`: `personal`, `umbral` o `ambos`, y si hubo umbral, cuál y de qué fuente.
+Los umbrales de signos vitales del catálogo de Iker son **[T] clínicos terrestres**: no se encontró una
+tabla pública de NASA para ellos. Trazabilidad dato por dato en [`semillas/medibles.md`](semillas/medibles.md).
+
+⚠️ **Modo demostración.** Con 24 h, una anomalía provocada en una demo de minutos tarda en mover la
+mediana y la vuelta a verde no se ve. El simulador, al pasar a «En vivo», acorta la ventana a 5 min y lo
+anuncia (`modo mision` en la terminal de la PC la devuelve a 24 h). `/api/salud` y la página de estado
+siempre dicen qué ventana está activa.
+
+Relación con la fórmula de Bayes del cuaderno, firmware del ESP32 y pasarela Bluetooth: `INTEGRACION.md`,
+en la etiqueta `planeacion-archivo` (`git checkout planeacion-archivo -- Planeacion/Julio/INTEGRACION.md`).
 
 ### Resultado con el simulador
 
@@ -204,6 +223,30 @@ funciona; no valida el modelo contra personas reales.
 
 ---
 
+## Semáforo de padecimientos (motor de 20)
+
+Lee las evaluaciones que escribe el motor Python de `prototipo-salud/` (20 padecimientos, 350 vínculos) y deja editar sus pesos. Es **distinto** del "índice por padecimiento" de Leo (`pesos.js`, 11 malestares). Provisional: no es un diagnóstico; las filas de la tripulación sintética llevan canal `SIMULADO`.
+
+| Ruta | Qué hace |
+|---|---|
+| `GET /api/padecimientos/semaforo[?tripulante=ID]` | Los 20 colores por tripulante (GRIS si no hay evaluación), con `vacio` y `como_poblar` |
+| `GET /api/padecimientos/semaforo/:tripulante/:padecimiento` | Evaluación y desglose por variable (peso de la fuente, del usuario, efectivo, contribución) |
+| `GET /api/padecimientos/referencias?tripulante=ID[&variable=VID]` | Valor normal por variable guardado por el motor en su última evaluación (rango, fuente, base personal; `SIMULADO` si aplica) |
+| `GET /api/padecimientos/pesos[?padecimiento=P07]` | Pesos por liga, rango [0, 3] y umbrales cambiados |
+| `PUT /api/padecimientos/pesos` | `{padecimiento_id, variable_id, peso?, prior_de?}` o `{umbral, valor}` |
+| `POST /api/padecimientos/pesos/restaurar` | `{}` (todo), `{padecimiento_id[, variable_id]}` o `{umbral}` |
+| `POST /api/padecimientos/evaluar` | `{simulado?: boolean}`: corre el motor (409 si la BD está en memoria o ya corre; 503 sin Python) |
+
+Los pesos cambiados se aplican en la **próxima evaluación**. Para poblar `evaluaciones` (hace falta `eva.db` en archivo y Python 3 con pandas):
+
+```
+npm run evaluar -- --simulado            # o --db ruta; por defecto BD o eva.db
+cd prototipo-salud && EVA_DB=<ruta a eva.db> python3 -m motor.evadb --evaluar [--simulado]
+curl -X POST localhost:8787/api/padecimientos/evaluar -d '{"simulado": true}'
+```
+
+Variables de entorno opcionales: `PYTHON`, `PROTOTIPO_SALUD`.
+
 ## Archivos
 
 ```
@@ -215,6 +258,8 @@ src/ingesta.ts     tubería: asignación, decodificación, guardado y vigilancia
 src/semillas.ts    configuración inicial e importación del contrato de Leo
 src/enlace.ts      enlace con Tierra: retraso de la luz, ventanas y avisos de vuelta
 src/servidor.ts    API REST y eventos en vivo
+src/semaforo.ts    semáforo de padecimientos, pesos del usuario y ejecución del motor Python
+src/evaluar-salud.ts  npm run evaluar
 src/simulador.ts   simulador de terminal: 4 tripulantes, 119 días
 web/simulador.html simulador visual (astronauta, dispositivos, PC central, Tierra) en /simulador
                    el PC abre la computadora central de LUNNA (/app/central.html, de

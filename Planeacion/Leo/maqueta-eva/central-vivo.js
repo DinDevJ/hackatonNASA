@@ -241,13 +241,15 @@
       <td><small class="tenue">${v.valor == null ? (v.basal != null ? `basal ${num(v.basal)}` : "") : `${esc(v.dispositivo || "–")} · ${esc(PROCEDENCIA[v.procedencia] || v.procedencia || "")}<br>${hms(v.t_scet)} · ${hace(v.t_scet)}`}</small></td></tr>`).join("");
     return `<section class="tarjeta cn-vivo" aria-labelledby="t-vivo">${cab}${avisoConexion()}
       <div class="cn-vivo-cab"><div><b>${esc(a.tripulante.nombre)}</b><small>${esc(a.tripulante.id)}${a.tripulante.rol ? ` · ${esc(a.tripulante.rol)}` : ""} · entorno: ${esc(ENTORNO[a.entorno] || a.entorno)}${a.dia_mision != null ? ` · día de misión ${a.dia_mision}` : " · misión sin empezar"}</small></div>${sem(g)}</div>
-      ${a.variables.length ? `<div class="cn-tabla-caja"><table class="cn-tabla cn-vivo-tabla"><thead><tr><th>Variable</th><th>Último</th><th>Mediana 24 h</th><th>Esperado (banda)</th><th>z</th><th>Estado</th><th>Días de misión</th><th>Origen</th></tr></thead><tbody>${filas}</tbody></table></div>` : `<div class="cn-vacio">Sin variables ni basales registradas.</div>`}
-      <div class="cn-rejilla cn-2b" style="margin-top:14px">
-        <div><h3 class="cn-vivo-sub">Sus alertas de LUNNA</h3>${a.alertas.length ? `<ol class="cn-hist">${a.alertas.slice(0, 6).map((x) => filaAlerta(x, false)).join("")}</ol>` : `<div class="cn-vacio">Sin alertas.</div>`}</div>
-        <div><h3 class="cn-vivo-sub">Avisos de Tierra que ya le llegaron</h3>${a.avisos.length ? a.avisos.slice(0, 6).map(aviso).join("") : `<div class="cn-vacio">Ninguno.</div>`}</div>
+      <div class="cn-vivo-cuerpo">
+        ${a.variables.length ? `<div class="cn-tabla-caja"><table class="cn-tabla cn-vivo-tabla"><thead><tr><th>Variable</th><th>Último</th><th>Mediana ${a.ventana_personal_min && a.ventana_personal_min < 1440 ? `${a.ventana_personal_min} min · demostración` : "24 h"}</th><th>Esperado (banda)</th><th>z</th><th>Estado</th><th>Días de misión</th><th>Origen</th></tr></thead><tbody>${filas}</tbody></table></div>` : `<div class="cn-vacio">Sin variables ni basales registradas.</div>`}
+        <div class="cn-vivo-lado">
+          <div><h3 class="cn-vivo-sub">Sus alertas de LUNNA</h3>${a.alertas.length ? `<ol class="cn-hist">${a.alertas.slice(0, 6).map((x) => filaAlerta(x, false)).join("")}</ol>` : `<div class="cn-vacio">Sin alertas.</div>`}</div>
+          <div><h3 class="cn-vivo-sub">Avisos de Tierra que ya le llegaron</h3>${a.avisos.length ? a.avisos.slice(0, 6).map(aviso).join("") : `<div class="cn-vacio">Ninguno.</div>`}</div>
+        </div>
       </div>
       ${pieFuente(`<code>/api/app/${esc(a.tripulante.id)}</code> y eventos de <code>/api/stream</code>`)}
-      <p class="cn-nota">Lo de abajo (14 días contra su normal, Cuerpo LUNNA, índice por padecimiento, metas y dosis) es el <b>escenario simulado</b> de la maqueta: el backend aún no ofrece esos datos.</p></section>`;
+      <p class="cn-nota">El resto del panel (14 días contra su normal, Cuerpo LUNNA, índice por padecimiento, metas y dosis) es el <b>escenario simulado</b> de la maqueta: el backend aún no ofrece esos datos.</p></section>`;
   }
   function aviso(a) {
     const nv = a.tipo === "alerta" ? (a.datos && a.datos.nivel) : null, n = nv === "rojo" ? 2 : nv === "ambar" ? 1 : 0;

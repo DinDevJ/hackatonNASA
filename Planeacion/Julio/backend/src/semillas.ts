@@ -42,39 +42,50 @@ function expandirPriores(base: Inicial['priores_orbita']): Prior[] {
   return out;
 }
 
-export function cargarInicial(db: BD, ruta: string): void {
-  const hay = db.prepare(`SELECT COUNT(*) AS n FROM variables`).get() as { n: number };
-  if (hay.n > 0) return;
+/**
+ * Carga la configuración inicial. Es INCREMENTAL: añade lo que falte y no toca lo
+ * que ya existe, así una semilla nueva (p. ej. los dispositivos del ESP32) aparece
+ * también en una base creada antes, sin borrarla y sin pisar lo que el equipo editó.
+ */
+export function cargarInicial(db: BD, ruta: string): { nuevos: Record<string, number> } {
   const d = JSON.parse(readFileSync(ruta, 'utf8')) as Inicial;
   const t = ahora();
+  const nuevos: Record<string, number> = {};
+  const contar = (k: string, r: { changes: number | bigint }) => { nuevos[k] = (nuevos[k] ?? 0) + Number(r.changes); };
 
   for (const v of d.variables) {
-    db.prepare(`INSERT INTO variables VALUES (?,?,?,?,?,?,?)`)
-      .run(v.id, v.nombre, v.descripcion ?? null, v.unidad, v.tipo_umbral ?? null, v.procedencia, t);
+    contar('variables', db.prepare(`INSERT OR IGNORE INTO variables VALUES (?,?,?,?,?,?,?)`)
+      .run(v.id, v.nombre, v.descripcion ?? null, v.unidad, v.tipo_umbral ?? null, v.procedencia, t));
   }
   for (const e of d.esquemas) {
     const errores = validarEsquema(e);
     if (errores.length) throw new Error(`esquema ${e.nombre}: ${errores.join('; ')}`);
-    db.prepare(`INSERT INTO esquemas VALUES (?,?,?,?,?)`).run(e.id, e.nombre, e.version, json(e.campos), t);
+    contar('esquemas', db.prepare(`INSERT OR IGNORE INTO esquemas VALUES (?,?,?,?,?)`)
+      .run(e.id, e.nombre, e.version, json(e.campos), t));
   }
   for (const x of d.dispositivos) {
-    db.prepare(`INSERT INTO dispositivos VALUES (?,?,?,?,?,?,?)`)
-      .run(x.id, x.clave, x.nombre, x.tipo, x.perfil, x.esquema_id ?? null, t);
+    contar('dispositivos', db.prepare(`INSERT OR IGNORE INTO dispositivos VALUES (?,?,?,?,?,?,?)`)
+      .run(x.id, x.clave, x.nombre, x.tipo, x.perfil, x.esquema_id ?? null, t));
   }
   for (const c of d.tripulantes) {
-    db.prepare(`INSERT INTO tripulantes VALUES (?,?,?,?,?,?,?,?)`)
+    const r = db.prepare(`INSERT OR IGNORE INTO tripulantes VALUES (?,?,?,?,?,?,?,?)`)
       .run(c.id, c.nombre, c.rol ?? null, c.sexo, c.edad, c.peso_kg, c.altura_m, c.sangre ?? null);
+    contar('tripulantes', r);
     for (const [v, val] of Object.entries(c.basales)) {
-      db.prepare(`INSERT INTO basales VALUES (?,?,?)`).run(c.id, v, val);
+      db.prepare(`INSERT OR IGNORE INTO basales VALUES (?,?,?)`).run(c.id, v, val);
     }
-    for (const h of c.historial ?? []) {
-      db.prepare(`INSERT INTO historial (tripulante, mision, entorno, variable, delta, escala) VALUES (?,?,?,?,?,?)`)
-        .run(c.id, h.mision, h.entorno, h.variable, h.delta, h.escala);
+    // El historial no tiene clave única: sólo se siembra para tripulantes nuevos.
+    if (Number(r.changes) > 0) {
+      for (const h of c.historial ?? []) {
+        db.prepare(`INSERT INTO historial (tripulante, mision, entorno, variable, delta, escala) VALUES (?,?,?,?,?,?)`)
+          .run(c.id, h.mision, h.entorno, h.variable, h.delta, h.escala);
+      }
     }
   }
   for (const p of expandirPriores(d.priores_orbita)) {
-    db.prepare(`INSERT INTO priores VALUES (?,?,?)`).run(p.variable, p.entorno, json(p));
+    contar('priores', db.prepare(`INSERT OR IGNORE INTO priores VALUES (?,?,?)`).run(p.variable, p.entorno, json(p)));
   }
+  return { nuevos };
 }
 
 // ─── importación del contrato de Leo (Planeacion/Leo/ingesta/src/contrato.ts) ──

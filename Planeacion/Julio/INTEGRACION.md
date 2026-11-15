@@ -146,8 +146,9 @@ python pasarela_ble.py --prueba --asignar 2561=ana --asignar 2817=ana
 La pasarela genera las mismas tramas que el firmware. También está el simulador de
 misión completa: `npm run sim` dentro de `backend/`.
 
-⚠️ Si ya tenían un `eva.db` de antes, **bórrenlo**: los dispositivos del ESP32 (2561 y
-2817) se cargan sólo con la base vacía.
+No hace falta borrar el `eva.db`: al arrancar, el backend añade lo que falte de las
+semillas sin tocar lo que ya existe, y lo indica en consola
+(`Semillas: añadidos 2 esquemas, 2 dispositivos`).
 
 ### Con el ESP32
 
@@ -197,7 +198,7 @@ Detalle de las llamadas en `backend/README.md`.
 | Pasarela → backend → base de datos → estado | ✅ de punta a punta en modo prueba |
 | Fórmula en un campo virtual (presión media) | ✅ calculada y con la fórmula registrada |
 | LUNNA detecta la fatiga simulada sin falsos positivos | ✅ 119 días, 4 tripulantes, 2 alertas verdaderas |
-| Backend: 17 pruebas | ✅ |
+| Backend: 18 pruebas | ✅ |
 | Firmware compilado y subido a un ESP32 | ❌ no hay placa |
 | Conexión BLE real entre ESP32 y PC | ❌ no hay placa; la pasarela usa `bleak`, que funciona en Windows |
 | LUNNA con datos humanos reales | ❌ los datos son sintéticos |

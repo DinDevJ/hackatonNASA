@@ -20,6 +20,15 @@
   // ---------- Piezas de interfaz ----------
   const FECHA0 = Date.UTC(2027, 2, 18); // día 112 = 18 mar 2027 (SCET del escenario de Julio)
   const fechaDia = (d) => new Date(FECHA0 + (d - 112) * 864e5);
+  /** Fase del ciclo de una persona un día, con el mismo cálculo que la pantalla Ciclo. */
+  const faseCicloDe = (pid, dia) => {
+    const per = M.PERSONAS.find((x) => x.id === pid);
+    if (!per || per.sexo !== "M" || pid === "MS-3") return null; // hombres y supresión menstrual (Mei): sin fases
+    const C = E.ciclo, dur = Math.max(21, Math.min(40, +C.duracion || 28)), sang = Math.max(2, Math.min(9, +C.sangrado || 5));
+    const diaC = (((Math.floor((fechaDia(dia) - new Date(C.ultima + "T00:00:00Z")) / 864e5)) % dur) + dur) % dur + 1;
+    return diaC <= sang ? "menstruacion" : diaC <= dur - 14 ? "folicular" : "lutea";
+  };
+  M.configurarCiclo(faseCicloDe);
   const fechaLarga = (d) => fechaDia(d).toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
   const titulo = (t, extra) => `<header class="titulo-grande"><div><p class="sup">${fechaLarga(E.dia)} · día ${E.dia}</p><h1>${t}</h1></div>${extra || ""}</header>`;
   const ICONO_SUB = {
@@ -29,10 +38,15 @@
     "Privacidad": ["candado", "#3DD68C", "#119B5A"], "Lunna": ["luna", "#6C7CFF", "#3446D4"], "Qué es real y qué es simulado": ["info", "#8B95B8", "#4E5A80"],
   };
   const sub = (t, s, volver) => { const i = ICONO_SUB[t]; return `<div class="cabecera"><button class="icono-btn" data-volver${volver ? `="${volver}"` : ""} aria-label="Volver">${ic("atras")}</button>${i ? `<div class="pastilla-ic" style="--ic1:${i[1]};--ic2:${i[2]}">${ic(i[0])}</div>` : ""}<div class="cab-txt"><h1>${t}</h1>${s ? `<div class="sub">${s}</div>` : ""}</div></div>`; };
-  const fila = (o) => `<button class="lista-fila" ${o.ir ? `data-ir="${o.ir}"` : ""} ${o.id ? `id="${o.id}"` : ""} ${o.data || ""}>
+  // Solo es botón si lleva a algún lado (bug 8); si no, es una fila de información sin flecha ni toque.
+  const fila = (o) => {
+    const tocable = !!(o.ir || o.id || o.data);
+    const tag = tocable ? "button" : "div";
+    return `<${tag} class="lista-fila${tocable ? "" : " lista-fila-fija"}" ${o.ir ? `data-ir="${o.ir}"` : ""} ${o.id ? `id="${o.id}"` : ""} ${o.data || ""}>
       <span class="lf-ic" style="--c:${o.c || "var(--acento)"}">${ic(o.ic)}</span>
       <span class="lf-txt"><b>${o.t}</b>${o.s ? `<small>${o.s}</small>` : ""}</span>
-      ${o.v !== undefined ? `<span class="lf-v">${o.v}</span>` : ""}${o.sinFlecha ? "" : ic("chevron", "lf-flecha")}</button>`;
+      ${o.v !== undefined ? `<span class="lf-v">${o.v}</span>` : ""}${o.sinFlecha || !tocable ? "" : ic("chevron", "lf-flecha")}</${tag}>`;
+  };
   const grupo = (t, filas, pie) => `<section class="grupo">${t ? `<h3 class="grupo-t">${t}</h3>` : ""}<div class="lista">${filas.join("")}</div>${pie ? `<p class="grupo-pie">${pie}</p>` : ""}</section>`;
   const chipSim = (t) => `<span class="ref ref-sim">${ic("planeta", "ic-sm")}${t || "Simulado"}</span>`;
 
@@ -360,7 +374,7 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
         <button class="btn btn-ancho btn-ciclo" id="reg-ciclo">${ic("mas")} Registrar hoy</button>
         ${!supr ? `<div class="pred"><div><small>Próxima menstruación</small><b>en ${prox} días</b></div><div><small>Ovulación</small><b>${aOvu > 0 ? `en ${aOvu} días` : aOvu === 0 ? "hoy" : "pasó"}</b></div><div><small>Ciclo</small><b>${dur} días</b></div></div>` : ""}
         ${grupo("Tu ciclo en el espacio", [
-          fila({ ic: "corazon", c: "#E0457B", t: "Tu normal se ajusta por fase", s: "En la fase lútea el pulso y la HRV cambian; LUNNA lo toma en cuenta para no darte falsas alarmas", sinFlecha: true }),
+          fila({ ic: "corazon", c: "#E0457B", t: "Tu normal se ajusta por fase", s: supr ? "Con supresión menstrual no hay fases: tu normal no se ajusta" : `En fase lútea el pulso en reposo y la HRV cambian; Lunna ensancha ${fmt(M.AJUSTE_LUTEA.fc)}× tu margen en esas dos para no darte falsas alarmas (propuesta del equipo). Hoy: ${NOMBRE[fase(diaC)].toLowerCase()}`, sinFlecha: true }),
           fila({ ic: "escudo", c: "#5B6CFF", t: supr ? "DIU de levonorgestrel" : "Píldora combinada · te alcanza para 120 días", s: supr ? "Cubre toda la misión" : "Faltan 98 días de tránsito (simulado)", sinFlecha: true }),
           fila({ ic: "candado", c: "#5A6080", t: "Riesgo de coágulos con tratamiento hormonal", s: "La CMO lo ve solo con tu permiso o en emergencia", sinFlecha: true }),
           fila({ ic: "ola", c: "#11A3C8", t: "Al volver a la gravedad", s: "El mareo al ponerse de pie es más frecuente en mujeres: te aviso en la transición", sinFlecha: true }),

@@ -7,9 +7,9 @@ y avisa cuando un signo vital se sale de **lo esperado para esa persona en ese e
 modelo que define "lo esperado".
 
 ```bash
-npm start      # servidor en http://localhost:8787
+npm start      # servidor; abre http://localhost:8787 para ver su estado
 npm run sim    # simulador de hardware: 119 días de misión y luego en vivo
-npm test       # 18 pruebas
+npm test       # 19 pruebas
 ```
 
 Requiere **Node 22.6+** y nada más: SQLite y TypeScript vienen integrados en Node.
@@ -51,6 +51,13 @@ Requiere **Node 22.6+** y nada más: SQLite y TypeScript vienen integrados en No
 | Tripulantes, basales e historial | `GET/POST /api/tripulantes` · `PUT …/:id/basales` · `POST …/:id/historial` |
 | Ponerse un dispositivo | `POST /api/asignaciones` `{ dispositivo, tripulante }` |
 | Fases de la misión | `GET/POST /api/fases` `{ desde, entorno }` |
+| Enlace con Tierra | `GET/PUT /api/enlace` `{ owlt_s, abierto }` |
+| Lo que ha llegado a Tierra | `GET /api/tierra/bandeja` (con la antigüedad de cada cosa) |
+| Tierra manda un aviso | `POST /api/tierra/avisos` `{ para, texto, prioridad }` |
+| Avisos ya llegados a la nave | `GET /api/avisos` |
+
+Eventos de `/api/stream`: `muestra`, `alerta`, `rechazo`, `tierra` (algo llegó a Tierra),
+`aviso` (un aviso de Tierra llegó a la nave) y `enlace`.
 
 ```js
 const es = new EventSource('http://localhost:8787/api/stream');
@@ -200,6 +207,7 @@ src/lunna.ts       el modelo
 src/db.ts          esquema de la base de datos
 src/ingesta.ts     tubería: asignación, decodificación, guardado y vigilancia
 src/semillas.ts    configuración inicial e importación del contrato de Leo
+src/enlace.ts      enlace con Tierra: retraso de la luz, ventanas y avisos de vuelta
 src/servidor.ts    API REST y eventos en vivo
 src/simulador.ts   sustituto del ESP32
 semillas/inicial.json   tripulación, esquemas y priores PROVISIONALES

@@ -49,6 +49,34 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .enl{fill:none;stroke-width:1.4;stroke-dasharray:3 5;stroke:#1d5f7a}
 .enl.cortado{stroke:#b91c1c}
 
+/* ── lo que se puede abrir, parpadea en rojo ── */
+@keyframes latido{0%,100%{filter:drop-shadow(0 0 0 rgba(225,29,72,0))}50%{filter:drop-shadow(0 0 7px rgba(225,29,72,1)) drop-shadow(0 0 2px rgba(225,29,72,1))}}
+@keyframes contorno{0%,100%{stroke:#1d3b4f}50%{stroke:#e11d48}}
+@keyframes contornoT{0%,100%{stroke:rgba(225,29,72,0)}50%{stroke:#e11d48}}
+.disp .forma{animation:latido 1.6s ease-in-out infinite}
+.equipo .marco{animation:contorno 1.6s ease-in-out infinite;stroke-width:3}
+.equipo[data-id="tierra"] .marco{animation-name:contornoT}
+.disp.apagado .forma{animation:none}
+@media (prefers-reduced-motion:reduce){.disp .forma,.equipo .marco{animation:none} .disp .forma{filter:drop-shadow(0 0 4px rgba(225,29,72,.9))} .equipo .marco{stroke:#e11d48}}
+
+/* ── presentación al abrir ── */
+#intro{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:rgba(4,10,18,.55);backdrop-filter:blur(3px);animation:aparece .35s ease-out}
+#intro[hidden]{display:none}
+@keyframes aparece{from{opacity:0}to{opacity:1}}
+.tarjeta{width:min(600px,100%);max-height:calc(100vh - 32px);overflow:auto;background:#fff;color:#0f2233;border-radius:14px;padding:28px 30px;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.tarjeta .eyebrow{margin:0 0 8px;font:600 11px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.12em;text-transform:uppercase;color:#0369a1}
+.tarjeta h2{margin:0 0 12px;font-size:1.45rem;line-height:1.25}
+.tarjeta p{margin:0 0 14px;color:#334a5c}
+.tarjeta ol{margin:0 0 16px;padding:0;list-style:none;display:grid;gap:10px}
+.tarjeta li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;color:#334a5c}
+.tarjeta li span{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#e0f2fe;color:#0369a1;font-weight:700;font-size:.85rem}
+.tarjeta li b{color:#0f2233}
+.tarjeta .como{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:10px;background:#fff1f2;color:#881337;font-size:.88rem}
+.tarjeta .como i{flex:none;width:12px;height:12px;border-radius:50%;background:#e11d48;animation:punto 1.6s ease-in-out infinite}
+@keyframes punto{0%,100%{box-shadow:0 0 0 0 rgba(225,29,72,.6)}50%{box-shadow:0 0 0 6px rgba(225,29,72,0)}}
+.tarjeta .acciones{display:flex;justify-content:flex-end;margin-top:18px}
+.tarjeta .acciones button{padding:10px 18px;font-size:.92rem;background:#0369a1;color:#fff}
+
 /* ── terminales flotantes ── */
 .ventana{position:fixed;z-index:10;width:min(580px,calc(100vw - 16px));height:min(320px,calc(100vh - 80px));min-width:300px;min-height:150px;
   display:flex;flex-direction:column;background:#0b0e13;border:1px solid #2b3340;border-radius:8px;overflow:hidden;resize:both;
@@ -70,6 +98,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
   <h1>Maqueta de aeronave interactiva para simular sistema LUNNA</h1>
   <div class="ctrl">
     <span class="pill"><span class="dot" id="d-back"></span> backend <b id="v-back">…</b></span>
+    <button id="b-info" class="sec" title="Qué es esta simulación" aria-label="Qué es esta simulación">?</button>
     <button id="b-preparar">Preparar misión</button>
     <button id="b-vivo" class="sec" disabled>▶ En vivo</button>
     <button id="b-reiniciar" class="sec">Reiniciar</button>
@@ -254,6 +283,21 @@ button:disabled{opacity:.4;cursor:not-allowed}
     <g id="paquetes"></g>
   </svg>
 </section>
+
+<div id="intro" role="dialog" aria-modal="true" aria-labelledby="intro-t">
+  <div class="tarjeta">
+    <p class="eyebrow">Simulación · Equipo EVA · NASA Space Apps Challenge</p>
+    <h2 id="intro-t">Cómo se integraría LUNNA en el sistema de una aeronave</h2>
+    <p>Esta maqueta es una <b>simulación</b>: los sensores, sus lecturas y la tripulación son sintéticos. Lo que sí es real es el software: cada trama llega al <b>backend</b> que correría en la computadora central de la nave, y <b>LUNNA</b> la evalúa.</p>
+    <ol>
+      <li><span>1</span><div><b>Sensores puestos.</b> La playera (con su ESP32), el brazalete y el reloj miden signos vitales y los mandan por Bluetooth.</div></li>
+      <li><span>2</span><div><b>PC central.</b> Sabe quién lleva cada dispositivo, guarda los datos y LUNNA los compara con lo esperado para esa persona en ese entorno.</div></li>
+      <li><span>3</span><div><b>Tierra.</b> Recibe las alertas con el retraso de la luz y responde con avisos a la tripulación.</div></li>
+    </ol>
+    <div class="como"><i></i><div>Lo que <b>parpadea en rojo</b> se puede abrir: haz clic para ver su terminal y las tramas que envía. Empieza con <b>Preparar misión</b>.</div></div>
+    <div class="acciones"><button id="intro-ok" type="button">Entrar a la simulación</button></div>
+  </div>
+</div>
 
 <script>
 'use strict';
@@ -661,6 +705,14 @@ document.querySelectorAll('.disp,.equipo').forEach((g) => {
   });
 });
 $('#b-preparar').addEventListener('click', preparar);
+// Presentación: aparece al abrir; se vuelve a ver con «?».
+const intro = $('#intro');
+const cerrarIntro = () => { intro.hidden = true; };
+$('#intro-ok').addEventListener('click', cerrarIntro);
+intro.addEventListener('click', (e) => { if (e.target === intro) cerrarIntro(); });
+addEventListener('keydown', (e) => { if (e.key === 'Escape' && !intro.hidden) cerrarIntro(); });
+$('#b-info').addEventListener('click', () => { intro.hidden = false; $('#intro-ok').focus(); });
+$('#intro-ok').focus();
 $('#b-vivo').addEventListener('click', () => (S.vivo ? detener() : iniciar()));
 $('#b-reiniciar').addEventListener('click', async () => {
   detener(); await api('/api/demo/reiniciar', 'POST');

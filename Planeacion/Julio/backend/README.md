@@ -235,14 +235,16 @@ Lee las evaluaciones que escribe el motor Python de `prototipo-salud/` (20 padec
 | `GET /api/padecimientos/pesos[?padecimiento=P07]` | Pesos por liga, rango [0, 3] y umbrales cambiados |
 | `PUT /api/padecimientos/pesos` | `{padecimiento_id, variable_id, peso?, prior_de?}` o `{umbral, valor}` |
 | `POST /api/padecimientos/pesos/restaurar` | `{}` (todo), `{padecimiento_id[, variable_id]}` o `{umbral}` |
-| `POST /api/padecimientos/evaluar` | `{simulado?: boolean}`: corre el motor (409 si la BD está en memoria o ya corre; 503 sin Python) |
+| `POST /api/padecimientos/evaluar` | `{simulado?: boolean, origen_simulador?: boolean}`: corre el motor (409 si la BD está en memoria o ya corre; 503 sin Python) |
 
 Los pesos cambiados se aplican en la **próxima evaluación**. Para poblar `evaluaciones` (hace falta `eva.db` en archivo y Python 3 con pandas):
 
 ```
 npm run evaluar -- --simulado            # o --db ruta; por defecto BD o eva.db
+npm run evaluar -- --origen-simulador    # eva.db viene de `npm run sim`: se evalúa igual, se guarda con canal SIMULADO
 cd prototipo-salud && EVA_DB=<ruta a eva.db> python3 -m motor.evadb --evaluar [--simulado]
 curl -X POST localhost:8787/api/padecimientos/evaluar -d '{"simulado": true}'
+curl -X POST localhost:8787/api/padecimientos/evaluar -d '{"origen_simulador": true}'
 ```
 
 Variables de entorno opcionales: `PYTHON`, `PROTOTIPO_SALUD`.

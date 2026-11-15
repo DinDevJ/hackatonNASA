@@ -1210,3 +1210,58 @@ body { padding: 12px 0; }
 /* Idioma (Ajustes): dos opciones, con el código grande como en los temas. */
 .aj-idioma { grid-template-columns: repeat(2, 1fr); }
 .aj-idioma .aj-cod { font: 700 15px/1 var(--letra); letter-spacing: .04em; color: var(--acento, #2C5BD6); padding: 6px 0 2px; }
+
+/* ================= Zoom al órgano, fluido (15 nov) =================
+ * Todo lo que se mueve es transform u opacity: la tarjeta gráfica lo anima a 60 fps.
+ * 1) Un anillo late sobre el órgano. 2) La figura se acerca (transform en app.js, no viewBox).
+ * 3) El panel brota del órgano como una burbuja que crece hasta cubrir la pantalla; su vidrio
+ *    (backdrop-filter) se enciende solo cuando terminó de crecer (.listo). */
+.hud, .hud.abierto { clip-path: none; }
+.hud {
+  transform-origin: var(--ox, 50%) var(--oy, 50%);
+  transform: scale(.06); opacity: 0; border-radius: 48px;
+  transition: transform 560ms cubic-bezier(.22, 1, .36, 1), opacity 240ms ease, border-radius 560ms cubic-bezier(.22, 1, .36, 1);
+  will-change: transform, opacity;
+}
+.hud.abierto { transform: none; opacity: 1; border-radius: 0; }
+.hud:not(.listo), :root[data-tema] .hud:not(.listo) { backdrop-filter: none; -webkit-backdrop-filter: none; }
+.hud.sin-trans, .hud.sin-trans > * { transition: none !important; }
+/* Al cerrar se recoge más rápido que al abrir. */
+.hud:not(.abierto) { transition-duration: 420ms, 260ms, 420ms; transition-timing-function: cubic-bezier(.65, 0, .35, 1), ease, cubic-bezier(.65, 0, .35, 1); }
+/* El contenido entra en cascada un poco después de que la burbuja ya cubrió casi todo. */
+.hud.abierto > *:not(.hud-cab) { transition-delay: 200ms; }
+.hud.abierto > *:nth-child(3) { transition-delay: 260ms; } .hud.abierto > *:nth-child(4) { transition-delay: 310ms; }
+.hud.abierto > *:nth-child(5) { transition-delay: 360ms; } .hud.abierto > *:nth-child(n+6) { transition-delay: 410ms; }
+.hud > *:not(.hud-cab) { transform: translateY(14px) scale(.98); }
+.hud.abierto > * { transform: none; }
+
+/* La figura acercándose: sin redibujar mientras se mueve. */
+.esc-lienzo .cuerpo-svg { will-change: transform; backface-visibility: hidden; }
+.cuerpo-svg.con-foco .org.activa, .cuerpo-svg.con-foco .halo.activa { opacity: 1; }
+
+/* Anillo de luz sobre el órgano. */
+.org-pulso {
+  position: absolute; z-index: 31; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; pointer-events: none;
+  --c: #58C8FF; border: 2px solid var(--c);
+  box-shadow: 0 0 22px var(--c), inset 0 0 18px var(--c);
+  transform: scale(.15); opacity: 0;
+  animation: org-pulso 760ms cubic-bezier(.22, 1, .36, 1) forwards;
+}
+.org-pulso::after { content: ""; position: absolute; inset: 38%; border-radius: 50%; background: var(--c); filter: blur(6px); opacity: .8; }
+.org-pulso.es-0 { --c: #3DD68C; } .org-pulso.es-1 { --c: #FFC23D; } .org-pulso.es-2 { --c: #FF5A6E; }
+@keyframes org-pulso {
+  0% { transform: scale(.15); opacity: 0; }
+  25% { opacity: 1; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hud, .hud > * { transition: none !important; transform: none !important; }
+  .org-pulso { display: none; }
+}
+/* Atenuar los demás órganos de golpe (no con transición): si cambian mientras la figura se mueve, el SVG se
+   redibuja en cada cuadro. Al cerrar sí regresan suave, cuando la figura ya está quieta. */
+.cuerpo-svg.con-foco .org, .cuerpo-svg.con-foco .halo, .cuerpo-svg.con-foco .marcas { transition: none; }
+/* Mientras se acerca, la figura no se sale de su lienzo (no tapa el título «Tu cuerpo hoy»). */
+.esc-lienzo:has(.cuerpo-svg.con-foco) { overflow: hidden; border-radius: 18px; }
+/* En tema claro el panel era 82 % opaco y, mientras crece sin desenfoque, se veía Inicio detrás. */
+:root[data-tema="claro"] .hud { background: var(--brillo), linear-gradient(rgba(238, 244, 255, .97), rgba(238, 244, 255, .97)); }

@@ -6,10 +6,12 @@ la hora, se suscribe a sus tramas y las reenvía al backend.
 
     pip install -r requirements.txt
     python pasarela_ble.py                         # Bluetooth real
-    python pasarela_ble.py --prueba                # sin ESP32: tramas simuladas
-    python pasarela_ble.py --asignar 2561=ana --asignar 2817=ana
+    python pasarela_ble.py --prueba                # sin hardware: tramas simuladas
+    python pasarela_ble.py --asignar 401=ana --asignar 201=ana
 
-  ESP32 ──BLE──► esta pasarela ──HTTP──► backend (POST /api/tramas/binaria)
+  playera (ESP32) ──BLE──┐
+  brazalete       ──BLE──┼──► esta pasarela ──HTTP──► backend (POST /api/tramas/binaria)
+  otro aparato EVA──BLE──┘    (una conexión por dispositivo, todas a la vez)
 """
 from __future__ import annotations
 
@@ -108,7 +110,7 @@ async def conectar(dispositivo, conectados: set[str]) -> None:
     try:
         async with BleakClient(dispositivo) as cliente:
             log(f"✓ conectado a {nombre}")
-            # 1. Hora: el ESP32 no tiene reloj; sin esto no puede sellar sus tramas.
+            # 1. Hora: el dispositivo no tiene reloj; sin esto no puede sellar sus tramas.
             await cliente.write_gatt_char(UUID_HORA, struct.pack("<I", int(time.time())), response=True)
             # 2. Qué manda: el dispositivo se autodescribe.
             esquema = await cliente.read_gatt_char(UUID_ESQUEMA)
@@ -139,19 +141,21 @@ async def buscar() -> None:
 
 
 async def prueba() -> None:
-    """Sin hardware: genera las mismas tramas que el firmware del ESP32."""
-    A = [("u8", 1), ("u8", 1), ("i16", 0.01)]
-    B = [("u8", 1), ("u8", 1), ("u8", 1)]
-    seq = {2561: 0, 2817: 0}
-    log("modo prueba: simulando un EVA HUB (dispositivos 2561 y 2817)")
+    """Sin hardware: genera las tramas de dos dispositivos BLE independientes:
+    la playera (firmware del ESP32, id 401) y un brazalete de presión (id 201)."""
+    PLAYERA = [("u8", 1), ("u8", 1), ("i16", 0.01)]   # esquema 5: fc · fr · temp
+    BRAZALETE = [("u8", 1), ("u8", 1)]                # esquema 2: sis · dia (la PA media la calcula el backend)
+    seq = {401: 0, 201: 0}
+    log("modo prueba: simulando la playera (401) y el brazalete de presión (201)")
     while True:
         t = int(time.time())
-        recibir(codificar(2561, 3, seq[2561], t, A,
-                          [62 + 3 * math.sin(t / 60) + random.gauss(0, 1), 98 + random.gauss(0, 0.3), 36.6]))
-        recibir(codificar(2817, 4, seq[2817], t, B,
-                          [14 + random.gauss(0, 0.5), 115 + random.gauss(0, 2), 75 + random.gauss(0, 1.5)]))
-        seq[2561] += 1
-        seq[2817] += 1
+        recibir(codificar(401, 5, seq[401], t, PLAYERA,
+                          [62 + 3 * math.sin(t / 60) + random.gauss(0, 1), 14 + random.gauss(0, 0.5), 36.6]))
+        seq[401] += 1
+        if t % 5 == 0:   # un brazalete real mide cada cierto tiempo, no cada segundo
+            recibir(codificar(201, 2, seq[201], t, BRAZALETE,
+                              [115 + random.gauss(0, 2), 75 + random.gauss(0, 1.5)]))
+            seq[201] += 1
         await asyncio.sleep(1)
 
 
@@ -167,7 +171,7 @@ async def principal() -> None:
     ap.add_argument("--backend", default="http://localhost:8787")
     ap.add_argument("--prueba", action="store_true", help="sin hardware: tramas simuladas")
     ap.add_argument("--asignar", action="append", default=[], metavar="ID=TRIPULANTE",
-                    help="asigna un dispositivo a un tripulante al arrancar (p. ej. 2561=ana)")
+                    help="asigna un dispositivo a un tripulante al arrancar (p. ej. 401=ana)")
     a = ap.parse_args()
 
     try:

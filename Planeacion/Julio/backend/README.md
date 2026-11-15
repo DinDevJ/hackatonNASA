@@ -7,7 +7,7 @@ y avisa cuando un signo vital se sale de **lo esperado para esa persona en ese e
 modelo que define "lo esperado".
 
 ```bash
-npm start      # servidor; abre http://localhost:8787 para ver su estado
+npm start      # servidor; http://localhost:8787 = estado · /simulador = simulador visual
 npm run sim    # simulador de hardware: 119 días de misión y luego en vivo
 npm test       # 19 pruebas
 ```
@@ -20,12 +20,12 @@ Requiere **Node 22.6+** y nada más: SQLite y TypeScript vienen integrados en No
 ## Arquitectura
 
 ```
- traje ──┐  binaria, perfil EVA
- ESP32 ──┤
- simulador┘
+ playera (ESP32) ─┐  binaria, perfil EVA, BLE directo
+ brazalete ───────┤
+ simulador ───────┘
                  ┌──────────────────── COMPUTADORA CENTRAL ────────────────────┐
- celular ─┐ JSON │  dispositivo → tripulante → decodificar → fórmula → validar │
- reloj ───┘      │       (tabla de asignaciones)   (esquema)                   │
+ reloj ───┐ JSON │  dispositivo → tripulante → decodificar → fórmula → validar │
+ celular ─┘      │       (tabla de asignaciones)   (esquema)                   │
                  │                         │                                   │
  semillas ──────►│                    SQLite ──► LUNNA ──► alerta              │
  (Leo, Iker)     └─────────────────────────┬───────────────────┬───────────────┘
@@ -109,7 +109,7 @@ cada una, `mu0` y `tau0` con su fuente. Hoy casi todos son provisionales.
 
 ### Hardware · perfil EVA binario
 
-Lo que mandará el ESP32 (y lo que manda hoy el simulador), little-endian:
+Lo que manda el ESP32 de la playera, el brazalete y el simulador, little-endian:
 
 ```
 ┌ cabecera, 13 B ──────────────────────────────────────┬ carga ────────────────┐
@@ -209,7 +209,8 @@ src/ingesta.ts     tubería: asignación, decodificación, guardado y vigilancia
 src/semillas.ts    configuración inicial e importación del contrato de Leo
 src/enlace.ts      enlace con Tierra: retraso de la luz, ventanas y avisos de vuelta
 src/servidor.ts    API REST y eventos en vivo
-src/simulador.ts   sustituto del ESP32
+src/simulador.ts   simulador de terminal: 4 tripulantes, 119 días
+web/simulador.html simulador visual (astronauta, dispositivos, PC central, Tierra) en /simulador
 semillas/inicial.json   tripulación, esquemas y priores PROVISIONALES
 ```
 
@@ -218,5 +219,5 @@ semillas/inicial.json   tripulación, esquemas y priores PROVISIONALES
 - **Priores reales** de Leo e Iker: hoy la mayoría son no informativos y lo dicen
 - **Fusión** cuando dos dispositivos miden lo mismo (traje y reloj): hoy se guardan ambos
 - **Verificación cruzada de asignación**: si traje y reloj del mismo tripulante discrepan mucho, avisar de una posible asignación equivocada
-- **Pasarela Bluetooth nativa** (Python `bleak` o Node) que reenvíe al `POST /api/tramas/binaria`
+- **Traducir perfiles Bluetooth estándar** (ritmo cardiaco, presión arterial) en la pasarela, para aceptar relojes y brazaletes comerciales
 - **Histéresis** en las alertas para que no oscilen ámbar–verde cerca del umbral

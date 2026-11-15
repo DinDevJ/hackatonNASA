@@ -89,6 +89,14 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .maxim{flex:none;width:28px;height:26px;padding:0;border:0;border-radius:5px;background:transparent;color:#94a3b8;font:400 14px/1 system-ui,sans-serif;cursor:pointer}
 .maxim:hover{background:#273142;color:#fff}
 .ventana.ui{width:min(1240px,calc(100vw - 32px));height:min(760px,calc(100vh - 84px))}
+.ventana.ui.movil{width:min(400px,calc(100vw - 16px));height:min(820px,calc(100vh - 84px))}
+.ventana.ui .vlog,.ventana.ui .vcmd{display:none}
+.ventana.ui.ver-back .vlog,.ventana.ui.ver-back .vcmd{display:flex}
+.ventana.ui.ver-back .vlog{display:block}
+.ventana.ui.ver-back iframe{display:none}
+.modo{display:flex;flex:none;padding:2px;border:1px solid #2b3340;border-radius:6px;background:#0b0e13}
+.modo button{border:0;background:none;color:#94a3b8;font:600 11px ui-monospace,Menlo,Consolas,monospace;padding:3px 8px;border-radius:4px;cursor:pointer}
+.modo button[aria-pressed="true"]{background:#e2e8f0;color:#0b0e13}
 .ventana.ui iframe{flex:1;width:100%;border:0;background:#0a0d12}
 .ventana.ui .vpie{flex:none;height:16px;background:#151a22;border-top:1px solid #232a35}
 .ventana.max{left:0!important;top:52px!important;width:100vw!important;height:calc(100vh - 52px)!important;border-radius:0;resize:none}
@@ -387,32 +395,57 @@ function esp32Conecta() { serie('PC central conectada'); serie(`hora recibida: $
 function esp32Arranca() { serie('Playera EVA lista como "EVA-PLAYERA-01". Esperando a la PC central…'); if (S.bleConectado) esp32Conecta(); }
 
 let zTop = 10, abiertas = 0;
+// ── Interfaces integradas ──
+// Cada equipo que tenga una interfaz real se integra aquí con una línea. Su ventana abre en
+// «Frontend» (la interfaz) y con un clic pasa a «Backend» (la terminal de ese equipo).
+//   forma: 'grande' (escritorio, centrada) o 'movil' (proporción de teléfono)
+const INTERFACES = {
+  tierra: { url: '/tierra', titulo: 'Tierra — consola de control de misión', forma: 'grande' },
+  cel: { url: '/app/', titulo: 'Smartphone', forma: 'movil' },
+};
+// Avisa a la interfaz embebida si su equipo está encendido (la app no notifica si está apagado).
+function avisarEnergia(nodo) {
+  const f = $(`.ventana[data-nodo="${nodo}"] iframe`);
+  if (f && f.contentWindow) f.contentWindow.postMessage({ eva: 'energia', encendido: S.encendido[nodo] !== false }, location.origin);
+}
 function abrirTerminal(nodo, ev) {
   let w = $(`.ventana[data-nodo="${nodo}"]`);
   if (w) { w.style.zIndex = ++zTop; $('input', w)?.focus(); return; }
-  // La Tierra no abre una terminal: abre la consola de control de misión (/tierra).
-  const ui = nodo === 'tierra';
+  const ui = INTERFACES[nodo];
   w = document.createElement('div');
-  w.className = 'ventana' + (ui ? ' ui' : ''); w.dataset.nodo = nodo; w.style.zIndex = ++zTop;
-  const titulo = ui ? 'Tierra — consola de control de misión' : nodo === 'esp32' ? 'ESP32 de la playera — monitor serie · 115200 baudios' : NODO[nodo];
+  w.className = 'ventana' + (ui ? ` ui ${ui.forma}` : ''); w.dataset.nodo = nodo; w.style.zIndex = ++zTop;
+  const titulo = ui ? ui.titulo : nodo === 'esp32' ? 'ESP32 de la playera — monitor serie · 115200 baudios' : NODO[nodo];
+  // Con interfaz: «Frontend» (la interfaz real, por defecto) o «Backend» (su terminal con lo que recibe).
   w.innerHTML = `<div class="vbarra"><span class="vtitulo">${titulo}</span>
+      ${ui ? `<span class="modo" role="group" aria-label="Vista"><button type="button" data-modo="front" aria-pressed="true">Frontend</button><button type="button" data-modo="back" aria-pressed="false">Backend</button></span>` : ''}
       <button class="maxim" type="button" title="Maximizar" aria-label="Maximizar ventana de ${NODO[nodo]}">□</button>
       <button class="cerrar" type="button" title="Cerrar" aria-label="Cerrar ventana de ${NODO[nodo]}">×</button></div>` +
-    (ui ? '<iframe src="/tierra" title="Consola de control de misión en Tierra"></iframe><div class="vpie"></div>'
-        : `<div class="vlog">${S.consola[nodo].join('')}</div>
-           <form class="vcmd"><span>${NODO[nodo]}$</span><input autocomplete="off" spellcheck="false" placeholder="escribe «ayuda»" aria-label="Comando para ${NODO[nodo]}"></form>`);
+    (ui ? `<iframe src="${ui.url}" title="${esc(ui.titulo)}"></iframe>` : '') +
+    `<div class="vlog">${S.consola[nodo].join('')}</div>
+     <form class="vcmd"><span>${NODO[nodo]}$</span><input autocomplete="off" spellcheck="false" placeholder="escribe «ayuda»" aria-label="Comando para ${NODO[nodo]}"></form>` +
+    (ui ? '<div class="vpie"></div>' : '');
   document.body.appendChild(w);
   const ancho = w.offsetWidth, alto = w.offsetHeight;
-  if (ui) {                       // grande y centrada
+  if (ui && ui.forma !== 'movil') {        // grande y centrada
     w.style.left = Math.max(8, (innerWidth - ancho) / 2) + 'px';
     w.style.top = Math.max(60, 52 + (innerHeight - 52 - alto) / 2) + 'px';
-  } else {                        // junto al equipo que se pulsó, sin salirse de la pantalla
+  } else {                                 // junto al equipo que se pulsó, sin salirse de la pantalla
     const x0 = (ev?.clientX ?? innerWidth / 2) + 24 + (abiertas % 4) * 18, y0 = (ev?.clientY ?? innerHeight / 2) - 40 + (abiertas % 4) * 18;
     w.style.left = Math.max(8, Math.min(innerWidth - ancho - 8, x0 + ancho > innerWidth ? x0 - ancho - 48 : x0)) + 'px';
-    w.style.top = Math.max(60, Math.min(innerHeight - alto - 8, y0)) + 'px';
+    w.style.top = Math.max(60, Math.min(innerHeight - alto - 8, ui ? 60 : y0)) + 'px';
     abiertas++;
-    const log = $('.vlog', w); log.scrollTop = log.scrollHeight;
-    $('form', w).addEventListener('submit', (e) => { e.preventDefault(); const i = $('input', w); comando(nodo, i.value.trim()); i.value = ''; });
+  }
+  const log = $('.vlog', w); log.scrollTop = log.scrollHeight;
+  $('form', w).addEventListener('submit', (e) => { e.preventDefault(); const i = $('input', w); comando(nodo, i.value.trim()); i.value = ''; });
+  if (ui) {
+    const marco = $('iframe', w);
+    marco.addEventListener('load', () => avisarEnergia(nodo));
+    w.querySelectorAll('.modo button').forEach((b) => b.addEventListener('click', () => {
+      const back = b.dataset.modo === 'back';
+      w.classList.toggle('ver-back', back);
+      w.querySelectorAll('.modo button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      if (back) { log.scrollTop = log.scrollHeight; $('input', w).focus(); }
+    }));
   }
   w.addEventListener('pointerdown', () => { w.style.zIndex = ++zTop; });
   $('.cerrar', w).addEventListener('click', () => { w.remove(); marcarAbiertos(); });
@@ -447,6 +480,7 @@ function marcarAbiertos() {
 // ── Comandos: la única forma de tocar algo sin interfaz gráfica ──
 const AYUDA = {
   esp32: ['reiniciar             (reinicia el ESP32: la cola en RAM se pierde)'],
+  tierra: [],
   playera: ['apagar | encender', 'ble off | ble on      (cortar o recuperar el Bluetooth)', 'fatiga N              (FC +N %)', 'taquipnea N           (respiración +N %)', 'fiebre N              (temperatura +N °C)'],
   brazalete: ['apagar | encender', 'hipertension N        (presión +N mmHg)'],
   reloj: ['apagar | encender', 'contacto off | contacto on', 'hipoxia N             (SpO₂ −N puntos)'],
@@ -459,11 +493,12 @@ async function comando(nodo, txt) {
   const [c, ...resto] = txt.split(/\s+/), arg = resto.join(' '), n = Number(resto[0]);
   const ok = (m) => tr(nodo, `<span class="verde">${m}</span>`), mal = (m) => tr(nodo, `<span class="rojo">${m}</span>`);
   const num = (k, uni, max) => { if (!Number.isFinite(n) || n < 0 || n > max) return mal(`uso: ${c} N (0–${max})`); S.anom[k] = n; ok(`${k} = ${n} ${uni}`); };
-  if (c === 'ayuda' || c === 'help') return [...AYUDA[nodo], 'limpiar'].forEach((l) => tr(nodo, `<span class="dim">  ${esc(l)}</span>`));
+  if (c === 'ayuda' || c === 'help') return [...(AYUDA[nodo] || []), 'limpiar'].forEach((l) => tr(nodo, `<span class="dim">  ${esc(l)}</span>`));
   if (c === 'limpiar' || c === 'clear') { S.consola[nodo] = []; $(`.ventana[data-nodo="${nodo}"] .vlog`).innerHTML = ''; return; }
   if ((c === 'apagar' || c === 'encender') && nodo in S.encendido) {
     S.encendido[nodo] = c === 'encender'; pintarEnlacesLocales(); ok(c === 'encender' ? 'encendido' : 'apagado');
     if (nodo === 'playera') { if (c === 'encender') esp32Arranca(); else { S.colaEsp = []; S.seq[401] = 0; } }
+    avisarEnergia(nodo);
     tr('pc', `<span class="${c === 'encender' ? 'verde' : 'amb'}">${NODO[nodo]} ${c === 'encender' ? 'conectado' : 'desconectado'}</span>`); return;
   }
   if (nodo === 'playera' && c === 'ble' && (arg === 'on' || arg === 'off')) {

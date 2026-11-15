@@ -74,3 +74,39 @@ test('lo que Luna dice: cuenta las señales con números y no diagnostica', () =
 test('la silueta depende del sexo de cada tripulante', () => {
   assert.deepEqual(M.PERSONAS.map((p) => [p.nombre, p.sexo]), [['Ana', 'M'], ['Luis', 'H'], ['Mei', 'M'], ['Tomás', 'H']]);
 });
+
+test("bug 4: lo registrado hoy reemplaza el valor simulado y se recalcula; se puede limpiar", () => {
+  const antes = M.estadoIndicador(ana, "animo", 112);
+  M.registrar(ana, 112, "animo", 95, "08:10");
+  const e = M.estadoIndicador(ana, "animo", 112);
+  assert.equal(e.valor, 95);
+  assert.deepEqual(e.registrado, { valor: 95, hora: "08:10" });
+  assert.equal(e.nivel, 1, "un estrés muy por encima de tu normal pide atención");
+  assert.equal(M.SERIES[ana].animo[M.idx(112)], antes.valor, "la serie simulada no se toca");
+  M.registrar(ana, 112, "presion", 150, "08:12");
+  assert.equal(M.estadoIndicador(ana, "presion", 112).nivel, 2);
+  M.limpiarRegistros();
+  assert.equal(M.estadoIndicador(ana, "animo", 112).valor, antes.valor);
+  assert.equal(M.estadoIndicador(ana, "animo", 112).registrado, null);
+});
+
+test("bug 7: en fase lútea tu normal de pulso y HRV se ensancha y no hay falsa alarma", () => {
+  const sin = M.estadoIndicador(ana, "fc", 112);
+  M.configurarCiclo((pid) => (pid === ana ? "lutea" : null));
+  const con = M.estadoIndicador(ana, "fc", 112);
+  assert.ok(con.ajusteCiclo);
+  assert.ok(Math.abs(con.z) < Math.abs(sin.z), "el z baja con el margen ensanchado");
+  assert.equal(M.estadoIndicador("MS-4", "fc", 112).ajusteCiclo, false, "a los hombres no se les ajusta");
+  M.configurarCiclo(null);
+  assert.equal(M.estadoIndicador(ana, "fc", 112).ajusteCiclo, false);
+  assert.equal(M.fatiga(ana, 112).estado, "abierto", "sin fase lútea el escenario no cambia");
+});
+
+test("bug 9: la dosis es personal y el evento solar suma según cuánto tardó cada quien en refugiarse", () => {
+  const dosis = M.PERSONAS.map((p) => M.dosisPersonal(p.id, 112).mision);
+  assert.ok(new Set(dosis).size > 1, "no es la misma cifra para los cuatro");
+  assert.equal(M.dosisPersonal("MS-2", 114).evento, 0);
+  const mei = M.dosisPersonal("MS-3", 115).evento, ana = M.dosisPersonal("MS-2", 115).evento;
+  assert.ok(mei > ana, "Mei tardó más en llegar al refugio");
+  assert.ok(mei < 250, "bajo el límite por evento");
+});

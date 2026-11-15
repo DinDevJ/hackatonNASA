@@ -1,0 +1,9 @@
+# ECG (NeuroKit2 + wfdb): procesamiento de senal, CPU, SIN torch/torchvision. Python 3.11 (wheels cp311, Windows).
+# NeuroKit2 0.3.0 exige numpy>=2 (por eso no se usa el numpy 1.26.4 de los demas entornos).
+neurokit2==0.3.0
+wfdb==4.3.1
+PyWavelets    # necesario para nk.ecg_delineate(method="dwt")
+numpy>=2.0,<2.3
+pandas>=2.2,<2.4
+scipy>=1.13,<1.16
+scikit-learn>=1.5,<1.8

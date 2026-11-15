@@ -28,18 +28,15 @@ Documentación modular del proyecto **EVA / LUNNA**, el monitoreo de salud para 
 
 ## Fuentes de esta documentación
 
-Esta carpeta se construyó a partir de:
+Esta carpeta se construyó a partir del README consolidado del prototipo de salud
+([`prototipo-salud/README.md`](../prototipo-salud/README.md)), de los borradores de planeación, protocolo y manual
+(ya integrados aquí y conservados en el historial de git) y del código de `Sistema/`, `Simulacion/` y
+`prototipo-salud/`, contrastado archivo por archivo.
 
-- [`prototipo-salud/README.md`](../prototipo-salud/README.md), que es el README consolidado y el principal;
-- [`prototipo-salud/PLANEACION.md`](../prototipo-salud/PLANEACION.md);
-- [`prototipo-salud/PROTOCOLO-INGESTIGACION.md`](../prototipo-salud/PROTOCOLO-INGESTIGACION.md);
-- [`prototipo-salud/MANUAL-USUARIO-LUNNA.md`](../prototipo-salud/MANUAL-USUARIO-LUNNA.md);
-- el código de `Sistema/`, `Simulacion/` y `prototipo-salud/`, contrastado archivo por archivo.
+Donde la documentación anterior y el código no coinciden, **manda el código que se ejecuta** (`Sistema/`), y la
+diferencia se señala en el documento correspondiente.
 
-Donde la documentación anterior y el código no coinciden, **manda el código que se ejecuta** (`Sistema/`), y la diferencia se señala en el documento correspondiente.
-
-## Tareas finales
-
-- [ ] Documentar el catálogo [`Planeacion/data/variables/VARIABLES-CARDIOBASCULAR.csv`](../Planeacion/data/variables/VARIABLES-CARDIOBASCULAR.csv): origen, columnas, relación con `VARIABLES-MEDIDAS-ASTRONAUTAS.csv` y uso en el sistema. Después, agregarlo al [diccionario de datos](README_07_DICCIONARIO_DATOS_VARIABLES.md#9-catálogos-de-investigación).
+Para empezar: [README](../README.md) y [ONBOARDING](../ONBOARDING.md) en la raíz del repositorio. Trazabilidad de
+cada umbral clínico: [`Sistema/backend/semillas/medibles.md`](../Sistema/backend/semillas/medibles.md).
 
 Revisión: 15 de noviembre de 2026.

@@ -20,7 +20,7 @@ Cada integración se clasifica así:
 | Central ↔ Tierra, real | HTTPS (TLS) entre dos procesos, exactamente-una-vez | Implementada con certificado autofirmado de desarrollo |
 | Central ↔ motor de padecimientos | SQLite compartida (`EVA_DB`) + `child_process` → `python -m motor.evadb --evaluar` | Implementada: [`semaforo.ts`](../Sistema/backend/src/semaforo.ts) y `motor/evadb.py` |
 | Central → modelos de eco/ECG (`/api/modelos/*`) | `child_process` → `python -m core.run_model` → `motor.puente_modelos` | Implementada: [`modelos.ts`](../Sistema/backend/src/modelos.ts). Probada con un Python falso y con ECG real en Linux; **eco con pesos y CUDA, pendiente en la PC con GPU** |
-| Importación de semillas de investigación | HTTP `POST /api/semillas` (contrato `SalidaTipo`) | Implementada en el backend; el productor (`Planeacion/Leo/ingesta`) no está en disco |
+| Importación de semillas de investigación | HTTP `POST /api/semillas` (contrato `SalidaTipo`) | Implementada en el backend; el productor (`Planeacion/Leo/ingesta`) ya no está en el árbol; se conserva en la etiqueta `planeacion-archivo` |
 | NASA DONKI → escenario | API REST de NASA (`fetch_donki.py`) | Implementada; datos guardados en `Simulacion/donki/datos/` |
 | Perfiles BLE estándar (Heart Rate, Blood Pressure) | GATT estándar | **Pendiente** (README del backend, «Pendiente») |
 | Infraestructura EVA real / red espacial | — | **No implementada**: no hay integración con sistemas de vuelo |

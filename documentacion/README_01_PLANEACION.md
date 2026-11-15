@@ -109,7 +109,7 @@ Las etapas y sus fechas son las registradas en la historia de Git y en los regis
 | Simulador visual y generador | `Simulacion/simulador/`, `Simulacion/generador/` |
 | Prototipo de salud (app, motor, adaptadores, validación) | `prototipo-salud/` |
 | Matriz de pesos por malestar | `Planeacion/Leo/modelo-pesos/` |
-| Video de presentación | `Planeacion/Leo/video/lunna-video.mp4` |
+| Video de presentación | `video/lunna-video.mp4` |
 | Documentación | `documentacion/` y `prototipo-salud/README.md` (consolidado) |
 
 ## 8. Recursos tecnológicos
@@ -151,6 +151,7 @@ Estado al 15 de noviembre de 2026:
    - comando `npm run evaluar` (`evaluar-salud.ts`);
    - vista del semáforo en la central (`semaforo.js`);
    - simulador visual en inglés.
+   Las carpetas viejas se retiraron del árbol; su historia completa está en git.
 3. **Una sola matriz de padecimientos.** La fuente de verdad es [`prototipo-salud/datos/modelo/PADECIMIENTO-VARIABLE.csv`](../prototipo-salud/datos/modelo/PADECIMIENTO-VARIABLE.csv), que usan el motor y el backend: 350 ligas. La copia de `Planeacion/data/padecimientos/` se igualó a ella.
 
 ## Documentación relacionada

@@ -229,7 +229,7 @@ Invoke-RestMethod http://localhost:8787/api/modelos/trabajos/$($t.id)   # repeti
 | `prototipo-salud/datos/modelo/overrides.json` | Cambios del usuario; no existe hasta la primera edición |
 | `prototipo-salud/.streamlit/config.toml` | Tema de la app |
 | `adapters/<modelo>/manifest.json` | Repositorio, pesos, modalidades, opciones, licencia y `timeout_s` de cada modelo |
-| `prototipo-salud/requirements-app.in/.txt` | Dependencias de la app (streamlit, pandas, numpy, opencv-python-headless, pydicom, pytest, uv) |
+| `prototipo-salud/requirements-app.in` y `requirements-app.txt` | Dependencias de la app (streamlit, pandas, numpy, opencv-python-headless, pydicom, pytest, uv) |
 
 ## 5. Puertos
 

@@ -370,7 +370,7 @@ Sensor / interfaz de registro
   → encolar alertas, resúmenes y datos crudos hacia Tierra
   → entregar al cumplirse ventana y retardo configurado; acuse de regreso
 ```
-
+   
 La trama EVA tiene una cabecera little-endian de 13 bytes: versión `u8`,
 `id_disp u32`, `id_esquema u16`, secuencia `u16`, `t_scet u32`; el esquema define
 carga, tipos, escalas y fórmulas. El tripulante **no** va codificado en la trama:
@@ -474,3 +474,5 @@ vuelo y enlaces por variable están en los catálogos vinculados en §2 y en
 - Enlace con Tierra: [`backend/src/enlace.ts`](Planeacion/Julio/backend/src/enlace.ts).
 - Motor e índices de la maqueta: [`maqueta-eva/motor.js`](Planeacion/Leo/maqueta-eva/motor.js), [`consola.js`](Planeacion/Leo/maqueta-eva/consola.js) y [`modelo-pesos/actualizacion_bayesiana.py`](Planeacion/Leo/modelo-pesos/actualizacion_bayesiana.py).
 
+
+--- borra esto

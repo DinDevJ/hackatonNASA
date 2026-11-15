@@ -41,10 +41,10 @@
   // de Leo; los demás empiezan "Sin registro hoy" hasta que anoten algo.
   const DATOS_PERSONA = {};
   const inicialPersona = (pid) => (pid === "MS-2"
-    ? { comidas: D.comidasHoy.slice(), apetito: 6, calidadSueno: 62, dolor: 2, zonaDolor: [], cefalea: false, intensidadCefalea: 0, mareo: [], animo: null, glucometro: [], tocado: { comida: true, sintomas: true, fuerza: true, cgm: true } }
-    : { comidas: [], apetito: 6, calidadSueno: 62, dolor: 0, zonaDolor: [], cefalea: false, intensidadCefalea: 0, mareo: [], animo: null, glucometro: [], tocado: {} });
+    ? { comidas: D.comidasHoy.slice(), apetito: 6, calidadSueno: 62, dolor: 2, zonaDolor: ["lumbar"], dolorZonas: { cuello: 0, dorsal: 0, lumbar: 2 }, cefalea: false, intensidadCefalea: 0, mareo: [], animo: null, glucometro: [], tocado: { comida: true, sintomas: true, fuerza: true, cgm: true } }
+    : { comidas: [], apetito: 6, calidadSueno: 62, dolor: 0, zonaDolor: [], dolorZonas: { cuello: 0, dorsal: 0, lumbar: 0 }, cefalea: false, intensidadCefalea: 0, mareo: [], animo: null, glucometro: [], tocado: {} });
   const datosDe = (pid) => DATOS_PERSONA[pid] || (DATOS_PERSONA[pid] = inicialPersona(pid));
-  for (const k of ["comidas", "apetito", "calidadSueno", "dolor", "zonaDolor", "cefalea", "intensidadCefalea", "mareo", "animo", "glucometro", "tocado"]) {
+  for (const k of ["comidas", "apetito", "calidadSueno", "dolor", "zonaDolor", "dolorZonas", "cefalea", "intensidadCefalea", "mareo", "animo", "glucometro", "tocado"]) {
     Object.defineProperty(estado, k, { get: () => datosDe(estado.persona)[k], set: (v) => { datosDe(estado.persona)[k] = v; }, enumerable: true, configurable: true });
   }
 
@@ -307,7 +307,8 @@
   }
 
   /** Toca un órgano: la figura se acerca a él y la información sale de ahí hasta cubrir la pantalla. */
-  function abrirRegion(r) {
+  function abrirRegion(r, opc) {
+    opc = opc || {};
     const P = persona(), def = M.REGIONES[r], ev = M.evaluar(P.id, estado.dia);
     const tel = $(".telefono");
     const svgEl = $(".esc-lienzo .cuerpo-svg");
@@ -367,7 +368,14 @@
       requestAnimationFrame(() => requestAnimationFrame(() => hud.classList.add("abierto")));
       $(".hud-x", hud).focus({ preventScroll: true });
     };
-    if (svgEl && !reducirMov()) { animarVista(svgEl, zoom, ZOOM_MS); setTimeout(abrir, ZOOM_MS * 0.45); }
+    if (opc.directo) {
+      // Al volver de una ficha: el órgano ya está acercado y su panel abierto, sin animación de entrada.
+      if (svgEl) svgEl.setAttribute("viewBox", zoom.join(" "));
+      hud.classList.add("sin-trans");
+      abrir();
+      hud.classList.add("abierto");
+      requestAnimationFrame(() => requestAnimationFrame(() => hud.classList.remove("sin-trans")));
+    } else if (svgEl && !reducirMov()) { animarVista(svgEl, zoom, ZOOM_MS); setTimeout(abrir, ZOOM_MS * 0.45); }
     else { if (svgEl) animarVista(svgEl, zoom, 0); abrir(); }
 
     const cerrar = (luego) => {
@@ -384,6 +392,7 @@
       };
       const fin = () => {
         hud.remove();
+        if (!luego && actual.startsWith("hoy:")) actual = "hoy"; // cerrado a mano: Inicio vuelve a ser el cuerpo entero
         if (luego) luego(); else if (previo && previo.isConnected) previo.focus({ preventScroll: true });
       };
       if (reducirMov()) { alejar(); fin(); return; }
@@ -395,7 +404,8 @@
     hud.addEventListener("click", (e) => {
       if (e.target.closest("[data-cerrar]")) return cerrar();
       const f = e.target.closest("[data-ficha]");
-      if (f) cerrar(() => ir(f.dataset.ficha));
+      // Se apila "hoy:<órgano>": al volver de la ficha se reabre este órgano, no el cuerpo entero.
+      if (f) cerrar(() => { actual = "hoy:" + r; ir(f.dataset.ficha); });
     });
   }
 
@@ -637,7 +647,35 @@
     return { v: fmt(ind.dec ? u.toFixed(ind.dec) : u), u: ind.unidad };
   }
   /** Serie de 14 días contra la franja de tu normal (RF-01-03). */
+  /** Presión como se mide: una barra por día de la diastólica a la sistólica, con los cortes 130/80 (AHA). */
+  function grafPresion(pid, dia, mini) {
+    const e = M.estadoIndicador(pid, "presion", dia);
+    const i0 = M.idx(dia) - (e.historia.length - 1);
+    const dias = M.serieCon(pid, "diastolica").slice(i0, i0 + e.historia.length);
+    const pares = e.historia.map((s, i) => (s != null && dias[i] != null ? [s, dias[i]] : null));
+    const v = pares.filter(Boolean);
+    if (v.length < 2) return `<div class="tenue-12">Aún no hay suficientes días.</div>`;
+    const W = 320, H = mini ? 44 : 140, mi = mini ? 2 : 30, md = 8, ma = 8, mb = mini ? 4 : 18;
+    const ext = [...v.flat(), ...(mini ? [] : [130, 80])];
+    let lo = Math.min(...ext) - 4, hi = Math.max(...ext) + 4;
+    const x = (i) => mi + 6 + (i / Math.max(1, pares.length - 1)) * (W - mi - md - 12);
+    const y = (n) => ma + (1 - (n - lo) / (hi - lo)) * (H - ma - mb);
+    const ult = pares.length - 1, nivel = M.evaluar(pid, dia).nivelDe("presion");
+    const colorHoy = ["var(--verde)", "var(--ambar)", "var(--rojo)"][nivel || 0];
+    const ancho = mini ? 4 : 7;
+    return `<svg class="normal-graf graf-presion ${mini ? "mini" : ""}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Presión arterial, sistólica y diastólica de los últimos ${pares.length} días">
+      ${mini ? "" : `<line class="umbral" x1="${mi}" x2="${W - md}" y1="${y(130)}" y2="${y(130)}"/><text x="${W - md}" y="${y(130) - 3}" text-anchor="end">130</text>
+        <line class="umbral" x1="${mi}" x2="${W - md}" y1="${y(80)}" y2="${y(80)}"/><text x="${W - md}" y="${y(80) - 3}" text-anchor="end">80</text>`}
+      ${pares.map((pp, i) => (pp ? `<g class="pa-dia${i === ult ? " pa-hoy" : ""}"${i === ult ? ` style="--c:${colorHoy}"` : ""}>
+        <line x1="${x(i)}" x2="${x(i)}" y1="${y(pp[0])}" y2="${y(pp[1])}" vector-effect="non-scaling-stroke"/>
+        <line x1="${x(i) - ancho / 2}" x2="${x(i) + ancho / 2}" y1="${y(pp[0])}" y2="${y(pp[0])}" vector-effect="non-scaling-stroke"/>
+        <line x1="${x(i) - ancho / 2}" x2="${x(i) + ancho / 2}" y1="${y(pp[1])}" y2="${y(pp[1])}" vector-effect="non-scaling-stroke"/></g>` : "")).join("")}
+      ${mini ? "" : `<text x="${mi - 4}" y="${y(hi - 4) + 3}" text-anchor="end">${Math.round(hi - 4)}</text><text x="${mi - 4}" y="${y(lo + 4) + 3}" text-anchor="end">${Math.round(lo + 4)}</text>
+        <text x="${x(0)}" y="${H - 4}">Día ${dia - ult}</text><text x="${x(ult)}" y="${H - 4}" text-anchor="end">Hoy</text>`}
+    </svg>`;
+  }
   function grafNormal(pid, k, dia, mini) {
+    if (k === "presion") return grafPresion(pid, dia, mini);
     const e = M.estadoIndicador(pid, k, dia);
     const ind = M.IND[k];
     const h = e.historia;
@@ -680,6 +718,7 @@
       <h3>${ic(ind.icono || "info")} ${ind.nombre} · ${persona().nombre}</h3>
       <div class="valor-grande"><b>${v.v}</b><span class="u">${v.u}</span>${sem(nivel)}</div>
       ${etiquetas(k, e)}
+      ${k === "presion" ? `<div class="pa-leyenda"><span><i class="pa-sis"></i>Sistólica (arriba)</span><span><i class="pa-dia-i"></i>Diastólica (abajo)</span><span>mmHg · manguito</span></div>` : ""}
       ${grafNormal(pid, k, estado.dia)}
       <div class="tenue-12">${e.normal ? `Últimos 14 días · la franja es tu normal (${M.texto(k, e.normal.banda[0])} a ${M.texto(k, e.normal.banda[1])})` : ind.abs ? `Sin tu normal: se compara con el umbral (${ind.abs.texto})` : ""}</div>
     </div>`;
@@ -700,7 +739,8 @@
 
   // ---------- Pantallas ----------
   const PANTALLAS = {
-    hoy(p) {
+    hoy(p, arg) {
+      delete p.dataset.reabierto; // permite reabrir el órgano al volver de una ficha
       const sec = resumen();
       const P = persona();
       const ev = M.evaluar(P.id, estado.dia);
@@ -775,6 +815,7 @@
       $("#cambiar-yo", p).addEventListener("click", () => window.APP.abrirCambio && window.APP.abrirCambio());
       $$("[data-region]", p).forEach((el) => {
         el.addEventListener("click", () => abrirRegion(el.dataset.region));
+        if (arg && el.dataset.region === arg && !p.dataset.reabierto) { p.dataset.reabierto = "1"; requestAnimationFrame(() => abrirRegion(arg, { directo: true })); }
         if (el.tagName !== "BUTTON") el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirRegion(el.dataset.region); } });
       });
     },
@@ -1006,15 +1047,18 @@
     },
 
     sintomas(p) {
-      const zonas = [["cuello", "Cuello"], ["dorsal", "Media"], ["lumbar", "Baja"]];
+      // Cada zona de la espalda tiene su propio dolor: no se asume que duela igual en las tres.
+      const zonas = [["cuello", "Cuello", "el cuello"], ["dorsal", "Espalda media", "la espalda media"], ["lumbar", "Espalda baja", "la espalda baja"]];
       const mareos = [["nausea", "Náusea"], ["vomito", "Vómito"], ["apetito", "Sin apetito"], ["ninguno", "Nada"]];
       p.innerHTML = `${cabecera("Síntomas", "Tú me cuentas", "sintomas", COLOR.sintomas, "curita")}
         ${lunaGlobo("¿Cómo te sientes hoy? Toca y desliza, es rapidito.")}
-        <div class="tarjeta"><h3>${ic("espalda")} Dolor de espalda</h3>
-          <div class="valor-grande" id="dolor-txt">${estado.dolor}<small style="font-size:14px">/10</small></div>
-          <input class="deslizador" id="dolor" type="range" min="0" max="10" value="${estado.dolor}" aria-label="Dolor de espalda de 0 a 10"/>
-          <div class="escala-etq"><span>Nada</span><span>El peor</span></div>
-          <div class="chips" style="margin-top:10px">${zonas.map(([k, n]) => `<button class="chip" data-zona="${k}" aria-pressed="${estado.zonaDolor.includes(k)}">${ic("espalda")}${n}</button>`).join("")}</div></div>
+        <div class="tarjeta"><h3>${ic("espalda")} Dolor de espalda <span class="espacio"></span><span class="tenue-12" id="dolor-max">${estado.dolor ? `más fuerte: ${estado.dolor}/10` : ""}</span></h3>
+          <p class="tenue-12" style="margin:0 0 8px">Toca dónde te duele y marca cuánto en cada zona.</p>
+          <div class="chips">${zonas.map(([k, n]) => `<button class="chip" data-zona="${k}" aria-pressed="${estado.zonaDolor.includes(k)}">${ic("espalda")}${n}</button>`).join("")}</div>
+          <div class="zonas-dolor">${zonas.map(([k, n, art]) => `<div class="zona-dolor" data-zona-panel="${k}" ${estado.zonaDolor.includes(k) ? "" : "hidden"}>
+            <div class="zona-cab"><span>¿Cuánto te duele ${art}?</span><b id="z-${k}">${estado.dolorZonas[k] || 0}<small>/10</small></b></div>
+            <input class="deslizador" data-zona-in="${k}" type="range" min="0" max="10" value="${estado.dolorZonas[k] || 0}" aria-label="Dolor en ${art}, de 0 a 10"/>
+            <div class="escala-etq"><span>Nada</span><span>El peor</span></div></div>`).join("")}</div></div>
         <div class="tarjeta"><h3>${ic("cabeza")} Dolor de cabeza</h3>
           <div class="chips"><button class="chip" id="cef-si" aria-pressed="${estado.cefalea}">${ic("cabeza")}Sí, hoy</button><button class="chip" id="cef-no" aria-pressed="${!estado.cefalea}">${ic("check")}No</button></div>
           <div id="cef-int" ${estado.cefalea ? "" : "hidden"} style="margin-top:10px">
@@ -1030,17 +1074,35 @@
         $("#nota", p).hidden = !fuerte;
         const nivel = Math.max(estado.dolor, estado.cefalea ? estado.intensidadCefalea : 0);
         if (fuerte) { luna.poner("empatica"); globo.innerHTML = "Lo siento mucho. Avisemos a la <b>CMO</b>."; }
-        else if (nivel >= 4) { luna.poner("preocupada"); globo.innerHTML = "Te duele un poco. Lo anoto para ver si mejora."; }
+        else if (nivel >= 4) {
+          const peor = zonas.filter(([k]) => estado.zonaDolor.includes(k)).sort((a, b) => (estado.dolorZonas[b[0]] || 0) - (estado.dolorZonas[a[0]] || 0))[0];
+          luna.poner("preocupada");
+          globo.innerHTML = peor && estado.dolorZonas[peor[0]] === estado.dolor && !(estado.cefalea && estado.intensidadCefalea > estado.dolor)
+            ? `Te duele más ${peor[2]} (<b>${estado.dolor}/10</b>). Lo anoto para ver si mejora.` : "Te duele un poco. Lo anoto para ver si mejora.";
+        }
         else if (estado.mareo.length && !estado.mareo.includes("ninguno")) { luna.poner("empatica"); globo.innerHTML = "El mareo es muy común los primeros días. Aquí estoy."; }
         else { luna.poner("feliz"); globo.innerHTML = "¡Qué bueno! Te sientes bien."; }
       };
       p.addEventListener("input", () => { estado.tocado.sintomas = true; });
       p.addEventListener("click", (e) => { if (e.target.closest("[data-zona], [data-mareo], #cef-si, #cef-no")) estado.tocado.sintomas = true; });
-      $("#dolor", p).addEventListener("input", (e) => { estado.dolor = Number(e.target.value); $("#dolor-txt", p).innerHTML = `${estado.dolor}<small style="font-size:14px">/10</small>`; reaccionar(); });
+      // El dolor de espalda que cuenta es el de la zona que más duele.
+      const recalcular = () => {
+        estado.dolor = Math.max(0, ...estado.zonaDolor.map((k) => estado.dolorZonas[k] || 0));
+        $("#dolor-max", p).textContent = estado.dolor ? `más fuerte: ${estado.dolor}/10` : "";
+        reaccionar();
+      };
       $$("[data-zona]", p).forEach((b) => b.addEventListener("click", () => {
         const k = b.dataset.zona; const i = estado.zonaDolor.indexOf(k);
         i < 0 ? estado.zonaDolor.push(k) : estado.zonaDolor.splice(i, 1);
         b.setAttribute("aria-pressed", String(i < 0));
+        $(`[data-zona-panel="${k}"]`, p).hidden = i >= 0;
+        recalcular();
+      }));
+      $$("[data-zona-in]", p).forEach((inp) => inp.addEventListener("input", () => {
+        const k = inp.dataset.zonaIn;
+        estado.dolorZonas = { ...estado.dolorZonas, [k]: Number(inp.value) };
+        $(`#z-${k}`, p).innerHTML = `${inp.value}<small>/10</small>`;
+        recalcular();
       }));
       const cef = (si) => {
         estado.cefalea = si;
@@ -1369,6 +1431,22 @@
     setLimpiar(f) { limpiar = f; },
     reposicionarLuna() { mem.guardar("luna-pos3", { lado: "izq", y: 1 }); location.reload(); },
     iniciar(destino) {
+      // Cada vez que Lunna dice algo nuevo (al entrar a una sección o al registrar), su globo se anima.
+      const animarGlobo = (g) => {
+        g.classList.remove("habla"); void g.offsetWidth; g.classList.add("habla");
+        const av = g.closest(".luna-fila")?.querySelector(".luna-aqui");
+        if (av) { av.classList.remove("habla"); void av.offsetWidth; av.classList.add("habla"); }
+      };
+      new MutationObserver((ms) => {
+        const vistos = new Set();
+        for (const m of ms) {
+          const t = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+          const g = t && t.closest && t.closest(".globo");
+          if (g) vistos.add(g);
+          for (const n of m.addedNodes) if (n.nodeType === 1) { if (n.matches(".globo")) vistos.add(n); n.querySelectorAll && n.querySelectorAll(".globo").forEach((x) => vistos.add(x)); }
+        }
+        vistos.forEach(animarGlobo);
+      }).observe($("#pantalla"), { childList: true, subtree: true, characterData: true });
       lunaF = crearLunaFlotante();
       ir(destino || "hoy");
       if (!destino) tutorialPrimeraVez("bienvenida");

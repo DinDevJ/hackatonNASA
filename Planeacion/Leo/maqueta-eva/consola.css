@@ -639,6 +639,21 @@ details[open] > summary.cn-vivo-cab { margin-bottom: 8px; }
 
 .cn-sem-mod { margin-top: 16px; }
 .cn-sem-mod[hidden], .cn-sem-mod [hidden] { display: none; }
+.cn-sem-mod-caja { margin: 0; }
+.cn-sem-mod-cab {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  cursor: pointer; list-style: none; margin: 0; border-radius: 12px;
+}
+.cn-sem-mod-cab::-webkit-details-marker, .cn-sem-mod-cab::marker { display: none; }
+.cn-sem-mod-cab:focus-visible { outline: 2px solid var(--acento); outline-offset: 3px; }
+.cn-sem-mod-cab h2 {
+  display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 650; margin: 0; flex-wrap: wrap;
+  flex: 1; min-width: 0;
+}
+.cn-sem-mod-flecha { flex: none; transition: transform 160ms ease-out; }
+details[open] > summary .cn-sem-mod-flecha { transform: rotate(90deg); }
+details[open] > summary.cn-sem-mod-cab { margin-bottom: 12px; }
+@media (prefers-reduced-motion: reduce) { .cn-sem-mod-flecha { transition: none; } }
 .cn-sem-mform { max-width: 560px; }
 .cn-sem-mod .cn-boton[aria-pressed="true"] { border-color: var(--acento); box-shadow: 0 0 0 2px var(--acento) inset; }
 .cn-sem-alerta { border-left: 3px solid var(--ambar); padding-left: 8px; }

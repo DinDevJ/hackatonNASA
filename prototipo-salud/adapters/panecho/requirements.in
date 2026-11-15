@@ -1,0 +1,7 @@
+# PanEcho: pines minimos de inferencia (SIN torch/torchvision: se instalan aparte, cu124). Python 3.11.
+numpy==1.26.4
+pandas==2.2.3
+timm==0.9.10
+opencv-python-headless==4.10.0.84
+pillow>=10.4,<12
+huggingface-hub==0.26.5   # timm 0.9.10 usa la API 0.x de huggingface_hub (no 1.x/2.x)

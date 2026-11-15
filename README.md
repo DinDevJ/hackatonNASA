@@ -1,57 +1,50 @@
-# LUNNA (Live-telemetry Updating Network for Nominal-deviation & Anomalies)
-For HACKATON SPACE APPS
-Team: Monarcas
+# Lunna
 
-Software de monitoreo de salud para astronautas en misiones de larga duración.
-NASA Space Apps Challenge 2026.
+**Equipo Monarcas · NASA Space Apps Challenge 2026** · reto *Create Health Monitoring Software for Astronauts on Space Missions*
 
-El software **recaba, organiza, monitorea, previene y asiste en emergencias**. Los cinco
-son una sola cadena: el monitoreo diario existe para que, cuando ocurra una emergencia,
-el sistema ya sepa cómo es esa persona cuando está bien.
+> **EN.** Lunna monitors each astronaut against their own 14-day normal, explains what changed and warns the
+> crew medical officer before a problem grows, even with a 20-minute light delay to Earth. The app is in
+> Spanish with an English switch (Ajustes → Idioma / the language button on the desktop panels).
 
-## Estructura del repositorio
+Software de monitoreo de salud para astronautas en misiones largas. Compara a cada tripulante con **su propio
+normal** (mediana y MAD de 14 días), explica qué cambió y avisa a la CMO a bordo antes de que crezca un problema.
+Tierra recibe lo mismo con el retraso de la luz, así que la nave puede decidir sola.
 
-    Planeacion/
-      Julio/        documentos de análisis y diseño
-      <nombre>/     una carpeta por integrante
+Todos los datos son **simulados**, salvo los eventos solares de **NASA DONKI** y los límites de **NASA-STD-3001**.
 
-Cada quien trabaja en su propia carpeta dentro de `Planeacion/` para evitar
-conflictos al mezclar ramas.
+## Qué hay
 
-## Computadora central
-
-**[Planeacion/Julio/INTEGRACION.md](Planeacion/Julio/INTEGRACION.md)** — **entregable**: firmware del ESP32,
-pasarela Bluetooth, backend y LUNNA, con limitantes y cómo integrarlos.
-
-**[Planeacion/Julio/backend](Planeacion/Julio/backend/README.md)** — backend de EVA y modelo
-**LUNNA**. Contratos para la interfaz, los dispositivos intermedios, las semillas y el hardware.
-
-## Documentos actuales
-
-| Documento | Qué contiene |
+| Carpeta | Qué es |
 |---|---|
-| [Diccionario de datos](Planeacion/Julio/diccionario-de-datos.md) | De dónde sale y cómo se calcula cada indicador: sensores, fórmulas, instrumentos y fuentes |
-| [Comportamiento del software](Planeacion/Julio/comportamiento-del-software.md) | Diagramas de secuencia, escalera de escalamiento, modelo de tiempos SCET/ERT, modo emergencia y guion de demo |
-| [Motor diagnóstico](Planeacion/Julio/motor-diagnostico.md) | Diferencial probabilístico, priors publicados, bucle de refutación y reglas de honestidad |
-| [Roadmap](Planeacion/Julio/roadmap.md) | Plan por fases, inventario de datos reales y estrategia para Best Use of Data |
-| [Stack y dependencias](Planeacion/Julio/stack-y-dependencias.md) | Decisión de lenguaje, librerías a reutilizar y estado de la API DONKI |
-| [Síntesis del equipo](Planeacion/Julio/sintesis-del-equipo.md) | Análisis de las cinco propuestas: convergencias, choques y qué decidir |
-| [Listado de las 77 variables](Planeacion/Julio/listado-77-variables.md) | Tabla completa: número, ID, qué dato es, para qué sirve y de dónde proviene |
-| [Mis variables agrupadas](Planeacion/Julio/mis-variables-agrupadas.md) | Las 77 variables asignadas, en 9 grupos por ruta de investigación |
-| [Checklist G1, G2 y G6](Planeacion/Julio/checklist-G1-G6.md) | Checklist cumplido para wearable, manguito y telemetría, con la escalera de obtención por variable |
-| [Checklist G3–G9](Planeacion/Julio/checklist-G3-G9.md) | Los 54 restantes: pruebas funcionales, escalas, ultrasonido, laboratorio y derivadas |
-| [LLM local y voz](Planeacion/Julio/llm-local-y-voz.md) | Qué modelo local, qué tamaño, personalidad configurable y la trampa de la voz |
-| [Hardware y radio](Planeacion/Julio/hardware-y-radio.md) | Qué está verificado sobre BLE y relojes en el espacio, y las restricciones del Huawei Watch 5 |
-| [Trama base](Planeacion/trama-base/README.md) | Qué manda el hardware por Bluetooth, qué variables viajan, qué condiciones se detectan y el simulador en ESP32 |
-| [Código](Planeacion/Julio/codigo/) | Módulo de lectura de frecuencia cardiaca por Web Bluetooth, tipado y probado |
+| [`Planeacion/Leo/maqueta-eva`](Planeacion/Leo/maqueta-eva/README.md) | La app del celular (`index.html`), la computadora central (`central.html`) y la base en Tierra (`base.html`) |
+| [`Planeacion/Julio/backend`](Planeacion/Julio/backend/README.md) | Computadora central: recibe las tramas, guarda, evalúa con el modelo LUNNA y simula el enlace con Tierra. Incluye el simulador visual de la nave |
+| `Planeacion/Julio/esp32`, `Planeacion/Julio/pasarela` | Firmware de la playera (ESP32) y pasarela Bluetooth hacia la central |
+| [`Planeacion/Fani/maqueta-reloj`](Planeacion/Fani/maqueta-reloj/README.md) | Interfaz del reloj, servida por el backend |
+| [`Planeacion/Leo/modelo-pesos`](Planeacion/Leo/modelo-pesos/README.md) | Pesos fisiológicos por padecimiento (de aquí sale `pesos.js`) |
+| `Planeacion/Julio/datos`, `Planeacion/Julio/scripts` | Eventos solares de NASA DONKI y el script que los descarga |
+| `Planeacion/*.csv`, `Planeacion/Iker` | Tablas de variables y padecimientos que citan las semillas del backend |
 
-## Convención de confianza
+## Abrir
 
-Los documentos marcan cada afirmación con uno de estos tres símbolos. **Nada
-marcado con ⚠️ debe llegar a una diapositiva sin verificarse antes.**
+Requiere **Node 22.6+**, sin `npm install`.
 
-| Marca | Significado |
-|---|---|
-| ✅ | Verificado en fuente primaria |
-| ⚠️ | Pendiente de verificar |
-| 🔶 | Decisión de diseño nuestra, no de NASA |
+```bash
+cd Planeacion/Julio/backend
+npm start
+```
+
+- App del celular: http://localhost:8787/app/
+- Computadora central: http://localhost:8787/app/central.html
+- Base en Tierra: http://localhost:8787/app/base.html
+- Simulador de la nave: http://localhost:8787/simulador
+
+Pruebas: `npm test` en el backend y `node --test motor.test.mjs` en `Planeacion/Leo/maqueta-eva`.
+
+## Documentación de planeación
+
+Las propuestas, el ERS, la investigación de variables y los prototipos anteriores se quitaron del repositorio para
+dejar solo lo que corre. Siguen en el historial con la etiqueta `planeacion-archivo`:
+
+```bash
+git checkout planeacion-archivo -- Planeacion/Katy
+```

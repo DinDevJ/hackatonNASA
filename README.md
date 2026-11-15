@@ -1,4 +1,6 @@
-# (nombre pendiente) --- HACKATON SPACE APPS
+# LUNNA (Live-telemetry Updating Network for Nominal-deviation & Anomalies)
+For HACKATON SPACE APPS
+Team: Monarcas
 
 Software de monitoreo de salud para astronautas en misiones de larga duración.
 NASA Space Apps Challenge 2026.

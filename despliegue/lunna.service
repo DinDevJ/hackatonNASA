@@ -1,0 +1,23 @@
+[Unit]
+Description=Lunna · backend en modo simulación (landing y nginx aparte)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=lunna
+Group=lunna
+WorkingDirectory=__DIR__/Simulacion
+Environment=PUERTO=8787
+Environment=NODE_ENV=production
+ExecStart=__NODE__ --experimental-strip-types --disable-warning=ExperimentalWarning ../Sistema/backend/src/servidor.ts --modo simulacion --simulacion .
+Restart=always
+RestartSec=3
+# Endurecimiento básico: sólo escribe en su carpeta
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=__DIR__
+
+[Install]
+WantedBy=multi-user.target

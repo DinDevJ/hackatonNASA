@@ -221,3 +221,10 @@ semillas/inicial.json   tripulación, esquemas y priores PROVISIONALES
 - **Verificación cruzada de asignación**: si traje y reloj del mismo tripulante discrepan mucho, avisar de una posible asignación equivocada
 - **Traducir perfiles Bluetooth estándar** (ritmo cardiaco, presión arterial) en la pasarela, para aceptar relojes y brazaletes comerciales
 - **Histéresis** en las alertas para que no oscilen ámbar–verde cerca del umbral
+
+## Créditos
+
+Foto de la Tierra en el simulador: *Blue Marble*, tomada por la tripulación del Apolo 17
+el 7 de diciembre de 1972 (NASA, dominio público). Descargada de la página de la NASA
+"Blue Marble - Image of the Earth from Apollo 17" (www.nasa.gov) e incrustada en
+`web/simulador.html` para que la maqueta funcione sin internet.

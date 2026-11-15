@@ -17,6 +17,7 @@ import { encolarAvisoNave, escribirEnlace, iniciarEnlace, leerEnlace, redactarAv
 import { estadoNave, estadoTierra } from './enlace-https.ts';
 import { idEmisor } from './sincro.ts';
 import { migrarSalud, sembrarSalud } from './salud.ts';
+import { correrMotor, detalleSemaforo, ErrorSemaforo, guardarPeso, leerPesos, restaurarPesos, rutaBd, semaforo } from './semaforo.ts';
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { reiniciarEstados } from './ingesta.ts';
 import { cargarReferencias, referencias, type CargaReferencias } from './referencias.ts';
@@ -450,6 +451,32 @@ export function manejador(db: BD, opciones: OpcionesServidor = {}) {
   ruta('GET', '/api/emergencias', (_r, _p, q) => leerEmergencias(db, q.get('tripulante') ?? undefined));
   ruta('POST', '/api/emergencias', async (req) => conError(async () => registrarEmergencia(db, await cuerpoJson(req))));
   ruta('PUT', '/api/emergencias/:id', async (req, p) => conError(async () => cerrarEmergencia(db, Number(p.id), (await cuerpoJson<{ resultado: string }>(req)).resultado)));
+
+  // ── Semáforo de padecimientos (motor de 20, prototipo-salud) ──
+  const sem = <T>(f: () => T): T => {
+    try { return f(); } catch (e) { if (e instanceof ErrorSemaforo) throw new ErrorHttp(e.estado, e.message); throw e; }
+  };
+  /** Cuerpo JSON opcional: vacío = {}. */
+  const cuerpoOpcional = async (req: IncomingMessage): Promise<unknown> => {
+    const t = (await cuerpo(req)).toString('utf8').trim();
+    if (!t) return {};
+    try { return JSON.parse(t); } catch { throw new ErrorHttp(400, 'JSON inválido'); }
+  };
+  ruta('GET', '/api/padecimientos/semaforo', (_r, _p, q) => sem(() => semaforo(db, q.get('tripulante') ?? undefined)));
+  ruta('GET', '/api/padecimientos/semaforo/:tripulante/:padecimiento', (_r, p) => sem(() => detalleSemaforo(db, p.tripulante!, p.padecimiento!)));
+  ruta('GET', '/api/padecimientos/pesos', (_r, _p, q) => sem(() => leerPesos(db, q.get('padecimiento') ?? undefined)));
+  ruta('PUT', '/api/padecimientos/pesos', async (req) => { const c = await cuerpoJson<unknown>(req); return sem(() => guardarPeso(db, c)); });
+  ruta('POST', '/api/padecimientos/pesos/restaurar', async (req) => { const c = await cuerpoOpcional(req); return sem(() => restaurarPesos(db, c)); });
+  ruta('POST', '/api/padecimientos/evaluar', async (req) => {
+    const c = await cuerpoOpcional(req) as Record<string, unknown> | null;
+    if (!c || typeof c !== 'object' || Array.isArray(c)) throw new ErrorHttp(400, 'el cuerpo debe ser un objeto JSON');
+    if (c.simulado !== undefined && typeof c.simulado !== 'boolean') throw new ErrorHttp(400, 'simulado debe ser booleano');
+    try {
+      const r = await correrMotor(rutaBd(db), c.simulado === true);
+      anotar(`Motor de padecimientos: ${r.filas_escritas} filas (canal ${r.canal})`);
+      return { ok: true, ...r };
+    } catch (e) { if (e instanceof ErrorSemaforo) throw new ErrorHttp(e.estado, e.message); throw e; }
+  });
 
   // ── Sólo para la demo: deja la misión en blanco, conserva la configuración ──
   ruta('POST', '/api/demo/reiniciar', () => {

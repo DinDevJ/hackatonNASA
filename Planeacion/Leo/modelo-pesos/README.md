@@ -13,9 +13,10 @@ Fundamentos y contexto: [../modelo-predictivo-fundamentos.md](../modelo-predicti
 | [pesos.json](pesos.json) | Lo mismo en JSON, más la lista de referencias |
 | [generar_pesos.py](generar_pesos.py) | **Fuente de verdad**: aquí se editan los pesos y se regeneran el CSV y el JSON |
 | [actualizacion_bayesiana.py](actualizacion_bayesiana.py) | Implementación de referencia en Python puro (sin dependencias) con una demostración |
+| [../maqueta-eva/pesos.js](../maqueta-eva/pesos.js) | Copia ligera (solo celdas con peso) que usan la computadora central y la base en Tierra para el índice por padecimiento. La genera `generar_pesos.py` |
 
 ```bash
-python generar_pesos.py            # regenera pesos.csv y pesos.json
+python generar_pesos.py            # regenera pesos.csv, pesos.json y ../maqueta-eva/pesos.js
 python actualizacion_bayesiana.py  # demostración con datos simulados
 ```
 

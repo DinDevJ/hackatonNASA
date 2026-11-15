@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+envs/
+weights/
+vendor/
+outputs/
+datos/estado/
+datos/modelo/overrides.json

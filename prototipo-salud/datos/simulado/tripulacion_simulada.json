@@ -1,0 +1,1701 @@
+{
+  "simulated": true,
+  "etiqueta": "SIMULADO",
+  "provisional": true,
+  "nota": "SIMULADO: datos sintéticos, no es fisiología real ni de astronautas; variables independientes con ruido alrededor de medias arbitrarias; solo ejercita el flujo del motor (h.2). Ninguna cifra es una validación. Todos los números son provisional.",
+  "semilla": 20261114,
+  "mision": {
+    "SIM-T01": {
+      "lanzamiento": "2026-09-13",
+      "aterrizaje": null
+    },
+    "SIM-T02": {
+      "lanzamiento": "2026-09-13",
+      "aterrizaje": null
+    },
+    "SIM-T03": {
+      "lanzamiento": "2026-09-13",
+      "aterrizaje": null
+    },
+    "SIM-T04": {
+      "lanzamiento": "2026-09-13",
+      "aterrizaje": null
+    },
+    "SIM-T05": {
+      "lanzamiento": "2026-09-13",
+      "aterrizaje": null
+    }
+  },
+  "perfiles": {
+    "SIM-T01": {
+      "edad": 38,
+      "sexo": "M"
+    },
+    "SIM-T02": {
+      "edad": 42,
+      "sexo": "F"
+    },
+    "SIM-T03": {
+      "edad": 35,
+      "sexo": "M"
+    },
+    "SIM-T04": {
+      "edad": 45,
+      "sexo": "F"
+    },
+    "SIM-T05": {
+      "edad": 40,
+      "sexo": "M"
+    }
+  },
+  "perfiles_nota": "edad y sexo INVENTADOS para ejercitar el flujo (SIMULADO, provisional)",
+  "dias": {
+    "pre": [
+      "2026-09-01",
+      "2026-09-12"
+    ],
+    "vuelo": [
+      "2026-09-13",
+      "2026-09-30"
+    ],
+    "n_dias": 30
+  },
+  "parametros": {
+    "provisional": true,
+    "inicio": "2026-09-01",
+    "lanzamiento": "2026-09-13",
+    "fin": "2026-09-30",
+    "ruido_max_de": 1.0,
+    "ruido_max_de_vuelo": 0.5,
+    "entre_personas_de": 0.8,
+    "hora_signos": "03:00:00",
+    "hora_resto": "08:00:00",
+    "salto_T02": {
+      "persona": "SIM-T02",
+      "variables": [
+        "04:A1",
+        "01:V3"
+      ],
+      "desde": "2026-09-27",
+      "hasta": "2026-09-30",
+      "magnitud_de": 5.0
+    },
+    "rampa_T03": {
+      "persona": "SIM-T03",
+      "variable": "03:V30",
+      "desde": "2026-09-13",
+      "hasta": "2026-09-30",
+      "pendiente_de_por_dia": -0.1
+    },
+    "faltantes_T04": {
+      "persona": "SIM-T04",
+      "sin_filas_en_vuelo": [
+        "04:A3",
+        "04:A2",
+        "04:A25"
+      ],
+      "sin_dato": [
+        {
+          "variable_id": "01:V3",
+          "fecha": "2026-09-16",
+          "motivo": "sensor desconectado"
+        },
+        {
+          "variable_id": "01:V3",
+          "fecha": "2026-09-17",
+          "motivo": "sensor desconectado"
+        },
+        {
+          "variable_id": "04:A1",
+          "fecha": "2026-09-20",
+          "motivo": "termometro no disponible"
+        },
+        {
+          "variable_id": "03:V30",
+          "fecha": "2026-09-22",
+          "motivo": "actigrafo sin sincronizar"
+        },
+        {
+          "variable_id": "03:V66",
+          "fecha": "2026-09-24",
+          "motivo": "prueba no realizada"
+        },
+        {
+          "variable_id": "04:A23",
+          "fecha": "2026-09-26",
+          "motivo": "analizador en mantenimiento"
+        }
+      ]
+    },
+    "n4_T05": {
+      "persona": "SIM-T05",
+      "pa_cuffless": {
+        "variable_id": "01:V1",
+        "desde": "2026-09-28",
+        "hasta": "2026-09-30",
+        "magnitud_de": 8.0
+      },
+      "adaptador_ecg": {
+        "desde": "2026-09-28",
+        "hasta": "2026-09-30",
+        "V31_bandera": 1,
+        "V34_qtc_ms": 470.0
+      }
+    },
+    "compartida": {
+      "variable": "04:A23",
+      "desde": "2026-09-18",
+      "hasta": "2026-09-18",
+      "magnitud_de": 1.5,
+      "personas": [
+        "SIM-T01",
+        "SIM-T02",
+        "SIM-T03",
+        "SIM-T04",
+        "SIM-T05"
+      ]
+    }
+  },
+  "escenarios": [
+    {
+      "persona": "SIM-T01",
+      "que": "control: todo dentro de su base, cobertura completa, sin anomalías inyectadas (salvo la desviación compartida de ppCO2)",
+      "dias": [
+        "2026-09-01",
+        "2026-09-30"
+      ],
+      "resultado_esperado": "VERDE donde la cobertura lo permita (escenario 1 de h.2)"
+    },
+    {
+      "persona": "SIM-T02",
+      "que": "salto brusco de +5 DE en temperatura corporal (04:A1) y FC en reposo (01:V3)",
+      "dias": [
+        "2026-09-27",
+        "2026-09-30"
+      ],
+      "resultado_esperado": "alerta en las dos variables; la media adaptativa no cambia (escenario 4 de h.2)"
+    },
+    {
+      "persona": "SIM-T03",
+      "que": "rampa lenta descendente de sueño (03:V30), -0.1 DE por día desde el lanzamiento, sin puntos extremos",
+      "dias": [
+        "2026-09-13",
+        "2026-09-30"
+      ],
+      "resultado_esperado": "señal del CUSUM y tope del EWMA; base prevuelo intacta (escenario 5 de h.2)"
+    },
+    {
+      "persona": "SIM-T04",
+      "que": "faltantes: en vuelo no hay filas de SpO2 (04:A3), FR (04:A2) ni PIO2 (04:A25) (núcleo de P03) y hay varias filas sin_dato con motivo y value vacío",
+      "dias": [
+        "2026-09-13",
+        "2026-09-30"
+      ],
+      "resultado_esperado": "P03 GRIS, no VERDE; sin_dato nunca es 0 (escenarios 2 y 3 de h.2)"
+    },
+    {
+      "persona": "SIM-T05",
+      "que": "datos N4: PA cuffless muy desviada y filas tipo adaptador ECG (01:V31 = 1, 01:V34 = 470 ms)",
+      "dias": [
+        "2026-09-28",
+        "2026-09-30"
+      ],
+      "resultado_esperado": "no actualiza la base; no produce ROJO; no respalda VERDE (escenario 6 de h.2)"
+    },
+    {
+      "persona": "TODAS",
+      "que": "ppCO2 de cabina (04:A23) elevada +1.5 DE en toda la tripulación",
+      "dias": [
+        "2026-09-18",
+        "2026-09-18"
+      ],
+      "resultado_esperado": "etiqueta «desviación compartida»; ninguna alerta individual se apaga; ninguna base cambia (escenario 10 de h.2)"
+    }
+  ],
+  "variables_simuladas": [
+    {
+      "variable_id": "01:V1",
+      "variable": "Presión arterial sistólica / diastólica en reposo",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P03",
+        "P04",
+        "P10"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "01:V3",
+      "variable": "Frecuencia cardíaca en reposo",
+      "tipo": "continua",
+      "unidad": "bpm",
+      "device_class": "ecg_prenda_holter",
+      "padecimientos": [
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "P07",
+        "P10"
+      ],
+      "media_base": 60.0,
+      "de": 2.5,
+      "rango_plausible": true,
+      "provisional": true
+    },
+    {
+      "variable_id": "01:V8",
+      "variable": "Masa corporal",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P19"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "02:V58",
+      "variable": "Dolor de espalda: presencia e intensidad",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P18"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "02:V59",
+      "variable": "Localización, día de inicio y duración del dolor",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P18"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "02:V60",
+      "variable": "Respuesta al tratamiento",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P18"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "02:V61",
+      "variable": "Estatura de pie",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P18"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "02:V62",
+      "variable": "Talla sentado",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P18"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "02:V64",
+      "variable": "Altura y ángulo del disco intervertebral; desecación; osteofitos",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P18"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "02:V67a",
+      "variable": "Síntomas de mareo espacial (náusea, vómito, palidez, sudor frío, malestar, pérdida de apetito, fatiga)",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P16"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "02:V68a",
+      "variable": "Uso y respuesta a medicación antimareo",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P16"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "02:V74",
+      "variable": "Ilusiones y desorientación espacial; agudeza visual dinámica",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P16"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "02:V76",
+      "variable": "25-OH vitamina D sérica",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "laboratorio",
+      "padecimientos": [
+        "P19"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "02:V77",
+      "variable": "Ingesta y adherencia al suplemento de vitamina D",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P19"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "02:V78",
+      "variable": "Ferritina sérica",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "laboratorio",
+      "padecimientos": [
+        "P19"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "02:V79",
+      "variable": "Ingesta de hierro",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P19"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "02:V80",
+      "variable": "Folato sérico y eritrocitario",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "laboratorio",
+      "padecimientos": [
+        "P19"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "02:V81",
+      "variable": "Ingesta energética",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P19"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "02:V82",
+      "variable": "Ingesta de proteína",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P19"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "02:V83",
+      "variable": "Ingesta de sodio",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P19"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "02:V84",
+      "variable": "Ingesta de calcio",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P19"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "02:V85",
+      "variable": "Apetito y saciedad",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P19"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V11",
+      "variable": "Ítems de astenia (8 ítems POMS de \"astenia fase 1\")",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P06"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V30",
+      "variable": "Tiempo total de sueño (actigrafía)",
+      "tipo": "continua",
+      "unidad": "h",
+      "device_class": "actigrafia",
+      "padecimientos": [
+        "P04",
+        "P05",
+        "P06"
+      ],
+      "media_base": 7.0,
+      "de": 0.5,
+      "rango_plausible": true,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V31",
+      "variable": "Porcentaje de noches con <6 h",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V32",
+      "variable": "Tiempo total de sueño (diario)",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V33",
+      "variable": "Tiempo en cama frente a oportunidad de sueño",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V34",
+      "variable": "Eficiencia del sueño",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V35",
+      "variable": "Latencia de sueño",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V36",
+      "variable": "Vigilia tras inicio del sueño (WASO) y número y causa de despertares",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V37",
+      "variable": "Calidad subjetiva del sueño",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V41",
+      "variable": "Arquitectura del sueño (polisomnografía)",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V42",
+      "variable": "Presión de sueño en vigilia (EEG)",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V43",
+      "variable": "Deuda de sueño (rebote al volver)",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V44",
+      "variable": "Alineación circadiana del episodio de sueño",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V46",
+      "variable": "6-sulfatoximelatonina en orina (aMT6s)",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "laboratorio",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V47",
+      "variable": "Temperatura corporal central",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V48",
+      "variable": "Ritmo de cortisol urinario",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "laboratorio",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V49",
+      "variable": "Luz ambiental (iluminancia)",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V5",
+      "variable": "POMS / POMS-SF",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P06"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V50",
+      "variable": "Espectro y ajuste de iluminación",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V51",
+      "variable": "Cambio brusco de horario (\"slam shift\")",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V52",
+      "variable": "Hora de acostarse y de levantarse (regularidad)",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V55",
+      "variable": "Fatiga mental, agotamiento físico, cansancio, somnolencia (escalas visuales)",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P06"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V59",
+      "variable": "Horas de trabajo",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P06"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V60",
+      "variable": "Carga de trabajo autoinformada",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P06"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V63",
+      "variable": "Consumo de cafeína",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P06"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V65",
+      "variable": "PVT-B: velocidad de respuesta",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "pvt_laptop",
+      "padecimientos": [
+        "P06"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V66",
+      "variable": "PVT-B: lapsos",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "pvt_laptop",
+      "padecimientos": [
+        "P03",
+        "P05",
+        "P06",
+        "P07"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V67",
+      "variable": "PVT: falsos arranques",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "pvt_laptop",
+      "padecimientos": [
+        "P06"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V68",
+      "variable": "Batería Cognition (velocidad, precisión y eficiencia por prueba)",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "prueba_cognitiva",
+      "padecimientos": [
+        "P06"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V69",
+      "variable": "DSST (sustitución dígito-símbolo)",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "prueba_cognitiva",
+      "padecimientos": [
+        "P06"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V70",
+      "variable": "Fractal 2-Back",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "prueba_cognitiva",
+      "padecimientos": [
+        "P06"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V71",
+      "variable": "Razonamiento abstracto (MRT) y memoria visual (VOLT)",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "prueba_cognitiva",
+      "padecimientos": [
+        "P06"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V72",
+      "variable": "Propensión al riesgo (BART)",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "prueba_cognitiva",
+      "padecimientos": [
+        "P06"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V73",
+      "variable": "Reconocimiento de emociones (ERT)",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "prueba_cognitiva",
+      "padecimientos": [
+        "P06"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V74",
+      "variable": "WinSCAT",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "prueba_cognitiva",
+      "padecimientos": [
+        "P06"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V75",
+      "variable": "ROBoT-r (tarea robótica operativa)",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "prueba_cognitiva",
+      "padecimientos": [
+        "P06"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V76",
+      "variable": "Tiempo de reacción en simulación de acoplamiento",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "prueba_cognitiva",
+      "padecimientos": [
+        "P06"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V82",
+      "variable": "Episodio de cefalea (sí/no, fecha, duración)",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P07"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V83",
+      "variable": "Intensidad de la cefalea",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P07"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V84",
+      "variable": "Fenotipo y síntomas acompañantes",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P07"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V85",
+      "variable": "Relación cefalea-CO2",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P07"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V86",
+      "variable": "Tratamiento de la cefalea",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P07"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V87",
+      "variable": "Uso de hipnóticos",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "03:V88",
+      "variable": "Uso de cualquier medicación (analgésicos, descongestivos, antieméticos)",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P07"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A1",
+      "variable": "Temperatura corporal",
+      "tipo": "continua",
+      "unidad": "°C",
+      "device_class": "termometro_oral",
+      "padecimientos": [
+        "P04"
+      ],
+      "media_base": 36.6,
+      "de": 0.2,
+      "rango_plausible": true,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A10",
+      "variable": "Leucocitos totales (WBC)",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "laboratorio",
+      "padecimientos": [
+        "P04"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A11",
+      "variable": "Diferencial de 5 partes (neutrófilos, linfocitos, monocitos, eosinófilos, basófilos)",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "laboratorio",
+      "padecimientos": [
+        "P04"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A12",
+      "variable": "Función de células T / citocinas estimuladas (IFNγ, IL-10, IL-5, TNFα, IL-6)",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "laboratorio",
+      "padecimientos": [
+        "P04"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A14",
+      "variable": "Carga viral latente en saliva (EBV, VZV, HSV-1) y orina (CMV)",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "laboratorio",
+      "padecimientos": [
+        "P04"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A16",
+      "variable": "Lesiones herpéticas (herpes labial, zóster)",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P04"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A17",
+      "variable": "Erupción cutánea / hipersensibilidad (localización, extensión, prurito, foto)",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P04"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A18",
+      "variable": "Signos de infección de piel / herida",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P04"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A19",
+      "variable": "Garganta (foto, dolor)",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P04"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A2",
+      "variable": "Frecuencia respiratoria",
+      "tipo": "continua",
+      "unidad": "rpm",
+      "device_class": "bandas_toracicas",
+      "padecimientos": [
+        "P03",
+        "P04",
+        "P07",
+        "P10"
+      ],
+      "media_base": 15.0,
+      "de": 1.0,
+      "rango_plausible": true,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A20",
+      "variable": "Otoscopia (tímpano)",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P04"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A21",
+      "variable": "Microbioma (piel, saliva, heces)",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "laboratorio",
+      "padecimientos": [
+        "P04"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A22a",
+      "variable": "Leucocitos (esterasa)",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "laboratorio",
+      "padecimientos": [
+        "P04"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A22b",
+      "variable": "Nitritos",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "laboratorio",
+      "padecimientos": [
+        "P04"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A22f",
+      "variable": "Cetonas",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "laboratorio",
+      "padecimientos": [
+        "P19"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A23",
+      "variable": "ppCO2 de cabina",
+      "tipo": "continua",
+      "unidad": "mmHg",
+      "device_class": "analizador_cabina",
+      "padecimientos": [
+        "P05",
+        "P06",
+        "P07"
+      ],
+      "media_base": 2.0,
+      "de": 0.15,
+      "rango_plausible": true,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A24",
+      "variable": "CO2 inspirado en traje (PICO2)",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P07"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A25",
+      "variable": "O2 inspirado (PIO2)",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P03"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A26",
+      "variable": "Presión total de cabina",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P03",
+        "P10"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A27",
+      "variable": "Temperatura y humedad de cabina",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A28",
+      "variable": "Ruido: dosis de 24 h",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A3",
+      "variable": "SpO2",
+      "tipo": "continua",
+      "unidad": "%",
+      "device_class": "oximetro_dedo",
+      "padecimientos": [
+        "P03",
+        "P04",
+        "P10"
+      ],
+      "media_base": 97.0,
+      "de": 0.6,
+      "rango_plausible": true,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A30",
+      "variable": "Productos de combustión (CO, HCN, HCl, HF)",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "captura_manual",
+      "padecimientos": [
+        "P03"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A34",
+      "variable": "Microbiología de aire, superficies y agua",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "laboratorio",
+      "padecimientos": [
+        "P04"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A36",
+      "variable": "Síntomas DCS tipo I",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P10"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A37",
+      "variable": "Síntomas DCS tipo II",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P10"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A39",
+      "variable": "Barotrauma de oído/senos (dolor, imposibilidad de igualar)",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P10"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A40",
+      "variable": "Insomnio / horas de sueño",
+      "tipo": "continua",
+      "unidad": "u.a. SIMULADA",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P05"
+      ],
+      "media_base": 100.0,
+      "de": 5.0,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A43",
+      "variable": "Diarrea / gastroenteritis",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P04"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A44",
+      "variable": "Infección respiratoria",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P04"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A46",
+      "variable": "Reacción alérgica",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P04"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A49",
+      "variable": "Sinusitis",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P04"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A50",
+      "variable": "Parestesia y delaminación de uña tras EVA",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P10"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A6",
+      "variable": "Cefalea (sí/no, intensidad 0–10, hora)",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P07"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A7",
+      "variable": "Lista de síntomas por CO2",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P07"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "04:A8",
+      "variable": "Congestión nasal / \"cabeza llena\"",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P07"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "R24",
+      "variable": "Síntomas urinarios y ginecológicos",
+      "tipo": "presencia",
+      "unidad": "presencia_0_1",
+      "device_class": "autorreporte",
+      "padecimientos": [
+        "P04"
+      ],
+      "media_base": 0.0,
+      "de": null,
+      "rango_plausible": false,
+      "provisional": true
+    },
+    {
+      "variable_id": "01:V31",
+      "variable": "Bandera de ritmo irregular (tipo adaptador ECG)",
+      "tipo": "presencia",
+      "unidad": "bandera_0_1_no_diagnostica",
+      "device_class": "ecg_adaptador",
+      "solo_persona": "SIM-T05",
+      "provisional": true
+    },
+    {
+      "variable_id": "01:V34",
+      "variable": "QTc (tipo adaptador ECG)",
+      "tipo": "continua",
+      "unidad": "ms",
+      "device_class": "ecg_adaptador",
+      "solo_persona": "SIM-T05",
+      "provisional": true
+    }
+  ],
+  "archivos": {
+    "csv": "tripulacion_simulada.csv",
+    "leeme": "LEEME.md"
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "key": "ecg",
+  "nombre": "ECG (NeuroKit2)",
+  "repo": null,
+  "repo_url": "https://github.com/neuropsychology/NeuroKit",
+  "entrypoint": "adapters/ecg/infer.py",
+  "env": {
+    "dir": "envs/ecg",
+    "python": "3.11",
+    "requirements_in": "adapters/ecg/requirements.in",
+    "lock_windows": "adapters/ecg/requirements-win.lock.txt",
+    "install_vars": {},
+    "editable": [],
+    "verificar_import": [
+      "neurokit2",
+      "wfdb",
+      "pywt"
+    ],
+    "notas": "Procesamiento de senal, sin torch/torchvision ni pesos (CPU, numpy/scipy). neurokit2 0.3.0 exige numpy>=2, por eso este entorno usa numpy 2.2.6 (los de los modelos de eco usan 1.26.4); el lock se compilo con uv pip compile para Windows/cp311 (sin paquetes solo-Windows) e incluye PyWavelets (necesario para ecg_delineate method=dwt), matplotlib (dependencia de neurokit2/wfdb), scikit-learn y scipy. Instalacion: uv venv --python 3.11 envs\\ecg y uv pip install -r adapters\\ecg\\requirements-win.lock.txt --no-deps (un solo paso; no hay paso de torch)."
+  },
+  "pesos": [],
+  "muestras": [
+    {
+      "archivo": "samples/ecg_normal_mitdb100.hea",
+      "fuente": "MIT-BIH Arrhythmia Database, registro 100, muestras 172800-237600 (ver samples/FUENTES.md)",
+      "licencia": "ODC-By 1.0 (PhysioNet)",
+      "modalidad": "ecg_1d",
+      "vista": "desconocida"
+    },
+    {
+      "archivo": "samples/ecg_fa_afdb04015.hea",
+      "fuente": "MIT-BIH Atrial Fibrillation Database, registro 04015, muestras 130000-175000 (ver samples/FUENTES.md)",
+      "licencia": "ODC-By 1.0 (PhysioNet)",
+      "modalidad": "ecg_1d",
+      "vista": "desconocida"
+    },
+    {
+      "archivo": "samples/ecg_extrasistoles_mitdb201.hea",
+      "fuente": "MIT-BIH Arrhythmia Database, registro 201, muestras 194400-259200 (ver samples/FUENTES.md)",
+      "licencia": "ODC-By 1.0 (PhysioNet)",
+      "modalidad": "ecg_1d",
+      "vista": "desconocida"
+    }
+  ],
+  "modalidades_admitidas": [
+    "ecg_1d"
+  ],
+  "vistas_admitidas": [
+    "cualquiera"
+  ],
+  "entrada": "Registro WFDB (carpeta con un .hea + .dat y, opcional, .atr/.qrs de anotaciones; el .hea fija la modalidad ecg_1d) o tabla CSV/TXT/TSV declarada ecg_1d con una columna de senal (separador autodetectado) y options.fs obligatorio > 0 (no se adivina la frecuencia de muestreo). Un canal por ejecucion (options.canal / canal_nombre / csv_columna); segmento con inicio_s/duracion_s. Rechaza video, imagen, DICOM y volumen (analisis no implementado).",
+  "salidas": [
+    "8 filas normalizadas siempre: heart_rate (bpm), hrv_rmssd y hrv_sdnn (ms), pr_interval y qtc_bazett (ms; quality experimental_delineacion_dwt o aviso de ritmo irregular, nunca ok), latidos_irregulares (latidos, hallazgo; criterio RR de prematuridad, quality experimental_criterio_rr_prematuridad), ritmo_irregular_fraccion_ventanas (fraccion_0_1, hallazgo) y ritmo_irregular_compatible_fa (bandera_0_1_no_diagnostica, regla_alerta); valor ausente = vacio con quality 'sin_dato: <motivo>', nunca 0",
+    "source algoritmo_senal (FC, HRV, PR, QTc, latidos irregulares) y regla_experimental (fraccion de segmentos y bandera)",
+    "la bandera 'ritmo irregular compatible con FA' (estadisticos, umbrales y filtro de ectopicos de Dash et al. 2009 sobre segmentos de 128 RR, option fa_filtro_ectopicos; sin su rama de RR omitidos) es EXPERIMENTAL y NO es un diagnostico (etiqueta: BANDERA EXPERIMENTAL – NO DIAGNOSTICO)",
+    "raw_output: aviso, entrada, metodos, picos_r, fc, hrv (sin filtrar, filtrada y ventanas de 300 s), intervalos (PR/QT/QTc), latidos_irregulares (criterio RR y Kubios aparte), bandera_fa (con ventanas[] = segmentos {i,t0_s,t1_s,n_rr,n_rr_filtrados_ectopicos,nrmssd,tpr,entropia,c1,c2,c3,marcada}), comparacion_anotaciones (picos_r, ectopicos, ectopicos_kubios, fa, fc_hrv; si hay .atr/.qrs), tiempos_s; sin arreglos por latido",
+    "artefacto ecg_traza.npz (senal, picos R, latidos prematuros, anotaciones, ritmos, segmentos de la bandera)"
+  ],
+  "requiere_prompt": false,
+  "opciones": {
+    "fs": 0.0,
+    "canal": 0,
+    "canal_nombre": "",
+    "csv_columna": "",
+    "inicio_s": 0.0,
+    "duracion_s": 0.0,
+    "traza_max_s": 1800.0,
+    "rr_min_s": 0.25,
+    "rr_max_s": 3.0,
+    "min_rr_hrv": 20,
+    "ect_fraccion_prematuro": 0.8,
+    "ect_n_previos": 8,
+    "fa_latidos_segmento": 128,
+    "fa_paso_latidos": 32,
+    "fa_n_atipicos": 8,
+    "fa_umbral_nrmssd": 0.1,
+    "fa_tpr_min": 0.54,
+    "fa_tpr_max": 0.77,
+    "fa_umbral_entropia": 0.7,
+    "fa_filtro_ectopicos": true,
+    "fa_min_ventanas_consecutivas": 2,
+    "tolerancia_pico_ms": 150.0,
+    "prueba_carga_dummy": false
+  },
+  "vram_estimada": {
+    "gb": 0,
+    "base": "no usa GPU (CPU, numpy/scipy)",
+    "cabe_en_6gb": "no aplica"
+  },
+  "licencia": "NeuroKit2 0.3.0: MIT (metadatos del paquete instalado: License 'MIT License', classifier 'License :: OSI Approved :: MIT License'; LICENSE en neurokit2-0.3.0.dist-info, 'Copyright (c) 2020, Dominique Makowski'). wfdb 4.3.1: MIT (metadatos: License 'MIT License'; LICENSE en wfdb-4.3.1.dist-info, 'Copyright (c) 2016 MIT Laboratory for Computational Physiology'). Sin pesos ni modelo entrenado. Los datos de prueba son de PhysioNet (MIT-BIH Arrhythmia Database y MIT-BIH Atrial Fibrillation Database, ODC-By 1.0): las muestras de samples/ son recortes de 180 s y validacion/ecg/runs/*/input/ guarda copias de los registros usados en la validacion; atribucion y citas en samples/FUENTES.md. Resultados experimentales, NO diagnosticos.",
+  "estado": "pendiente de probar en PC",
+  "motivo_estado": "Probado solo en Linux CPU (Python 3.11, versiones del lock), no en Windows ni en la PC de Iker. Ejecucion real sobre registros WFDB completos: mitdb 100 (bandera 0; 67 segmentos, 0 AFIB anotados, Sp 1,0), 201 (bandera 1; 58 de 60 segmentos marcados; AFIB 23: TP 23, FP 35, FN 0, TN 2; Sp 0,054, PPV 0,397), 203 (bandera 1; 83 de 83 marcados; AFIB 68: TP 68, FP 15, TN 0; Sp 0,0), afdb 04015 (10,2 h, ~144 s; bandera 1; 145 de 1402 marcados; AFIB 12: TP 12, FP 133, FN 0, TN 1257; Se 1,0, Sp 0,904, PPV 0,083) y las 3 muestras de samples/. La bandera (Dash 2009 con su filtro de ectopicos, sin su rama de RR omitidos) no discrimina en 201 ni 203. Criterio RR de prematuridad: Se 0,88/0,59/0,43 y PPV 1,0/0,45/0,23 en 100/201/203; Kubios solo comparacion (Se 0,97/0,03/0,08). Las cifras sobre 100/201/203/04015 NO son validacion independiente (v2/v2.1 se eligieron despues de ver v1 sobre ellos). La delineacion PR/QTc no esta validada (p. ej. PR 68 ms en 04015). Tambien se probaron segmento corto, CSV con/sin fs, rechazos y prueba de carga.",
+  "no_implementado": [
+    "Diagnostico de fibrilacion auricular u otra arritmia (la bandera es una regla experimental, no validada clinicamente)",
+    "Rama de RR omitidos del filtro de Dash et al. 2009 (RR[i]/RR[i-1] > Perc99 y RR[i+1]/RR[i] < Perc1): el articulo no dice que RR se eliminan",
+    "Distincion entre ectopicos supraventriculares y ventriculares (el criterio RR solo detecta prematuridad)",
+    "ECG de 12 derivaciones en una sola ejecucion (un canal por run) y duracion de la onda P / SAECG",
+    "ECG desde imagen, video, DICOM o PDF (analisis no implementado; se rechaza)",
+    "Delineacion validada y fiable con ritmo irregular (PR/QTc llevan quality experimental o de aviso)"
+  ],
+  "timeout_s": 1800
+}

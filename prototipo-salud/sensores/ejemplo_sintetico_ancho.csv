@@ -1,0 +1,5 @@
+subject_id,timestamp,device,heart_rate,hrv_rmssd,spo2,temp_body__F,temp_skin,simulated,notes
+SIM-A01,2026-11-09T08:00:00,reloj_sim,62,49.5,97,,33.1,true,"DATO SINTÉTICO generado por generar_sintetico.py, no es de ninguna persona"
+SIM-A01,2026-11-09T20:00:00,reloj_sim,74,,,,33.0,true,"DATO SINTÉTICO generado por generar_sintetico.py, no es de ninguna persona"
+SIM-B02,2026-11-09T08:00:00,reloj_sim,60,38.2,,98.2,33.5,true,"DATO SINTÉTICO generado por generar_sintetico.py, no es de ninguna persona"
+SIM-B02,2026-11-09T20:00:00,reloj_sim,,37.0,,,,true,"DATO SINTÉTICO generado por generar_sintetico.py, no es de ninguna persona"

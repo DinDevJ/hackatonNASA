@@ -28,7 +28,7 @@ Cómo funciona, cómo se conecta y dónde están los límites.
 | **Firmware** | `esp32/playera_eva/` | El ESP32 de la playera: lee los sensores, arma tramas, las manda por BLE y las guarda si no hay conexión | C++ (Arduino) |
 | **Pasarela** | `pasarela/` | Encuentra **todos** los dispositivos EVA, se conecta a cada uno, les da la hora y reenvía sus tramas | Python |
 | **Backend** | `backend/` | Atribuye cada dato al tripulante, lo guarda y lo evalúa con LUNNA | TypeScript (Node) |
-| **Simulador** | `backend/web/` | *Maqueta de aeronave interactiva para simular sistema LUNNA*, a pantalla completa en `http://localhost:8787/simulador`. Al dar clic en un equipo se abre su terminal (se puede arrastrar y redimensionar) con cada trama enviada o recibida: `22:26:50 enviada trama 01 91 01 …`. Se controla con comandos (`ayuda`, `fatiga 30`, `ble off`, `aviso …`) | HTML |
+| **Simulador** | `backend/web/` | *Maqueta de aeronave interactiva para simular sistema LUNNA* en `http://localhost:8787/simulador`: la nave con el astronauta, la PC central y el smartphone, y la Tierra afuera. Clic en un equipo abre su terminal arrastrable con cada trama (`22:26:50 enviada trama 01 91 01 …`); clic en el ESP32 abre su monitor serie. Se controla con comandos (`ayuda`) | HTML |
 
 ### ¿Los dispositivos van cableados al ESP32?
 
@@ -192,7 +192,8 @@ está ocupado.
 
 1. Arduino IDE → instalar el núcleo **esp32** de Espressif → abrir
    `esp32/playera_eva/playera_eva.ino` → subir. El monitor serie (115200) debe decir
-   `Playera EVA lista`.
+   `Playera EVA lista`. Con `DEPURAR 1` también muestra cada lectura, cada trama
+   enviada, las conexiones y un resumen cada 10 s (lo mismo que el monitor serie del simulador).
 2. Arrancar el backend.
 3. `python pasarela_ble.py --asignar 401=ana` (sin `--prueba`).
 4. La pasarela lo encuentra, se conecta y empieza a reenviar.

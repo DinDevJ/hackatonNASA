@@ -284,26 +284,43 @@
   // Curva suave al empezar y al terminar: el acercamiento no arranca ni frena de golpe.
   const suave = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
   const reducirMov = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  function animarVista(svgEl, destino, ms, listo) {
-    cancelAnimationFrame(svgEl._anim || 0); // si había otra animación, esta sigue desde donde iba
-    const desde = svgEl.getAttribute("viewBox").split(/\s+/).map(Number);
-    if (reducirMov()) { svgEl.setAttribute("viewBox", destino.join(" ")); return listo && listo(); }
-    const t0 = performance.now();
-    (function paso(t) {
-      const k = suave(Math.min(1, (t - t0) / ms));
-      svgEl.setAttribute("viewBox", desde.map((a, i) => (a + (destino[i] - a) * k).toFixed(2)).join(" "));
-      if (k < 1) svgEl._anim = requestAnimationFrame(paso); else if (listo) listo();
-    })(t0);
+  /** El acercamiento a `vista` como transformación CSS (escala + desplazamiento) de la figura entera.
+   *  Se anima en la tarjeta gráfica: no redibuja el SVG en cada cuadro como cambiar el viewBox, así va a 60 fps. */
+  function zoomCSS(svgEl, vista) {
+    const L = svgEl.parentElement.getBoundingClientRect();   // el lienzo no se transforma: sirve de referencia fija
+    const [VX, VY, VW, VH] = C.VISTA, esc = Math.min(L.width / VW, L.height / VH);
+    const offX = (L.width - VW * esc) / 2, offY = (L.height - VH * esc) / 2;
+    const [x, y, w, h] = vista;
+    const k = Math.min(L.width / (w * esc), L.height / (h * esc));
+    const cx = offX + (x + w / 2 - VX) * esc, cy = offY + (y + h / 2 - VY) * esc;
+    return { k, tx: L.width / 2 - k * cx, ty: L.height / 2 - k * cy, L, esc, offX, offY };
   }
-  /** Dónde quedará el centro de un órgano en pantalla cuando termine el acercamiento a `vista`. */
+  function acercar(svgEl, vista, ms) {
+    const z = zoomCSS(svgEl, vista);
+    svgEl.style.transformOrigin = "0 0";
+    svgEl.style.transition = ms ? `transform ${ms}ms cubic-bezier(.22, 1, .36, 1)` : "none";
+    svgEl.style.transform = `translate(${z.tx.toFixed(1)}px, ${z.ty.toFixed(1)}px) scale(${z.k.toFixed(3)})`;
+  }
+  function alejarCSS(svgEl, ms, listo) {
+    svgEl.style.transition = ms ? `transform ${ms}ms cubic-bezier(.65, 0, .35, 1)` : "none";
+    svgEl.style.transform = "";
+    setTimeout(() => { svgEl.style.transition = ""; if (listo) listo(); }, ms || 0);
+  }
+  /** Dónde quedará el centro de un órgano en pantalla (relativo al teléfono) cuando termine el acercamiento. */
   function puntoFinal(svgEl, el, vista, tel) {
     const t = tel.getBoundingClientRect();
     if (!svgEl || !el) return { x: t.width / 2, y: t.height / 2 };
-    const bb = el.getBBox(), r = svgEl.getBoundingClientRect();
-    const [vx, vy, vw, vh] = vista, esc = Math.min(r.width / vw, r.height / vh);
-    const x = r.left + (r.width - vw * esc) / 2 + (bb.x + bb.width / 2 - vx) * esc;
-    const y = r.top + (r.height - vh * esc) / 2 + (bb.y + bb.height / 2 - vy) * esc;
-    return { x: x - t.left, y: y - t.top };
+    const bb = el.getBBox(), z = zoomCSS(svgEl, vista);
+    const px = z.offX + (bb.x + bb.width / 2 - C.VISTA[0]) * z.esc, py = z.offY + (bb.y + bb.height / 2 - C.VISTA[1]) * z.esc;
+    return { x: z.L.left + z.k * px + z.tx - t.left, y: z.L.top + z.k * py + z.ty - t.top };
+  }
+  /** Anillo de luz que late sobre el órgano justo antes de que brote el panel. */
+  function pulso(tel, pt, n) {
+    const a = document.createElement("span");
+    a.className = `org-pulso es-${n == null ? "nd" : n}`;
+    a.style.left = `${pt.x}px`; a.style.top = `${pt.y}px`;
+    tel.append(a);
+    setTimeout(() => a.remove(), 900);
   }
 
   /** Toca un órgano: la figura se acerca a él y la información sale de ahí hasta cubrir la pantalla. */
@@ -361,31 +378,46 @@
       hud.style.setProperty("--ox", `${pt.x}px`);
       hud.style.setProperty("--oy", `${pt.y}px`);
     };
-    const ZOOM_MS = 620;
+    const ZOOM_MS = 640;
+    // Cuando el panel termina de crecer se enciende su vidrio (backdrop-filter): animarlo con el
+    // desenfoque puesto obliga a recalcularlo en cada cuadro y es lo que hacía que se trabara.
+    hud.addEventListener("transitionend", (e) => { if (e.target === hud && e.propertyName === "transform" && hud.classList.contains("abierto")) hud.classList.add("listo"); });
+    // El panel se mete al teléfono desde el toque (invisible y chiquito en el órgano): así el trabajo pesado
+    // de dibujarlo ocurre antes de que empiece el movimiento y no a media animación.
+    const montar = () => { if (!hud.isConnected) { origen(); tel.append(hud); } };
     const abrir = () => {
-      origen();
-      tel.append(hud);
+      montar();
       requestAnimationFrame(() => requestAnimationFrame(() => hud.classList.add("abierto")));
       $(".hud-x", hud).focus({ preventScroll: true });
     };
     if (opc.directo) {
       // Al volver de una ficha: el órgano ya está acercado y su panel abierto, sin animación de entrada.
-      if (svgEl) svgEl.setAttribute("viewBox", zoom.join(" "));
-      hud.classList.add("sin-trans");
+      if (svgEl) acercar(svgEl, zoom, 0);
+      hud.classList.add("sin-trans", "listo");
       abrir();
       hud.classList.add("abierto");
       requestAnimationFrame(() => requestAnimationFrame(() => hud.classList.remove("sin-trans")));
-    } else if (svgEl && !reducirMov()) { animarVista(svgEl, zoom, ZOOM_MS); setTimeout(abrir, ZOOM_MS * 0.45); }
-    else { if (svgEl) animarVista(svgEl, zoom, 0); abrir(); }
+    } else if (svgEl && !reducirMov()) {
+      // 1) el órgano late, 2) la figura se acerca, 3) el panel brota del órgano a media carrera.
+      const o = $(`[data-region="${r}"]`, svgEl);
+      const pt0 = puntoFinal(svgEl, o, C.VISTA, tel);
+      montar();
+      pulso(tel, pt0, ev.regiones[r]);
+      // Un cuadro después del toque (ya con el panel dibujado y los demás órganos atenuados) empieza el acercamiento.
+      requestAnimationFrame(() => requestAnimationFrame(() => acercar(svgEl, zoom, ZOOM_MS)));
+      setTimeout(() => pulso(tel, puntoFinal(svgEl, o, zoom, tel), ev.regiones[r]), ZOOM_MS * 0.35);
+      setTimeout(abrir, ZOOM_MS * 0.42);
+    } else { if (svgEl) acercar(svgEl, zoom, 0); hud.classList.add("listo"); abrir(); }
 
     const cerrar = (luego) => {
       document.removeEventListener("keydown", tecla);
       origen();
+      hud.classList.remove("listo");
       hud.classList.remove("abierto");
       // El alejamiento empieza mientras el panel se recoge hacia el órgano: sin corte entre los dos.
       const alejar = () => {
         if (!svgEl || !svgEl.isConnected) return;
-        animarVista(svgEl, C.VISTA, ZOOM_MS, () => {
+        alejarCSS(svgEl, reducirMov() ? 0 : ZOOM_MS, () => {
           svgEl.classList.remove("con-foco");
           $$(".org, .halo", svgEl).forEach((el) => el.classList.remove("activa"));
         });

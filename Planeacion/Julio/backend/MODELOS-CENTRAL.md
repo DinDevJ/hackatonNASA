@@ -53,7 +53,7 @@ npm run certs        # solo la primera vez (la nave exige certs\tierra.crt)
 npm run nave         # http://localhost:8787
 ```
 
-Abrir la central: <http://localhost:8787/app/central.html#semaforo> → tarjeta **Analizar con modelos**.
+Abrir la central: <http://localhost:8787/app/central.html#semaforo> → tarjeta **Analizar con modelos** (va debajo de la tripulación y los padecimientos; sale plegada y el navegador recuerda si la dejaste abierta).
 
 - **ECG**: «Analizar ECG» → tripulante → modelo ECG (NeuroKit2) → muestra `ecg_fa_afdb04015.hea` → deja **SIMULADO** marcado
   (las muestras MIT-BIH no son del tripulante) → «Analizar». Para ver el semáforo moverse en una demo, desmarca SIMULADO

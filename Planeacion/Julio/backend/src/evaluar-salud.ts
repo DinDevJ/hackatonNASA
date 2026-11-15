@@ -1,7 +1,8 @@
 /**
  * Corre el motor de padecimientos (prototipo-salud) sobre la BD y escribe `evaluaciones`.
  *
- *   npm run evaluar -- [--simulado] [--db ruta]
+ *   npm run evaluar -- [--simulado | --origen-simulador] [--db ruta]
+ *   --origen-simulador: los datos de eva.db vienen de `npm run sim`; se evalúan igual pero se guardan con canal SIMULADO
  */
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,7 +13,7 @@ const args = process.argv.slice(2);
 const i = args.indexOf('--db');
 const ruta = resolve(i >= 0 && args[i + 1] ? args[i + 1]! : process.env.BD ?? join(AQUI, '..', 'eva.db'));
 try {
-  const r = await correrMotor(ruta, args.includes('--simulado'));
+  const r = await correrMotor(ruta, args.includes('--simulado'), { origenSimulador: args.includes('--origen-simulador') });
   console.log(r.salida);
   for (const a of r.avisos) console.error(a);
 } catch (e) {

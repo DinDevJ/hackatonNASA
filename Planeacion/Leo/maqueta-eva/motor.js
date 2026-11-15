@@ -214,6 +214,25 @@
       solar,
     };
   }
+  // ------------------------------------------------------------------ dosis personal (bug 9)
+  // SIMULADA. Misma cabina para todos, pero cada quien pasa distinto tiempo en módulos menos
+  // blindados (factor) y tarda distinto en llegar al refugio el día 115 (minutos fuera).
+  const FACTOR_DOSIS = { "MS-1": 1.02, "MS-2": 1.0, "MS-3": 0.97, "MS-4": 1.06 };
+  const MIN_AL_REFUGIO = { "MS-1": 3, "MS-2": 2, "MS-3": 5, "MS-4": 2 }; // Mei llega 11:09 en el escenario
+  const DURACION_EVENTO_MIN = 27, TASA_EVENTO = 6000, BLINDAJE_REFUGIO = 0.1; // supuestos del escenario
+  /** Dosis del evento solar del día 115 para una persona, en mSv (0 antes del evento). */
+  function dosisEvento(pid, dia) {
+    if (dia < 115) return 0;
+    const fuera = MIN_AL_REFUGIO[pid] ?? 3;
+    const uSv = (TASA_EVENTO * fuera) / 60 + (TASA_EVENTO * BLINDAJE_REFUGIO * (DURACION_EVENTO_MIN - fuera)) / 60;
+    return redondo(uSv / 1000, 2);
+  }
+  /** Dosis acumulada de la misión (mSv) y del evento solar (mSv) de una persona. */
+  function dosisPersonal(pid, dia) {
+    const evento = dosisEvento(pid, dia);
+    return { mision: redondo(dia * 0.48 * (FACTOR_DOSIS[pid] ?? 1) + evento, 1), evento, minAlRefugio: MIN_AL_REFUGIO[pid] ?? 3 };
+  }
+
   /** Evento real de DONKI que sirve de modelo al evento solar del día 115 (ERS CU-03). */
   const DONKI = {
     id: "2024-05-11T02:10:00-SEP-001", instrumento: "GOES-P SEISS > 100 MeV", latenciaMin: 20,
@@ -351,7 +370,7 @@
       hallazgos.push({
         id: "RADIACION", nivel: 2, titulo: "Evento de partículas solares",
         frase: "La radiación subió de golpe. <b>Dirígete al refugio blindado ahora.</b>",
-        evidencia: [`Tasa de dosis: ${ev.cabina.tasa.toLocaleString("es-ES")} µSv/h (diseño < 54) [A]`, `Dosis de la misión: ${ev.cabina.dosisMision} de 600 mSv [A]`],
+        evidencia: [`Tasa de dosis: ${ev.cabina.tasa.toLocaleString("es-ES")} µSv/h (diseño < 54) [A]`, `Tu dosis de la misión: ${fmt(dosisPersonal(pid, dia).mision, 1)} de 600 mSv · del evento: ${fmt(dosisPersonal(pid, dia).evento, 2)} de 250 mSv [A]`],
         hacer: "Sigue el protocolo de refugio y confirma a tu pareja del buddy check (" + p.pareja + ").",
         umbral: "[A] NASA-STD-3001", simulado: true,
       });
@@ -422,7 +441,7 @@
     return { resumen, hallazgos, bien, cara, nivel: ev.general };
   }
 
-  const API = { ESTADO, configurarCiclo, AJUSTE_LUTEA, registrar, registro, limpiarRegistros, serieCon, PRIMER_DIA, ULTIMO_DIA, DIAS, IND, REGIONES, PERSONAS, SERIES, DONKI, idx, tuNormal, zDe, mediana, cabina, estadoIndicador, fatiga, evaluar, lunaDice, horas, texto };
+  const API = { ESTADO, dosisPersonal, dosisEvento, configurarCiclo, AJUSTE_LUTEA, registrar, registro, limpiarRegistros, serieCon, PRIMER_DIA, ULTIMO_DIA, DIAS, IND, REGIONES, PERSONAS, SERIES, DONKI, idx, tuNormal, zDe, mediana, cabina, estadoIndicador, fatiga, evaluar, lunaDice, horas, texto };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else raiz.MOTOR = API;
 })(typeof window !== "undefined" ? window : globalThis);

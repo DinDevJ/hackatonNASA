@@ -316,7 +316,7 @@
     }).join("");
     let extra = "";
     if (def.cabina === "co2") extra += `<div class="hud-meta">${sem(ev.cabina.co2 > 3 ? 1 : 0, false)} CO₂ que respiras (cabina): <b>${fmt(ev.cabina.co2)} mmHg</b> · [A] ≤ 3 promedio de 1 h</div>`;
-    if (def.cabina === "radiacion") extra += `<div class="hud-meta">${sem(ev.regiones.radiacion, false)} Tasa de dosis: <b>${ev.cabina.tasa.toLocaleString("es-ES")} µSv/h</b> · [A] diseño &lt; 54<br>Dosis de la misión: <b>${ev.cabina.dosisMision} de 600 mSv</b> [A] · dato simulado</div>`;
+    if (def.cabina === "radiacion") extra += `<div class="hud-meta">${sem(ev.regiones.radiacion, false)} Tasa de dosis: <b>${ev.cabina.tasa.toLocaleString("es-ES")} µSv/h</b> · [A] diseño &lt; 54<br>Tu dosis de la misión: <b>${fmt(M.dosisPersonal(P.id, estado.dia).mision)} de 600 mSv</b>${estado.dia >= 115 ? ` · del evento: <b>${fmt(M.dosisPersonal(P.id, estado.dia).evento)} de 250 mSv</b>` : ""} [A] · dato simulado</div>`;
     if (def.metas && def.metas.includes("agua")) { const a = M.SERIES[P.id].agua[M.idx(estado.dia)]; extra += `<div class="hud-meta">Agua de hoy: <b>${fmt(a)} L</b> de ${fmt((32 * P.masaKg / 1000).toFixed(1))} L · meta [A] 32 mL/kg</div>`; }
     if (def.metas && def.metas.includes("ejercicio")) { const m = M.SERIES[P.id].ejercicio[M.idx(estado.dia)]; extra += `<div class="hud-meta">Ejercicio de hoy: <b>${m} min</b> de 90 · meta [A] ISS 1,5 h/día (ARED, CEVIS, T2)</div>`; }
     if (def.nota) extra += `<div class="hud-meta">${def.nota}</div>`;

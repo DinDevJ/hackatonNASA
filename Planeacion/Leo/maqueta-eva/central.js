@@ -5,7 +5,8 @@
  * Cuerpo LUNNA, los mismos iconos, el mismo semáforo con forma y la misma tripulación y escenario.
  * Le añade lo que estaba en la app y no en el panel: Lunna, ambiente de cabina, clima espacial, dosis
  * personal, metas de agua y ejercicio, privacidad por rol y el enlace con Tierra (cola y avisos).
- * Quien la usa es la CMO (Mei). Todo es SIMULADO.
+ * Quien la usa es la CMO (Mei). Todo esto es SIMULADO; lo que sí viene del backend de Julio (tripulación,
+ * variables, alertas de LUNNA y enlace) lo pinta central-vivo.js en los huecos [data-vivo].
  */
 (function () {
   "use strict";
@@ -26,6 +27,8 @@
   const P = (id) => K.persona(id);
   const nombreDe = (pid) => (pid ? (P(pid) || {}).nombre || pid : "toda la tripulación");
   const sel = { region: {}, ind: {} };
+  /** Rellena los huecos [data-vivo] con lo que diga el backend de Julio (central-vivo.js). */
+  const pintarVivo = () => { if (window.VIVO) window.VIVO.pintar(); };
 
   // ================================================================ piezas
   /** Lo que Lunna ve en toda la tripulación (las mismas frases que el teléfono, en tercera persona). */
@@ -133,7 +136,8 @@
   function vistaHoy(p) {
     K.marcarPestana("hoy");
     const g = K.general();
-    p.innerHTML = `${K.tarjetaMision({ etq: "Misión activa · nave en tránsito" })}
+    p.innerHTML = `<p class="cn-etq cn-separa">${ic("planeta", "ic-sm")} Escenario simulado · días ${K.DIA_MIN}–${K.DIA_MAX} · no viene del backend</p>
+      ${K.tarjetaMision({ etq: "Misión activa · nave en tránsito" })}
       <div class="cn-rejilla cn-2" style="margin-top:16px">
         <div class="cn-pila">
           ${tarjetaLunna()}
@@ -142,6 +146,7 @@
             <ul class="cn-trip-lista">${K.PERSONAS.map((x) => `<li>${K.tarjetaTripulante(x, `#tripulante/${x.id}`)}</li>`).join("")}</ul>
             <div class="cn-leyenda">${sem(0, "En su normal")}${sem(1, "Atención")}${sem(2, "Actúa ahora")}${sem(null, "Sin dato")}<span>· la forma repite el color para no depender de él</span></div>
           </section>
+          <div data-vivo="hoy"></div>
           <section class="tarjeta" aria-labelledby="t-hist"><h2 id="t-hist">${pastilla("hora", "#7C8AB8", "#4A5680")} Historial de advertencias y emergencias</h2>
             <p class="cn-nota" style="margin:-6px 0 10px">Avisos de la CMO, notas y alertas de Tierra y activaciones del modo emergencia, con su causa.</p>
             <div id="historial">${listaHistorial(null)}</div></section>
@@ -149,6 +154,7 @@
         <div class="cn-pila">${avisosHoy()}${tarjetaAmbiente()}${tarjetaClima()}${tarjetaEnlaceMini()}</div>
       </div>`;
     montarLunna(g);
+    pintarVivo();
   }
 
   // ================================================================ vista: panel clínico de un tripulante
@@ -236,6 +242,7 @@
         ${sem(e.general)}<span class="cn-chips">${alertas}</span>
         <a class="cn-boton cn-empuja" href="index.html" id="abrir-tel" title="Abre la app del teléfono como ${esc(x.nombre)}, el mismo día">${ic("telefono", "ic-sm")}Ver su app</a>
       </header>
+      <p class="cn-etq cn-separa">${ic("planeta", "ic-sm")} Escenario simulado · día ${d} · no viene del backend</p>
       <div class="cn-hud">
         <section class="tarjeta cn-hud-izq" aria-labelledby="t-vit"><h2 id="t-vit">${pastilla("corazon", "#FF6B8B", "#D93A63")} Signos vitales <span class="cn-empuja tenue">14 días contra su normal</span></h2>
           ${["fc", "hrv", "presion", "spo2", "fr", "temperatura", "glucosa"].map((k) => K.filaVital(pid, k, d)).join("")}</section>
@@ -248,6 +255,7 @@
           <div class="cn-privado">${ic("candado")}<span><b>Lo que no ves:</b> el diario y el ciclo solo con su permiso o en una emergencia; del ánimo, la tendencia semanal. Igual que en el teléfono (ERS §6.5).</span></div>
         </div>
       </div>
+      <div data-vivo="tripulante" data-id="${esc(K.BACKEND_ID[pid] || "")}" style="margin-top:16px"></div>
       <div class="cn-rejilla cn-2b" style="margin-top:16px">${tarjetaLunnaPersona(pid, d)}${tarjetaIndice(pid, d)}</div>
       <div class="cn-rejilla cn-2b" style="margin-top:16px">
         <section class="tarjeta" aria-labelledby="t-int"><h2 id="t-int">${pastilla("enviar", "#5B8DFF", "#1F4FD8")} Intervención médica</h2>${formulario(pid, d)}</section>
@@ -257,6 +265,7 @@
     $$("#ind-barras [data-ind]", p).forEach((b) => b.addEventListener("click", () => elegirIndice(p, pid, d, +b.dataset.ind)));
     conectarFormulario(p, pid, d, () => { $("#historial", p).innerHTML = listaHistorial(pid); });
     $("#abrir-tel", p).addEventListener("click", () => { K.mem.guardar("persona", pid); K.mem.guardar("dia", d); });
+    pintarVivo();
   }
   function elegirIndice(p, pid, d, mid) {
     sel.ind[pid] = mid;
@@ -371,6 +380,7 @@
     const paquetes = K.paquetesEscenario();
     const bajadas = K.leerEnlace().filter((m) => m.sentido === "bajada").reverse();
     p.innerHTML = `<div class="cn-encabezado"><div><h1>Enlace con Tierra</h1><p class="sub">Lo que la central manda a la base y lo que llega de ella, con el retraso de la luz</p></div></div>
+      <p class="cn-etq cn-separa">${ic("planeta", "ic-sm")} Escenario simulado · cola y mensajes de la CMO en este navegador · no pasan por el backend</p>
       <div class="cn-enlace">
         <div><span>Retraso por trayecto</span><b>${K.OWLT_ESCENARIO_MIN} min</b><span>${K.backend ? `backend: ${s} s` : `demo: ${s} s (×60)`}</span></div>
         <div><span>Ida y vuelta</span><b>${K.OWLT_ESCENARIO_MIN * 2} min</b><span>una pregunta tarda esto en tener respuesta</span></div>
@@ -386,6 +396,7 @@
         <section class="tarjeta" aria-labelledby="t-rec"><h2 id="t-rec">${pastilla("tierra", "#38D1F0", "#0B8DB8")} Recibido de Tierra</h2>
           <div id="recibidos">${recibidosHtml()}</div></section>
       </div>
+      <div data-vivo="tierra" style="margin-top:16px"></div>
       <section class="tarjeta" style="margin-top:16px" aria-labelledby="t-env"><h2 id="t-env">${pastilla("enviar", "#5B8DFF", "#1F4FD8")} Mandar a Tierra</h2>
         <form class="cn-form" id="f-tierra" novalidate>
           <div class="cn-rejilla cn-2b" style="gap:12px">
@@ -396,6 +407,7 @@
           <div class="cn-niveles"><button type="submit" class="btn">${ic("cohete")} Encolar hacia Tierra</button></div>
           <p class="cn-estado-envio" role="status" id="t-estado"></p>
         </form></section>`;
+    pintarVivo();
     const selOwlt = $("#owlt", p);
     if (selOwlt) selOwlt.addEventListener("change", () => { try { localStorage.setItem("lunna:owlt", selOwlt.value); } catch { /* sin almacenamiento */ } K.toast({ titulo: `Retraso de la demo: ${selOwlt.value} s por trayecto`, icono: "antena", c1: "#38D1F0", c2: "#0B8DB8", ms: 2500 }); });
     conectarRecibidos(p);

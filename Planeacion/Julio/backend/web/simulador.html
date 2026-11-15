@@ -274,7 +274,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
     <g id="ondas"></g>
 
-    <g class="equipo" data-id="pc" tabindex="0" role="button" aria-label="Computadora central: abrir terminal">
+    <g class="equipo" data-id="pc" tabindex="0" role="button" aria-label="Computadora central: abrir panel médico de LUNNA y su terminal">
       <rect class="marco" x="885" y="330" width="150" height="102" rx="7" fill="#1d3b4f" stroke="#1d3b4f" stroke-width="2"/>
       <rect x="893" y="338" width="134" height="86" rx="3" fill="#0f2233"/>
       <polyline id="pc-onda" points="902,378 930,378 938,362 948,394 958,378 1018,378" fill="none" stroke="#34d399" stroke-width="1.8"/>
@@ -400,8 +400,9 @@ let zTop = 10, abiertas = 0;
 // «Frontend» (la interfaz) y con un clic pasa a «Backend» (la terminal de ese equipo).
 //   forma: 'grande' (escritorio, centrada) o 'movil' (proporción de teléfono)
 const INTERFACES = {
-  tierra: { url: '/tierra', titulo: 'Tierra — consola de control de misión', forma: 'grande' },
+  tierra: { url: '/app/base.html', titulo: 'Tierra — base en Tierra LUNNA', forma: 'grande' },
   cel: { url: '/app/', titulo: 'Smartphone', forma: 'movil' },
+  pc: { url: '/app/central.html', titulo: 'PC central — computadora central LUNNA', forma: 'grande' },
 };
 // Avisa a la interfaz embebida si su equipo está encendido (la app no notifica si está apagado).
 function avisarEnergia(nodo) {
@@ -792,7 +793,7 @@ $('#b-reiniciar').addEventListener('click', async () => {
   tr('playera', 'hora recibida de pc-central · lista para enviar');
   esp32Arranca();
   tr('tierra', 'control de misión en línea · escribe «ayuda»');
-  tr('tierra', '<span class="dim">consola completa del cirujano de vuelo: </span><a href="/tierra" target="_blank" style="color:#7dd3fc">/tierra</a>');
+  tr('tierra', '<span class="dim">consola de control de misión de Julio: </span><a href="/tierra" target="_blank" style="color:#7dd3fc">/tierra</a>');
   conectarEventos(); pintarEnlacesLocales(); pintarEnlace();
 })();
 </script>

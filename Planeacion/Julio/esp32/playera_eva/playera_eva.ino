@@ -1,12 +1,14 @@
 // ═══════════════════════════════════════════════════════════════════════════
-//  EVA HUB · firmware para ESP32
+//  PLAYERA EVA · firmware para el ESP32 que va DENTRO de la playera
 //
-//  Recoge dos dispositivos —A (x, y, z) y B (a, b, c)— y los manda por Bluetooth
-//  Low Energy a la computadora central, en tramas binarias del perfil EVA.
+//  Los sensores de la playera (electrodos de ECG, banda de respiración,
+//  termómetro) no tienen radio: van cableados a este ESP32, que es el que
+//  habla por Bluetooth Low Energy DIRECTO con la computadora central.
 //
-//    dispositivo A ─┐
-//                   ├─ ESP32 ── BLE ──► PC central (pasarela → backend → LUNNA)
-//    dispositivo B ─┘
+//    sensores ─cable─ ESP32 (en la playera) ── BLE ──► PC central (pasarela → backend → LUNNA)
+//
+//  El reloj, el brazalete de presión o cualquier otro aparato BLE se conectan
+//  por su cuenta a la misma PC: no pasan por aquí.
 //
 //  Placa: cualquier ESP32 con BLE (ESP32-WROOM, DevKit v1…). Arduino IDE con el
 //  núcleo "esp32" de Espressif. Usa la librería BLE que trae el núcleo: no hay
@@ -23,12 +25,10 @@
 // ─── Configuración ─────────────────────────────────────────────────────────
 #define SIMULAR 1                       // 0 cuando haya sensores reales
 
-const char*    NOMBRE_BLE  = "EVA-HUB-01";
-const uint32_t ID_DISP_A   = 2561;      // 0x0A01 · registrado en el backend
-const uint32_t ID_DISP_B   = 2817;      // 0x0B01
-const uint16_t ESQUEMA_A   = 3;         // esp32-dispositivo-A
-const uint16_t ESQUEMA_B   = 4;         // esp32-dispositivo-B
-const uint32_t PERIODO_MS  = 1000;      // una lectura de A y una de B por segundo
+const char*    NOMBRE_BLE  = "EVA-PLAYERA-01";
+const uint32_t ID_DISP     = 401;       // registrado en el backend (playera-01)
+const uint16_t ID_ESQUEMA  = 5;         // playera-esp32-v1
+const uint32_t PERIODO_MS  = 1000;      // una lectura por segundo
 const size_t   ENVIOS_POR_CICLO = 10;   // tramas pendientes que se vacían por vuelta
 
 // UUID propios del perfil EVA. La pasarela busca este servicio.
@@ -37,32 +37,30 @@ const size_t   ENVIOS_POR_CICLO = 10;   // tramas pendientes que se vacían por 
 #define UUID_ESQUEMA  "a3c87502-8ed3-4bdf-8a39-a01bebede295"   // leer: qué mando
 #define UUID_HORA     "a3c87503-8ed3-4bdf-8a39-a01bebede295"   // escribir: hora UTC
 
-// Disposición de la carga. Debe coincidir con los esquemas 3 y 4 del backend.
-//   A: fc u8 · spo2 u8 · temp i16 ×0,01      B: fr u8 · sis u8 · dia u8
-const eva::Campo CAMPOS_A[3] = { {eva::U8, 1, 0}, {eva::U8, 1, 0}, {eva::I16, 0.01, 0} };
-const eva::Campo CAMPOS_B[3] = { {eva::U8, 1, 0}, {eva::U8, 1, 0}, {eva::U8, 1, 0} };
+// Disposición de la carga. Debe coincidir con el esquema 5 del backend.
+//   fc u8 · fr u8 · temp i16 ×0,01   →  13 B de cabecera + 4 B = 17 B por trama
+const eva::Campo CAMPOS[3] = { {eva::U8, 1, 0}, {eva::U8, 1, 0}, {eva::I16, 0.01, 0} };
 
 const char* ESQUEMA_JSON =
   "{\"perfil\":1,\"dispositivos\":["
-  "{\"id\":2561,\"esquema\":3,\"campos\":[\"fc:u8\",\"spo2:u8\",\"temp:i16*0.01\"]},"
-  "{\"id\":2817,\"esquema\":4,\"campos\":[\"fr:u8\",\"sis:u8\",\"dia:u8\"]}]}";
+  "{\"id\":401,\"esquema\":5,\"campos\":[\"fc:u8\",\"fr:u8\",\"temp:i16*0.01\"]}]}";
 
 // ─── Cola de lecturas pendientes ───────────────────────────────────────────
 // Si no hay conexión, las lecturas se guardan y se mandan al reconectar.
 // Se guarda el instante en millis() y la trama se arma al enviar: así una
 // lectura tomada ANTES de recibir la hora sale igualmente con su hora real.
-struct Lectura { uint32_t ms; uint8_t disp; double v[3]; };
-const size_t CAPACIDAD = 1800;          // ≈ 15 min de A + B a 1 Hz (~50 KB de RAM)
+struct Lectura { uint32_t ms; double v[3]; };
+const size_t CAPACIDAD = 1800;          // ≈ 30 min a 1 Hz (~50 KB de RAM)
 Lectura cola[CAPACIDAD];
 size_t inicio = 0, pendientes = 0;
 uint32_t descartadas = 0;               // lecturas perdidas por cola llena
 
-void encolar(uint8_t disp, double a, double b, double c) {
+void encolar(double a, double b, double c) {
   if (pendientes == CAPACIDAD) {        // llena: se pierde la más antigua
     inicio = (inicio + 1) % CAPACIDAD; pendientes--; descartadas++;
   }
   Lectura& l = cola[(inicio + pendientes) % CAPACIDAD];
-  l.ms = millis(); l.disp = disp; l.v[0] = a; l.v[1] = b; l.v[2] = c;
+  l.ms = millis(); l.v[0] = a; l.v[1] = b; l.v[2] = c;
   pendientes++;
 }
 
@@ -80,7 +78,7 @@ uint32_t horaDe(uint32_t ms) {
 BLECharacteristic* chDatos = nullptr;
 BLE2902*           cccd    = nullptr;
 volatile bool      conectado = false;
-uint16_t seqA = 0, seqB = 0;
+uint16_t seq = 0;
 
 class CallbacksServidor : public BLEServerCallbacks {
   void onConnect(BLEServer*) override { conectado = true; }
@@ -100,27 +98,20 @@ class CallbacksHora : public BLECharacteristicCallbacks {
   }
 };
 
-// ─── Sensores ──────────────────────────────────────────────────────────────
-void leerDispositivoA(double& fc, double& spo2, double& temp) {
+// ─── Sensores de la playera ────────────────────────────────────────────────
+void leerPlayera(double& fc, double& fr, double& temp) {
 #if SIMULAR
   const double t = millis() / 1000.0;
   fc   = 62 + 3 * sin(t / 60.0) + random(-15, 16) / 10.0;
-  spo2 = 98 + random(-5, 6) / 10.0;
+  fr   = 14 + random(-10, 11) / 10.0;
   temp = 36.6 + 0.1 * sin(t / 300.0);
 #else
-  // Ejemplo: pulsioxímetro MAX30102 por I²C y termómetro MLX90614.
-  // Hay que añadir sus librerías y escribir aquí la lectura.
-  fc = NAN; spo2 = NAN; temp = NAN;
-#endif
-}
-
-void leerDispositivoB(double& fr, double& sis, double& dia) {
-#if SIMULAR
-  fr  = 14 + random(-10, 11) / 10.0;
-  sis = 115 + random(-30, 31) / 10.0;
-  dia = 75 + random(-20, 21) / 10.0;
-#else
-  fr = NAN; sis = NAN; dia = NAN;
+  // Ejemplo (sin probar): ECG AD8232 en un pin analógico para la FC,
+  // banda de respiración por pletismografía o galga en otro, y termómetro
+  // MAX30205 por I²C en la axila. Hay que añadir sus librerías y escribir aquí
+  // la lectura. Si un sensor falla, devuelve NAN: esa lectura no se envía
+  // (el perfil EVA no tiene "valor ausente" y un NAN no cabe en un entero).
+  fc = NAN; fr = NAN; temp = NAN;
 #endif
 }
 
@@ -150,16 +141,16 @@ void setup() {
   adv->setScanResponse(true);
   BLEDevice::startAdvertising();
 
-  Serial.printf("EVA HUB listo como \"%s\". Esperando a la PC central…\n", NOMBRE_BLE);
+  Serial.printf("Playera EVA lista como \"%s\". Esperando a la PC central…\n", NOMBRE_BLE);
 }
 
 void loop() {
   static uint32_t ultima = 0;
   if (millis() - ultima >= PERIODO_MS) {
     ultima = millis();
-    double a, b, c;
-    leerDispositivoA(a, b, c); encolar(0, a, b, c);
-    leerDispositivoB(a, b, c); encolar(1, a, b, c);
+    double fc, fr, temp;
+    leerPlayera(fc, fr, temp);
+    if (!isnan(fc) && !isnan(fr) && !isnan(temp)) encolar(fc, fr, temp);
   }
 
   // Sólo se envía con conexión, notificaciones activadas y hora recibida.
@@ -167,13 +158,8 @@ void loop() {
     for (size_t k = 0; k < ENVIOS_POR_CICLO && pendientes > 0; k++) {
       const Lectura& l = cola[inicio];
       uint8_t buf[32];
-      const bool esA = (l.disp == 0);
-      const size_t n = eva::codificar(buf, sizeof buf,
-                                      esA ? ID_DISP_A : ID_DISP_B,
-                                      esA ? ESQUEMA_A : ESQUEMA_B,
-                                      esA ? seqA++ : seqB++,
-                                      horaDe(l.ms),
-                                      esA ? CAMPOS_A : CAMPOS_B, l.v, 3);
+      const size_t n = eva::codificar(buf, sizeof buf, ID_DISP, ID_ESQUEMA, seq++,
+                                      horaDe(l.ms), CAMPOS, l.v, 3);
       chDatos->setValue(buf, n);
       chDatos->notify();
       inicio = (inicio + 1) % CAPACIDAD; pendientes--;

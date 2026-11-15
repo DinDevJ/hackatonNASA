@@ -7,7 +7,8 @@
 <style>
 :root{
   --bg:#070b14; --panel:#0f1626; --panel2:#141d31; --line:#22304a; --fg:#e7eef9; --dim:#8a9bb8;
-  --ok:#34d399; --warn:#fbbf24; --bad:#f87171; --acc:#60a5fa; --acc2:#a78bfa; --earth:#38bdf8;
+  --ok:#34d399; --warn:#fbbf24; --bad:#f87171; --acc:#60a5fa; --earth:#38bdf8;
+  --dev:#f43f5e; --cuerpo:#dbe4f0;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
@@ -17,35 +18,54 @@ header h1 span{color:var(--dim);font-weight:400}
 .ctrl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 button{background:var(--acc);color:#04111f;border:0;border-radius:8px;padding:7px 12px;font-weight:700;cursor:pointer;font-size:.85rem}
 button.sec{background:transparent;color:var(--fg);border:1px solid var(--line)}
-button.peligro{background:var(--bad);color:#2a0606}
 button:disabled{opacity:.4;cursor:not-allowed}
 .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;border:1px solid var(--line);font-size:.78rem;color:var(--dim);white-space:nowrap}
 .pill b{color:var(--fg)}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
-.dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)}
-main{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,1fr);gap:14px;padding:14px 16px}
+.dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)}
+main{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(320px,1fr);gap:14px;padding:14px 16px}
 @media(max-width:980px){main{grid-template-columns:1fr}}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px}
-#escena{position:relative;overflow:hidden}
+#escena{position:relative;overflow:hidden;background:radial-gradient(ellipse at 30% 40%,#101a30 0,#0b1222 55%,#080d18 100%)}
 #escena svg{display:block;width:100%;height:auto}
+.limite{display:flex;gap:10px;align-items:flex-start;margin:0 14px 14px;padding:10px 12px;border:1px solid #3a2330;background:rgba(244,63,94,.07);border-radius:10px;font-size:.82rem;color:#e9c9d1}
+.limite b{color:#fff}
+.limite i{flex:none;width:10px;height:10px;margin-top:5px;border-radius:2px;background:var(--dev)}
+
+/* ── escena ── */
+.cuerpo{fill:#111c31;stroke:var(--cuerpo);stroke-width:2.2;stroke-linejoin:round}
 .disp{cursor:pointer}
-.disp .halo{fill:transparent;stroke:transparent;stroke-width:2;transition:all .2s}
-.disp:hover .halo,.disp.sel .halo{stroke:var(--acc);fill:rgba(96,165,250,.12)}
-.disp.apagado{opacity:.35}
-.lbl{fill:var(--fg);font-size:12px;font-weight:600;pointer-events:none}
-.sub{fill:#a9b8d2;font-size:10.5px;pointer-events:none}
-.lbl,.sub{paint-order:stroke;stroke:#0c1424;stroke-width:4px;stroke-linejoin:round}
-.guia{stroke:#4b5d80;stroke-width:1;pointer-events:none}
+.disp .forma{transition:filter .2s,opacity .2s}
+.disp:hover .forma,.disp.sel .forma{filter:drop-shadow(0 0 6px rgba(244,63,94,.9))}
 .disp:focus{outline:none}
-.disp:focus-visible .halo{stroke:var(--acc);fill:rgba(96,165,250,.12)}
-.enl{stroke:var(--line);stroke-width:2;fill:none}
-.enl.ble{stroke:var(--acc);stroke-dasharray:5 5;animation:flujo 1.2s linear infinite}
-.enl.json{stroke:var(--acc2);stroke-dasharray:5 5;animation:flujo 1.4s linear infinite}
-.enl.tierra{stroke:var(--earth);stroke-dasharray:2 7;animation:flujo 2.4s linear infinite}
-.enl.cortado{stroke:var(--bad);stroke-dasharray:3 6;animation:none;opacity:.6}
-@keyframes flujo{to{stroke-dashoffset:-20}}
+.disp:focus-visible .forma{filter:drop-shadow(0 0 6px #60a5fa)}
+.disp.apagado .forma{opacity:.25;filter:grayscale(1)}
+.disp.sel .lbl{fill:#fff}
+.equipo{cursor:pointer}
+.equipo .marco{transition:stroke .2s}
+.equipo:hover .marco,.equipo.sel .marco{stroke:#93c5fd}
+.lbl{fill:var(--fg);font-size:13px;font-weight:650}
+.sub{fill:#a9b8d2;font-size:11px}
+.lbl,.sub{paint-order:stroke;stroke:#0b1222;stroke-width:4px;stroke-linejoin:round;pointer-events:none}
+.lbl.rojo{fill:#fda4af}
+.guia{stroke:#fb7185;stroke-width:1;stroke-dasharray:3 3;opacity:.7;pointer-events:none}
+.ondas path{fill:none;stroke:var(--dev);stroke-width:2.2;stroke-linecap:round;animation:pulso 1.5s ease-in-out infinite;pointer-events:none}
+.ondas path:nth-child(2){animation-delay:.18s}
+.ondas path:nth-child(3){animation-delay:.36s}
+.ondas.pc path{stroke:#93c5fd}
+.ondas.claro path{stroke:#fff1f2}
+.ondas.tierra path{stroke:var(--earth);animation-duration:2.4s}
+.ondas.cortado path{stroke:#64748b;animation:none;opacity:.3}
+@keyframes pulso{0%,100%{opacity:.12}35%{opacity:1}}
+.enl{fill:none;stroke-width:1.5;stroke-dasharray:2 6;stroke:#334766}
+.enl.vivo{stroke:#4b6a99;animation:flujo 1.6s linear infinite}
+.enl.cortado{stroke:#7f1d1d}
+@keyframes flujo{to{stroke-dashoffset:-16}}
+
+/* ── panel ── */
 #detalle{padding:16px;min-height:420px}
 #detalle h2{margin:0 0 2px;font-size:1.05rem}
+#detalle h3{margin:14px 0 2px;font-size:.9rem}
 #detalle .rol{color:var(--dim);margin:0 0 12px;font-size:.85rem}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .met{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
@@ -53,11 +73,11 @@ main{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,1fr);gap:1
 .met .v{font-size:1.25rem;font-weight:700;font-variant-numeric:tabular-nums}
 .met .v small{font-size:.75rem;color:var(--dim);font-weight:500}
 label.fila{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 4px;font-size:.82rem;color:var(--dim)}
-input[type=range]{width:100%}
-select,textarea,input[type=text]{width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:7px;font:inherit}
+input[type=range]{width:100%;accent-color:var(--dev)}
+select,textarea{width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:7px;font:inherit}
 textarea{resize:vertical;min-height:60px}
 .sw{display:flex;align-items:center;gap:10px;margin:10px 0}
-.sw input{width:18px;height:18px}
+.sw input{width:18px;height:18px;accent-color:var(--acc)}
 pre.hex{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;font-size:.72rem;overflow:auto;margin:8px 0 0;color:#9fd1ff}
 .lista{display:flex;flex-direction:column;gap:6px;margin-top:8px;max-height:260px;overflow:auto}
 .item{background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--dim);border-radius:8px;padding:7px 10px;font-size:.82rem}
@@ -69,10 +89,12 @@ pre.hex{background:var(--bg);border:1px solid var(--line);border-radius:8px;padd
 .banda .esp{position:absolute;top:0;bottom:0;width:2px;background:var(--ok)}
 .banda .act{position:absolute;top:-3px;width:10px;height:26px;margin-left:-5px;border-radius:3px;background:var(--fg)}
 .banda .act.fuera{background:var(--bad)}
-.var-h{display:flex;justify-content:space-between;font-size:.8rem}
-.var-h span:last-child{color:var(--dim);font-variant-numeric:tabular-nums}
+.var-h{display:flex;justify-content:space-between;gap:8px;font-size:.8rem}
+.var-h span:last-child{color:var(--dim);font-variant-numeric:tabular-nums;text-align:right}
 .pesos{display:flex;height:6px;border-radius:3px;overflow:hidden;margin-top:-6px;margin-bottom:12px}
 .pesos i{display:block}
+.mide{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.mide span{font-size:.75rem;padding:2px 8px;border-radius:99px;background:rgba(244,63,94,.12);border:1px solid rgba(244,63,94,.35);color:#fecdd3}
 #log{grid-column:1/-1;padding:10px 14px;max-height:170px;overflow:auto;font:12px/1.6 ui-monospace,Menlo,Consolas,monospace;color:var(--dim)}
 #log .e{color:var(--fg)} #log .a{color:var(--warn)} #log .r{color:var(--bad)} #log .ti{color:var(--earth)}
 .nota{font-size:.75rem;color:var(--dim);margin-top:10px}
@@ -94,87 +116,116 @@ pre.hex{background:var(--bg);border:1px solid var(--line);border-radius:8px;padd
 
 <main>
   <section class="card" id="escena">
-    <svg viewBox="0 0 900 560" role="img" aria-label="Astronauta con sus dispositivos, computadora central y Tierra">
+    <svg viewBox="0 0 1000 640" role="img" aria-label="Astronauta con playera de sensores, reloj y brazalete; celular, computadora central y Tierra">
       <defs>
-        <radialGradient id="gTierra" cx="40%" cy="35%"><stop offset="0" stop-color="#7dd3fc"/><stop offset=".55" stop-color="#0ea5e9"/><stop offset="1" stop-color="#0c4a6e"/></radialGradient>
-        <linearGradient id="gTraje" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#e9eef6"/><stop offset="1" stop-color="#b9c4d6"/></linearGradient>
-        <linearGradient id="gVisor" x1="0" x2="1"><stop offset="0" stop-color="#1e3a5f"/><stop offset="1" stop-color="#0b1626"/></linearGradient>
+        <pattern id="rayado" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)">
+          <rect width="7" height="7" fill="rgba(244,63,94,.22)"/>
+          <line x1="0" y1="0" x2="0" y2="7" stroke="#f43f5e" stroke-width="2.2"/>
+        </pattern>
+        <radialGradient id="gTierra" cx="38%" cy="32%"><stop offset="0" stop-color="#7dd3fc"/><stop offset=".55" stop-color="#0ea5e9"/><stop offset="1" stop-color="#0c4a6e"/></radialGradient>
+        <clipPath id="recorteCuerpo"><path d="M0,0 C5.7,0.0 12.3,0.7 17,3 C21.7,5.3 25.5,9.3 28,14 C30.5,18.7 31.5,25.2 32,31 C32.5,36.8 32.0,43.7 31,49 C30.0,54.3 28.2,59.0 26,63 C23.8,67.0 19.8,70.3 18,73 C16.2,75.7 15.5,76.0 15,79 C14.5,82.0 13.5,87.8 15,91 C16.5,94.2 19.2,95.8 24,98 C28.8,100.2 37.7,102.2 44,104 C50.3,105.8 57.0,106.8 62,109 C67.0,111.2 70.8,113.3 74,117 C77.2,120.7 79.3,124.7 81,131 C82.7,137.3 83.0,146.0 84,155 C85.0,164.0 86.0,175.0 87,185 C88.0,195.0 88.8,204.2 90,215 C91.2,225.8 92.7,238.3 94,250 C95.3,261.7 96.7,273.3 98,285 C99.3,296.7 100.8,309.2 102,320 C103.2,330.8 104.2,341.7 105,350 C105.8,358.3 105.8,364.0 107,370 C108.2,376.0 110.5,380.0 112,386 C113.5,392.0 115.7,399.3 116,406 C116.3,412.7 115.5,420.7 114,426 C112.5,431.3 109.5,436.2 107,438 C104.5,439.8 101.2,439.2 99,437 C96.8,434.8 95.3,429.8 94,425 C92.7,420.2 92.3,412.5 91,408 C89.7,403.5 86.5,402.0 86,398 C85.5,394.0 87.3,388.7 88,384 C88.7,379.3 90.0,376.5 90,370 C90.0,363.5 89.0,355.0 88,345 C87.0,335.0 85.3,321.7 84,310 C82.7,298.3 81.3,286.7 80,275 C78.7,263.3 77.3,251.3 76,240 C74.7,228.7 73.3,216.3 72,207 C70.7,197.7 69.3,190.2 68,184 C66.7,177.8 65.2,169.3 64,170 C62.8,170.7 62.0,180.5 61,188 C60.0,195.5 59.0,205.5 58,215 C57.0,224.5 55.2,235.0 55,245 C54.8,255.0 55.7,265.0 57,275 C58.3,285.0 61.7,295.0 63,305 C64.3,315.0 65.0,323.3 65,335 C65.0,346.7 63.8,361.7 63,375 C62.2,388.3 61.2,401.2 60,415 C58.8,428.8 57.3,443.8 56,458 C54.7,472.2 53.3,487.7 52,500 C50.7,512.3 48.0,524.0 48,532 C48.0,540.0 50.8,543.0 52,548 C53.2,553.0 55.3,558.0 55,562 C54.7,566.0 53.8,569.8 50,572 C46.2,574.2 37.0,575.3 32,575 C27.0,574.7 22.3,573.2 20,570 C17.7,566.8 18.0,561.3 18,556 C18.0,550.7 19.7,547.3 20,538 C20.3,528.7 20.3,513.0 20,500 C19.7,487.0 18.7,473.3 18,460 C17.3,446.7 17.0,433.3 16,420 C15.0,406.7 13.3,392.0 12,380 C10.7,368.0 9.5,355.8 8,348 C6.5,340.2 4.3,336.2 3,333 C1.7,329.8 1.0,329.0 0,329 C-1.0,329.0 -1.7,329.8 -3,333 C-4.3,336.2 -6.5,340.2 -8,348 C-9.5,355.8 -10.7,368.0 -12,380 C-13.3,392.0 -15.0,406.7 -16,420 C-17.0,433.3 -17.3,446.7 -18,460 C-18.7,473.3 -19.7,487.0 -20,500 C-20.3,513.0 -20.3,528.7 -20,538 C-19.7,547.3 -18.0,550.7 -18,556 C-18.0,561.3 -17.7,566.8 -20,570 C-22.3,573.2 -27.0,574.7 -32,575 C-37.0,575.3 -46.2,574.2 -50,572 C-53.8,569.8 -54.7,566.0 -55,562 C-55.3,558.0 -53.2,553.0 -52,548 C-50.8,543.0 -48.0,540.0 -48,532 C-48.0,524.0 -50.7,512.3 -52,500 C-53.3,487.7 -54.7,472.2 -56,458 C-57.3,443.8 -58.8,428.8 -60,415 C-61.2,401.2 -62.2,388.3 -63,375 C-63.8,361.7 -65.0,346.7 -65,335 C-65.0,323.3 -64.3,315.0 -63,305 C-61.7,295.0 -58.3,285.0 -57,275 C-55.7,265.0 -54.8,255.0 -55,245 C-55.2,235.0 -57.0,224.5 -58,215 C-59.0,205.5 -60.0,195.5 -61,188 C-62.0,180.5 -62.8,170.7 -64,170 C-65.2,169.3 -66.7,177.8 -68,184 C-69.3,190.2 -70.7,197.7 -72,207 C-73.3,216.3 -74.7,228.7 -76,240 C-77.3,251.3 -78.7,263.3 -80,275 C-81.3,286.7 -82.7,298.3 -84,310 C-85.3,321.7 -87.0,335.0 -88,345 C-89.0,355.0 -90.0,363.5 -90,370 C-90.0,376.5 -88.7,379.3 -88,384 C-87.3,388.7 -85.5,394.0 -86,398 C-86.5,402.0 -89.7,403.5 -91,408 C-92.3,412.5 -92.7,420.2 -94,425 C-95.3,429.8 -96.8,434.8 -99,437 C-101.2,439.2 -104.5,439.8 -107,438 C-109.5,436.2 -112.5,431.3 -114,426 C-115.5,420.7 -116.3,412.7 -116,406 C-115.7,399.3 -113.5,392.0 -112,386 C-110.5,380.0 -108.2,376.0 -107,370 C-105.8,364.0 -105.8,358.3 -105,350 C-104.2,341.7 -103.2,330.8 -102,320 C-100.8,309.2 -99.3,296.7 -98,285 C-96.7,273.3 -95.3,261.7 -94,250 C-92.7,238.3 -91.2,225.8 -90,215 C-88.8,204.2 -88.0,195.0 -87,185 C-86.0,175.0 -85.0,164.0 -84,155 C-83.0,146.0 -82.7,137.3 -81,131 C-79.3,124.7 -77.2,120.7 -74,117 C-70.8,113.3 -67.0,111.2 -62,109 C-57.0,106.8 -50.3,105.8 -44,104 C-37.7,102.2 -28.8,100.2 -24,98 C-19.2,95.8 -16.5,94.2 -15,91 C-13.5,87.8 -14.5,82.0 -15,79 C-15.5,76.0 -16.2,75.7 -18,73 C-19.8,70.3 -23.8,67.0 -26,63 C-28.2,59.0 -30.0,54.3 -31,49 C-32.0,43.7 -32.5,36.8 -32,31 C-31.5,25.2 -30.5,18.7 -28,14 C-25.5,9.3 -21.7,5.3 -17,3 C-12.3,0.7 -5.7,0.0 0,0Z"/></clipPath>
       </defs>
+
       <!-- estrellas -->
-      <g fill="#fff" opacity=".35"><circle cx="40" cy="30" r="1"/><circle cx="120" cy="80" r="1.2"/><circle cx="310" cy="24" r=".8"/><circle cx="520" cy="60" r="1"/><circle cx="600" cy="22" r="1.3"/><circle cx="760" cy="50" r=".9"/><circle cx="860" cy="120" r="1"/><circle cx="700" cy="520" r="1"/><circle cx="60" cy="520" r="1.1"/><circle cx="460" cy="540" r=".8"/></g>
-      <!-- nave -->
-      <rect x="18" y="40" width="600" height="480" rx="22" fill="#0c1424" stroke="#1d2a44" stroke-width="2"/>
-      <text x="38" y="66" class="sub">NAVE · tránsito a Marte</text>
+      <g fill="#fff" opacity=".35"><circle cx="40" cy="30" r="1"/><circle cx="470" cy="70" r="1.2"/><circle cx="610" cy="24" r=".8"/><circle cx="700" cy="300" r="1"/><circle cx="960" cy="40" r="1.3"/><circle cx="560" cy="560" r=".9"/><circle cx="980" cy="330" r="1"/><circle cx="660" cy="470" r="1"/><circle cx="60" cy="560" r="1.1"/><circle cx="430" cy="600" r=".8"/></g>
 
-      <!-- enlaces -->
-      <path id="e-A" class="enl" d="M232 330 L238 400"/>
-      <path id="e-B" class="enl" d="M200 205 L222 395"/>
-      <path id="e-esp" class="enl ble" d="M262 410 L430 300"/>
-      <path id="e-reloj" class="enl json" d="M126 342 L84 424"/>
-      <path id="e-cel" class="enl json" d="M92 440 L430 320"/>
-      <path id="e-tierra" class="enl tierra" d="M560 300 L780 300"/>
+      <!-- enlaces (el camino por el que viajan los paquetes) -->
+      <path id="c-cel" class="enl vivo" d="M670 302 L775 185"/>
+      <path id="c-tierra" class="enl vivo" d="M830 222 L830 458"/>
 
-      <!-- astronauta -->
-      <g transform="translate(70,90)">
-        <rect x="88" y="78" width="104" height="70" rx="16" fill="#9aa7bd"/>          <!-- mochila -->
-        <rect x="60" y="88" width="160" height="150" rx="40" fill="url(#gTraje)"/>    <!-- torso -->
-        <rect x="26" y="98" width="40" height="140" rx="20" fill="url(#gTraje)" transform="rotate(10 46 98)"/>
-        <rect x="214" y="98" width="40" height="140" rx="20" fill="url(#gTraje)" transform="rotate(-10 234 98)"/>
-        <rect x="78" y="228" width="52" height="170" rx="24" fill="url(#gTraje)"/>
-        <rect x="150" y="228" width="52" height="170" rx="24" fill="url(#gTraje)"/>
-        <rect x="70" y="384" width="66" height="34" rx="14" fill="#7d8aa1"/>
-        <rect x="144" y="384" width="66" height="34" rx="14" fill="#7d8aa1"/>
-        <circle cx="140" cy="48" r="50" fill="url(#gTraje)"/>                          <!-- casco -->
-        <ellipse cx="140" cy="52" rx="34" ry="28" fill="url(#gVisor)"/>
-        <path d="M118 40 q10 -10 26 -8" stroke="#7fb3ff" stroke-width="3" fill="none" opacity=".6"/>
-        <rect x="60" y="226" width="160" height="16" rx="8" fill="#5b6b86"/>           <!-- cinturón -->
-        <text x="140" y="440" text-anchor="middle" class="lbl">Ana · especialista</text>
+      <!-- ═══ astronauta ═══ -->
+      <g transform="translate(330,40)">
+        <path class="cuerpo" d="M0,0 C5.7,0.0 12.3,0.7 17,3 C21.7,5.3 25.5,9.3 28,14 C30.5,18.7 31.5,25.2 32,31 C32.5,36.8 32.0,43.7 31,49 C30.0,54.3 28.2,59.0 26,63 C23.8,67.0 19.8,70.3 18,73 C16.2,75.7 15.5,76.0 15,79 C14.5,82.0 13.5,87.8 15,91 C16.5,94.2 19.2,95.8 24,98 C28.8,100.2 37.7,102.2 44,104 C50.3,105.8 57.0,106.8 62,109 C67.0,111.2 70.8,113.3 74,117 C77.2,120.7 79.3,124.7 81,131 C82.7,137.3 83.0,146.0 84,155 C85.0,164.0 86.0,175.0 87,185 C88.0,195.0 88.8,204.2 90,215 C91.2,225.8 92.7,238.3 94,250 C95.3,261.7 96.7,273.3 98,285 C99.3,296.7 100.8,309.2 102,320 C103.2,330.8 104.2,341.7 105,350 C105.8,358.3 105.8,364.0 107,370 C108.2,376.0 110.5,380.0 112,386 C113.5,392.0 115.7,399.3 116,406 C116.3,412.7 115.5,420.7 114,426 C112.5,431.3 109.5,436.2 107,438 C104.5,439.8 101.2,439.2 99,437 C96.8,434.8 95.3,429.8 94,425 C92.7,420.2 92.3,412.5 91,408 C89.7,403.5 86.5,402.0 86,398 C85.5,394.0 87.3,388.7 88,384 C88.7,379.3 90.0,376.5 90,370 C90.0,363.5 89.0,355.0 88,345 C87.0,335.0 85.3,321.7 84,310 C82.7,298.3 81.3,286.7 80,275 C78.7,263.3 77.3,251.3 76,240 C74.7,228.7 73.3,216.3 72,207 C70.7,197.7 69.3,190.2 68,184 C66.7,177.8 65.2,169.3 64,170 C62.8,170.7 62.0,180.5 61,188 C60.0,195.5 59.0,205.5 58,215 C57.0,224.5 55.2,235.0 55,245 C54.8,255.0 55.7,265.0 57,275 C58.3,285.0 61.7,295.0 63,305 C64.3,315.0 65.0,323.3 65,335 C65.0,346.7 63.8,361.7 63,375 C62.2,388.3 61.2,401.2 60,415 C58.8,428.8 57.3,443.8 56,458 C54.7,472.2 53.3,487.7 52,500 C50.7,512.3 48.0,524.0 48,532 C48.0,540.0 50.8,543.0 52,548 C53.2,553.0 55.3,558.0 55,562 C54.7,566.0 53.8,569.8 50,572 C46.2,574.2 37.0,575.3 32,575 C27.0,574.7 22.3,573.2 20,570 C17.7,566.8 18.0,561.3 18,556 C18.0,550.7 19.7,547.3 20,538 C20.3,528.7 20.3,513.0 20,500 C19.7,487.0 18.7,473.3 18,460 C17.3,446.7 17.0,433.3 16,420 C15.0,406.7 13.3,392.0 12,380 C10.7,368.0 9.5,355.8 8,348 C6.5,340.2 4.3,336.2 3,333 C1.7,329.8 1.0,329.0 0,329 C-1.0,329.0 -1.7,329.8 -3,333 C-4.3,336.2 -6.5,340.2 -8,348 C-9.5,355.8 -10.7,368.0 -12,380 C-13.3,392.0 -15.0,406.7 -16,420 C-17.0,433.3 -17.3,446.7 -18,460 C-18.7,473.3 -19.7,487.0 -20,500 C-20.3,513.0 -20.3,528.7 -20,538 C-19.7,547.3 -18.0,550.7 -18,556 C-18.0,561.3 -17.7,566.8 -20,570 C-22.3,573.2 -27.0,574.7 -32,575 C-37.0,575.3 -46.2,574.2 -50,572 C-53.8,569.8 -54.7,566.0 -55,562 C-55.3,558.0 -53.2,553.0 -52,548 C-50.8,543.0 -48.0,540.0 -48,532 C-48.0,524.0 -50.7,512.3 -52,500 C-53.3,487.7 -54.7,472.2 -56,458 C-57.3,443.8 -58.8,428.8 -60,415 C-61.2,401.2 -62.2,388.3 -63,375 C-63.8,361.7 -65.0,346.7 -65,335 C-65.0,323.3 -64.3,315.0 -63,305 C-61.7,295.0 -58.3,285.0 -57,275 C-55.7,265.0 -54.8,255.0 -55,245 C-55.2,235.0 -57.0,224.5 -58,215 C-59.0,205.5 -60.0,195.5 -61,188 C-62.0,180.5 -62.8,170.7 -64,170 C-65.2,169.3 -66.7,177.8 -68,184 C-69.3,190.2 -70.7,197.7 -72,207 C-73.3,216.3 -74.7,228.7 -76,240 C-77.3,251.3 -78.7,263.3 -80,275 C-81.3,286.7 -82.7,298.3 -84,310 C-85.3,321.7 -87.0,335.0 -88,345 C-89.0,355.0 -90.0,363.5 -90,370 C-90.0,376.5 -88.7,379.3 -88,384 C-87.3,388.7 -85.5,394.0 -86,398 C-86.5,402.0 -89.7,403.5 -91,408 C-92.3,412.5 -92.7,420.2 -94,425 C-95.3,429.8 -96.8,434.8 -99,437 C-101.2,439.2 -104.5,439.8 -107,438 C-109.5,436.2 -112.5,431.3 -114,426 C-115.5,420.7 -116.3,412.7 -116,406 C-115.7,399.3 -113.5,392.0 -112,386 C-110.5,380.0 -108.2,376.0 -107,370 C-105.8,364.0 -105.8,358.3 -105,350 C-104.2,341.7 -103.2,330.8 -102,320 C-100.8,309.2 -99.3,296.7 -98,285 C-96.7,273.3 -95.3,261.7 -94,250 C-92.7,238.3 -91.2,225.8 -90,215 C-88.8,204.2 -88.0,195.0 -87,185 C-86.0,175.0 -85.0,164.0 -84,155 C-83.0,146.0 -82.7,137.3 -81,131 C-79.3,124.7 -77.2,120.7 -74,117 C-70.8,113.3 -67.0,111.2 -62,109 C-57.0,106.8 -50.3,105.8 -44,104 C-37.7,102.2 -28.8,100.2 -24,98 C-19.2,95.8 -16.5,94.2 -15,91 C-13.5,87.8 -14.5,82.0 -15,79 C-15.5,76.0 -16.2,75.7 -18,73 C-19.8,70.3 -23.8,67.0 -26,63 C-28.2,59.0 -30.0,54.3 -31,49 C-32.0,43.7 -32.5,36.8 -32,31 C-31.5,25.2 -30.5,18.7 -28,14 C-25.5,9.3 -21.7,5.3 -17,3 C-12.3,0.7 -5.7,0.0 0,0Z"/>
+
+        <!-- Playera con sensores -->
+        <g class="disp" data-id="playera" tabindex="0" role="button" aria-label="Playera con sensores">
+          <g class="forma">
+            <path clip-path="url(#recorteCuerpo)" fill="url(#rayado)" stroke="#f43f5e" stroke-width="1.5"
+                  d="M0,104 L13,92 L28,99 L62,109 L76,120 L84,145 L93,197 L68,204 L66,180 L60,215 L58,260 L62,306 L0,311 L-62,306 L-58,260 L-60,215 L-66,180 L-68,204 L-93,197 L-84,145 L-76,120 L-62,109 L-28,99 L-13,92 Z"/>
+            <!-- electrodos de ECG, banda de respiración, termómetro -->
+            <circle cx="-20" cy="148" r="5" fill="#fff1f2" stroke="#e11d48" stroke-width="2"/>
+            <circle cx="20" cy="148" r="5" fill="#fff1f2" stroke="#e11d48" stroke-width="2"/>
+            <path d="M-57,196 Q0,206 57,196" fill="none" stroke="#fff1f2" stroke-width="2.5" stroke-dasharray="5 3"/>
+            <circle cx="48" cy="176" r="4" fill="#fde68a" stroke="#e11d48" stroke-width="1.5"/>
+            <!-- ESP32 cosido en la playera -->
+            <rect x="-50" y="252" width="28" height="18" rx="3" fill="#0b1220" stroke="#fff1f2" stroke-width="1.5"/>
+            <rect x="-45" y="257" width="8" height="8" fill="#f43f5e"/>
+          </g>
+        </g>
+
+        <!-- Brazalete de presión (brazo izquierdo) -->
+        <g class="disp" data-id="brazalete" tabindex="0" role="button" aria-label="Brazalete de presión">
+          <g class="forma"><rect x="-93" y="213" width="25" height="20" rx="4" fill="#f43f5e" stroke="#fff1f2" stroke-width="1.5" transform="rotate(4 -81 223)"/></g>
+        </g>
+
+        <!-- Reloj (muñeca derecha) -->
+        <g class="disp" data-id="reloj" tabindex="0" role="button" aria-label="Reloj inteligente">
+          <g class="forma">
+            <rect x="87" y="357" width="23" height="16" rx="3" fill="#f43f5e" stroke="#fff1f2" stroke-width="1.5" transform="rotate(-4 98 365)"/>
+            <rect x="93" y="361" width="11" height="8" rx="2" fill="#0b1220"/>
+          </g>
+        </g>
       </g>
 
-      <!-- dispositivos -->
-      <g class="disp" data-id="B" transform="translate(200,205)">
-        <circle class="halo" r="22"/><rect x="-16" y="-10" width="32" height="20" rx="6" fill="#a78bfa"/>
-        <line class="guia" x1="18" y1="0" x2="126" y2="-18"/>
-        <text x="130" y="-20" class="lbl">B · banda pectoral</text><text x="130" y="-6" class="sub">respiración · presión arterial</text>
+      <!-- etiquetas del cuerpo -->
+      <g class="disp etq" data-id="playera">
+        <line class="guia" x1="218" y1="146" x2="300" y2="178"/>
+        <text x="214" y="140" text-anchor="end" class="lbl rojo">Playera con sensores</text>
+        <text x="214" y="155" text-anchor="end" class="sub">FC (ECG) · respiración · temperatura</text>
       </g>
-      <g class="disp" data-id="A" transform="translate(232,330)">
-        <circle class="halo" r="20"/><circle r="10" fill="#f472b6"/>
-        <line class="guia" x1="12" y1="0" x2="114" y2="-10"/>
-        <text x="118" y="-12" class="lbl">A · pulsioxímetro</text><text x="118" y="2" class="sub">FC · SpO₂ · temperatura</text>
+      <g class="disp etq" data-id="brazalete">
+        <line class="guia" x1="218" y1="264" x2="238" y2="264"/>
+        <text x="214" y="258" text-anchor="end" class="lbl rojo">Brazalete de presión</text>
+        <text x="214" y="273" text-anchor="end" class="sub">opcional · PA sistólica y diastólica</text>
       </g>
-      <g class="disp" data-id="esp" transform="translate(250,410)">
-        <circle class="halo" r="24"/><rect x="-18" y="-11" width="36" height="22" rx="4" fill="#111827" stroke="#60a5fa" stroke-width="2"/>
-        <rect x="-11" y="-5" width="10" height="10" fill="#60a5fa"/>
-        <line class="guia" x1="20" y1="4" x2="96" y2="18"/>
-        <text x="100" y="20" class="lbl">ESP32</text><text x="100" y="34" class="sub">concentrador BLE</text>
+      <g class="disp etq" data-id="playera">
+        <line class="guia" x1="218" y1="330" x2="282" y2="302"/>
+        <text x="214" y="326" text-anchor="end" class="lbl rojo">ESP32 dentro de la playera</text>
+        <text x="214" y="341" text-anchor="end" class="sub">sensores por cable · sale por Bluetooth</text>
       </g>
-      <g class="disp" data-id="reloj" transform="translate(128,330)">
-        <circle class="halo" r="20"/><rect x="-9" y="-11" width="18" height="22" rx="5" fill="#0f172a" stroke="#cbd5e1" stroke-width="2"/>
-        <line class="guia" x1="-10" y1="-8" x2="-50" y2="-30"/>
-        <text x="-54" y="-40" text-anchor="end" class="lbl">Reloj</text><text x="-54" y="-27" text-anchor="end" class="sub">opcional</text>
+      <g class="disp etq" data-id="reloj">
+        <line class="guia" x1="442" y1="414" x2="468" y2="432"/>
+        <text x="472" y="438" class="lbl rojo">Reloj inteligente</text>
+        <text x="472" y="453" class="sub">opcional · FC (PPG) · SpO₂</text>
       </g>
-      <g class="disp" data-id="cel" transform="translate(78,440)">
-        <circle class="halo" r="22"/><rect x="-10" y="-17" width="20" height="34" rx="4" fill="#0f172a" stroke="#cbd5e1" stroke-width="2"/>
-        <circle cx="0" cy="12" r="2" fill="#cbd5e1"/>
-        <text x="0" y="36" text-anchor="middle" class="lbl">Celular</text><text x="0" y="50" text-anchor="middle" class="sub">opcional · avisos</text>
+      <text x="330" y="632" text-anchor="middle" class="sub">Ana · especialista de misión</text>
+
+      <!-- ondas de radio: se dibujan desde el script, apuntando a la computadora central -->
+      <g id="ondas"></g>
+
+      <!-- ═══ celular ═══ -->
+      <g class="equipo" data-id="cel" tabindex="0" role="button" aria-label="Celular">
+        <rect class="marco" x="650" y="300" width="40" height="70" rx="8" fill="#0b1220" stroke="#cbd5e1" stroke-width="2"/>
+        <rect x="655" y="310" width="30" height="46" rx="2" fill="#0e1b33"/>
+        <circle cx="670" cy="363" r="2.5" fill="#cbd5e1"/>
+        <circle id="cel-badge" cx="688" cy="302" r="0" fill="#38bdf8"/>
+        <text x="670" y="392" text-anchor="middle" class="lbl">Smartphone</text>
+        <text x="670" y="407" text-anchor="middle" class="sub">opcional · avisos</text>
       </g>
-      <g class="disp" data-id="pc" transform="translate(495,300)">
-        <circle class="halo" r="62"/>
-        <rect x="-58" y="-40" width="116" height="72" rx="8" fill="#0b1220" stroke="#60a5fa" stroke-width="2"/>
-        <rect x="-50" y="-32" width="100" height="56" rx="4" fill="#0e1b33"/>
-        <polyline id="pc-onda" points="-46,0 -30,0 -24,-14 -16,14 -8,0 46,0" fill="none" stroke="#34d399" stroke-width="2"/>
-        <rect x="-18" y="32" width="36" height="8" fill="#22304a"/>
-        <text x="0" y="62" text-anchor="middle" class="lbl">Computadora central</text>
-        <text x="0" y="77" text-anchor="middle" class="sub">backend · LUNNA</text>
+
+      <!-- ═══ computadora central ═══ -->
+      <g class="equipo" data-id="pc" tabindex="0" role="button" aria-label="Computadora central">
+        <rect class="marco" x="755" y="88" width="150" height="100" rx="10" fill="#0b1220" stroke="#60a5fa" stroke-width="2.2"/>
+        <rect x="765" y="98" width="130" height="80" rx="5" fill="#0e1b33"/>
+        <polyline id="pc-onda" points="772,140 800,140 808,120 818,160 828,140 888,140" fill="none" stroke="#34d399" stroke-width="2.2"/>
+        <text id="pc-con" x="830" y="170" text-anchor="middle" class="sub">— conectados</text>
+        <rect x="815" y="188" width="30" height="10" fill="#22304a"/>
+        <rect x="780" y="198" width="100" height="18" rx="4" fill="#111c31" stroke="#22304a"/>
+        <text x="830" y="70" text-anchor="middle" class="lbl">PC central</text>
+        <text x="830" y="54" text-anchor="middle" class="sub">backend · LUNNA</text>
       </g>
-      <g class="disp" data-id="tierra" transform="translate(825,300)">
-        <circle class="halo" r="56"/><circle r="44" fill="url(#gTierra)"/>
-        <path d="M-20 -18 q12 -8 22 4 q6 10 -6 16 q-14 4 -16 -20z M8 14 q14 -4 18 8 q-8 10 -18 -8z" fill="#22c55e" opacity=".75"/>
-        <text x="0" y="66" text-anchor="middle" class="lbl">Tierra</text>
-        <text x="0" y="81" text-anchor="middle" class="sub" id="t-owlt">retraso —</text>
+
+      <!-- ═══ Tierra ═══ -->
+      <g class="equipo" data-id="tierra" tabindex="0" role="button" aria-label="Tierra">
+        <circle class="marco" cx="830" cy="522" r="62" fill="url(#gTierra)" stroke="#0c4a6e" stroke-width="2"/>
+        <path d="M800 490 q14 -10 26 4 q8 12 -6 20 q-18 6 -20 -24z M842 530 q18 -6 24 10 q-10 14 -24 -10z M790 548 q10 -4 16 6 q-6 8 -16 -6z" fill="#22c55e" opacity=".8"/>
+        <text x="830" y="606" text-anchor="middle" class="lbl">TIERRA</text>
+        <text x="830" y="621" text-anchor="middle" class="sub" id="t-owlt">retraso —</text>
       </g>
+
       <g id="paquetes"></g>
     </svg>
+    <div class="limite"><i></i><div>Cada aparato con Bluetooth se conecta <b>directo a la PC central</b>. La única limitante es <b>qué puede medir cada dispositivo</b>: si un aparato mide algo, se registra su esquema y entra sin cambiar el software.</div></div>
   </section>
 
   <section class="card" id="detalle"></section>
@@ -186,19 +237,21 @@ pre.hex{background:var(--bg);border:1px solid var(--line);border-radius:8px;padd
 // ═══════════ Estado ═══════════
 const DIA = 86400000;
 const S = {
-  lanzamiento: null, vivo: false, tramas: 0, temporizador: null,
-  encendido: { A: true, B: true, reloj: true, cel: true },
+  lanzamiento: null, vivo: false, tramas: 0, temporizador: null, tic: 0,
+  encendido: { playera: true, brazalete: true, reloj: true, cel: true },
   bleConectado: true, colaEsp: [], descartadas: 0, enviadasEsp: 0,
-  seq: { 2561: 0, 2817: 0, reloj: 0 },
-  anom: { fatiga: 0, hipoxia: 0, fiebre: 0, hiper: 0 },
+  seq: { 401: 0, 201: 0, reloj: 0 },
+  anom: { fatiga: 0, taquipnea: 0, fiebre: 0, hipoxia: 0, hiper: 0 },
   contactoReloj: true,
-  ultimos: {}, ultimoHex: { A: '', B: '' },
+  ultimos: {}, ultimoHex: { playera: '', brazalete: '' }, ultimosVar: {},
   alertas: [], bandeja: [], avisos: [], enlace: { owlt_s: 20, abierto: true },
   pred: [], sel: 'pc',
 };
 const BASAL = { fc: 62, spo2: 98, fr: 14, temp: 36.6, sis: 115, dia: 75 };
 const DELTA = { fc: -0.08, spo2: -0.005, fr: -0.04, temp: 1.0, sis: -0.06, dia: -0.10 };
 const NOMBRE = { '04:A4': 'Frecuencia cardiaca', '04:A3': 'SpO₂', '04:A2': 'Frec. respiratoria', '04:A1': 'Temperatura', '01:V1': 'PA sistólica', 'X:PAD': 'PA diastólica', 'X:PAM': 'PA media' };
+// Dónde está cada cosa en la escena (para ondas y paquetes).
+const POS = { playera: [294, 302], brazalete: [249, 263], reloj: [429, 405], cel: [670, 300], pc: [830, 138], tierra: [830, 460] };
 const $ = (q) => document.querySelector(q);
 const api = async (ruta, metodo = 'GET', cuerpo) => {
   const r = await fetch(ruta, { method: metodo, headers: { 'content-type': 'application/json' }, body: cuerpo ? JSON.stringify(cuerpo) : undefined });
@@ -211,8 +264,8 @@ const hora = (iso) => new Date(iso).toLocaleTimeString('es', { hour: '2-digit', 
 
 // ═══════════ Perfil EVA en el navegador (igual que esquema.ts y trama_eva.h) ═══════════
 const ESQ = {
-  3: [['u8', 1], ['u8', 1], ['i16', 0.01]],   // A: fc · spo2 · temp
-  4: [['u8', 1], ['u8', 1], ['u8', 1]],       // B: fr · sis · dia
+  5: [['u8', 1], ['u8', 1], ['i16', 0.01]],   // playera: fc · fr · temp
+  2: [['u8', 1], ['u8', 1]],                  // brazalete: sis · dia (la PA media la calcula la central)
 };
 const RANGO = { u8: [0, 255], i16: [-32768, 32767] };
 function codificar(idDisp, idEsq, seq, tSeg, valores) {
@@ -241,6 +294,7 @@ function valor(v, t, conAnomalias) {
   if (v === 'fc' && dia < 3) x *= 1 + 0.05 * (1 - dia / 3);
   if (conAnomalias) {
     if (v === 'fc') x *= 1 + S.anom.fatiga / 100;
+    if (v === 'fr') x *= 1 + S.anom.taquipnea / 100;
     if (v === 'spo2') x -= S.anom.hipoxia;
     if (v === 'temp') x += S.anom.fiebre;
     if (v === 'sis') x += S.anom.hiper;
@@ -248,8 +302,16 @@ function valor(v, t, conAnomalias) {
   }
   return x;
 }
-function lecturaA(t, anom) { return [valor('fc', t, anom), Math.min(100, valor('spo2', t, anom)), valor('temp', t, anom)]; }
-function lecturaB(t, anom) { return [valor('fr', t, anom), valor('sis', t, anom), valor('dia', t, anom)]; }
+const lecturaPlayera = (t, a) => [valor('fc', t, a), valor('fr', t, a), valor('temp', t, a)];
+const lecturaBrazalete = (t, a) => [valor('sis', t, a), valor('dia', t, a)];
+function tramaReloj(t, a) {
+  const fc = Math.round(valor('fc', t, a)), spo2 = Math.min(100, Math.round(valor('spo2', t, a) * 10) / 10);
+  const q = { contacto: S.contactoReloj };
+  return { fc, spo2, json: { frame: 'eva.telemetry.v1', source: { id: 'reloj-ana', kind: 'wrist' }, subject: 'ana',
+    t_scet: new Date(Math.floor(t / 1000) * 1000).toISOString(), seq: S.seq.reloj++,
+    samples: [{ var: '04:A4', value: fc, unit: 'bpm', origin: 'sensor', quality: q },
+              { var: '04:A3', value: spo2, unit: '%', origin: 'sensor', quality: q }] } };
+}
 
 // ═══════════ Preparar misión: 119 días de historia ═══════════
 async function preparar() {
@@ -257,26 +319,31 @@ async function preparar() {
   try {
     detener();
     await api('/api/demo/reiniciar', 'POST');
-    S.alertas = []; S.bandeja = []; S.avisos = []; S.tramas = 0; S.colaEsp = []; S.seq = { 2561: 0, 2817: 0, reloj: 0 };
+    S.alertas = []; S.bandeja = []; S.avisos = []; S.tramas = 0; S.colaEsp = []; S.seq = { 401: 0, 201: 0, reloj: 0 };
     S.lanzamiento = Date.now() - 112 * DIA;
     const inicioTierra = new Date(S.lanzamiento - 7 * DIA).toISOString();
     await api('/api/fases', 'POST', { desde: inicioTierra, entorno: 'tierra' });
     await api('/api/fases', 'POST', { desde: new Date(S.lanzamiento).toISOString(), entorno: 'orbita' });
-    for (const d of [2561, 2817, 302]) await api('/api/asignaciones', 'POST', { dispositivo: d, tripulante: 'ana', desde: inicioTierra });
+    for (const d of [401, 201, 302]) await api('/api/asignaciones', 'POST', { dispositivo: d, tripulante: 'ana', desde: inicioTierra });
     log('e', 'Misión preparada: lanzamiento hace 112 días. Rellenando historia…');
 
-    let lote = [];
-    const enviar = async () => { if (!lote.length) return; await api('/api/tramas/binaria', 'POST', { b64: lote }); S.tramas += lote.length; lote = []; pintarCabecera(); };
+    let bin = [], json = [];
+    const enviar = async () => {
+      if (bin.length) { await api('/api/tramas/binaria', 'POST', { b64: bin }); S.tramas += bin.length; bin = []; }
+      if (json.length) { await api('/api/tramas', 'POST', json); S.tramas += json.length; json = []; }
+      pintarCabecera();
+    };
     for (let d = -7; d < 112; d++) {
       for (let k = 0; k < 12; k++) {
         const t = S.lanzamiento + d * DIA + (k + 0.5) * (DIA / 12), ts = Math.floor(t / 1000);
-        lote.push(b64(codificar(2561, 3, S.seq[2561]++, ts, lecturaA(t, false))));
-        lote.push(b64(codificar(2817, 4, S.seq[2817]++, ts, lecturaB(t, false))));
+        bin.push(b64(codificar(401, 5, S.seq[401]++, ts, lecturaPlayera(t, false))));
+        bin.push(b64(codificar(201, 2, S.seq[201]++, ts, lecturaBrazalete(t, false))));
+        json.push(tramaReloj(t, false).json);
       }
-      if (lote.length >= 480) { b.textContent = `Rellenando… día ${d}`; await enviar(); }
+      if (bin.length >= 480) { b.textContent = `Rellenando… día ${d}`; await enviar(); }
     }
     await enviar();
-    log('e', `Historia lista: ${S.tramas} tramas binarias de 119 días. LUNNA ya calibró a Ana (días 0–13).`);
+    log('e', `Historia lista: ${S.tramas} tramas de 119 días. LUNNA ya calibró a Ana (días 0–13).`);
     await refrescar();
     $('#b-vivo').disabled = false;
     iniciar();
@@ -284,65 +351,71 @@ async function preparar() {
   b.textContent = 'Preparar misión · 112 días'; b.disabled = false;
 }
 
-// ═══════════ En vivo: lo que hace el ESP32 cada segundo ═══════════
+// ═══════════ En vivo: cada segundo ═══════════
 function tick() {
-  const t = Date.now(), ts = Math.floor(t / 1000);
-  // El ESP32 encola siempre; sólo vacía la cola si hay conexión BLE.
-  if (S.encendido.A) { const v = lecturaA(t, true); S.colaEsp.push({ disp: 2561, esq: 3, ts, v }); S.ultimos.A = v; }
-  if (S.encendido.B) { const v = lecturaB(t, true); S.colaEsp.push({ disp: 2817, esq: 4, ts, v }); S.ultimos.B = v; }
+  const t = Date.now(), ts = Math.floor(t / 1000), cada5 = S.tic++ % 5 === 0;
+
+  // Playera: el ESP32 lee sus sensores y encola; sólo vacía la cola si hay Bluetooth.
+  if (S.encendido.playera) { const v = lecturaPlayera(t, true); S.colaEsp.push({ ts, v }); S.ultimos.playera = v; }
   if (S.colaEsp.length > 1800) { S.descartadas += S.colaEsp.length - 1800; S.colaEsp.splice(0, S.colaEsp.length - 1800); }
   if (S.bleConectado && S.colaEsp.length) {
-    const salen = S.colaEsp.splice(0, 40).map((r) => {
-      const u8 = codificar(r.disp, r.esq, S.seq[r.disp]++, r.ts, r.v);
-      S.ultimoHex[r.disp === 2561 ? 'A' : 'B'] = hex(u8);
-      return b64(u8);
-    });
+    const salen = S.colaEsp.splice(0, 40).map((r) => { const u8 = codificar(401, 5, S.seq[401]++, r.ts, r.v); S.ultimoHex.playera = hex(u8); return b64(u8); });
     S.enviadasEsp += salen.length;
     api('/api/tramas/binaria', 'POST', { b64: salen }).then(() => { S.tramas += salen.length; pintarCabecera(); }).catch((e) => log('r', e.message));
-    paquete('e-esp', '#60a5fa');
+    paquete(POS.playera, POS.pc, '#fb7185');
   }
-  // Reloj → celular → central (JSON), cada 5 s.
-  if (S.seq.reloj++ % 5 === 0 && S.encendido.reloj && S.encendido.cel) {
-    const fc = Math.round(valor('fc', t, true));
-    S.ultimos.reloj = fc;
-    api('/api/tramas', 'POST', { frame: 'eva.telemetry.v1', source: { id: 'reloj-ana', kind: 'wrist' }, subject: 'ana',
-      t_scet: new Date(ts * 1000).toISOString(), seq: S.seq.reloj,
-      samples: [{ var: '04:A4', value: fc, unit: 'bpm', origin: 'sensor', quality: { contacto: S.contactoReloj } }] }).catch(() => {});
-    paquete('e-cel', '#a78bfa');
+
+  // Brazalete: mide cada cierto tiempo y manda su propia trama por Bluetooth.
+  if (cada5 && S.encendido.brazalete) {
+    const v = lecturaBrazalete(t, true), u8 = codificar(201, 2, S.seq[201]++, ts, v);
+    S.ultimos.brazalete = v; S.ultimoHex.brazalete = hex(u8);
+    api('/api/tramas/binaria', 'POST', { b64: [b64(u8)] }).then(() => { S.tramas++; pintarCabecera(); }).catch(() => {});
+    paquete(POS.brazalete, POS.pc, '#fb7185');
   }
-  if (S.sel === 'esp' || S.sel === 'A' || S.sel === 'B' || S.sel === 'reloj') pintarDetalle();
+
+  // Reloj: FC y SpO₂ cada 5 s, directo a la central.
+  if (cada5 && S.encendido.reloj) {
+    const r = tramaReloj(t, true);
+    S.ultimos.reloj = [r.fc, r.spo2];
+    api('/api/tramas', 'POST', r.json).then(() => { S.tramas++; pintarCabecera(); }).catch(() => {});
+    paquete(POS.reloj, POS.pc, '#fb7185');
+  }
+  if (['playera', 'brazalete', 'reloj'].includes(S.sel)) pintarDetalle();
 }
-function iniciar() { if (S.temporizador) return; S.vivo = true; S.temporizador = setInterval(tick, 1000); pintarCabecera(); log('e', 'En vivo: el ESP32 manda una trama de A y una de B por segundo.'); }
+function iniciar() { if (S.temporizador) return; S.vivo = true; S.temporizador = setInterval(tick, 1000); pintarCabecera(); log('e', 'En vivo: la playera manda 1 trama por segundo; brazalete y reloj, 1 cada 5 s.'); }
 function detener() { clearInterval(S.temporizador); S.temporizador = null; S.vivo = false; pintarCabecera(); }
 
-// ═══════════ Animación de paquetes ═══════════
-function paquete(idEnlace, color) {
-  const p = document.getElementById(idEnlace); if (!p) return;
-  const L = p.getTotalLength(), c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  c.setAttribute('r', 4); c.setAttribute('fill', color); $('#paquetes').appendChild(c);
-  const t0 = performance.now(), dur = idEnlace === 'e-tierra' ? 1600 : 700;
-  (function paso(ahora) {
-    const k = Math.min(1, (ahora - t0) / dur), pt = p.getPointAtLength(L * (idEnlace === 'e-tierra-sube' ? 1 - k : k));
-    c.setAttribute('cx', pt.x); c.setAttribute('cy', pt.y);
-    if (k < 1) requestAnimationFrame(paso); else c.remove();
-  })(t0);
+// ═══════════ Ondas y paquetes ═══════════
+const NS = 'http://www.w3.org/2000/svg';
+function ondas(id, [cx, cy], [tx, ty], clase = '', radios = [12, 20, 28], abre = 0.5) {
+  const g = document.createElementNS(NS, 'g'); g.id = 'o-' + id; g.setAttribute('class', 'ondas ' + clase);
+  const a = Math.atan2(ty - cy, tx - cx);
+  for (const r of radios) {
+    const p = document.createElementNS(NS, 'path');
+    const x1 = cx + r * Math.cos(a - abre), y1 = cy + r * Math.sin(a - abre), x2 = cx + r * Math.cos(a + abre), y2 = cy + r * Math.sin(a + abre);
+    p.setAttribute('d', `M${x1.toFixed(1)} ${y1.toFixed(1)} A${r} ${r} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)}`);
+    g.appendChild(p);
+  }
+  $('#ondas').appendChild(g);
 }
-function paqueteInverso(idEnlace, color) {
-  const p = document.getElementById(idEnlace), L = p.getTotalLength();
-  const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  c.setAttribute('r', 5); c.setAttribute('fill', color); $('#paquetes').appendChild(c);
+function paquete([x0, y0], [x1, y1], color, dur = 800, r = 4) {
+  const c = document.createElementNS(NS, 'circle');
+  c.setAttribute('r', r); c.setAttribute('fill', color); $('#paquetes').appendChild(c);
   const t0 = performance.now();
   (function paso(ahora) {
-    const k = Math.min(1, (ahora - t0) / 1600), pt = p.getPointAtLength(L * (1 - k));
-    c.setAttribute('cx', pt.x); c.setAttribute('cy', pt.y);
+    const k = Math.min(1, (ahora - t0) / dur), e = k * k * (3 - 2 * k);
+    c.setAttribute('cx', x0 + (x1 - x0) * e); c.setAttribute('cy', y0 + (y1 - y0) * e);
+    c.setAttribute('opacity', k < 0.9 ? 1 : (1 - k) * 10);
     if (k < 1) requestAnimationFrame(paso); else c.remove();
   })(t0);
 }
+const aTierra = () => paquete([830, 222], [830, 458], '#38bdf8', 1600, 5);
+const deTierra = () => paquete([830, 458], [830, 222], '#38bdf8', 1600, 5);
 
 // ═══════════ Eventos del backend ═══════════
 function conectarEventos() {
   const es = new EventSource('/api/stream');
-  es.addEventListener('muestra', (e) => { const m = JSON.parse(e.data); S.ultimosVar = S.ultimosVar || {}; S.ultimosVar[m.variable] = m.valor; });
+  es.addEventListener('muestra', (e) => { const m = JSON.parse(e.data); S.ultimosVar[m.variable] = m.valor; });
   es.addEventListener('alerta', (e) => {
     const a = JSON.parse(e.data); S.alertas.unshift(a);
     const nivel = a.estado === 'rojo' ? 'r' : a.estado === 'ambar' ? 'a' : 'e';
@@ -351,22 +424,20 @@ function conectarEventos() {
     if (S.sel === 'pc') pintarDetalle();
   });
   es.addEventListener('tierra', (e) => {
-    const b = JSON.parse(e.data); S.bandeja.unshift(b);
-    paquete('e-tierra', '#38bdf8');
+    const b = JSON.parse(e.data); S.bandeja.unshift(b); aTierra();
     if (b.tipo === 'alerta') log('ti', `Tierra recibe alerta de ${b.datos.tripulante} (${b.datos.estado}), ocurrida a las ${hora(b.t_scet)}: llegó con ${Math.round((Date.parse(b.t_ert) - Date.parse(b.t_scet)) / 1000)} s de antigüedad`);
     if (S.sel === 'tierra') pintarDetalle();
   });
   es.addEventListener('aviso', (e) => {
-    const a = JSON.parse(e.data); S.avisos.unshift(a);
-    paqueteInverso('e-tierra', '#38bdf8');
+    const a = JSON.parse(e.data); S.avisos.unshift(a); deTierra();
+    if (S.encendido.cel) setTimeout(() => { paquete(POS.pc, POS.cel, '#38bdf8', 700, 5); $('#cel-badge').setAttribute('r', 6); }, 1600);
     log('ti', `Aviso de Tierra para ${a.para}: «${a.texto}» (redactado a las ${hora(a.t_redactado)})`);
-    if (S.sel === 'cel' || S.sel === 'pc' || S.sel === 'tierra') pintarDetalle();
+    if (['cel', 'pc', 'tierra'].includes(S.sel)) pintarDetalle();
   });
   es.addEventListener('enlace', (e) => { S.enlace = JSON.parse(e.data); pintarEnlace(); });
   es.onerror = () => { $('#d-back').className = 'dot bad'; };
   es.onopen = () => { $('#d-back').className = 'dot ok'; };
 }
-
 async function refrescar() {
   try { S.pred = await api('/api/prediccion/ana'); } catch {}
   if (S.sel === 'pc') pintarDetalle();
@@ -386,50 +457,63 @@ function pintarCabecera() {
 function pintarEnlace() {
   const e = S.enlace;
   $('#t-owlt').textContent = e.abierto ? `retraso ${e.owlt_s} s` : 'ventana CERRADA';
-  $('#e-tierra').setAttribute('class', 'enl ' + (e.abierto ? 'tierra' : 'cortado'));
+  $('#o-tierra')?.setAttribute('class', 'ondas tierra ' + (e.abierto ? '' : 'cortado'));
+  $('#c-tierra').setAttribute('class', 'enl ' + (e.abierto ? 'vivo' : 'cortado'));
 }
 function pintarEnlacesLocales() {
-  $('#e-esp').setAttribute('class', 'enl ' + (S.bleConectado ? 'ble' : 'cortado'));
-  $('#e-cel').setAttribute('class', 'enl ' + (S.encendido.cel ? 'json' : 'cortado'));
-  $('#e-reloj').setAttribute('class', 'enl ' + (S.encendido.reloj && S.encendido.cel ? 'json' : 'cortado'));
-  for (const k of ['A', 'B', 'reloj', 'cel']) document.querySelector(`.disp[data-id="${k}"]`).classList.toggle('apagado', !S.encendido[k]);
+  const activo = { playera: S.encendido.playera && S.bleConectado, brazalete: S.encendido.brazalete, reloj: S.encendido.reloj, cel: S.encendido.cel };
+  for (const k of Object.keys(activo)) $('#o-' + k)?.setAttribute('class', 'ondas ' + (k === 'playera' ? 'claro ' : '') + (activo[k] ? '' : 'cortado'));
+  $('#c-cel').setAttribute('class', 'enl ' + (S.encendido.cel ? 'vivo' : 'cortado'));
+  for (const k of ['playera', 'brazalete', 'reloj']) document.querySelectorAll(`.disp[data-id="${k}"]`).forEach((g) => g.classList.toggle('apagado', !S.encendido[k]));
+  const n = ['playera', 'brazalete', 'reloj', 'cel'].filter((k) => activo[k]).length;
+  $('#pc-con').textContent = `${n} conectados`;
 }
 const met = (k, v, u = '') => `<div class="met"><div class="k">${k}</div><div class="v">${v}<small> ${u}</small></div></div>`;
 const f1 = (x) => (x == null || Number.isNaN(x) ? '—' : (+x).toFixed(1));
 const sw = (id, txt, on) => `<label class="sw"><input type="checkbox" id="${id}" ${on ? 'checked' : ''}> ${txt}</label>`;
 const rango = (id, txt, val, min, max, paso, uni) => `<label class="fila" for="${id}">${txt}<b id="${id}-v">${val} ${uni}</b></label><input type="range" id="${id}" min="${min}" max="${max}" step="${paso}" value="${val}">`;
+const mide = (...xs) => `<div class="mide">${xs.map((x) => `<span>${x}</span>`).join('')}</div>`;
 
 const VISTAS = {
-  A: () => `<h2>Dispositivo A · pulsioxímetro del traje</h2><p class="rol">Mide FC, SpO₂ y temperatura. Va cableado al ESP32. id <b>2561</b>, esquema <b>3</b>.</p>
-    <div class="grid2">${met('FC', f1(S.ultimos.A?.[0]), 'bpm')}${met('SpO₂', f1(S.ultimos.A?.[1]), '%')}${met('Temperatura', f1(S.ultimos.A?.[2]), '°C')}${met('Trama', '17', 'bytes')}</div>
-    ${sw('s-A', 'Encendido', S.encendido.A)}
-    <h3 style="margin:14px 0 0;font-size:.9rem">Provocar una anomalía</h3>
+  playera: () => `<h2>Playera con sensores</h2>
+    <p class="rol">Los sensores de la playera no tienen radio: van cableados a un <b>ESP32 cosido en la playera</b>, que los manda por Bluetooth directo a la PC central. id <b>401</b>, esquema <b>5</b>.</p>
+    ${mide('electrodos de ECG → FC', 'banda torácica → respiración', 'termómetro axilar → temperatura')}
+    <div class="grid2">${met('FC', f1(S.ultimos.playera?.[0]), 'lpm')}${met('Respiración', f1(S.ultimos.playera?.[1]), 'resp/min')}${met('Temperatura', f1(S.ultimos.playera?.[2]), '°C')}${met('Trama', '17', 'bytes')}</div>
+    ${sw('s-playera', 'Puesta y encendida', S.encendido.playera)}
+    <h3>ESP32 de la playera</h3>
+    <div class="grid2">${met('Bluetooth', S.bleConectado ? '<span style="color:var(--ok)">conectado</span>' : '<span style="color:var(--bad)">cortado</span>')}${met('En cola', S.colaEsp.length, '/ 1800')}${met('Enviadas', S.enviadasEsp.toLocaleString('es'))}${met('Perdidas (cola llena)', S.descartadas)}</div>
+    ${sw('s-ble', 'Conexión Bluetooth con la PC central', S.bleConectado)}
+    <div class="nota">Prueba: corta el Bluetooth 20 s y mira crecer la cola. Al reconectar no se pierde nada y cada lectura llega con la hora en que se tomó.</div>
+    <h3>Provocar una anomalía</h3>
     ${rango('r-fatiga', 'Fatiga: FC por encima de lo normal', S.anom.fatiga, 0, 40, 1, '%')}
-    ${rango('r-hipoxia', 'Hipoxia: SpO₂ más baja', S.anom.hipoxia, 0, 10, 0.5, 'pts')}
+    ${rango('r-taquipnea', 'Taquipnea: respiración acelerada', S.anom.taquipnea, 0, 60, 1, '%')}
     ${rango('r-fiebre', 'Fiebre: temperatura más alta', S.anom.fiebre, 0, 3, 0.1, '°C')}
-    <div class="nota">Última trama binaria (cabecera de 13 B + carga):</div><pre class="hex">${S.ultimoHex.A || '—'}</pre>
+    <div class="nota">Última trama binaria (cabecera de 13 B + carga):</div><pre class="hex">${S.ultimoHex.playera || '—'}</pre>
     <div class="nota">LUNNA evalúa la mediana de 24 h: con la anomalía puesta, la alerta tarda unos 20–40 s en aparecer.</div>`,
-  B: () => `<h2>Dispositivo B · banda pectoral</h2><p class="rol">Respiración y presión arterial. id <b>2817</b>, esquema <b>4</b>. La PA media no viaja: la calcula la central con la fórmula del esquema.</p>
-    <div class="grid2">${met('Respiración', f1(S.ultimos.B?.[0]), 'resp/min')}${met('PA sistólica', f1(S.ultimos.B?.[1]), 'mmHg')}${met('PA diastólica', f1(S.ultimos.B?.[2]), 'mmHg')}${met('PA media', S.ultimosVar?.['X:PAM'] ?? '—', 'mmHg · fórmula')}</div>
-    ${sw('s-B', 'Encendido', S.encendido.B)}
+  brazalete: () => `<h2>Brazalete de presión · opcional</h2>
+    <p class="rol">Aparato propio con Bluetooth: se conecta directo a la PC central, no pasa por la playera. id <b>201</b>, esquema <b>2</b>. La PA media no viaja: la calcula la central con la fórmula del esquema.</p>
+    ${mide('manguito inflable → PA sistólica y diastólica')}
+    <div class="grid2">${met('PA sistólica', f1(S.ultimos.brazalete?.[0]), 'mmHg')}${met('PA diastólica', f1(S.ultimos.brazalete?.[1]), 'mmHg')}${met('PA media', S.ultimosVar['X:PAM'] ?? '—', 'mmHg · fórmula')}${met('Trama', '15', 'bytes')}</div>
+    ${sw('s-brazalete', 'Puesto y encendido', S.encendido.brazalete)}
     ${rango('r-hiper', 'Hipertensión: PA por encima de lo normal', S.anom.hiper, 0, 40, 1, 'mmHg')}
-    <div class="nota">Última trama binaria:</div><pre class="hex">${S.ultimoHex.B || '—'}</pre>`,
-  esp: () => `<h2>ESP32 · concentrador</h2><p class="rol">Recoge A y B y los manda por Bluetooth LE a la computadora central. Si se corta la conexión, guarda las lecturas y las manda con su hora real al reconectar.</p>
-    <div class="grid2">${met('Conexión BLE', S.bleConectado ? '<span style="color:var(--ok)">conectado</span>' : '<span style="color:var(--bad)">cortada</span>')}${met('En cola', S.colaEsp.length, `/ 1800`)}${met('Enviadas', S.enviadasEsp.toLocaleString('es'))}${met('Perdidas por cola llena', S.descartadas)}</div>
-    ${sw('s-ble', 'Conexión Bluetooth con la central', S.bleConectado)}
-    <div class="nota">Prueba: corta la conexión 20 s, mira crecer la cola, y vuelve a conectar. Ninguna lectura se pierde y todas llegan con la hora en que se tomaron.</div>`,
-  reloj: () => `<h2>Reloj inteligente · opcional</h2><p class="rol">Frecuencia cardiaca por PPG. No habla con la central directamente: la reenvía el celular en JSON (lo que construyen Katia y Diana).</p>
-    <div class="grid2">${met('FC', S.ultimos.reloj ?? '—', 'bpm')}${met('Contacto del sensor', S.contactoReloj ? 'sí' : '<span style="color:var(--warn)">correa floja</span>')}</div>
-    ${sw('s-reloj', 'Encendido', S.encendido.reloj)}${sw('s-contacto', 'Contacto con la piel', S.contactoReloj)}
-    <div class="nota">Sin contacto, la central guarda la muestra marcada pero LUNNA no la evalúa.</div>`,
-  cel: () => `<h2>Celular · opcional</h2><p class="rol">Reenvía el reloj a la central y muestra al astronauta los avisos que llegan de Tierra.</p>
+    <div class="nota">Última trama binaria:</div><pre class="hex">${S.ultimoHex.brazalete || '—'}</pre>
+    <div class="nota">En la simulación mide cada 5 s; uno real mide cada varios minutos (inflar el manguito tarda).</div>`,
+  reloj: () => `<h2>Reloj inteligente · opcional</h2>
+    <p class="rol">Se conecta por Bluetooth directo a la PC central y manda JSON (<code>eva.telemetry.v1</code>). FC por PPG y SpO₂.</p>
+    ${mide('sensor óptico PPG → FC', 'PPG rojo/IR → SpO₂')}
+    <div class="grid2">${met('FC', S.ultimos.reloj?.[0] ?? '—', 'lpm')}${met('SpO₂', S.ultimos.reloj?.[1] ?? '—', '%')}${met('Contacto con la piel', S.contactoReloj ? 'sí' : '<span style="color:var(--warn)">correa floja</span>')}</div>
+    ${sw('s-reloj', 'Puesto y encendido', S.encendido.reloj)}${sw('s-contacto', 'Contacto con la piel', S.contactoReloj)}
+    ${rango('r-hipoxia', 'Hipoxia: SpO₂ más baja', S.anom.hipoxia, 0, 10, 0.5, 'pts')}
+    <div class="nota">Sin contacto, la central guarda la muestra marcada pero LUNNA no la evalúa.</div>
+    <div class="nota">Ojo: un reloj comercial no habla el protocolo EVA. La FC sí suele salir por el perfil Bluetooth estándar de ritmo cardiaco; la SpO₂ normalmente sólo la da la app del fabricante.</div>`,
+  cel: () => `<h2>Smartphone · opcional</h2><p class="rol">No es necesario para medir. Le muestra al astronauta sus datos y los avisos que llegan de Tierra.</p>
     ${sw('s-cel', 'Encendido', S.encendido.cel)}
-    <h3 style="margin:10px 0 0;font-size:.9rem">Avisos recibidos</h3>
+    <h3>Avisos recibidos</h3>
     <div class="lista">${S.avisos.length ? S.avisos.map((a) => `<div class="item aviso"><b>${a.de}</b> → ${a.para}<br>${a.texto}<div class="t">redactado ${hora(a.t_redactado)} · llegó ${hora(a.t_llegada)}</div></div>`).join('') : '<div class="nota">Ninguno todavía. Redacta uno desde Tierra.</div>'}</div>`,
   pc: () => {
     const filas = S.pred.map((p) => {
-      const act = S.ultimosVar?.[p.variable];
-      const lo = Math.min(p.banda[0], act ?? p.banda[0], p.basal) , hi = Math.max(p.banda[1], act ?? p.banda[1], p.basal);
+      const act = S.ultimosVar[p.variable];
+      const lo = Math.min(p.banda[0], act ?? p.banda[0], p.basal), hi = Math.max(p.banda[1], act ?? p.banda[1], p.basal);
       const pad = (hi - lo) * 0.15 || 1, a = lo - pad, b = hi + pad, x = (v) => ((v - a) / (b - a)) * 100;
       const fuera = act != null && (act < p.banda[0] || act > p.banda[1]);
       const w = p.pesos;
@@ -437,20 +521,20 @@ const VISTAS = {
         <div class="banda"><div class="rango" style="left:${x(p.banda[0])}%;width:${x(p.banda[1]) - x(p.banda[0])}%"></div><div class="esp" style="left:${x(p.esperado)}%"></div>${act != null ? `<div class="act ${fuera ? 'fuera' : ''}" style="left:${x(act)}%"></div>` : ''}</div>
         <div class="pesos" title="peso de cada fuente"><i style="width:${w.poblacion * 100}%;background:#64748b"></i><i style="width:${w.historial * 100}%;background:#a78bfa"></i><i style="width:${w.vuelo * 100}%;background:#34d399"></i></div>`;
     }).join('');
-    return `<h2>Computadora central · LUNNA</h2><p class="rol">Atribuye cada trama a su tripulante, la guarda, y compara lo medido con lo esperado para Ana en este entorno.</p>
+    return `<h2>PC central · LUNNA</h2><p class="rol">Recibe por Bluetooth a cada dispositivo, sabe quién lo lleva puesto, guarda todo y compara lo medido con lo esperado para Ana en este entorno.</p>
       ${filas || '<div class="cta">Pulsa <b>Preparar misión</b> para generar 112 días de historia: LUNNA necesita los primeros 14 para conocer a Ana.</div>'}
       <div class="nota">Barra de color: de dónde sale la predicción — <span style="color:#94a3b8">literatura</span> · <span style="color:#a78bfa">misión anterior</span> · <span style="color:#34d399">sus datos en vuelo</span>.</div>
-      <h3 style="margin:14px 0 0;font-size:.9rem">Alertas</h3>
-      <div class="lista">${S.alertas.length ? S.alertas.map((a) => `<div class="item ${a.estado}"><b>${a.estado.toUpperCase()}</b> · ${NOMBRE[a.variable] || a.variable}: ${a.valor} (esperado ${a.esperado})<div class="t">z = ${a.z} · P(nominal) = ${a.prob_nominal} · ${hora(a.t_scet)}</div></div>`).join('') : '<div class="nota">Sin alertas. Provoca una anomalía en el dispositivo A o B.</div>'}</div>`;
+      <h3>Alertas</h3>
+      <div class="lista">${S.alertas.length ? S.alertas.map((a) => `<div class="item ${a.estado}"><b>${a.estado.toUpperCase()}</b> · ${NOMBRE[a.variable] || a.variable}: ${a.valor} (esperado ${a.esperado})<div class="t">z = ${a.z} · P(nominal) = ${a.prob_nominal} · ${hora(a.t_scet)}</div></div>`).join('') : '<div class="nota">Sin alertas. Provoca una anomalía en la playera, el brazalete o el reloj.</div>'}</div>`;
   },
-  tierra: () => `<h2>Tierra · control de misión</h2><p class="rol">Recibe alertas y resúmenes con el retraso de la luz, y manda avisos a la tripulación. Todo lo que se genera sin ventana espera en cola.</p>
+  tierra: () => `<h2>Tierra · control de misión</h2><p class="rol">Recibe alertas y resúmenes con el retraso de la luz, y manda avisos a la tripulación. Lo que se genera sin ventana espera en cola.</p>
     ${sw('s-ventana', 'Ventana de comunicación abierta', S.enlace.abierto)}
     ${rango('r-owlt', 'Retraso por trayecto (Marte: 240–1440 s)', S.enlace.owlt_s, 0, 1440, 5, 's')}
-    <h3 style="margin:12px 0 4px;font-size:.9rem">Mandar un aviso</h3>
+    <h3>Mandar un aviso</h3>
     <select id="av-para"><option value="ana">Ana</option><option value="todos">Toda la tripulación</option></select>
     <textarea id="av-texto" style="margin-top:6px" placeholder="p. ej. Vimos tu evento de fatiga. Descansa hoy y repite el check-in mañana."></textarea>
     <button id="b-aviso" style="margin-top:6px">Enviar a la nave</button>
-    <h3 style="margin:14px 0 0;font-size:.9rem">Bandeja de entrada</h3>
+    <h3>Bandeja de entrada</h3>
     <div class="lista">${S.bandeja.length ? S.bandeja.slice(0, 40).map((b) => b.tipo === 'alerta'
       ? `<div class="item ${b.datos.estado}"><b>Alerta ${b.datos.estado}</b> · ${b.datos.tripulante} · ${NOMBRE[b.datos.variable] || b.datos.variable}: ${b.datos.valor}<div class="t">ocurrió ${hora(b.t_scet)} · llegó ${hora(b.t_ert)} · <b>${Math.round((Date.parse(b.t_ert) - Date.parse(b.t_scet)) / 1000)} s de antigüedad</b></div></div>`
       : `<div class="item"><b>Resumen</b> · ${b.datos.length} variables<div class="t">ocurrió ${hora(b.t_scet)} · llegó ${hora(b.t_ert)}</div></div>`).join('') : '<div class="nota">Nada todavía. Cada 30 s llega un resumen, y cada alerta al instante (más el retraso).</div>'}</div>`,
@@ -465,10 +549,11 @@ function pintarDetalle() {
 
 function conectarControles() {
   const on = (id, f) => { const el = document.getElementById(id); if (el) el.addEventListener('change', f); };
-  for (const k of ['A', 'B', 'reloj', 'cel']) on('s-' + k, (e) => { S.encendido[k] = e.target.checked; pintarEnlacesLocales(); log('e', `${k} ${e.target.checked ? 'encendido' : 'apagado'}`); });
-  on('s-ble', (e) => { S.bleConectado = e.target.checked; pintarEnlacesLocales(); log(S.bleConectado ? 'e' : 'a', S.bleConectado ? `BLE reconectado: el ESP32 vacía ${S.colaEsp.length} lecturas guardadas` : 'BLE cortado: el ESP32 empieza a guardar lecturas'); pintarDetalle(); });
+  const NOM = { playera: 'Playera', brazalete: 'Brazalete', reloj: 'Reloj', cel: 'Smartphone' };
+  for (const k of Object.keys(NOM)) on('s-' + k, (e) => { S.encendido[k] = e.target.checked; pintarEnlacesLocales(); log('e', `${NOM[k]} ${e.target.checked ? 'encendido' : 'apagado'}`); });
+  on('s-ble', (e) => { S.bleConectado = e.target.checked; pintarEnlacesLocales(); log(S.bleConectado ? 'e' : 'a', S.bleConectado ? `Bluetooth reconectado: el ESP32 vacía ${S.colaEsp.length} lecturas guardadas` : 'Bluetooth cortado: el ESP32 de la playera empieza a guardar lecturas'); pintarDetalle(); });
   on('s-contacto', (e) => { S.contactoReloj = e.target.checked; });
-  for (const [id, k, u] of [['r-fatiga', 'fatiga', '%'], ['r-hipoxia', 'hipoxia', 'pts'], ['r-fiebre', 'fiebre', '°C'], ['r-hiper', 'hiper', 'mmHg']]) {
+  for (const [id, k, u] of [['r-fatiga', 'fatiga', '%'], ['r-taquipnea', 'taquipnea', '%'], ['r-hipoxia', 'hipoxia', 'pts'], ['r-fiebre', 'fiebre', '°C'], ['r-hiper', 'hiper', 'mmHg']]) {
     const el = document.getElementById(id); if (!el) continue;
     el.addEventListener('input', (e) => { S.anom[k] = +e.target.value; document.getElementById(id + '-v').textContent = `${e.target.value} ${u}`; });
     el.addEventListener('change', (e) => { log('a', `Anomalía «${k}» = ${e.target.value} ${u}`); el.blur(); });
@@ -491,21 +576,27 @@ function conectarControles() {
 
 function seleccionar(id) {
   S.sel = id;
-  document.querySelectorAll('.disp').forEach((g) => g.classList.toggle('sel', g.dataset.id === id));
+  document.querySelectorAll('.disp,.equipo').forEach((g) => g.classList.toggle('sel', g.dataset.id === id));
+  if (id === 'cel') $('#cel-badge').setAttribute('r', 0);
   if (id === 'pc') refrescar();
   if (id === 'tierra') api('/api/tierra/bandeja').then((b) => { S.bandeja = b; pintarDetalle(); }).catch(() => {});
   pintarDetalle();
 }
 
 // ═══════════ Arranque ═══════════
-// Área de clic que cubre icono Y etiqueta: los huecos entre letras no captan el clic.
-document.querySelectorAll('.disp').forEach((g) => {
-  const bb = g.getBBox(), r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-  r.setAttribute('x', bb.x - 6); r.setAttribute('y', bb.y - 6);
-  r.setAttribute('width', bb.width + 12); r.setAttribute('height', bb.height + 12);
-  r.setAttribute('fill', 'transparent'); r.setAttribute('rx', 10);
-  g.insertBefore(r, g.firstChild);
-  g.setAttribute('tabindex', '0'); g.setAttribute('role', 'button');
+ondas('playera', POS.playera, POS.pc, 'claro', [12, 20, 28, 36]);
+ondas('brazalete', POS.brazalete, [POS.brazalete[0] + 100, POS.brazalete[1] - 120], '', [10, 17, 24]);
+ondas('reloj', POS.reloj, POS.pc);
+ondas('cel', [670, 298], POS.pc, '', [10, 17, 24]);
+ondas('pc', [830, 218], [830, 520], 'pc', [14, 24, 34], 0.7);
+ondas('tierra', [830, 460], [830, 200], 'tierra', [12, 22, 32], 0.6);
+// Las etiquetas también son clicables: un rectángulo transparente tapa los huecos entre letras.
+document.querySelectorAll('.etq').forEach((g) => {
+  const bb = g.getBBox(), r = document.createElementNS(NS, 'rect');
+  r.setAttribute('x', bb.x - 6); r.setAttribute('y', bb.y - 4); r.setAttribute('width', bb.width + 12); r.setAttribute('height', bb.height + 8);
+  r.setAttribute('fill', 'transparent'); g.insertBefore(r, g.firstChild);
+});
+document.querySelectorAll('.disp,.equipo').forEach((g) => {
   g.addEventListener('click', () => seleccionar(g.dataset.id));
   g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); seleccionar(g.dataset.id); } });
 });
@@ -522,9 +613,9 @@ $('#b-reiniciar').addEventListener('click', async () => { detener(); await api('
     const orb = fases.find((f) => f.entorno === 'orbita');
     if (orb) { S.lanzamiento = Date.parse(orb.desde); $('#b-vivo').disabled = false; S.avisos = await api('/api/avisos'); log('e', 'Misión existente recuperada.'); }
   } catch (e) { $('#v-back').textContent = 'sin conexión'; $('#d-back').className = 'dot bad'; }
-  conectarEventos(); pintarEnlacesLocales(); pintarCabecera(); seleccionar('pc');
+  conectarEventos(); pintarEnlacesLocales(); pintarEnlace(); pintarCabecera(); seleccionar('pc');
   setInterval(() => { refrescar(); pintarCabecera(); }, 5000);
-  log('e', 'Haz clic en cualquier elemento: dispositivos, ESP32, computadora central o Tierra.');
+  log('e', 'Haz clic en cualquier cosa: la playera, el reloj, el brazalete, el celular, la PC central o la Tierra.');
 })();
 </script>
 </body>

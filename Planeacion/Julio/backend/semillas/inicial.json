@@ -106,8 +106,8 @@
       ]
     },
     {
-      "id": 3,
-      "nombre": "esp32-dispositivo-A",
+      "id": 5,
+      "nombre": "playera-esp32-v1",
       "version": 1,
       "campos": [
         {
@@ -116,8 +116,8 @@
           "tipo": "u8"
         },
         {
-          "clave": "spo2",
-          "variable": "04:A3",
+          "clave": "fr",
+          "variable": "04:A2",
           "tipo": "u8"
         },
         {
@@ -125,33 +125,6 @@
           "variable": "04:A1",
           "tipo": "i16",
           "escala": 0.01
-        }
-      ]
-    },
-    {
-      "id": 4,
-      "nombre": "esp32-dispositivo-B",
-      "version": 1,
-      "campos": [
-        {
-          "clave": "fr",
-          "variable": "04:A2",
-          "tipo": "u8"
-        },
-        {
-          "clave": "sis",
-          "variable": "01:V1",
-          "tipo": "u8"
-        },
-        {
-          "clave": "dia",
-          "variable": "X:PAD",
-          "tipo": "u8"
-        },
-        {
-          "clave": "pam",
-          "variable": "X:PAM",
-          "formula": "round((sis + 2 * dia) / 3 * 10) / 10"
         }
       ]
     }
@@ -200,25 +173,17 @@
     {
       "id": 302,
       "clave": "reloj-ana",
-      "nombre": "Reloj de Ana (vía celular)",
+      "nombre": "Reloj de Ana (BLE directo a la central)",
       "tipo": "wrist",
       "perfil": "json"
     },
     {
-      "id": 2561,
-      "clave": "esp32-A",
-      "nombre": "ESP32 · dispositivo A (FC, SpO2, temperatura)",
-      "tipo": "suit",
-      "perfil": "eva",
-      "esquema_id": 3
-    },
-    {
-      "id": 2817,
-      "clave": "esp32-B",
-      "nombre": "ESP32 · dispositivo B (resp., PA sis/dia)",
+      "id": 401,
+      "clave": "playera-01",
+      "nombre": "Playera con sensores (ESP32 integrado): FC, respiración, temperatura",
       "tipo": "chest",
       "perfil": "eva",
-      "esquema_id": 4
+      "esquema_id": 5
     }
   ],
   "tripulantes": [

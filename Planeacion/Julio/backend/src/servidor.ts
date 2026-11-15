@@ -20,7 +20,7 @@ import { reiniciarEstados } from './ingesta.ts';
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const PUERTO = Number(process.env.PUERTO ?? 8787);
 /** Sube al cambiar algo que la pasarela o el simulador necesiten. */
-export const VERSION_BACKEND = '0.3.0';
+export const VERSION_BACKEND = '0.4.0';
 
 class ErrorHttp extends Error {
   estado: number;
@@ -82,6 +82,7 @@ function estadoTexto(db: BD): string {
     'actividad reciente',
     ...(recientes.length ? recientes.map((r) => '  ' + r) : ['  (nada todavía)']),
     '',
+    'simulador visual: /simulador',
     'API: /api/salud · /api/estado · /api/alertas · /api/stream · ver backend/README.md',
   ].join('\n');
 }

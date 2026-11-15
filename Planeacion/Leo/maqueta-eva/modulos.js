@@ -60,6 +60,8 @@
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#hoja").hidden) cerrarHoja(); });
 
   // ---------- Tema: claro, azul marino o automático ----------
+  /** Idioma de la interfaz ("es" | "en"), lo maneja idioma.js. */
+  const idiomaActual = () => (window.Lunna && window.Lunna.idioma ? window.Lunna.idioma.actual() : "es");
   function aplicarTema() {
     const t = E.tema === "auto" ? (matchMedia("(prefers-color-scheme: dark)").matches ? "oscuro" : "claro") : E.tema;
     document.documentElement.dataset.tema = t;
@@ -543,6 +545,8 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
         </section>
         <h3 class="aj-sec">Apariencia</h3>
         <div class="aj-temas">${[["auto", "Automático"], ["claro", "Claro"], ["oscuro", "Azul marino"]].map(([k, t]) => `<button data-tema="${k}" aria-pressed="${E.tema === k}"><span class="sw sw-${k}"></span>${t}</button>`).join("")}</div>
+        <h3 class="aj-sec">Idioma · Language</h3>
+        <div class="aj-temas aj-idioma" translate="no">${[["es", "ES", "Español"], ["en", "EN", "English"]].map(([k, c, t]) => `<button data-idioma="${k}" aria-pressed="${idiomaActual() === k}"><span class="aj-cod">${c}</span>${t}</button>`).join("")}</div>
         <h3 class="aj-sec">Preferencias</h3>
         <div class="aj-grid">
           ${tile("privacidad", "candado", "#19B074", "Privacidad", "Quién ve qué y quién vio tus datos")}
@@ -561,6 +565,7 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
       $("#aj-mas", p).addEventListener("click", () => { E.dia++; ir("ajustes"); });
       $$("[data-hito]", p).forEach((b) => b.addEventListener("click", () => { E.dia = +b.dataset.hito; ir("ajustes"); }));
       $$("[data-tema]", p).forEach((b) => b.addEventListener("click", () => { E.tema = b.dataset.tema; mem.guardar("tema", E.tema); aplicarTema(); ir("ajustes"); }));
+      $$("[data-idioma]", p).forEach((b) => b.addEventListener("click", () => { if (window.Lunna && window.Lunna.idioma) window.Lunna.idioma.poner(b.dataset.idioma); ir("ajustes"); }));
     },
     privacidad(p) {
       const yo = P();

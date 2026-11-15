@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LUNNA | Ecosistema de Monitoreo de Salud Espacial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="stars-bg"></div>
+
+  <main class="landing-canvas">
+    
+    <!-- ENCABEZADO MINIMALISTA CON LA LUNA REAL -->
+    <header class="top-hero">
+      <div class="moon-logo-container">
+        <svg class="moon-svg" viewBox="0 0 100 100" aria-label="Logo Luna Lunna">
+          <defs>
+            <radialGradient id="moonGlow" cx="45%" cy="45%" r="55%">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="65%" stop-color="#e2e8f0"/>
+              <stop offset="88%" stop-color="#94a3b8"/>
+              <stop offset="100%" stop-color="#475569"/>
+            </radialGradient>
+            <filter id="moonSoftShadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#00f0ff" flood-opacity="0.35"/>
+            </filter>
+          </defs>
+          <circle cx="50" cy="50" r="44" fill="url(#moonGlow)" filter="url(#moonSoftShadow)"/>
+          <!-- Cráteres -->
+          <ellipse cx="38" cy="36" rx="9" ry="7" fill="#cbd5e1" opacity="0.6"/>
+          <circle cx="34" cy="38" r="4" fill="#94a3b8" opacity="0.4"/>
+          <ellipse cx="64" cy="46" rx="11" ry="8" fill="#cbd5e1" opacity="0.5"/>
+          <circle cx="62" cy="48" r="5" fill="#94a3b8" opacity="0.35"/>
+          <ellipse cx="44" cy="68" rx="14" ry="9" fill="#cbd5e1" opacity="0.55"/>
+          <circle cx="48" cy="70" r="6" fill="#94a3b8" opacity="0.3"/>
+          <circle cx="28" cy="62" r="5" fill="#cbd5e1" opacity="0.5"/>
+          <circle cx="70" cy="28" r="4.5" fill="#cbd5e1" opacity="0.45"/>
+          <circle cx="54" cy="22" r="3" fill="#cbd5e1" opacity="0.4"/>
+        </svg>
+      </div>
+
+      <div class="brand-text">
+        <h1 class="brand-title">LUNNA</h1>
+        <div class="brand-badge">NASA SPACE APPS CHALLENGE 2026 · EQUIPO MONARCAS</div>
+      </div>
+      
+      <p class="brand-tagline">
+        El sistema que te conoce <strong>antes de que te enfermes</strong>.<br>
+        Monitoreo fisiológico autónomo con 24 minutos de retraso de luz.
+      </p>
+
+      <div class="kpi-mini-bar">
+        <span><strong>388</strong> Variables Clínicas</span>
+        <span class="dot-sep">•</span>
+        <span><strong>14 Días</strong> Línea Base</span>
+        <span class="dot-sep">•</span>
+        <span><strong>20 Bytes</strong> Trama BLE</span>
+        <span class="dot-sep">•</span>
+        <span><strong>100%</strong> Autónomo a Bordo</span>
+      </div>
+    </header>
+
+    <!-- EL LIENZO PRINCIPAL DEL ESPACIO DE TRABAJO (ESTILO DE LA IMAGEN) -->
+    <section class="workspace-section">
+      <div class="workspace-header-text">
+        <h2>Un ecosistema integrado para toda la misión</h2>
+        <p>Abre el panel de salud de la nave y las herramientas se orquestan en vivo: telemetría del traje, consola médica, simulación de retraso con la Tierra y el celular personal del astronauta.</p>
+      </div>
+
+      <!-- LIENZO / WORKSPACE FRAME ESTILO DESKTOP MODERNO -->
+      <div class="canvas-window">
+        <!-- Barra de título de la ventana estilo Mac/OS aeroespacial -->
+        <div class="window-titlebar">
+          <div class="window-controls">
+            <span class="ctrl red"></span>
+            <span class="ctrl yellow"></span>
+            <span class="ctrl green"></span>
+          </div>
+          <div class="tab-pill-group">
+            <div class="tab-pill active">
+              <span class="tab-ico">🚀</span> lunna-nave · central
+            </div>
+            <div class="tab-pill">
+              <span class="tab-ico">🌍</span> dsn-tierra · houston
+            </div>
+            <div class="tab-pill">
+              <span class="tab-ico">📡</span> esp32-telemetria
+            </div>
+          </div>
+          <div class="window-actions">
+            <span class="status-chip live"><span class="pulse"></span> EN VIVO</span>
+            <span class="status-chip delay">RETARDADOR TIERRA +20m</span>
+          </div>
+        </div>
+
+        <!-- CUERPO DEL LIENZO: VENTANA DE LA COMPUTADORA CON CELULAR FLOTANTE AL LADO -->
+        <div class="canvas-body">
+          
+          <!-- BARRA LATERAL ESTILO DESKA / DOCK DE NAVEGACIÓN -->
+          <aside class="canvas-sidebar">
+            <div class="dock-item active" title="Tripulación">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="dock-item" title="Cuerpo y Síntomas">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><path d="M12 8v8"/><path d="M8 12h8"/><path d="M9 20l3-4 3 4"/></svg>
+            </div>
+            <div class="dock-item" title="Radiación DONKI">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/></svg>
+            </div>
+            <div class="dock-item" title="Trama Binaria">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+          </aside>
+
+          <!-- ÁREA DE PANELES FLOTANTES ORGANIZADOS EN EL LIENZO -->
+          <div class="canvas-workspace-grid">
+            
+            <!-- PANEL 1: CONSOLA DE LA NAVE (CENTRAL.HTML) -->
+            <div class="glass-window main-console">
+              <div class="glass-bar">
+                <span class="file-tag">🖥️ consola-nave.tsx</span>
+                <span class="file-desc">Computadora Central · Médico a Bordo</span>
+              </div>
+              <div class="glass-content">
+                
+                <!-- Alerta activa en la nave -->
+                <div class="alert-box-compact warning">
+                  <div class="alert-left">
+                    <span class="warn-badge">ÁMBAR</span>
+                    <strong>FATIGA ACUMULADA · REGLA FATIGA-03</strong>
+                  </div>
+                  <div class="alert-right">Tripulante: <strong>Ana (MS-2) · Día 112</strong></div>
+                </div>
+
+                <div class="console-body-grid">
+                  <!-- Columna Tripulación -->
+                  <div class="crew-roster">
+                    <div class="roster-item active">
+                      <div class="avatar-badge amber">MS2</div>
+                      <div class="roster-info">
+                        <strong>Ana Ramos</strong>
+                        <small class="text-amber">Z-Score: +2.1 FC / -2.3 HRV</small>
+                      </div>
+                    </div>
+                    <div class="roster-item">
+                      <div class="avatar-badge green">MS1</div>
+                      <div class="roster-info">
+                        <strong>Tomás (Cdr)</strong>
+                        <small class="text-green">Nominal · 62 lpm</small>
+                      </div>
+                    </div>
+                    <div class="roster-item">
+                      <div class="avatar-badge green">MS3</div>
+                      <div class="roster-info">
+                        <strong>Mei (CMO)</strong>
+                        <small class="text-green">Nominal · 65 lpm</small>
+                      </div>
+                    </div>
+                    <div class="roster-item">
+                      <div class="avatar-badge amber">MS4</div>
+                      <div class="roster-info">
+                        <strong>Luis (Ing)</strong>
+                        <small class="text-amber">Presión: 134/84 [T]</small>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Métricas centrales -->
+                  <div class="vitals-display">
+                    <div class="vital-tile">
+                      <span class="lbl">FC Reposo</span>
+                      <strong class="val text-amber">74 <small>lpm</small></strong>
+                      <span class="sub text-amber">▲ +12 sobre basal</span>
+                    </div>
+                    <div class="vital-tile">
+                      <span class="lbl">HRV (RMSSD)</span>
+                      <strong class="val text-amber">38 <small>ms</small></strong>
+                      <span class="sub text-amber">▼ -24ms sobre basal</span>
+                    </div>
+                    <div class="vital-tile">
+                      <span class="lbl">Sueño (3 noches)</span>
+                      <strong class="val">5.5 <small>h/noche</small></strong>
+                      <span class="sub">Basal: 7.1 h</span>
+                    </div>
+                    <div class="vital-tile">
+                      <span class="lbl">CO₂ Cabina</span>
+                      <strong class="val text-green">2.1 <small>mmHg</small></strong>
+                      <span class="sub text-green">Normal NASA-STD [A]</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Barra inferior de telemetría de 20 bytes -->
+                <div class="stream-line">
+                  <span class="stream-label">TRAMA BLE:</span>
+                  <code>11 05 d4 28 d1 8a 9b 6b 4b 61 1d 22 0d 0c 00 02 00 5a 57 00</code>
+                  <span class="stream-meta">20 Bytes · 1 Hz · Ingesta en 4ms</span>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- PANEL 2: TARJETA DE RECOMENDACIÓN CLÍNICA / NOTAS (Estilo post-it de la imagen) -->
+            <div class="glass-window protocol-card">
+              <div class="glass-bar yellow-bar">
+                <span>📋 Protocolo Médico sugerido</span>
+              </div>
+              <div class="protocol-content">
+                <div class="task-check checked">✔ Proteger ventana de descanso de 8.5 h</div>
+                <div class="task-check checked">✔ Suspender cafeína 6 horas previas</div>
+                <div class="task-check">○ Ajuste dinámico de meta de hidratación</div>
+                <div class="protocol-note">
+                  <em>"El sistema no diagnostica, orienta al Oficial Médico."</em>
+                </div>
+              </div>
+            </div>
+
+            <!-- PANEL 3: TERMINAL TELEMETRÍA TIERRA (Estilo ventana de código/terminal de la imagen) -->
+            <div class="glass-window terminal-earth">
+              <div class="glass-bar">
+                <span class="terminal-tag">🌍 houston-dsn.log</span>
+                <span class="terminal-delay">+20m retraso de luz</span>
+              </div>
+              <div class="terminal-code">
+                <p><span class="c-dim">[14:32 SCET]</span> <span class="c-cyan">EVA.BLE:</span> Paquete recibido en Orión</p>
+                <p><span class="c-dim">[14:32 SCET]</span> <span class="c-amber">LUNNA-ENGINE:</span> Fatiga-03 evaluada a bordo</p>
+                <p><span class="c-dim">[14:52 ERT]</span> <span class="c-green">TIERRA-RECEPTOR:</span> Paquete sincronizado</p>
+                <p class="c-success">✔ Telemetría respaldada en base terrestre.</p>
+              </div>
+            </div>
+
+            <!-- PANEL 4: EL CELULAR AL LADO DERECHO (Flotando dentro del canvas como en la imagen) -->
+            <div class="mobile-device-wrapper">
+              <div class="phone-device">
+                <div class="phone-island"></div>
+                <div class="phone-screen-inner">
+                  
+                  <div class="m-top-bar">
+                    <span>14:32</span>
+                    <span class="m-logo">🌒 LUNNA</span>
+                    <span>🔋 92%</span>
+                  </div>
+
+                  <div class="m-user-strip">
+                    <div>
+                      <small>Tripulante</small>
+                      <h5>Ana Ramos</h5>
+                    </div>
+                    <span class="m-badge-amber">Ámbar</span>
+                  </div>
+
+                  <!-- Silueta interactiva de cuerpo humano -->
+                  <div class="m-body-card">
+                    <div class="m-human-silhouette">
+                      <div class="silhouette-head"></div>
+                      <div class="silhouette-chest alert-pulse"></div>
+                      <div class="silhouette-body"></div>
+                      <div class="silhouette-legs"></div>
+                    </div>
+                    <div class="m-body-desc">
+                      <strong>Región Cardíaca</strong>
+                      <p>Pulso en reposo +12 lpm sobre tu normal de 14 días.</p>
+                    </div>
+                  </div>
+
+                  <!-- Tarjetas de signos -->
+                  <div class="m-metric-row">
+                    <div class="m-mini-metric">
+                      <span>Sueño anoche</span>
+                      <strong>5.5 h</strong>
+                      <div class="m-progress"><div class="m-bar amber" style="width: 60%"></div></div>
+                    </div>
+                    <div class="m-mini-metric">
+                      <span>Presión</span>
+                      <strong>112 / 72</strong>
+                      <div class="m-progress"><div class="m-bar green" style="width: 85%"></div></div>
+                    </div>
+                  </div>
+
+                  <div class="m-checkin-box">
+                    <span>Check-in del día</span>
+                    <strong>Completado (Ánimo: 44/100)</strong>
+                  </div>
+
+                  <button class="m-btn-symptom">Reportar Síntoma</button>
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- FOOTER LIMPIO -->
+    <footer class="footer-clean">
+      <p>LUNNA · Sistema Médico Autónomo para Misiones de Exploración Espacial · NASA Space Apps Challenge 2026</p>
+    </footer>
+
+  </main>
+</body>
+</html>

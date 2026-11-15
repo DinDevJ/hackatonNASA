@@ -636,3 +636,10 @@ details[open] > summary.cn-vivo-cab { margin-bottom: 8px; }
 .cn-sem-ctl input[type="range"] { flex: 1 1 90px; min-width: 80px; accent-color: var(--acento); }
 .cn-sem-num { width: 78px; padding: 6px 8px; }
 .cn-sem-lbl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+.cn-sem-mod { margin-top: 16px; }
+.cn-sem-mod[hidden], .cn-sem-mod [hidden] { display: none; }
+.cn-sem-mform { max-width: 560px; }
+.cn-sem-mod .cn-boton[aria-pressed="true"] { border-color: var(--acento); box-shadow: 0 0 0 2px var(--acento) inset; }
+.cn-sem-alerta { border-left: 3px solid var(--ambar); padding-left: 8px; }
+.cn-sem-err { color: var(--rojo); margin: 6px 0; }

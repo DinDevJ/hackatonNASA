@@ -231,6 +231,7 @@ Lee las evaluaciones que escribe el motor Python de `prototipo-salud/` (20 padec
 |---|---|
 | `GET /api/padecimientos/semaforo[?tripulante=ID]` | Los 20 colores por tripulante (GRIS si no hay evaluación), con `vacio` y `como_poblar` |
 | `GET /api/padecimientos/semaforo/:tripulante/:padecimiento` | Evaluación y desglose por variable (peso de la fuente, del usuario, efectivo, contribución) |
+| `GET /api/padecimientos/referencias?tripulante=ID[&variable=VID]` | Valor normal por variable guardado por el motor en su última evaluación (rango, fuente, base personal; `SIMULADO` si aplica) |
 | `GET /api/padecimientos/pesos[?padecimiento=P07]` | Pesos por liga, rango [0, 3] y umbrales cambiados |
 | `PUT /api/padecimientos/pesos` | `{padecimiento_id, variable_id, peso?, prior_de?}` o `{umbral, valor}` |
 | `POST /api/padecimientos/pesos/restaurar` | `{}` (todo), `{padecimiento_id[, variable_id]}` o `{umbral}` |

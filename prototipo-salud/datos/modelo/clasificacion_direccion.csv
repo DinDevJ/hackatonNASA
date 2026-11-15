@@ -97,3 +97,4 @@ tercer cuarto,dependiente_fase,0,sí [P·S10],depende del cuarto de misión: no 
 ↓ positivo / ↑ negativo,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
 ↓ puntuación,una_direccion,-1,sí [P·S10],
 ↓ sueño profundo/REM,una_direccion,-1,sí [P·S10],
+↓ (<52 % ♂ / <54 % ♀),criterio,-1,sí [P·S10],"01:V18 FEVI: Lang 2015 (ASE/EACVI), <52 % hombres / <54 % mujeres; criterio de d.1; sin sexo y entre 52 y 54 % = indeterminado (como D16); umbral terrestre, no validado en astronautas"

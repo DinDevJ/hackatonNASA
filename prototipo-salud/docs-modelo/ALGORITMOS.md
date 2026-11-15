@@ -8,7 +8,7 @@
 
 | Sigla | Archivo |
 |---|---|
-| [PV] | `PADECIMIENTO-VARIABLE.csv` (348 ligas) |
+| [PV] | `PADECIMIENTO-VARIABLE.csv` (350 ligas) |
 | [PAD] | `PADECIMIENTOS.csv` y `PADECIMIENTOS.md` |
 | [VMA] | `VARIABLES-MEDIDAS-ASTRONAUTAS.csv` / `.md` |
 | [PREC] | `PRECISION-VARIABLES.md` |
@@ -87,7 +87,7 @@ Las ligas (padecimiento, peso, nivel) se copiaron de [PV] y se verificaron una p
 | `ecg` · `pr_interval` | ms · medicion · `experimental_delineacion_dwt` | `01:V35` | P01 (1, C) | N4. Además `01:V35` es **solo pre-post** en astronautas [VMA] |
 | `ecg` · `latidos_irregulares` | latidos · hallazgo · `experimental_criterio_rr_prematuridad` | **No unívoca**: proxy de `01:V32` y/o `01:V33` (el criterio RR no distingue supraventricular de ventricular [CON]) | `01:V32`: P01 (2, C). `01:V33`: P01 (3, C) | **Una sola aportación**, con el peso menor de las dos (2, C) [P·S12]. Nunca se cuenta como `01:V33`. N4. Va en el mismo grupo de correlación que la bandera (d.3) |
 | `ecg` · `ritmo_irregular_compatible_fa` y `ritmo_irregular_fraccion_ventanas` | bandera 0/1 · regla_alerta · `BANDERA_EXPERIMENTAL_NO_DIAGNOSTICO`; fracción 0–1 · hallazgo | `01:V31` (proxy) | P01 (3, A; Perez 2019 / Taggar 2016) | **La bandera no hereda el nivel A.** Entra como N4 → nivel C (σ = 1.5), sin el LR de Taggar (d.2). Las dos filas son la misma evidencia: se usa la bandera; la fracción es descriptiva. Bandera vacía = `sin_dato`, no 0 |
-| `panecho` · `EF`; `echonet_dynamic` · `EF`; `echoclip` · `feve`; `echoprime` · `ejection_fraction` | % · medicion (EchoCLIP: `zero_shot_por_similitud`; EchoPrime: `recuperacion_por_vecinos_no_calibrado`) | `01:V18` (FEVI) | **Ninguna.** `01:V18` no aparece en [PV] | **No alimenta el score de ningún padecimiento.** Se muestra como contexto (a.5) y sigue sujeta a R1/R2 como capa de demostración (a.6). En astronautas: solo análogo [VMA] |
+| `panecho` · `EF`; `echonet_dynamic` · `EF`; `echoclip` · `feve`; `echoprime` · `ejection_fraction` | % · medicion (EchoCLIP: `zero_shot_por_similitud`; EchoPrime: `recuperacion_por_vecinos_no_calibrado`) | `01:V18` (FEVI) | `01:V18` entra en [PV] (P01 y P02, peso 1, evidencia C) | **Entra al score como liga N4 de peso 1 en P01 y P02** (criterio terrestre Lang 2015: FEVI <52 % M / <54 % F); no puede dar ROJO sola. Varios modelos el mismo día: mediana por modelo y puerta de discordancia a.5.4 (D > 10 pp = «discordante», no activa). R1 sigue como capa de demostración (a.6). En astronautas: sí en vuelo (Hamilton 2011, ISS, n = 6; [VMA] corregido el 15 nov 2026) |
 | `panecho` · `LVSV` | cm³ (≡ mL) · medicion | `01:V4` (volumen sistólico) | P02 (1, C; ↓) | N4. La unidad es idéntica; lo que **no** está demostrado es que la estimación del modelo sea comparable con el método de vuelo (reinhalación / ecocardiografía) [P·S15] |
 | `panecho` · `LVEDV` | cm³ · medicion | `01:V17` (**parcial**: la variable es «masa y volumen telediastólico»; el modelo no da masa) | P02 (1, C; ↓) | N4. `01:V17` es **solo pre-post** [VMA] |
 | `panecho` · `LAVol` | cm³ · medicion | `01:V36` (volumen de aurícula izquierda; ID verificado en [VMA]) | P01 (1, C; ↑) | N4. `01:V36` es **solo pre-post** (resonancia) [VMA] |
@@ -139,7 +139,7 @@ Los parámetros siguen siendo **de demostración, sin validación**, tal como di
 
 | Regla | Qué pasa con ella | Detalle |
 |---|---|---|
-| R1 (FEVE < 40 %) | **Se conserva como capa aparte** | No entra al semáforo: `01:V18` no tiene ligas y el 40 % no está validado en astronautas. Se muestra como aviso de demostración |
+| R1 (FEVE < 40 %) | **Se conserva como capa aparte** | No entra al semáforo: el 40 % no está validado en astronautas. Se muestra como aviso de demostración |
 | R2 (discrepancia entre modelos) | **Se envuelve** | Pasa a ser la puerta de a.5 punto 4. La tolerancia sigue siendo de demostración |
 | R3 (FC nocturna ≥ basal + 4 bpm, 2 noches; inspirada en Alavi 2022) | **Se envuelve y se corrige su base** | Su base actual es la mediana de los 7 días previos, sin excluir noches alertadas: eso permite aprender una anomalía como normal. En esta especificación la base sale de (e). El detector se conserva como activación de `01:V3` en P04, etiquetado [experimental] |
 | R4 (eco más viejo que 72 h) | **Se envuelve** | Se convierte en la regla de vigencia de (g). Las 72 h siguen siendo provisionales |
@@ -175,7 +175,7 @@ La calidad **degrada el nivel de evidencia de la liga, no su peso**. Así se reu
 |---|---|---|---|---|---|
 | **N1** alta / referencia | Veredicto «alta» en [PREC], o instrumento de referencia declarado | El de la tabla | Sí | Sí | Sí |
 | **N2** media / tendencia | Veredicto «media» | Baja un escalón (A→B, B→C) | Solo la base de **su misma clase de dispositivo**, marcada «tendencia» | No | Sí |
-| **N3** interrogante | (a) «baja por evidencia» en [PREC] (CO2 de cabina, síntomas fuera de PHQ-9): baja un escalón. (b) Sin evaluación de precisión (295 de las 348 ligas): el de la tabla, con la marca «precisión no evaluada» | Según (a) o (b) | Solo si la calidad declarada por el adaptador o por quien captura es buena | Sí, cuando el puntaje pide justo esa modalidad (ítems de cuestionario, signos tomados a mano) | Sí |
+| **N3** interrogante | (a) «baja por evidencia» en [PREC] (CO2 de cabina, síntomas fuera de PHQ-9): baja un escalón. (b) Sin evaluación de precisión (295 de las 350 ligas): el de la tabla, con la marca «precisión no evaluada» | Según (a) o (b) | Solo si la calidad declarada por el adaptador o por quien captura es buena | Sí, cuando el puntaje pide justo esa modalidad (ítems de cuestionario, signos tomados a mano) | Sí |
 | **N4** baja por error medido, experimental o modelo sin validar | Cuffless; etapas de sueño; temperatura central puntual; PR/QTc del adaptador; bandera de ritmo; criterio RR; **toda salida de modelo de eco**; métrica discordante (R2) | Forzado a C | **Nunca** | **Nunca** | **No** |
 | **N0** rechazada | G0, G5 o G6 | — | — | — | — |
 
@@ -302,7 +302,7 @@ El score tiene **dos canales que no se suman** y una cobertura. Los puntajes pub
 
 ### d.1 Activación de una liga
 
-Cada liga (p, v) se clasifica por el texto de su columna `direccion`. La clasificación de las 348 filas es una tabla de configuración pendiente [P·S10].
+Cada liga (p, v) se clasifica por el texto de su columna `direccion`. La clasificación de las 350 filas es una tabla de configuración pendiente [P·S10].
 
 | Tipo | Ejemplos de `direccion` | Activación a_pv |
 |---|---|---|
@@ -351,7 +351,7 @@ Las seis ligas con cifra en [PV]:
 
 Si la medición queda a menos de su error del umbral del criterio, el resultado es «indeterminado» y aporta 0.
 
-### d.3 Canal de pesos (todas las ligas; es el único para las 308 de nivel C)
+### d.3 Canal de pesos (todas las ligas; es el único para las 310 de nivel C)
 
 El peso se trata como **evidencia débil con incertidumbre**, no como un LR: `w_pv ~ Normal(μ_pv, σ_pv²)`, truncada en 0, con σ_pv según el nivel efectivo después de la puerta (b.2).
 
@@ -537,7 +537,7 @@ Todos los cortes de esta sección son **provisionales** salvo donde se cita la f
 
 **VERDE** solo si no hay condición de AMARILLO ni de ROJO **y** la cobertura es suficiente (g.3). En otro caso, **GRIS** («evidencia insuficiente»).
 
-Las reglas R1–R5 de demostración y la FEVE no intervienen (a.6). El 40 % de R1 no se usa como umbral.
+Las reglas R1–R5 de demostración no intervienen (a.6); la FEVI de eco entra solo como liga N4 de peso 1 en P01 y P02. El 40 % de R1 no se usa como umbral.
 
 ### f.2 Particularidades por padecimiento
 
@@ -587,7 +587,7 @@ No se imputa ningún valor clínico. Una liga sin dato vigente es NA: no suma 0,
 | F1 No medido en esta ventana | La variable es medible en la fase actual, pero no hay dato vigente | NA; baja la cobertura |
 | F2 `sin_dato: <motivo>` | El adaptador corrió y no pudo calcular (p. ej. bandera con pocos segmentos) | Como F1; se conserva el motivo |
 | F3 Solo pre/post | `medido_en_vuelo = solo pre-post vuelo` (50 ligas). Ejemplos: DXA de P14, pruebas ortostáticas de P02, `01:V35` | En vuelo es **ausencia estructural**: sale del denominador de la cobertura de vuelo y se informa aparte. En PRE y POST se evalúa normal |
-| F4 Solo análogo | 12 ligas; también `01:V18` (FEVI) | No se espera. Si llega un dato (p. ej. de un modelo de eco) entra como N4 |
+| F4 Solo análogo | 12 ligas | No se espera. Si llega un dato (p. ej. de un modelo de eco) entra como N4 |
 | F5 No / no encontrado | 33 ligas (p. ej. DLMO `03:V45`, PHQ-9 `03:V1`) | No se espera ni penaliza. Si alguien lo captura, entra como N3 |
 | F6 Pendiente de análisis en tierra | Muestra tomada en vuelo y analizada al regreso ([VMA] cuenta esto como «sí en vuelo») | NA en vuelo. Hace falta una columna de latencia que hoy no existe [P·S17] |
 | F7 Vencido | Dato más viejo que su vigencia | NA; se muestra como «último conocido» |
@@ -666,7 +666,7 @@ Métricas: cumplimiento de los invariantes de e.1 (sí/no) y, sobre las anomalí
 | S7 | Usar prevalencias de misión como log-odds previas; tasa constante para P04. Sin prior utilizable en P01, P03, P05, P06, P08–P10, P13–P15 y P17–P20 | d.5 |
 | S8 | Incertidumbre del ln LR tomada de σ/μ de la liga; aproximación normal e independencia entre grupos para el intervalo de T | d.2, d.4 |
 | S9 | Aplicar LR terrestres a padecimientos más amplios (PHQ-9 → P09; gripe → P04); definición provisional de fiebre (> 37.3 °C); lectura del ancla de Law 2014 y su unidad de tiempo | d.2 |
-| S10 | Clasificación de la columna `direccion` (texto libre) de las 348 ligas, incluidas las de contexto o predisposición | d.1 |
+| S10 | Clasificación de la columna `direccion` (texto libre) de las 350 ligas, incluidas las de contexto o predisposición | d.1 |
 | S11 | Grupos de correlación más allá de los dos declarados en [PAD] | d.3 |
 | S12 | `latidos_irregulares` no distingue supraventricular de ventricular: se le da el peso menor (2, C); extrapolar conteos a 24 h | a.2, c.1 |
 | S13 | Tratar la FC del adaptador `ecg` como «alta» por analogía con la prenda ECG de Villar 2015; tratar la lectura humana de ECG y el oxímetro de dedo como referencia sin cifra propia | b.3 |
@@ -680,10 +680,10 @@ Métricas: cumplimiento de los invariantes de e.1 (sí/no) y, sobre las anomalí
 
 Hechos que limitan todo lo anterior (no son parámetros, pero deben quedar a la vista):
 
-1. **Los modelos de eco no tienen ninguna inferencia real** y `01:V18` (FEVE) no tiene ligas: hoy la FEVE no influye en ningún semáforo.
+1. **Los modelos de eco no tienen ninguna inferencia real** y la FEVI (`01:V18`) entra solo como N4 de peso 1 en P01 y P02: sola no cambia ningún color (suma T = 1) y no puede dar ROJO.
 2. La bandera de ritmo es una reimplementación **incompleta** de Dash 2009 (sin la rama de RR omitidos) y sus cifras no son una validación independiente. PR y QTc no están validados.
 3. **Ningún puntaje publicado está validado en microgravedad**, y ningún wearable tampoco.
-4. No existen pesos por síntoma derivados en vuelo; 308 de las 348 ligas son de nivel C.
+4. No existen pesos por síntoma derivados en vuelo; 310 de las 350 ligas son de nivel C.
 5. El modelo de Conkin no se puede calcular: faltan sus variables.
 6. NEWS2, qSOFA y Centor quedan «incompletos» con la lista actual de variables.
 7. Los parámetros de R1–R5 siguen siendo de demostración.

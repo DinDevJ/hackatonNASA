@@ -32,6 +32,8 @@ def _p(valor, supuesto, descripcion, provisional=True, fuente=None):
 PARAMETROS: dict[str, dict] = {
     # --- rampa y estado de variable (c.5, d.1) ---
     "rampa_inicio": _p(1.5, "S1", "Inicio de la rampa de activación y corte de «estable» y de «desviada» (u en DE); generaliza el -1.5 DE de Cognition"),
+    # --- eco (a.5.4) ---
+    "tolerancia_feve_modelos": _p(10.0, "S16", "Dispersión máxima D = máx − mín (puntos porcentuales) entre modelos de eco para la FEVI (01:V18); por encima la métrica queda «discordante». Mismo valor que R2 en fusion/reglas.py (valor de demostración)", fuente="[REG] R2, valor de demostración"),
     "u1_una_direccion": _p(2.33, "S2", "u1 para variables de una dirección (p < 0.01 unilateral, supone normalidad)"),
     "u1_dos_direcciones": _p(2.58, "S2", "u1 para variables de dos direcciones (p < 0.01 bilateral, supone normalidad)"),
     # --- semáforo (f); los siete EDITABLES estan en UMBRALES_EDITABLES ---

@@ -42,6 +42,8 @@ CRITERIOS = {
     "04:A3": {"nombre": "SpO2 <=91 % (NEWS2: 3 puntos)", "fuente": "RCP NEWS2", "ambito": "[terrestre]", "regla": "le", "umbral": 91.0, "unidad": "%"},
     "04:A2": {"nombre": "FR fuera de 12-20 rpm (NEWS2)", "fuente": "RCP NEWS2", "ambito": "[terrestre]", "regla": "fuera",
               "umbral_bajo": 12.0, "umbral_alto": 20.0, "unidad": "rpm"},
+    "01:V18": {"nombre": "FEVI <52 % (M) / <54 % (F)", "fuente": "Lang 2015 (ASE/EACVI)", "ambito": "[terrestre]",
+               "regla": "fevi_baja", "umbral_m": 52.0, "umbral_f": 54.0, "unidad": "%"},
 }
 
 # ---------------------------------------------------------------------------------------------------

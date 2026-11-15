@@ -2,7 +2,7 @@
 
 PROVISIONAL: todos los umbrales (T_amarillo, T_inf_rojo, dL_amarillo, dL_inf_rojo, persistencia, histeresis, cobertura
 minima) son supuestos S2/S19 y se leen de `params` (el usuario puede haberlos modificado). La lista de centinelas
-de R-3 no tiene fuente. Nada es un diagnostico. Las reglas R1-R5 de demostracion y la FEVE (01:V18) NO intervienen.
+de R-3 no tiene fuente. Nada es un diagnostico. Las reglas R1-R5 de demostracion NO intervienen; la FEVI de eco (01:V18) entra solo como una liga N4 de peso 1 en P01 y P02.
 
 Colores y orden fijo (f.3): ROJO < AMARILLO < GRIS < VERDE (primero lo que mas pide revision; GRIS antes que VERDE porque
 «no hay con que opinar» no es lo mismo que «sin desviaciones»), luego T_inf descendente, luego l_p (solo si el prior

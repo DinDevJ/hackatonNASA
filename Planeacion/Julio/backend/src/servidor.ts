@@ -482,8 +482,9 @@ export function manejador(db: BD, opciones: OpcionesServidor = {}) {
     const c = await cuerpoOpcional(req) as Record<string, unknown> | null;
     if (!c || typeof c !== 'object' || Array.isArray(c)) throw new ErrorHttp(400, 'el cuerpo debe ser un objeto JSON');
     if (c.simulado !== undefined && typeof c.simulado !== 'boolean') throw new ErrorHttp(400, 'simulado debe ser booleano');
+    if (c.origen_simulador !== undefined && typeof c.origen_simulador !== 'boolean') throw new ErrorHttp(400, 'origen_simulador debe ser booleano');
     try {
-      const r = await correrMotor(rutaBd(db), c.simulado === true);
+      const r = await correrMotor(rutaBd(db), c.simulado === true, { origenSimulador: c.origen_simulador === true });
       anotar(`Motor de padecimientos: ${r.filas_escritas} filas (canal ${r.canal})`);
       return { ok: true, ...r };
     } catch (e) { if (e instanceof ErrorSemaforo) throw new ErrorHttp(e.estado, e.message); throw e; }

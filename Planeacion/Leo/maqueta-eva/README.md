@@ -220,8 +220,42 @@ Abiertas desde `http://localhost:8787/app/…`, las tres pantallas usan la centr
 | Central | «Enviar a …» va por `POST /api/abordo/avisos` y «Consultar a Tierra» por `POST /api/central/consultas`. Las emergencias del teléfono salen en el historial con aviso flotante (evento `emergencia`) |
 | Base en Tierra | La bandeja muestra lo que de verdad bajó por el enlace (`GET /api/tierra/bandeja` y evento `tierra`): alertas de LUNNA, consultas de la CMO, emergencias, el último resumen y las tramas crudas. Sus mensajes van por `POST /api/tierra/avisos` y marcan el **acuse** real cuando vuelve |
 
-### Valor normal del motor (informativo)
+### Alertas con la referencia del motor
 
-- Las alertas de la app usan sus propios umbrales de `motor.js`: «tu normal» (mediana ± MAD de 14 días, z robusto, |z| ≥ 3; FATIGA-03 desde z ≥ 2) y los umbrales absolutos `[A]/[T]` de `IND[k].abs`. No cambian.
-- `referencias.js` añade «Normal: …» (rango y fuente) tomado de `GET /api/padecimientos/referencias`; es solo informativo, no cambia colores ni alertas. También se ve en la pestaña Semáforo de la central (detalle y pesos).
-- Sin backend no se muestra nada. Con `?motor=SIM-T01` la app muestra la referencia de ese tripulante, marcada SIMULADO.
+`referencias.js` sigue mostrando «Normal: …» (rango y fuente de `GET /api/padecimientos/referencias?tripulante=ID`, también en la pestaña Semáforo de la central). Además, `alertas-motor.js` usa esa misma referencia para decidir la alerta de una sola variable. Ninguna de estas alertas es un diagnóstico: avisan y piden medir de nuevo o comentarlo con la CMO.
+
+**Regla** (indicador `k`, persona `p`, día `d`, valor vigente `v`):
+
+1. **Referencia utilizable `R`**: la del motor para `IND[k].varId`, solo si
+   - `tipo` es `poblacional` o `base personal prevuelo`;
+   - `rango` = `[lo, hi]` con dos números finitos y `lo ≤ hi`;
+   - la unidad del motor equivale a `IND[k].unidad` (minúsculas y sin espacios; `lpm`≡`bpm`; `rpm`≡`brpm`; `°c`≡`c`≡`degc`; el resto, igualdad exacta; unidad vacía o nula no es utilizable);
+   - `k` no está en `NO_COMPARABLE` (hoy solo `temperatura`).
+2. **Con `R`**, la señal de una sola variable contra «tu normal» se sustituye por `R`: `porRef = 1` (atención) si `v` está fuera de `[lo, hi]` en la dirección de riesgo del indicador (`dir` «alto»: `v > hi`; «bajo»: `v < lo`; sin `dir`: `v < lo` o `v > hi`); `porRef = 0` si está dentro o fuera hacia el lado sin riesgo. Nunca da 2. **Sin `R`**: lógica de siempre (|z| ≥ 3 contra tu normal de 14 días → 1).
+3. `porAbs = IND[k].abs.nivel(v)` ([A]/[T]) se evalúa **siempre**, haya `R` o no, esté `v` dentro o fuera del rango.
+4. `nivel = max(porRef, porAbs)`. Motivo: nivel 0 → ninguno; si `porAbs ≥ porRef` → el tipo del umbral (`A`/`T`); si no → `motor` (con `R`) o `tu_normal` (sin `R`).
+5. FATIGA-03 y RADIACION no cambian (FATIGA-03 sigue con z ≥ 2 contra tu normal).
+
+**Por qué así**
+
+- Seguridad: un umbral clínico absoluto [A]/[T] marca riesgo sea cual sea la distribución; P5–P95 dice dónde está el 90 % de la gente sana, no dónde empieza el daño. Por eso la referencia del motor solo puede subir a atención y nunca baja ni silencia un [A]/[T]; tampoco da rojo.
+- Dirección de riesgo: igual que tu normal, más sueño o una HRV más alta no son aviso.
+- FATIGA-03 no cambia: es una regla de patrón pensada para cambios dentro de lo normal; silenciarla antes de una caminata espacial no sería conservador.
+- Temperatura excluida: la app mide temperatura de piel en la muñeca; la del motor para 04:A1 es central/oral (Obermeyer 2017, y el simulador del backend la manda a ~36,6 °C). No son comparables.
+- Límite consciente: al sustituir tu normal, un salto respecto a tus 14 días que quede dentro del rango del motor no avisa por esa vía.
+- z pob, z personal y CUSUM del motor se refieren a la última evaluación del motor sobre los datos del backend; no se usan para decidir sobre el valor del día de la app (siguen visibles en la central).
+
+**Qué texto sale** (campo `referencia` de cada hallazgo; se ve como «Referencia: …» en «Lo que Lunna ve» y en Alertas):
+
+- Con la referencia del motor: `fuera de lo normal: 57–95 lpm, NHANES (Ostchega 2011)` (poblacional) o `respecto a tu base prevuelo: 100–150 mmHg`; con ` · SIMULADO` si el dato lo es, y ` · ID` en modo demo.
+- Umbral [A]/[T]: `umbral [T]: …` con su texto; si además el motor marca fuera, su texto se añade a la evidencia.
+- Sin referencia: `respecto a tu base (14 días)`. FATIGA-03: `respecto a tu base (14 días)`. RADIACION: `[A] NASA-STD-3001`.
+
+**Funcionamiento**
+
+- Sin backend o sin referencia, `motor.js` sigue como siempre (fallback silencioso): `alertas-motor.js` no hace nada y `motor.js` no depende de él.
+- Con `?motor=SIM-T01` se usa ese ID para las cuatro personas (modo demo, marcado SIMULADO). Sin él: MS-1→`tomas`, MS-2→`ana`, MS-3→`mei`, MS-4→`luis`.
+- Se recarga cada 60 s; si cambia algo utilizable, repinta solo hoy, alertas, reportes y signos (no otras pantallas, para no borrar un formulario a medias).
+- Ana, Luis, Mei y Tomás: con el backend, `npm run sim` y luego `npm run evaluar -- --origen-simulador` (en `Planeacion/Julio/backend`) el motor guarda su evaluación con canal SIMULADO; la referencia que sale con esos datos es la poblacional de pulso en reposo (01:V3, NHANES P5–P95 por sexo y edad del perfil); temperatura (Obermeyer) no se usa en la app por lo dicho arriba.
+- Archivos: `alertas-motor.js` (módulo, UMD sin dependencias), `alertas-motor.test.mjs` (pruebas), enganche `configurarReferencia` en `motor.js`.
+- Pruebas: `node --test Planeacion/Leo/maqueta-eva/motor.test.mjs Planeacion/Leo/maqueta-eva/alertas-motor.test.mjs`.

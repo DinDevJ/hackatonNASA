@@ -21,7 +21,7 @@ El script instala lo que falte: git, nginx y Node.js 22.
 ## Instalar (un comando)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/DinDevJ/hackatonNASA/main/despliegue/instalar.sh \
+curl -fsSL https://raw.githubusercontent.com/DinDevJ/lunna/main/despliegue/instalar.sh \
   | sudo DOMINIO=lunna.ejemplo.com CORREO=tu@correo.com USUARIO=monarcas CLAVE='una-clave' bash
 ```
 

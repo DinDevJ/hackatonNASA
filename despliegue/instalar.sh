@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Instala Lunna en un VPS con Ubuntu 22.04/24.04 o Debian 12 (como root). Se puede volver a correr.
 #
-#   curl -fsSL https://raw.githubusercontent.com/DinDevJ/hackatonNASA/main/despliegue/instalar.sh \
+#   curl -fsSL https://raw.githubusercontent.com/DinDevJ/lunna/main/despliegue/instalar.sh \
 #     | sudo DOMINIO=lunna.ejemplo.com CORREO=tu@correo.com USUARIO=monarcas CLAVE='…' bash
 #
 # o, con el repo ya clonado:  sudo DOMINIO=… bash despliegue/instalar.sh
@@ -14,7 +14,7 @@
 #   REPO, RAMA, DIR   origen y destino del código (por defecto el repo del equipo, main, /opt/lunna).
 set -euo pipefail
 
-REPO="${REPO:-https://github.com/DinDevJ/hackatonNASA.git}"
+REPO="${REPO:-https://github.com/DinDevJ/lunna.git}"
 RAMA="${RAMA:-main}"
 DIR="${DIR:-/opt/lunna}"
 DOMINIO="${DOMINIO:-}"

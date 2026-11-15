@@ -314,6 +314,72 @@
     const px = z.offX + (bb.x + bb.width / 2 - C.VISTA[0]) * z.esc, py = z.offY + (bb.y + bb.height / 2 - C.VISTA[1]) * z.esc;
     return { x: z.L.left + z.k * px + z.tx - t.left, y: z.L.top + z.k * py + z.ty - t.top };
   }
+  /** Línea de escaneo que barre la figura de arriba abajo mientras se acerca (solo transform: va a 60 fps). */
+  function barrido(lienzo, n) {
+    if (!lienzo) return;
+    const b = document.createElement("span");
+    b.className = `esc-escaneo es-${n == null ? "nd" : n}`;
+    lienzo.append(b);
+    setTimeout(() => b.remove(), 900);
+  }
+  /** Los números del panel cuentan desde cero hasta su valor (63 lpm, 5,8 h, 113/74…). */
+  function contarValores(hud) {
+    const nodos = $$(".hud-dato .v", hud).map((v) => v.firstChild).filter((t) => t && t.nodeType === 3 && /\d/.test(t.data));
+    const datos = nodos.map((t) => {
+      const partes = t.data.split(/(\d+(?:,\d+)?)/);
+      return { t, partes, nums: partes.map((p) => (/^\d/.test(p) ? { v: parseFloat(p.replace(",", ".")), dec: (p.split(",")[1] || "").length } : null)) };
+    });
+    if (!datos.length) return;
+    const coma = window.Lunna && window.Lunna.idioma && window.Lunna.idioma.actual() === "en" ? "." : ",";
+    const MS = 700, t0 = performance.now();
+    (function paso(ahora) {
+      const k = Math.min(1, (ahora - t0) / MS), e = 1 - Math.pow(1 - k, 3);
+      for (const d of datos) {
+        if (!d.t.isConnected) continue;
+        d.t.data = d.partes.map((p, i) => (d.nums[i] ? (d.nums[i].v * e).toFixed(d.nums[i].dec).replace(".", coma) : p)).join("");
+      }
+      if (k < 1) requestAnimationFrame(paso);
+    })(t0);
+  }
+  /** Deslizar el panel hacia abajo (desde arriba del todo) lo cierra, como una hoja de iPhone. Sigue al dedo. */
+  function arrastrarParaCerrar(hud, cerrar) {
+    let y0 = null, dy = 0, activo = false;
+    const empezar = (y) => { if (hud.scrollTop > 2 || !hud.classList.contains("abierto")) return; y0 = y; dy = 0; activo = false; };
+    const mover = (y, e) => {
+      if (y0 == null) return;
+      dy = y - y0;
+      if (!activo) {
+        if (dy > 8) { activo = true; hud.classList.add("arrastrando"); }
+        else { if (dy < -4) y0 = null; return; }
+      }
+      if (e && e.cancelable) e.preventDefault();
+      const d = Math.max(0, dy);
+      hud.style.transform = `translateY(${d.toFixed(1)}px) scale(${Math.max(0.88, 1 - d / 1600).toFixed(4)})`;
+      hud.style.borderRadius = `${Math.min(36, d / 4).toFixed(1)}px`;
+    };
+    const soltar = () => {
+      if (y0 == null) return;
+      y0 = null;
+      if (!activo) return;
+      hud.classList.remove("arrastrando");
+      hud._arrastro = true; setTimeout(() => { hud._arrastro = false; }, 60);
+      hud.style.transform = ""; hud.style.borderRadius = "";
+      if (dy > 110) cerrar();   // si no, regresa solo a su lugar con la transición del panel
+    };
+    hud.addEventListener("touchstart", (e) => empezar(e.touches[0].clientY), { passive: true });
+    hud.addEventListener("touchmove", (e) => mover(e.touches[0].clientY, e), { passive: false });
+    hud.addEventListener("touchend", soltar);
+    hud.addEventListener("touchcancel", soltar);
+    // Con mouse (laptop): mismo gesto arrastrando con el botón presionado.
+    hud.addEventListener("pointerdown", (e) => {
+      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      empezar(e.clientY);
+      const mv = (ev) => mover(ev.clientY, ev);
+      const up = () => { document.removeEventListener("pointermove", mv); document.removeEventListener("pointerup", up); soltar(); };
+      document.addEventListener("pointermove", mv);
+      document.addEventListener("pointerup", up);
+    });
+  }
   /** Anillo de luz que late sobre el órgano justo antes de que brote el panel. */
   function pulso(tel, pt, n) {
     const a = document.createElement("span");
@@ -361,7 +427,7 @@
     hud.setAttribute("aria-modal", "true");
     hud.setAttribute("aria-label", nombre);
     hud.innerHTML = `
-      <div class="hud-cab"><span class="hud-ruta">Escaneo · ${P.nombre} · día ${estado.dia}</span><span class="espacio"></span>
+      <div class="hud-cab"><span class="hud-asa" aria-hidden="true"></span><span class="hud-ruta">Escaneo · ${P.nombre} · día ${estado.dia}</span><span class="espacio"></span>
         <button class="hud-x" data-cerrar aria-label="Cerrar y volver al cuerpo">${ic("cerrar")}</button></div>
       <div class="hud-visor">${C.svg({ sexo: P.sexo, regiones: ev.regiones, activa: r, vista: zoom, marcas: false })}<span class="anillo-hud"></span><span class="esquinas"></span></div>
       <h2>${nombre}</h2>
@@ -389,6 +455,7 @@
       montar();
       requestAnimationFrame(() => requestAnimationFrame(() => hud.classList.add("abierto")));
       $(".hud-x", hud).focus({ preventScroll: true });
+      if (!reducirMov() && !opc.directo) setTimeout(() => contarValores(hud), 260);
     };
     if (opc.directo) {
       // Al volver de una ficha: el órgano ya está acercado y su panel abierto, sin animación de entrada.
@@ -402,7 +469,9 @@
       const o = $(`[data-region="${r}"]`, svgEl);
       const pt0 = puntoFinal(svgEl, o, C.VISTA, tel);
       montar();
+      if (navigator.vibrate) try { navigator.vibrate(12); } catch (e) { /* sin vibración: no pasa nada */ }
       pulso(tel, pt0, ev.regiones[r]);
+      barrido(svgEl.parentElement, ev.regiones[r]);
       // Un cuadro después del toque (ya con el panel dibujado y los demás órganos atenuados) empieza el acercamiento.
       requestAnimationFrame(() => requestAnimationFrame(() => acercar(svgEl, zoom, ZOOM_MS)));
       setTimeout(() => pulso(tel, puntoFinal(svgEl, o, zoom, tel), ev.regiones[r]), ZOOM_MS * 0.35);
@@ -433,7 +502,9 @@
     };
     const tecla = (e) => { if (e.key === "Escape") cerrar(); };
     document.addEventListener("keydown", tecla);
+    arrastrarParaCerrar(hud, () => cerrar());
     hud.addEventListener("click", (e) => {
+      if (hud._arrastro) return; // fue un arrastre para cerrar, no un toque
       if (e.target.closest("[data-cerrar]")) return cerrar();
       const f = e.target.closest("[data-ficha]");
       // Se apila "hoy:<órgano>": al volver de la ficha se reabre este órgano, no el cuerpo entero.

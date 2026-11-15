@@ -1,5 +1,6 @@
 """Puente con eva.db: BD temporal creada por el migrar de Node. Datos de PRUEBA (no son fisiología ni de nadie)."""
 import shutil
+import json
 import sqlite3
 import subprocess
 from pathlib import Path
@@ -78,7 +79,11 @@ def test_simulado_se_guarda_como_simulado(bd):
     assert r["filas_escritas"] > 0
     con = sqlite3.connect(bd)
     assert {c for (c,) in con.execute("SELECT DISTINCT canal FROM evaluaciones")} == {"SIMULADO"}
+    dets = [json.loads(d) for (d,) in con.execute("SELECT detalle FROM evaluaciones")]
     con.close()
+    assert all(isinstance(d["ligas"], list) for d in dets)
+    assert all(set(lg) == set(evadb.CAMPOS_LIGA) for d in dets for lg in d["ligas"])
+    assert any(isinstance(lg["aporte"], (int, float)) and lg["aporte"] > 0 for d in dets for lg in d["ligas"])
 
 
 def test_pesos_usuario_en_bd_y_fallback(bd, tmp_path, monkeypatch):

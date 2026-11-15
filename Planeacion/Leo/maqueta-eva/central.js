@@ -19,6 +19,7 @@
     subtitulo: "Computadora central · panel médico",
     pestanas: [
       { id: "hoy", texto: "Hoy", icono: "casa", href: "#hoy" },
+      { id: "semaforo", texto: "Semáforo", icono: "lista", href: "#semaforo" },
       { id: "estadisticas", texto: "Estadísticas", icono: "grafica", href: "#estadisticas" },
       { id: "tierra", texto: "Enlace con Tierra", icono: "antena", href: "#tierra" },
     ],
@@ -453,7 +454,7 @@
   }
 
   // ================================================================ arranque
-  const ir = K.enrutar({ hoy: vistaHoy, tripulante: vistaTripulante, estadisticas: vistaEstadisticas, mision: vistaMision, tierra: vistaTierra }, "hoy");
+  const ir = K.enrutar({ hoy: vistaHoy, tripulante: vistaTripulante, estadisticas: vistaEstadisticas, mision: vistaMision, tierra: vistaTierra, semaforo: (p, a) => window.SEMAFORO.vista(p, a) }, "hoy");
 
   // Llega algo de Tierra: aviso flotante y se actualiza lo que se ve, sin borrar lo que se está escribiendo.
   K.alLlegar((m) => {

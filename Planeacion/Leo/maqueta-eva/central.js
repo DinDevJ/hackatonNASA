@@ -77,7 +77,7 @@
     for (const n of K.notasTierra()) t.push(`<a class="aviso-card ac-info" href="#tierra">${ic("tierra", "ac-ic")}<span><b>Nota de Tierra sobre ${esc(nombreDe(n.pid))}</b><small>Sobre datos del ${esc(n.sobre)} · ${esc(n.llego)}</small></span>${ic("chevron", "ac-flecha")}</a>`);
     for (const m of K.llegados("subida").slice(-3).reverse()) t.push(`<a class="aviso-card ac-info" href="#tierra">${ic("tierra", "ac-ic")}<span><b>${esc(K.NIVEL_MSJ[m.nivel] ? K.NIVEL_MSJ[m.nivel].txt : "Aviso")} de Tierra · ${esc(nombreDe(m.pid))}</b><small>${esc(m.texto)}</small></span>${ic("chevron", "ac-flecha")}</a>`);
     return `<section class="tarjeta" aria-labelledby="t-avisos"><h2 id="t-avisos">${pastilla("alerta", "#FFC23D", "#E08A00")} Avisos de hoy</h2>
-      ${t.length ? t.join("") : `<div class="cn-vacio">Sin avisos: todo en su normal.</div>`}</section>`;
+      ${t.length ? t.join("") : K.positivo("check", "Todo en orden", "Ningún aviso hoy: toda la tripulación está en su normal.")}</section>`;
   }
 
   function tarjetaAmbiente() {
@@ -88,7 +88,7 @@
     const cab = M.cabina(K.dia);
     return `<section class="tarjeta" aria-labelledby="t-clima"><h2 id="t-clima">${pastilla("sol", "#FF8A65", "#E5484D")} Clima espacial</h2>
       ${cab.solar ? `<div class="aviso-card ac-rojo">${sem(2, false)}<span><b>Evento de partículas solares activo</b><small>Tasa ${cab.tasa.toLocaleString("es-ES")} µSv/h · refugio blindado · aviso de DONKI con ${M.DONKI.latenciaMin} min de latencia</small></span></div>`
-        : `<div class="cn-fila">${sem(0, false)}<span><b>Sin eventos solares hoy</b><small>Tasa de dosis ${cab.tasa} µSv/h (diseño &lt; 54) · dosis de la misión ${cab.dosisMision} mSv</small></span><span></span></div>`}
+        : K.positivo("sol", "Clima espacial en calma", `Sin riesgo por radiación: ${cab.tasa} µSv/h, dentro del diseño (&lt; 54) · dosis de la misión ${cab.dosisMision} mSv`)}
       <p class="cn-nota">El evento del día 115 está modelado sobre el evento real <b>${M.DONKI.id}</b> de NASA DONKI (${esc(M.DONKI.instrumento)}). <a class="enlace" href="${M.DONKI.url}" target="_blank" rel="noopener">Ver en DONKI</a></p></section>`;
   }
   function tarjetaEnlaceMini() {
@@ -125,7 +125,7 @@
   function listaHistorial(pid) {
     const es = entradasHistorial(pid);
     return es.length ? `<ol class="cn-hist">${es.map((e) => `<li class="es-${e.n}${e.id && nuevos.has(e.id) ? " nuevo" : ""}"><div class="meta">${e.chip}<span>${e.meta}</span></div><p>${e.texto}</p>${e.det ? `<p class="det">${e.det}</p>` : ""}</li>`).join("")}</ol>`
-      : `<div class="cn-vacio">Sin advertencias ni emergencias registradas${pid ? ` para ${esc(nombreDe(pid))}` : ""}.</div>`;
+      : K.positivo("escudo", "Todo en calma", `Ninguna advertencia ni emergencia${pid ? ` para ${esc(nombreDe(pid))}` : ""} en esta misión.`);
   }
   const nuevos = new Set();
 
@@ -165,7 +165,7 @@
   function tarjetaIndice(pid, d) {
     const top = K.indices(pid, d);
     const s = sel.ind[pid] || top[0].mid;
-    return `<section class="tarjeta" aria-labelledby="t-ind"><h2 id="t-ind">${pastilla("tendencia", "#A97BFF", "#6B3FD8")} Índice por padecimiento <span class="cn-empuja tenue">pesos fisiológicos de Leo · ilustrativo</span></h2>
+    return `<section class="tarjeta" aria-labelledby="t-ind"><h2 id="t-ind">${pastilla("tendencia", "#A97BFF", "#6B3FD8")} Índice por padecimiento <span class="cn-empuja tenue">pesos fisiológicos · ilustrativo</span></h2>
       <div id="ind-barras">${K.barrasIndice(pid, d, { sel: s })}</div>
       <div id="ind-detalle" style="margin-top:12px">${K.detalleIndice(pid, s, d)}</div>
       <p class="cn-nota">Ordena qué mirar primero; no es una probabilidad ni un diagnóstico. ▲ = una variable de peso 3 llegó a 3 puntos (regla tipo NEWS).</p></section>`;
@@ -313,7 +313,7 @@
           <div class="cn-leyenda">${sem(0, "En su normal")}${sem(1, "Atención")}${sem(2, "Actúa ahora")}<span>· Luis sigue en ■ por su presión (130–139, umbral AHA [T])</span></div></section>
         <section class="tarjeta" aria-labelledby="t-veces"><h2 id="t-veces">${pastilla("grafica", "#33C3B3", "#0E8F86")} Lo que más pidió atención</h2>
           ${veces.length ? `<div class="cn-indices">${veces.map(([n, max, v]) => `<div class="cn-ind" style="cursor:default"><span>${forma(max, 11)}<em>${esc(n)}</em></span><span class="cn-pista"><i style="--v:${(v / vmax).toFixed(3)}"></i></span><span class="num">${v}</span></div>`).join("")}</div>
-            <p class="cn-nota" style="margin-top:8px">Tripulante-días con el indicador en atención o más, del día ${K.DIA_MIN} al ${K.dia}.</p>` : `<div class="cn-vacio">Sin indicadores fuera de su normal.</div>`}</section>
+            <p class="cn-nota" style="margin-top:8px">Tripulante-días con el indicador en atención o más, del día ${K.DIA_MIN} al ${K.dia}.</p>` : K.positivo("check", "Todo en su normal", "Ningún indicador pidió atención en estos días.")}</section>
       </div>
       <section class="tarjeta" style="margin-top:16px" aria-labelledby="t-comp"><h2 id="t-comp">${pastilla("grafica", "#FFC23D", "#E08A00")} Avisos por misión</h2>
         <div class="cn-leyenda" style="margin:-4px 0 10px"><span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--ambar);vertical-align:-1px"></i> Atención ■</span><span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--rojo);vertical-align:-1px"></i> Actúa ahora ▲</span><span>${forma(2, 11)} = misión con al menos un evento crítico</span></div>
@@ -338,7 +338,7 @@
         <div><h1>${esc(m.nombre)}</h1><p class="sub">Resumen clínico · ${esc(m.destino)} · datos simulados</p></div><span class="cn-chip cn-empuja ${m.enCurso ? "" : "c-nd"}">${m.enCurso ? "En curso" : "Finalizada"}</span></div>
       <section class="tarjeta"><p>${esc(m.resumen)}</p><div class="cn-cifras" style="margin-top:12px"><div><b>${m.dias}</b><span>${m.enCurso ? "días hasta hoy" : "días de duración"}</span></div><div><b>${m.am}</b><span>avisos en atención ■</span></div><div><b>${m.ro}</b><span>avisos actúa ahora ▲</span></div></div></section>
       <div class="cn-rejilla cn-2b" style="margin-top:16px">
-        <section class="tarjeta"><h2>${pastilla("alerta", "#FF6B6B", "#D92D2D")} Eventos</h2>${m.eventos.length ? `<ol class="cn-hist">${m.eventos.map(([d, t, x]) => `<li class="es-${/atención/.test(t) ? 1 : 2}"><div class="meta">${chip(/atención/.test(t) ? 1 : 2, `Día ${d}`)}</div><p><b>${esc(t)}</b></p><p class="det">${esc(x)}</p></li>`).join("")}</ol>` : `<div class="cn-vacio">Sin eventos críticos registrados.</div>`}</section>
+        <section class="tarjeta"><h2>${pastilla("alerta", "#FF6B6B", "#D92D2D")} Eventos</h2>${m.eventos.length ? `<ol class="cn-hist">${m.eventos.map(([d, t, x]) => `<li class="es-${/atención/.test(t) ? 1 : 2}"><div class="meta">${chip(/atención/.test(t) ? 1 : 2, `Día ${d}`)}</div><p><b>${esc(t)}</b></p><p class="det">${esc(x)}</p></li>`).join("")}</ol>` : K.positivo("escudo", "Misión sin eventos críticos", "Nada que lamentar: la tripulación terminó sin episodios graves.")}</section>
         <section class="tarjeta"><h2>${pastilla("equipo", "#5B8DFF", "#1F4FD8")} Tripulantes</h2><div class="cn-chips">${m.tripulantes.map((t) => `<span class="cn-chip c-nd">${esc(t)}</span>`).join("")}</div></section>
         <section class="tarjeta"><h2>${pastilla("grafica", "#33C3B3", "#0E8F86")} Variables que dispararon avisos</h2><div class="cn-tabla-caja"><table class="cn-tabla"><thead><tr><th>Variable</th><th>Nivel máximo</th><th>Veces</th></tr></thead>
           <tbody>${m.variables.map(([n, max, v]) => `<tr><th scope="row">${esc(n)}</th><td>${sem(max)}</td><td class="num">${v}</td></tr>`).join("")}</tbody></table></div></section>

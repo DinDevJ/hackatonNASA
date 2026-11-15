@@ -1,4 +1,4 @@
-/* Cuerpo LUNA: figura humana de frente, de mujer o de hombre, en estilo de holograma médico.
+/* Cuerpo LUNNA: figura humana de frente, de mujer o de hombre, en estilo de holograma médico.
  *
  * El contorno sale de puntos anatómicos (media figura, reflejada) unidos con curvas suaves
  * (Catmull-Rom). Lleva esqueleto tenue (clavículas, costillas, esternón, pelvis), arterias
@@ -181,7 +181,7 @@
     const silueta = [simetrica(F.torso), curva(lado(F.brazo, 1)), curva(lado(F.brazo, -1)), simetrica(F.cabeza), curva(F.cuello.map(([x, y]) => [CX + x, y]))];
     const zona = (r) => `class="org org-${r} est-${clase(regiones[r])}${activa === r ? " activa" : ""}" data-region="${r}" role="button" tabindex="0" aria-label="${NOMBRE[r]}"`;
     const pelo = simetrica(F.pelo);
-    return `<svg class="cuerpo-svg${activa ? " con-foco" : ""}" viewBox="${vista.join(" ")}" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Cuerpo LUNA, figura de ${sexo === "M" ? "mujer" : "hombre"}">
+    return `<svg class="cuerpo-svg${activa ? " con-foco" : ""}" viewBox="${vista.join(" ")}" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Cuerpo LUNNA, figura de ${sexo === "M" ? "mujer" : "hombre"}">
       <defs>
         <linearGradient id="${id}-piel" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stop-color="#2A4FA8" stop-opacity=".75"/><stop offset=".25" stop-color="#17306F" stop-opacity=".55"/>

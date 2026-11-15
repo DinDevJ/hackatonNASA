@@ -1,9 +1,9 @@
-/* Motor de la maqueta: tripulación simulada, "tu normal", semáforo, FATIGA-03 y lo que Luna dice.
+/* Motor de la maqueta: tripulación simulada, "tu normal", semáforo, FATIGA-03 y lo que Lunna dice.
  *
  * Es la lógica del módulo 1 de app/ (React) traída al formato de la maqueta: JavaScript sin
  * dependencias. Todo es SIMULADO. Funciona en el navegador (window.MOTOR) y en Node (pruebas).
  *
- * Reglas (ERS-LUNA):
+ * Reglas (ERS-LUNNA):
  *  - Tu normal = 14 días anteriores, mínimo 7 con dato. z robusto = 0,6745 · (x − mediana) / MAD.
  *  - MAD nunca menor que la variación mínima creíble del indicador (si no, falsas alarmas).
  *  - Una señal sola contra tu normal pide atención con |z| ≥ 3. FATIGA-03 junta tres señales con
@@ -56,7 +56,7 @@
       nombre: "Pulso en reposo", unidad: "lpm", dec: 0, region: "corazon", proc: "calculado", dir: "alto", madMin: 1.5, seccion: "corazon", icono: "corazon", varId: "01:V3",
       abs: { tipo: "T", nivel: (v) => (v > 100 ? 1 : 0), texto: "> 100 lpm en reposo (taquicardia, clínico terrestre)" },
       porQue: "Si el pulso en reposo sube varios días seguidos, el cuerpo está cargando con algo: poco sueño, estrés, deshidratación o una infección que empieza.",
-      como: "Lo calcula Luna: la mediana de los 30 minutos con el pulso más bajo durante el sueño. 0,8 % de error frente al ECG.",
+      como: "Lo calcula Lunna: la mediana de los 30 minutos con el pulso más bajo durante el sueño. 0,8 % de error frente al ECG.",
       espacio: "En reposo no cambia de forma clara en vuelo (n = 8). Por eso se compara contigo misma o mismo.",
     },
     hrv: {
@@ -125,7 +125,7 @@
   const RUIDO = { sueno: 0.45, animo: 5, fc: 1.6, hrv: 5, sis: 4, dia: 2, spo2: 0.6, fr: 1, glucosa: 5, temperatura: 0.12 };
 
   const PERSONAS = [
-    { id: "MS-2", nombre: "Ana", sexo: "M", rol: "Especialista de misión", pareja: "Luis", masaKg: 62, color: "#B541FA" },
+    { id: "MS-2", nombre: "Ana", sexo: "M", rol: "Especialista de misión", pareja: "Luis", masaKg: 62, color: "#E0457B" },
     { id: "MS-4", nombre: "Luis", sexo: "H", rol: "Ingeniero de vuelo", pareja: "Ana", masaKg: 84, color: "#FF8A3D" },
     { id: "MS-3", nombre: "Mei", sexo: "M", rol: "Oficial médica (CMO)", pareja: "Tomás", masaKg: 58, color: "#2BA36B" },
     { id: "MS-1", nombre: "Tomás", sexo: "H", rol: "Comandante", pareja: "Mei", masaKg: 78, color: "#4FD2E9" },
@@ -202,9 +202,11 @@
   });
 
   // ------------------------------------------------------------------ cabina
+  // ESTADO.solarCerrado: la app lo pone en true cuando la tripulación cierra el evento del día 115 (11:31).
+  const ESTADO = { solarCerrado: false };
   function cabina(dia) {
     const r = rng(1000 + dia);
-    const solar = dia === 115;
+    const solar = dia === 115 && !ESTADO.solarCerrado;
     return {
       co2: redondo(2.1 + (r() - 0.5) * 0.4, 1), // mmHg · [A] ≤ 3 promedio de 1 h
       tasa: solar ? 6000 : Math.round(20 + (r() - 0.5) * 6), // µSv/h · [A] diseño < 54
@@ -289,7 +291,7 @@
     return { pid, dia, ind, nivelDe, alertas, fatiga: f, cabina: cab, regiones, general: todos.length ? Math.max(...todos) : 0 };
   }
 
-  // ------------------------------------------------------------------ lo que Luna dice
+  // ------------------------------------------------------------------ lo que Lunna dice
   const fmt = (v, dec) => (dec ? v.toFixed(dec) : String(Math.round(v))).replace(".", ",");
   const horas = (h) => { const hh = Math.floor(h); const mm = Math.round((h - hh) * 60); return mm ? `${hh} h ${String(mm).padStart(2, "0")}` : `${hh} h`; };
   const texto = (k, v) => (k === "sueno" ? horas(v) : k === "lapsos" ? `${fmt(v, 0)} lapso${Math.round(v) === 1 ? "" : "s"}` : `${fmt(v, IND[k].dec)} ${IND[k].unidad}`);
@@ -379,7 +381,7 @@
     return { resumen, hallazgos, bien, cara, nivel: ev.general };
   }
 
-  const API = { PRIMER_DIA, ULTIMO_DIA, DIAS, IND, REGIONES, PERSONAS, SERIES, DONKI, idx, tuNormal, zDe, mediana, cabina, estadoIndicador, fatiga, evaluar, lunaDice, horas, texto };
+  const API = { ESTADO, PRIMER_DIA, ULTIMO_DIA, DIAS, IND, REGIONES, PERSONAS, SERIES, DONKI, idx, tuNormal, zDe, mediana, cabina, estadoIndicador, fatiga, evaluar, lunaDice, horas, texto };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else raiz.MOTOR = API;
 })(typeof window !== "undefined" ? window : globalThis);

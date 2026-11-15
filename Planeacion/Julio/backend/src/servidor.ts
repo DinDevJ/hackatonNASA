@@ -84,7 +84,7 @@ function estadoTexto(db: BD): string {
   const e = leerEnlace(db);
   const seg = Math.floor((Date.now() - ARRANQUE) / 1000);
   return [
-    `EVA · computadora central · backend v${VERSION_BACKEND}`,
+    `Lunna · computadora central · backend v${VERSION_BACKEND}`,
     `CORRIENDO desde hace ${Math.floor(seg / 60)} min ${seg % 60} s`,
     '',
     `entorno actual       ${entornoEn(db, ahora())}`,
@@ -480,7 +480,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     throw e;
   });
   srv.listen(PUERTO, () => {
-    console.log(`EVA · backend v${VERSION_BACKEND}`);
+    console.log(`Lunna · backend v${VERSION_BACKEND}`);
     console.log(`  estado:           http://localhost:${PUERTO}   (se refresca solo)`);
     console.log(`  eventos en vivo:  http://localhost:${PUERTO}/api/stream`);
   });

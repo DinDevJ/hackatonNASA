@@ -477,7 +477,7 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
           ${ver.map(([x, a]) => { const d = M.dosisPersonal(x.id, E.dia); return `<div class="dosis-fila"><span>${x.id === yo.id ? "Tú" : x.nombre}</span>${a === "◐" ? `<b>${d.evento < 250 ? "bajo el límite" : "sobre el límite"}</b>` : `<div class="barra"><i style="width:${Math.max(1, (d.evento / 250) * 100)}%"></i></div><b>${fmt(d.evento)}/250</b>`}</div>`; }).join("")}
           <p class="tenue-12">${chipSim("Dosis simulada")} Depende de cuánto tardó cada quien en llegar al refugio blindado. Límite < 250 mSv por evento [A]; ~95 % de los eventos solares no se acercan.</p></div>` : ""}
         <div class="tarjeta"><h3>${ic("planeta")} Eventos reales de 2024 <span class="espacio"></span><span class="ref ref-A">NASA DONKI</span></h3>
-          <p class="tenue-12">119 eventos SEP en 2024; 71 con alerta emitida. La columna es cuánto tardó la alerta.</p>
+          <p class="tenue-12">119 eventos SEP en 2024; 71 con alerta emitida, con una mediana de 12 min de retraso. La columna es cuánto tardó la alerta.</p>
           ${DONKI.map((x) => `<div class="donki-fila">${x.modelo ? ic("estrella", "ic-sm ic-relleno") : ic("rayo", "ic-sm")}<span>${x.t}<small>${x.inst}</small></span><b>${x.lat} min</b></div>`).join("")}</div>`;
     },
     tierra(p) {
@@ -688,7 +688,7 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
       c.innerHTML = lp("Ahora", `<div class="lp-grande ${cab.solar ? "rojo" : ""}"><b>${cab.tasa.toLocaleString("es-ES")}</b> µSv/h ${sem(cab.tasa >= 3000 ? 2 : cab.tasa > 54 ? 1 : 0)}</div>
           <p>${cab.solar ? "Evento de partículas solares: <b>al refugio blindado</b>." : "Sin evento solar. "}Tu dosis de la misión: <b>${fmt(M.dosisPersonal(P().id, E.dia).mision)} de 600 mSv</b> [A] · simulada.</p>
           ${E.dia === 115 ? `<button class="lp-btn" data-ir="solar">Ver el evento solar y el buddy check</button>` : ""}`)
-        + lp("Eventos reales · NASA DONKI 2024", `<p>119 eventos SEP; 71 con alerta emitida. El del día 115 se modela sobre el primero.</p>${DONKI.map((x) => `<div class="lp-fila">${x.modelo ? "★" : "·"} <span>${x.t}<small>${x.inst}</small></span><b>${x.lat} min</b></div>`).join("")}`)
+        + lp("Eventos reales · NASA DONKI 2024", `<p>119 eventos SEP; 71 con alerta emitida (mediana: 12 min de retraso). El del día 115 se modela sobre el primero.</p>${DONKI.map((x) => `<div class="lp-fila">${x.modelo ? "★" : "·"} <span>${x.t}<small>${x.inst}</small></span><b>${x.lat} min</b></div>`).join("")}`)
         + lp("Cabina", AMBIENTE(cab).map((a) => `<div class="lp-fila">${sem(a[4], false)}<span>${a[0]}<small>Límite ${a[3]} [A]</small></span><b>${a[1]} ${a[2]}</b></div>`).join(""));
     },
     procesa(c) {

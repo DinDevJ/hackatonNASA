@@ -86,7 +86,7 @@
     { id: "pas", nombre: "Presión", unidad: "mmHg", base: 116, crisis: 94, icono: "rayo", decimales: 0, extra: (v) => `/${Math.round(v * 0.64)}` },
     { id: "temp", nombre: "Temperatura", unidad: "°C", base: 36.6, crisis: 36.8, icono: "fuego", decimales: 1 },
   ];
-  const TRIPULACION = { paciente: "Ana", cmo: "Mei", comandante: "Tomás", retrasoTierraMin: 12 };
+  const TRIPULACION = { paciente: "Ana", cmo: "Mei", comandante: "Tomás", retrasoTierraMin: 18 }; // ERS: 18 min por trayecto en la demo
 
   window.DATOS = { PERFIL, FC_MAX, sueno, glucosa, alimentos, comidasHoy, ared, unoRMPre, REF, VITALES, TRIPULACION, rng };
 })();

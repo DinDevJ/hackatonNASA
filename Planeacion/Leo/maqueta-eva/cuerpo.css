@@ -1,0 +1,124 @@
+/* Cuerpo LUNA, lo que Luna ve y fichas · integración del módulo 1 en la maqueta de Leo.
+ * Usa las variables de estilos.css (paleta del equipo). */
+:root { --rojo: #C8283A; --rojo-suave: #FDE4E7; --nd: #A9A4B8; }
+
+/* Control de simulación: quién y qué día */
+.simula { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 2px 0 10px; font-size: 12.5px; color: var(--gris); }
+.simula select { font: inherit; font-weight: 700; color: var(--azul); border: 1px solid var(--linea); background: var(--blanco); border-radius: 99px; padding: 6px 10px; min-height: 36px; }
+.paso-dia { display: inline-flex; align-items: center; gap: 2px; background: var(--blanco); border: 1px solid var(--linea); border-radius: 99px; padding: 2px; }
+.paso-dia button { border: 0; background: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; color: var(--azul); font-size: 16px; transition: transform 140ms var(--ease-out); }
+.paso-dia button:active { transform: scale(0.92); }
+.paso-dia button:disabled { opacity: .3; cursor: default; }
+.paso-dia b { min-width: 52px; text-align: center; color: var(--azul); }
+
+/* Semáforo con forma: ● ■ ▲ ○ */
+.sem { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+.sem svg { width: 11px; height: 11px; flex: none; }
+.sem-ok { color: var(--verde); } .sem-ojo { color: var(--ambar); } .sem-alto { color: var(--rojo); } .sem-nd { color: var(--nd); }
+.f-ok { fill: var(--verde); } .f-ojo { fill: var(--ambar); } .f-alto { fill: var(--rojo); } .f-nd { fill: none; stroke: var(--nd); stroke-width: 2; }
+
+/* Cuerpo */
+.cuerpo-tarjeta { display: grid; grid-template-columns: minmax(150px, 1.15fr) minmax(128px, 1fr); gap: 6px 8px; align-items: center; }
+.cuerpo-lienzo { margin: 0 -6px 0 -10px; }
+.cuerpo-tarjeta h3 { grid-column: 1 / -1; margin-bottom: 0; }
+.cuerpo-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.halo { fill: none; stroke-width: 5; stroke-dasharray: 2 9; stroke-linecap: round; cursor: pointer; pointer-events: stroke; opacity: .7; transition: opacity 160ms ease; outline: none; }
+.halo.est-ok { stroke: #9AD9F0; }
+.halo.est-ojo { stroke: var(--ambar); opacity: .9; }
+.halo.est-alto { stroke: var(--rojo); opacity: 1; stroke-dasharray: none; stroke-width: 4; animation: latir 1.6s ease-in-out infinite; }
+.halo.activa, .halo:focus-visible { opacity: 1; stroke-width: 7; }
+.sombra-suelo { fill: rgba(25, 37, 132, .1); }
+.silueta-borde path { fill: none; stroke: #B7A8E6; stroke-width: 5; stroke-linejoin: round; }
+.silueta-relleno path { fill: url(#cu-piel); stroke: none; }
+.silueta-luz path { fill: url(#cu-luz); stroke: none; opacity: .55; }
+.anatomia path { fill: none; stroke: #C9BCEF; stroke-width: 1.4; stroke-linecap: round; }
+.anatomia circle { fill: #C9BCEF; }
+.org { cursor: pointer; outline: none; transition: filter 160ms ease; }
+.org > ellipse, .org > path:not(.surco), .org > rect { stroke-width: 1.6; }
+.org .surco { fill: none; stroke: rgba(25, 37, 132, .25); stroke-width: 1; pointer-events: none; }
+.est-ok > ellipse, .est-ok > path:not(.surco), .est-ok > rect { fill: #CDEEDD; stroke: #6CC39A; }
+.est-ojo > ellipse, .est-ojo > path:not(.surco), .est-ojo > rect { fill: #FFDCA0; stroke: var(--ambar); }
+.est-alto > ellipse, .est-alto > path:not(.surco), .est-alto > rect { fill: #F9C0C8; stroke: var(--rojo); }
+.est-nd > ellipse, .est-nd > path:not(.surco), .est-nd > rect { fill: #ECEAF2; stroke: var(--nd); stroke-dasharray: 3 2; }
+.org-corazon.est-ok > path { fill: #F7B6C8; stroke: #E06D93; }
+.org:hover, .org:focus-visible { filter: drop-shadow(0 0 4px var(--morado)); }
+.org.activa { filter: drop-shadow(0 0 5px var(--morado)) drop-shadow(0 0 2px var(--morado)); }
+.marcas { pointer-events: none; }
+.marca-fondo { fill: #fff; stroke: var(--linea); stroke-width: 1; }
+.marca.activa .marca-fondo { stroke: var(--morado); stroke-width: 2; }
+@keyframes latir { 50% { opacity: .45; } }
+
+/* Lista de regiones: alternativa a la figura, navegable con teclado */
+.regiones { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.regiones button { width: 100%; display: flex; align-items: center; gap: 7px; border: 0; background: none; border-radius: 10px; padding: 5px 6px; cursor: pointer; text-align: left; font: inherit; font-size: 12.5px; color: var(--azul); min-height: 32px; transition: background-color 140ms ease, transform 140ms var(--ease-out); }
+.regiones button:hover, .regiones button.activa { background: var(--morado-suave); }
+.regiones button:active { transform: scale(0.97); }
+.regiones button svg { width: 12px; height: 12px; flex: none; }
+.regiones .reg-nombre { flex: 1; font-weight: 600; }
+.regiones .candado { color: var(--morado-fuerte); }
+
+/* Lo que Luna ve */
+.luna-ve h3 .ic { color: var(--morado-fuerte); }
+.hallazgo { border-radius: 14px; padding: 10px 12px; margin-top: 8px; background: var(--verde-suave); }
+.hallazgo.n1 { background: var(--ambar-suave); }
+.hallazgo.n2 { background: var(--rojo-suave); }
+.hallazgo-cab { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.hallazgo-cab b { font-size: 14px; }
+.hallazgo-cab code { margin-left: auto; font-size: 10.5px; background: rgba(255, 255, 255, .75); padding: 1px 6px; border-radius: 6px; color: var(--gris); }
+.hallazgo p { font-size: 13.5px; line-height: 1.4; margin: 6px 0; }
+.hallazgo ul { margin: 0; padding-left: 16px; font-size: 12.5px; line-height: 1.5; color: #3A3F6E; font-variant-numeric: tabular-nums; }
+.hallazgo .hacer { display: flex; gap: 6px; font-size: 13px; line-height: 1.4; background: rgba(255, 255, 255, .7); border-radius: 10px; padding: 7px 9px; margin-top: 8px; }
+.hallazgo .hacer .ic { color: var(--morado-fuerte); margin-top: 1px; }
+.hallazgo .pie { font-size: 11px; color: var(--gris); margin-top: 6px; }
+.bien { font-size: 13px; line-height: 1.45; color: #3A3F6E; margin-top: 8px; }
+.no-diag { font-size: 11px; color: var(--gris); margin-top: 8px; }
+
+/* Mosaico: el semáforo lleva forma, no solo punto de color */
+.mosaico .estado::before { display: none; }
+.mosaico .estado svg { width: 10px; height: 10px; }
+.estado-alto { color: var(--rojo); }
+.estado-nd { color: var(--nd); }
+
+/* Gráfica contra tu normal */
+.normal-graf { width: 100%; height: 120px; display: block; overflow: visible; }
+.normal-graf.mini { height: 38px; }
+.normal-graf .banda { fill: var(--cian); opacity: .22; }
+.normal-graf .mediana { stroke: var(--cian); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.normal-graf .umbral { stroke: var(--gris); stroke-width: 1; stroke-dasharray: 5 4; opacity: .55; }
+.normal-graf .trazo { fill: none; stroke: #9C90D4; stroke-width: 1.8; }
+.normal-graf .punto { fill: #9C90D4; }
+.normal-graf .punto.fuera { fill: var(--ambar); }
+.normal-graf .hoy { stroke: #fff; stroke-width: 2; }
+.normal-graf text { font-size: 10px; fill: var(--gris); }
+
+/* Fichas */
+.valor-grande { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.valor-grande b { font-size: 34px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.valor-grande .u { color: var(--gris); font-weight: 600; }
+.valor-grande .sem { margin-left: auto; align-self: center; }
+.etiquetas { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 4px; }
+.etq { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
+.etq-normal { background: var(--cian-suave); color: #0E6F84; }
+.etq-proc { background: #F0EEF5; color: var(--gris); font-weight: 600; }
+.etq-proc.estimado { background: none; border: 1px dashed var(--gris); font-style: italic; }
+.etq-prop { background: var(--morado-suave); color: var(--morado-fuerte); }
+.explica { margin: 0; }
+.explica dt { font-weight: 700; font-size: 13px; margin-top: 8px; }
+.explica dd { margin: 2px 0 0; font-size: 13.5px; line-height: 1.45; color: #3A3F6E; }
+.aviso-fijo { display: flex; gap: 6px; font-size: 13px; line-height: 1.4; background: var(--ambar-suave); color: #6B4500; border-radius: 12px; padding: 8px 10px; margin-bottom: 12px; }
+.tenue-12 { font-size: 12px; color: var(--gris); }
+
+/* Hoja de región */
+.reg-hoja .hoja-panel { max-height: 86dvh; overflow-y: auto; text-align: left; }
+.reg-hoja .hoja-panel p { min-height: 0; }
+.peligro { display: inline-block; font-size: 11.5px; font-weight: 700; color: var(--morado-fuerte); background: var(--morado-suave); padding: 2px 9px; border-radius: 99px; margin-bottom: 6px; }
+.reg-ind { border: 0; width: 100%; text-align: left; font: inherit; color: inherit; background: #F8F6FD; border-radius: 14px; padding: 10px 12px; margin-top: 8px; cursor: pointer; display: grid; gap: 4px; transition: transform 140ms var(--ease-out); }
+.reg-ind:active { transform: scale(0.98); }
+.reg-ind .fila-sup { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.reg-ind .fila-sup b { font-size: 14px; }
+.reg-ind .v { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.reg-ind .v small { font-size: 12px; color: var(--gris); font-weight: 600; margin-left: 3px; }
+.reg-ind .ver { font-size: 12px; color: var(--morado-fuerte); font-weight: 700; }
+.reg-meta { font-size: 13px; margin-top: 8px; background: #F8F6FD; border-radius: 12px; padding: 8px 12px; }
+
+@media (prefers-reduced-motion: reduce) { .halo.est-alto { animation: none; } }

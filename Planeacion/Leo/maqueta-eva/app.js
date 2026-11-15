@@ -1142,6 +1142,7 @@
         const v = Number(input.value);
         if (!v || v < 20 || v > 600) { luna.poner("pensando"); globo.innerHTML = "Ese número no parece una glucosa. Revísalo, por fa."; return; }
         estado.glucometro.push(v);
+        { const d = new Date(); M.registrar(estado.persona, estado.dia, "glucosa", v, `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`); }
         $("#glu-lista", p).innerHTML = "Registradas: " + estado.glucometro.map((n) => `<b>${n}</b>`).join(" · ") + " mg/dL";
         if (v < 70) { luna.poner("alerta"); globo.innerHTML = "Está <b>baja</b>. Avisa a la CMO."; }
         else if (v > 180) { luna.poner("preocupada"); globo.innerHTML = "Está <b>alta</b> para el rango de la Tierra. Lo anoto."; }
@@ -1300,6 +1301,9 @@
         // Lo registrado hoy reemplaza el valor simulado del día y se recalcula todo (bug 4).
         const d = new Date(), hora = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
         M.registrar(estado.persona, estado.dia, "animo", estado.estres, hora);
+        // Dolor de espalda y de cabeza (0–10) también quedan registrados: telefono-vivo.js los manda a la central.
+        M.registrar(estado.persona, estado.dia, "dolor_espalda", estado.dolor, hora);
+        M.registrar(estado.persona, estado.dia, "cefalea", estado.cefalea ? (estado.intensidadCefalea || 5) : 0, hora);
         estado.tocado.sintomas = true;
         const cara = { feliz: "Genial", tranquila: "Bien", preocupada: "Regular", empatica: "Mal" }[estado.animo];
         estado.registros.unshift({ t: "Check-in", v: `${cara ? cara + " · " : ""}estrés ${estado.estres} · espalda ${estado.dolor}/10${estado.cefalea ? " · cefalea" : ""}`, hora, ic: "chispa" });

@@ -35,6 +35,7 @@ test('simulador: el PC abre la computadora central desde el mismo origen, sin qu
     assert.match(html, /cel:\s*\{\s*url:\s*'\/app\/'/);
     assert.match(html, /tierra:\s*\{\s*url:\s*'\/app\/base\.html'/);
     assert.match(html, /class="equipo" data-id="pc"/);
+    assert.match(html, /reloj:\s*\{\s*url:\s*'\/reloj\/\?embebido&persona=MS-2'/);
   });
 });
 
@@ -101,5 +102,29 @@ test('central: sólo llama a rutas del backend que existen, con la forma que esp
     assert.equal(s.status, 200);
     assert.match(s.headers.get('content-type') ?? '', /text\/event-stream/);
     ctl.abort();
+  });
+});
+
+test('reloj: /reloj sirve la maqueta de Fani con los estilos, la Lunna y el motor de la de Leo', async () => {
+  await conServidor(async (base) => {
+    const r = await fetch(`${base}/reloj/?embebido&persona=MS-2`, { redirect: 'manual' });
+    assert.equal(r.status, 302);
+    assert.equal(r.headers.get('location'), '/maquetas/Fani/maqueta-reloj/?embebido&persona=MS-2');
+    const pagina = `${base}/maquetas/Fani/maqueta-reloj/`;
+    const html = await (await fetch(pagina)).text();
+    assert.match(html, /<title>Lunna · Reloj<\/title>/);
+    const recursos = [...html.matchAll(/(?:src|href)="([^"#:]+\.(?:js|css))(?:\?[^"]*)?"/g)].map((m) => m[1]!);
+    assert.ok(recursos.some((x) => x.includes('Leo/maqueta-eva/luna.js')) && recursos.includes('reloj.js'));
+    for (const rec of recursos) {
+      const x = await fetch(new URL(rec, pagina));
+      assert.equal(x.status, 200, rec);
+      await x.arrayBuffer();
+    }
+    // Sólo las carpetas de las maquetas: nada más de Planeacion/ queda expuesto.
+    for (const p of ['/maquetas/Julio/backend/package.json', '/maquetas/Leo/ingesta/package.json', '/maquetas/Fani/maqueta-reloj/..%2F..%2FJulio%2Fbackend%2Fpackage.json']) {
+      const x = await fetch(`${base}${p}`);
+      assert.equal(x.status, 404, p);
+      await x.arrayBuffer();
+    }
   });
 });

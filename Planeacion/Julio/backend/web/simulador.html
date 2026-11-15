@@ -212,7 +212,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
       <g class="disp" data-id="brazalete" tabindex="0" role="button" aria-label="Brazalete de presión: abrir terminal">
         <g class="forma"><rect x="-92" y="194" width="24" height="18" rx="4" fill="#f43f5e" stroke="#fff1f2" stroke-width="1.5" transform="rotate(4 -80 203)"/></g>
       </g>
-      <g class="disp" data-id="reloj" tabindex="0" role="button" aria-label="Reloj inteligente: abrir terminal">
+      <g class="disp" data-id="reloj" tabindex="0" role="button" aria-label="Reloj inteligente: abrir la pantalla del reloj y su terminal">
         <g class="forma">
           <rect x="87" y="299" width="23" height="16" rx="3" fill="#f43f5e" stroke="#fff1f2" stroke-width="1.5" transform="rotate(-4 98 307)"/>
           <rect x="93" y="303" width="11" height="8" rx="2" fill="#0b1220"/>
@@ -403,6 +403,7 @@ const INTERFACES = {
   tierra: { url: '/app/base.html', titulo: 'Tierra — base en Tierra LUNNA', forma: 'grande' },
   cel: { url: '/app/', titulo: 'Smartphone', forma: 'movil' },
   pc: { url: '/app/central.html', titulo: 'PC central — computadora central LUNNA', forma: 'grande' },
+  reloj: { url: '/reloj/?embebido&persona=MS-2', titulo: 'Reloj de Ana — Lunna', forma: 'movil' },
 };
 // Avisa a la interfaz embebida si su equipo está encendido (la app no notifica si está apagado).
 function avisarEnergia(nodo) {

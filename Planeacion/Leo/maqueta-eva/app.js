@@ -1364,6 +1364,8 @@
       })();
 
       $("#paso-hecho", p).addEventListener("click", async () => {
+        // Un doble toque en el último paso no debe registrar un paso que no existe ("Hecho: undefined").
+        if (paso >= PASOS.length || cancelada) return;
         registrar(`Hecho: ${PASOS[paso]}`);
         paso++;
         if (paso < PASOS.length) return mostrarPaso();

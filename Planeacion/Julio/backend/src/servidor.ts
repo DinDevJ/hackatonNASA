@@ -22,6 +22,13 @@ import { estadoApp } from './app.ts';
 const AQUI = dirname(fileURLToPath(import.meta.url));
 /** App móvil del equipo (Diana, Katy): se sirve tal cual en /app/. Se puede cambiar con APP_MOVIL. */
 const RAIZ_APP = resolve(process.env.APP_MOVIL ?? join(AQUI, '..', '..', '..', 'Leo', 'maqueta-eva'));
+/**
+ * Maquetas que se sirven en /maquetas/<carpeta>/ con la misma estructura que en Planeacion/, para que
+ * sus rutas relativas sigan valiendo (el reloj de Fani carga estilos, Lunna y motor de la de Leo).
+ * Sólo estas carpetas: nada más de Planeacion/ queda expuesto.
+ */
+const RAIZ_PLANEACION = resolve(join(AQUI, '..', '..', '..'));
+const MAQUETAS = ['Leo/maqueta-eva', 'Fani/maqueta-reloj'];
 const TIPOS: Record<string, string> = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png',
@@ -94,9 +101,22 @@ function estadoTexto(db: BD): string {
     'actividad reciente',
     ...(recientes.length ? recientes.map((r) => '  ' + r) : ['  (nada todavía)']),
     '',
-    'simulador visual: /simulador · control de misión (Tierra): /tierra · app móvil: /app/',
+    'simulador visual: /simulador · control de misión (Tierra): /tierra · app móvil: /app/ · reloj: /reloj',
     'API: /api/salud · /api/estado · /api/app/<tripulante> · /api/alertas · /api/referencias · /api/stream · ver backend/README.md',
   ].join('\n');
+}
+
+/** Sirve un archivo estático de `raiz` (ruta relativa codificada en la URL), sin salir de esa carpeta. */
+function servirArchivo(res: ServerResponse, raiz: string, relCodificada: string): void {
+  let rel = '';
+  try { rel = decodeURIComponent(relCodificada); } catch { /* ruta mal formada: 404 */ rel = '\0'; }
+  const archivo = resolve(raiz, rel || 'index.html');
+  const dentro = archivo.startsWith(raiz + sep) && !rel.includes('\0');
+  if (!dentro || !existsSync(archivo) || !statSync(archivo).isFile()) {
+    res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end('no encontrado'); return;
+  }
+  res.writeHead(200, { 'content-type': TIPOS[extname(archivo).toLowerCase()] ?? 'application/octet-stream', 'cache-control': 'no-cache' })
+    .end(readFileSync(archivo));
 }
 
 /** Línea de log de la carga de referencias clínicas. */
@@ -372,16 +392,17 @@ export function construir(db: BD) {
     }
     // App móvil: archivos estáticos, sin salir de su carpeta.
     if (req.method === 'GET' && url.pathname === '/app') { res.writeHead(301, { location: '/app/' }).end(); return; }
-    if (req.method === 'GET' && url.pathname.startsWith('/app/')) {
-      let rel = '';
-      try { rel = decodeURIComponent(url.pathname.slice(5)); } catch { /* ruta mal formada: 404 */ rel = '\0'; }
-      const archivo = resolve(RAIZ_APP, rel || 'index.html');
-      const dentro = archivo.startsWith(RAIZ_APP + sep) && !rel.includes('\0');
-      if (!dentro || !existsSync(archivo) || !statSync(archivo).isFile()) {
-        res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end('no encontrado'); return;
-      }
-      res.writeHead(200, { 'content-type': TIPOS[extname(archivo).toLowerCase()] ?? 'application/octet-stream', 'cache-control': 'no-cache' })
-        .end(readFileSync(archivo));
+    if (req.method === 'GET' && url.pathname.startsWith('/app/')) { servirArchivo(res, RAIZ_APP, url.pathname.slice(5)); return; }
+    // Reloj de la tripulación (maqueta de Fani): /reloj lleva a su carpeta dentro de /maquetas/.
+    if (req.method === 'GET' && (url.pathname === '/reloj' || url.pathname === '/reloj/')) {
+      res.writeHead(302, { location: '/maquetas/Fani/maqueta-reloj/' + url.search }).end(); return;
+    }
+    if (req.method === 'GET' && url.pathname.startsWith('/maquetas/')) {
+      const resto = url.pathname.slice('/maquetas/'.length);
+      const carpeta = MAQUETAS.find((m) => resto === m || resto.startsWith(m + '/'));
+      if (!carpeta) { res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end('no encontrado'); return; }
+      if (resto === carpeta) { res.writeHead(301, { location: `/maquetas/${carpeta}/${url.search}` }).end(); return; }
+      servirArchivo(res, resolve(RAIZ_PLANEACION, carpeta), resto.slice(carpeta.length + 1));
       return;
     }
     // Consola de control de misión (Tierra).

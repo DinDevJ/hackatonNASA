@@ -9,7 +9,7 @@ modelo que define "lo esperado".
 ```bash
 npm start      # servidor; http://localhost:8787 = estado · /simulador = simulador visual
 npm run sim    # simulador de hardware: 119 días de misión y luego en vivo
-npm test       # 36 pruebas
+npm test       # 37 pruebas
 ```
 
 Requiere **Node 22.6+** y nada más: SQLite y TypeScript vienen integrados en Node.
@@ -215,6 +215,8 @@ src/simulador.ts   simulador de terminal: 4 tripulantes, 119 días
 web/simulador.html simulador visual (astronauta, dispositivos, PC central, Tierra) en /simulador
                    el PC abre la computadora central de LUNNA (/app/central.html, de
                    Leo/maqueta-eva), que lee /api/app, /api/alertas, /api/enlace y /api/stream
+                   y el reloj abre el de Fani (/reloj → /maquetas/Fani/maqueta-reloj/),
+                   con pulso y SpO₂ en vivo de /api/stream
 semillas/inicial.json   tripulación, esquemas y priores PROVISIONALES
 ```
 

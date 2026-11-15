@@ -684,7 +684,7 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
     procesa(c) {
       const yo = P(), e = ev(), fuera = Object.keys(M.IND).filter((k) => e.nivelDe(k) > 0).length;
       // Bug 10: salen de la frecuencia de la trama eva.ble.v1 (vitales 1/s, cabina 1 cada 5 s, latidos según tu pulso).
-      const SEG = 86400, nf = (n) => n.toLocaleString("es-ES").replace(/./g, "202F");
+      const SEG = 86400, nf = (n) => n.toLocaleString("es-ES").replace(/\./g, " "); // miles con espacio fino: 86 400
       const fcMed = (M.estadoIndicador(P().id, "fc", E.dia).normal || { med: 60 }).med;
       c.innerHTML = lp("Hoy procesé · estimado por día", `<div class="lp-num"><div><b>${nf(SEG)}</b><small>lecturas de signos (1 por s)</small></div><div><b>${nf(SEG / 5)}</b><small>lecturas de cabina (1 cada 5 s)</small></div><div><b>${nf(Math.round(fcMed * 60 * 24))}</b><small>latidos (a tu pulso en reposo)</small></div><div><b>${Object.keys(M.IND).length}</b><small>indicadores contra tu normal</small></div><div><b>${fuera}</b><small>fuera de tu normal</small></div></div>`)
         + lp("El camino de un dato", `<ol class="lp-pasos"><li>Sensor → trama Bluetooth de 20 bytes</li><li>Valido: un dato estimado sin su margen se rechaza</li><li>Comparo contra tu normal de 14 días</li><li>Evalúo las reglas (FATIGA-03 y 10 condiciones en vivo)</li><li>Semáforo ● ■ ▲ y protocolo</li><li>Cola a Tierra por prioridad, con su hora de nave</li></ol>`)

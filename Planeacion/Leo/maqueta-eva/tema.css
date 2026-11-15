@@ -1298,3 +1298,17 @@ body { padding: 12px 0; }
    números cuentan y las gráficas se dibujan. Fuera, para que todo vaya a 60 fps. */
 .hud, :root[data-tema] .hud, :root[data-tema] .hud.listo { backdrop-filter: none; -webkit-backdrop-filter: none; }
 :root[data-tema="oscuro"] .hud { background: var(--brillo), linear-gradient(rgba(6, 14, 46, .96), rgba(4, 9, 32, .98)); }
+
+/* ================= Ciclo: lo registrado se pinta (15 nov) =================
+ * Un día con sangrado anotado se ve rojo aunque la predicción diga otra fase.
+ * Manchado (0) = aro rojo · ligero (1) · medio (2) · abundante (3) = rojo sólido cada vez más intenso. */
+.ciclo-anillo .cd-real circle:not(.cd-aro):not(.cd-reg) { fill: #FF5A75; }
+.ciclo-anillo .cd-flujo-0 circle:not(.cd-aro):not(.cd-reg) { fill: rgba(255, 90, 117, .14); stroke: #FF3B5C; stroke-width: 2.6; }
+.ciclo-anillo .cd-flujo-1 circle:not(.cd-aro):not(.cd-reg) { fill: #FF7A90; }
+.ciclo-anillo .cd-flujo-2 circle:not(.cd-aro):not(.cd-reg) { fill: #FF3B5C; }
+.ciclo-anillo .cd-flujo-3 circle:not(.cd-aro):not(.cd-reg) { fill: #D9183E; }
+.ciclo-anillo .cd-real circle:not(.cd-aro):not(.cd-reg) { filter: drop-shadow(0 0 4px rgba(255, 59, 92, .55)); }
+.sem-dia .cd-real { background: #FF3B5C; color: #fff; }
+.sem-dia .cd-flujo-0 { background: rgba(255, 90, 117, .14); color: #E0284A; box-shadow: inset 0 0 0 2px #FF3B5C; }
+.sem-dia .cd-flujo-1 { background: #FF7A90; } .sem-dia .cd-flujo-3 { background: #D9183E; }
+:root[data-tema="oscuro"] .sem-dia .cd-flujo-0 { color: #FF8FA3; }

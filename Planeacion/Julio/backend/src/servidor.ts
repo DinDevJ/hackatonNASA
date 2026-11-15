@@ -13,7 +13,10 @@ import { validarEsquema, type Esquema } from './esquema.ts';
 import { bus, entornoEn, fijarVentanaPersonal, ingerirBinaria, ingerirJson, prediccionPara, ventanaPersonal, VENTANA_PERSONAL_MISION_MIN, type TramaJson } from './ingesta.ts';
 import { ENTORNOS, type Entorno, type Prior } from './lunna.ts';
 import { cargarInicial, importarSemillas, type SalidaTipo } from './semillas.ts';
-import { escribirEnlace, iniciarEnlace, leerEnlace, redactarAviso } from './enlace.ts';
+import { encolarAvisoNave, escribirEnlace, iniciarEnlace, leerEnlace, redactarAviso } from './enlace.ts';
+import { estadoNave, estadoTierra } from './enlace-https.ts';
+import { idEmisor } from './sincro.ts';
+import { migrarSalud, sembrarSalud } from './salud.ts';
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { reiniciarEstados } from './ingesta.ts';
 import { cargarReferencias, referencias, type CargaReferencias } from './referencias.ts';
@@ -62,16 +65,10 @@ async function cuerpoJson<T>(req: IncomingMessage): Promise<T> {
 }
 
 type Manejador = (req: IncomingMessage, p: Record<string, string>, q: URLSearchParams) => Promise<unknown> | unknown;
-const rutas: Array<{ metodo: string; patron: RegExp; claves: string[]; h: Manejador }> = [];
-function ruta(metodo: string, camino: string, h: Manejador) {
-  const claves: string[] = [];
-  const patron = new RegExp('^' + camino.replace(/:(\w+)/g, (_, k) => { claves.push(k); return '([^/]+)'; }) + '$');
-  rutas.push({ metodo, patron, claves, h });
-}
 
 const ARRANQUE = Date.now();
 const recientes: string[] = [];
-function anotar(linea: string): void {
+export function anotar(linea: string): void {
   const l = `${new Date().toLocaleTimeString('es')}  ${linea}`;
   recientes.unshift(l);
   recientes.length = Math.min(recientes.length, 15);
@@ -79,7 +76,7 @@ function anotar(linea: string): void {
 }
 
 /** Lo que se ve al abrir http://localhost:8787: texto plano, se refresca solo. */
-function estadoTexto(db: BD): string {
+function estadoTexto(db: BD, rol: 'nave' | 'tierra' | null = null): string {
   const n = (sql: string) => (db.prepare(sql).get() as { n: number }).n;
   const e = leerEnlace(db);
   const seg = Math.floor((Date.now() - ARRANQUE) / 1000);
@@ -96,6 +93,7 @@ function estadoTexto(db: BD): string {
     `alertas de LUNNA     ${n('SELECT COUNT(*) AS n FROM alertas')}`,
     `referencias clínicas ${referencias(db).size}`,
     '',
+    ...bloqueEnlace(db, rol),
     `enlace con Tierra    ${e.abierto ? 'ABIERTO' : 'CERRADO'} · retraso ${e.owlt_s} s`,
     `  en cola en la nave ${n('SELECT COUNT(*) AS n FROM bajada WHERE t_envio IS NULL')}`,
     `  avisos de Tierra   ${n('SELECT COUNT(*) AS n FROM subida WHERE entregado = 1')} entregados`,
@@ -103,7 +101,7 @@ function estadoTexto(db: BD): string {
     'actividad reciente',
     ...(recientes.length ? recientes.map((r) => '  ' + r) : ['  (nada todavía)']),
     '',
-    'simulador visual: /simulador · control de misión (Tierra): /tierra · app móvil: /app/ · reloj: /reloj',
+    'simulador visual: /simulador · control de misión (Tierra): /tierra · panel de la nave: /nave · app móvil: /app/ · reloj: /reloj',
     'API: /api/salud · /api/estado · /api/app/<tripulante> · /api/alertas · /api/referencias · /api/stream · ver backend/README.md',
   ].join('\n');
 }
@@ -121,6 +119,26 @@ function servirArchivo(res: ServerResponse, raiz: string, relCodificada: string)
     .end(readFileSync(archivo));
 }
 
+/** Bloque visible del enlace HTTPS (solo en el rol nave) o del último contacto (Tierra). */
+function bloqueEnlace(db: BD, rol: 'nave' | 'tierra' | null): string[] {
+  if (rol === 'tierra') {
+    const t = estadoTierra(db);
+    return [`ENLACE HTTPS (Tierra)  último contacto de la nave: ${t.ultimo_contacto_nave ?? 'ninguno'}${t.antiguedad_contacto_s === null ? '' : ` (hace ${t.antiguedad_contacto_s} s)`}`,
+      `  mensajes recibidos ${t.recibidos} · pendientes de enviar a la nave ${t.pendientes_salida}`, ''];
+  }
+  if (rol !== 'nave') return [];
+  const s = estadoNave(db);
+  const cab = s.estado === 'CONECTADO' ? '██ CONECTADO ██' : `!! DESCONECTADO !! (${s.motivo ?? '—'})`;
+  return [
+    `ENLACE HTTPS CON TIERRA   ${cab}`,
+    `  último ping OK     ${s.ultimo_ping_ok ? `${s.ultimo_ping_ok.slice(11, 19)} UTC (hace ${s.antiguedad_ping_s} s)` : 'ninguno todavía'}`,
+    `  retraso estimado   ${s.retraso_estimado_s === null ? '—' : `${s.retraso_estimado_s} s (RTT/2)`} · retraso del modelo Marte ${s.owlt_modelo_s} s${s.simular_owlt ? ' (simulado)' : ''}`,
+    `  pendientes de enviar ${s.pendientes_salida}${s.estado === 'DESCONECTADO' && s.proximo_intento ? ` · próximo intento ${s.proximo_intento.slice(11, 19)} UTC` : ''}`,
+    '  panel: /nave',
+    '',
+  ];
+}
+
 /** Línea de log de la carga de referencias clínicas. */
 function resumenReferencias(r: CargaReferencias): string {
   if (r.ausente) return `Referencias clínicas: no hay ${RUTA_MEDIBLES}; se sigue sin umbrales absolutos nuevos`;
@@ -130,10 +148,10 @@ function resumenReferencias(r: CargaReferencias): string {
 }
 
 /** Actividad en la terminal y en la página de estado. */
-function registrarActividad(): void {
+export function registrarActividad(): void {
   let muestras = 0;
   bus.on('muestra', () => { muestras++; });
-  setInterval(() => { if (muestras) { anotar(`+${muestras} muestras`); muestras = 0; } }, 10_000);
+  setInterval(() => { if (muestras) { anotar(`+${muestras} muestras`); muestras = 0; } }, 10_000).unref();
   bus.on('alerta', (a: Record<string, unknown>) => {
     const u = a.umbral as { limite: number | null; valor_evaluado: number; lado: string | null; tipo: string } | null;
     const porUmbral = u ? ` · umbral ${u.tipo}: ${u.valor_evaluado} ${u.lado === 'min' ? '<' : '>'} ${u.limite}` : '';
@@ -145,10 +163,29 @@ function registrarActividad(): void {
   bus.on('enlace', (e: Record<string, unknown>) => anotar(`enlace ${e.abierto ? 'abierto' : 'cerrado'}, retraso ${e.owlt_s} s`));
 }
 
-export function construir(db: BD) {
+export interface OpcionesServidor {
+  rol?: 'nave' | 'tierra';
+  /** Rutas /enlace/* (solo Tierra). Devuelve true si atendió la petición. */
+  enlace?: (req: IncomingMessage, res: ServerResponse) => Promise<boolean>;
+}
+
+/** Antigüedad en segundos de un evento (ahora − t_evento); null si la fecha no es válida. */
+const antig = (t: unknown): number | null => {
+  const ms = Date.parse(String(t));
+  return Number.isFinite(ms) ? Math.max(0, Math.round((Date.now() - ms) / 1000)) : null;
+};
+
+export function manejador(db: BD, opciones: OpcionesServidor = {}) {
+  const rol = opciones.rol ?? null;
+  // Rutas propias de este manejador: varios servidores en un mismo proceso no se pisan.
+  const rutas: Array<{ metodo: string; patron: RegExp; claves: string[]; h: Manejador }> = [];
+  const ruta = (metodo: string, camino: string, h: Manejador) => {
+    const claves: string[] = [];
+    const patron = new RegExp('^' + camino.replace(/:(\w+)/g, (_, k) => { claves.push(k); return '([^/]+)'; }) + '$');
+    rutas.push({ metodo, patron, claves, h });
+  };
   const todos = (sql: string, ...a: Array<string | number | null>) => db.prepare(sql).all(...a);
   const uno = (sql: string, ...a: Array<string | number | null>) => db.prepare(sql).get(...a);
-  rutas.length = 0;
 
   ruta('GET', '/api/salud', () => ({ ok: true, version: VERSION_BACKEND, hora: ahora(), entorno: entornoEn(db, ahora()),
     ventana_personal_min: ventanaPersonal() }));
@@ -368,6 +405,7 @@ export function construir(db: BD) {
       : todos(`SELECT * FROM bajada WHERE t_ert IS NOT NULL AND t_ert <= ? ORDER BY id DESC LIMIT 100`, t)) as Array<Record<string, unknown>>;
     return filas
       .map((b) => ({ ...b, datos: JSON.parse(String(b.datos)),
+        t_evento: b.t_scet, t_recepcion: b.t_ert, antiguedad_s: antig(b.t_scet),
         antiguedad_al_llegar_s: Math.round((Date.parse(String(b.t_ert)) - Date.parse(String(b.t_scet))) / 1000) }));
   });
   ruta('GET', '/api/tierra/pendientes', () => ({
@@ -380,8 +418,29 @@ export function construir(db: BD) {
     try { return { id: redactarAviso(db, await cuerpoJson(req)), enlace: leerEnlace(db) }; }
     catch (e) { throw new ErrorHttp(400, (e as Error).message); }
   });
-  ruta('GET', '/api/tierra/avisos', () => todos(`SELECT * FROM subida ORDER BY id DESC LIMIT 100`));
-  ruta('GET', '/api/avisos', () => todos(`SELECT * FROM subida WHERE entregado = 1 ORDER BY id DESC LIMIT 100`));
+  const conEdad = (f: unknown) => { const a = f as Record<string, unknown>; return { ...a, t_evento: a.t_redactado, t_recepcion: a.t_llegada, antiguedad_s: antig(a.t_redactado) }; };
+  ruta('GET', '/api/tierra/avisos', () => todos(`SELECT * FROM subida ORDER BY id DESC LIMIT 100`).map(conEdad));
+  ruta('GET', '/api/avisos', () => todos(`SELECT * FROM subida WHERE entregado = 1 ORDER BY id DESC LIMIT 100`).map(conEdad));
+
+  // ── Enlace HTTPS nave↔Tierra: estado y avisos nave→Tierra (canal 'aviso' de la bajada) ──
+  ruta('GET', '/api/enlace/estado', () => {
+    if (rol === 'tierra') return estadoTierra(db);
+    if (rol === 'nave') return estadoNave(db);
+    const e = leerEnlace(db);
+    return { rol: null, estado: 'SIMULADO', owlt_modelo_s: e.owlt_s, ventana_abierta: e.abierto,
+      pendientes_salida: (uno(`SELECT COUNT(*) AS n FROM bajada WHERE t_envio IS NULL`) as { n: number }).n };
+  });
+  ruta('POST', '/api/nave/avisos', async (req) => {
+    try { return { seq: encolarAvisoNave(db, await cuerpoJson(req)) }; }
+    catch (e) { throw e instanceof ErrorHttp ? e : new ErrorHttp(400, (e as Error).message); }
+  });
+  ruta('GET', '/api/nave/avisos', () => {
+    if (rol === 'tierra') return [];
+    return (todos(`SELECT * FROM bajada WHERE tipo = 'aviso' AND emisor = ? ORDER BY seq DESC LIMIT 100`, idEmisor(db, 'nave')) as Array<Record<string, unknown>>)
+      .map((b) => { const d = JSON.parse(String(b.datos)) as Record<string, unknown>;
+        return { seq: b.seq, de: d.de, texto: d.texto, prioridad: d.prioridad, t_evento: b.t_scet, ack: b.ack, t_ack: b.t_ack,
+          intentos: b.intentos, antiguedad_s: antig(b.t_scet) }; });
+  });
 
   // ── A bordo: avisos de la CMO, consultas a Tierra y emergencias (abordo.ts) ──
   const conError = async <T>(f: () => T | Promise<T>) => { try { return await f(); } catch (e) { throw new ErrorHttp(400, (e as Error).message); } };
@@ -401,7 +460,7 @@ export function construir(db: BD) {
     return { ok: true };
   });
 
-  return createServer(async (req: IncomingMessage, res: ServerResponse) => {
+  return async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', 'content-type');
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,OPTIONS');
@@ -411,7 +470,7 @@ export function construir(db: BD) {
 
     // Página de estado: al abrir http://localhost:8787 se ve que el backend corre.
     if (req.method === 'GET' && url.pathname === '/') {
-      res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', refresh: '2' }).end(estadoTexto(db));
+      res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', refresh: '2' }).end(estadoTexto(db, rol));
       return;
     }
     // App móvil: archivos estáticos, sin salir de su carpeta.
@@ -428,6 +487,18 @@ export function construir(db: BD) {
       if (resto === carpeta) { res.writeHead(301, { location: `/maquetas/${carpeta}/${url.search}` }).end(); return; }
       servirArchivo(res, resolve(RAIZ_PLANEACION, carpeta), resto.slice(carpeta.length + 1));
       return;
+    }
+    // Panel de la nave (enlace HTTPS): lo escribe otro módulo; si no existe, 404.
+    if (req.method === 'GET' && url.pathname === '/nave') {
+      const html = join(AQUI, '..', 'web', 'nave.html');
+      if (!existsSync(html)) { res.writeHead(404, { 'content-type': 'application/json' }).end(JSON.stringify({ error: 'web/nave.html no existe' })); return; }
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(readFileSync(html));
+      return;
+    }
+    // Transporte del enlace (solo Tierra): /enlace/ping, lote, descarga, ack.
+    if (opciones.enlace && url.pathname.startsWith('/enlace/')) {
+      try { if (await opciones.enlace(req, res)) return; }
+      catch (e) { if (!res.headersSent) res.writeHead(500, { 'content-type': 'application/json' }).end(JSON.stringify({ error: (e as Error).message })); else res.destroy(); return; }
     }
     // Consola de control de misión (Tierra).
     if (req.method === 'GET' && url.pathname === '/tierra') {
@@ -473,7 +544,11 @@ export function construir(db: BD) {
       return;
     }
     res.writeHead(404, { 'content-type': 'application/json' }).end(JSON.stringify({ error: 'ruta no existe' }));
-  });
+  };
+}
+
+export function construir(db: BD, opciones: OpcionesServidor = {}) {
+  return createServer(manejador(db, opciones));
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
@@ -482,6 +557,9 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const añadidos = Object.entries(nuevos).filter(([, n]) => n > 0).map(([k, n]) => `${n} ${k}`);
   if (añadidos.length) console.log(`Semillas: añadidos ${añadidos.join(', ')}`);
   console.log(resumenReferencias(cargarReferencias(db, RUTA_MEDIBLES)));
+  migrarSalud(db);
+  const sal = sembrarSalud(db);
+  console.log(`Salud: ${sal.ausente ? 'sin CSV del modelo' : sal.error ? `error (${sal.error})` : `${sal.padecimientos} padecimientos, ${sal.vinculos} vínculos`}`);
   const srv = construir(db);
   iniciarEnlace(db);
   registrarActividad();

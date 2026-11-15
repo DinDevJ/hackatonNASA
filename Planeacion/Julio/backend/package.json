@@ -8,6 +8,10 @@
   "scripts": {
     "start": "node --experimental-strip-types --disable-warning=ExperimentalWarning src/servidor.ts",
     "sim": "node --experimental-strip-types --disable-warning=ExperimentalWarning src/simulador.ts",
+    "nave": "node --experimental-strip-types --disable-warning=ExperimentalWarning src/rol.ts nave",
+    "tierra": "node --experimental-strip-types --disable-warning=ExperimentalWarning src/rol.ts tierra",
+    "certs": "node --experimental-strip-types --disable-warning=ExperimentalWarning src/certs.ts",
+    "migrar": "node --experimental-strip-types --disable-warning=ExperimentalWarning src/migrar.ts",
     "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test test/*.test.ts"
   }
 }

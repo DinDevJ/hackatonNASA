@@ -159,11 +159,22 @@ CREATE TABLE IF NOT EXISTS emergencias (
   t_scet TEXT NOT NULL, t_registro TEXT NOT NULL,
   resultado TEXT, t_cierre TEXT
 );
+
+-- ── Sincronización nave↔Tierra sin pérdidas ni duplicados (ver sincro.ts) ──
+CREATE TABLE IF NOT EXISTS enlace_contador (emisor TEXT PRIMARY KEY, ultimo INTEGER NOT NULL);  -- seq monótono; no se reinicia al borrar bajada/subida
+CREATE TABLE IF NOT EXISTS entrada (            -- bandeja de entrada del receptor (idempotencia)
+  id INTEGER PRIMARY KEY,                       -- orden de llegada/aplicación
+  emisor TEXT NOT NULL, seq INTEGER NOT NULL,
+  canal TEXT NOT NULL,                          -- 'bajada' (nave→Tierra) · 'subida' (Tierra→nave)
+  tipo TEXT NOT NULL, prioridad INTEGER NOT NULL, datos TEXT NOT NULL,
+  t_evento TEXT NOT NULL, t_envio TEXT NOT NULL, t_recepcion TEXT NOT NULL,
+  UNIQUE (emisor, seq));
+CREATE TABLE IF NOT EXISTS enlace_estado (clave TEXT PRIMARY KEY, valor TEXT);   -- id propio, ack por emisor, cursores, heartbeat
 `;
 
 export function abrir(ruta = 'eva.db'): BD {
   const db = new DatabaseSync(ruta);
-  db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
+  db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;');
   db.exec(ESQUEMA_SQL);
   // Bases creadas antes de las alertas manuales: añadir las columnas que faltan.
   const cols = (db.prepare(`PRAGMA table_info(subida)`).all() as Array<{ name: string }>).map((c) => c.name);
@@ -173,6 +184,18 @@ export function abrir(ruta = 'eva.db'): BD {
   const colsAlertas = (db.prepare(`PRAGMA table_info(alertas)`).all() as Array<{ name: string }>).map((c) => c.name);
   if (!colsAlertas.includes('motivo')) db.exec(`ALTER TABLE alertas ADD COLUMN motivo TEXT`);
   if (!colsAlertas.includes('umbral')) db.exec(`ALTER TABLE alertas ADD COLUMN umbral TEXT`);
+  // Sincronización: columnas de emisor/seq/ack en las dos colas del enlace.
+  for (const tabla of ['bajada', 'subida']) {
+    const c = (db.prepare(`PRAGMA table_info(${tabla})`).all() as Array<{ name: string }>).map((x) => x.name);
+    if (!c.includes('emisor')) db.exec(`ALTER TABLE ${tabla} ADD COLUMN emisor TEXT`);
+    if (!c.includes('seq')) db.exec(`ALTER TABLE ${tabla} ADD COLUMN seq INTEGER`);
+    if (!c.includes('ack')) db.exec(`ALTER TABLE ${tabla} ADD COLUMN ack INTEGER NOT NULL DEFAULT 0`);
+    if (!c.includes('intentos')) db.exec(`ALTER TABLE ${tabla} ADD COLUMN intentos INTEGER NOT NULL DEFAULT 0`);
+    if (!c.includes('t_ack')) db.exec(`ALTER TABLE ${tabla} ADD COLUMN t_ack TEXT`);
+    // NULL ≠ NULL: las filas viejas (sin emisor) no chocan.
+    db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS ux_${tabla}_emisor_seq ON ${tabla}(emisor, seq)`);
+  }
+  db.exec(`CREATE INDEX IF NOT EXISTS ix_bajada_pend ON bajada(emisor, ack, prioridad, seq)`);
   return db;
 }
 

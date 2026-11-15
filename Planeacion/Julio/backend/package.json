@@ -1,0 +1,13 @@
+{
+  "name": "eva-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Computadora central EVA: ingesta de tramas, registro de variables, sincronizacion y modelo LUNNA",
+  "engines": { "node": ">=22.6" },
+  "scripts": {
+    "start": "node --experimental-strip-types --disable-warning=ExperimentalWarning src/servidor.ts",
+    "sim": "node --experimental-strip-types --disable-warning=ExperimentalWarning src/simulador.ts",
+    "test": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test test/*.test.ts"
+  }
+}

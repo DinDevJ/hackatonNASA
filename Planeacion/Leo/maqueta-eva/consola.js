@@ -773,11 +773,19 @@
         </div>
         ${otros.map(([h, i, t, tt]) => `<a class="cn-boton" href="${h}" title="${tt}">${ic(i, "ic-sm")}${t}</a>`).join("")}
         ${document.documentElement.hasAttribute("data-solo-oscuro") ? "" : `<button type="button" class="cn-boton solo-ic" id="cn-tema" aria-label="Cambiar tema"></button>`}
+        <button type="button" class="cn-boton cn-idioma" id="cn-idioma" translate="no" aria-label="Idioma · Language"></button>
       </div>
       <nav class="cn-pestanas" aria-label="Vistas">${o.pestanas.map((p) => `<a href="${p.href}" data-pestana="${p.id}">${ic(p.icono)}${p.texto}<span class="cuenta" data-cuenta="${p.id}" hidden></span></a>`).join("")}</nav>
     </div>`;
     $$("#cn-dia [data-dia]").forEach((b) => b.addEventListener("click", () => ponerDia(dia + +b.dataset.dia)));
     if ($("#cn-tema")) $("#cn-tema").addEventListener("click", siguienteTema);
+    // Idioma: el botón muestra a cuál se cambia (ES ↔ EN); la traducción la hace idioma.js.
+    const I = window.Lunna && window.Lunna.idioma, bIdioma = $("#cn-idioma");
+    if (I && bIdioma) {
+      const pintarIdioma = () => { bIdioma.textContent = I.actual() === "en" ? "ES" : "EN"; bIdioma.title = I.actual() === "en" ? "Cambiar a español" : "Switch to English"; };
+      bIdioma.addEventListener("click", () => { I.alternar(); pintarIdioma(); });
+      pintarIdioma();
+    } else if (bIdioma) bIdioma.remove();
     if (window.LUNA) lunaMarca = window.LUNA.crear($("#cn-luna"), { cara: "tranquila", tam: 40, fase: 1 });
     aplicarTema();
     pintarDia();

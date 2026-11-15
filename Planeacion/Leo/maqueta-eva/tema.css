@@ -1206,3 +1206,7 @@ body { padding: 12px 0; }
    barra flotante tenía su propio vidrio (backdrop-filter) y Chrome dejaba una costura recta al hacer
    scroll. Dentro de la pantalla el desenfoque se quita; lo conservan la barra, las hojas y los avisos. */
 .pantalla, .pantalla * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+
+/* Idioma (Ajustes): dos opciones, con el código grande como en los temas. */
+.aj-idioma { grid-template-columns: repeat(2, 1fr); }
+.aj-idioma .aj-cod { font: 700 15px/1 var(--letra); letter-spacing: .04em; color: var(--acento, #2C5BD6); padding: 6px 0 2px; }

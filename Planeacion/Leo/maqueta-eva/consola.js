@@ -550,11 +550,48 @@
       backend = { version: s.version, owlt_s: +e.owlt_s || 20, abierto: e.abierto !== false };
     } catch { backend = null; }
     pintarEnlacePildora();
+    if (backend) abrirFlujo();
     return backend;
   }
-  /** Manda un aviso de Tierra por el backend de Julio (si está corriendo). */
+  // ---- puente con el backend de Julio (solo si corre) ----
+  const DESDE_BACKEND = Object.fromEntries(Object.entries(BACKEND_ID).map(([pid, id]) => [id, pid]));
+  const oyentesBk = {};
+  let flujo = null, nombresVar = {};
+  const enviarBk = async (ruta, cuerpo, metodo) => {
+    if (!backend) return null;
+    try {
+      const r = await fetch(ruta, { method: metodo || "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cuerpo) });
+      return r.ok ? await r.json() : null;
+    } catch { return null; }
+  };
+  const leerBk = async (ruta) => { if (!backend) return null; try { const r = await fetch(ruta, { cache: "no-store" }); return r.ok ? await r.json() : null; } catch { return null; } };
+  /** Eventos en vivo del backend: "tierra" (lo que llega a Tierra), "aviso", "emergencia"… */
+  function alEventoBk(tipo, f) {
+    (oyentesBk[tipo] = oyentesBk[tipo] || []).push(f);
+    if (flujo && !flujo._oye[tipo]) escuchar(tipo);
+  }
+  function escuchar(tipo) {
+    flujo._oye[tipo] = true;
+    flujo.addEventListener(tipo, (e) => { let d; try { d = JSON.parse(e.data); } catch { return; } (oyentesBk[tipo] || []).forEach((f) => f(d)); });
+  }
+  async function abrirFlujo() {
+    if (!backend || flujo) return;
+    flujo = new EventSource("/api/stream"); flujo._oye = {};
+    Object.keys(oyentesBk).forEach(escuchar);
+    const vars = await leerBk("/api/variables");
+    if (Array.isArray(vars)) nombresVar = Object.fromEntries(vars.map((v) => [v.id, v.nombre]));
+  }
+  const nombreVar = (id) => nombresVar[id] || (IND[id] && IND[id].nombre) || id;
+  /** Aviso de la CMO al teléfono de un tripulante, por la central real. */
+  const avisoAbordoBk = (m) => enviarBk("/api/abordo/avisos", { para: BACKEND_ID[m.pid] || "todos", texto: m.texto, nivel: (NIVEL_MSJ[m.nivel] || NIVEL_MSJ.aviso).backend, de: m.de || "CMO" });
+  /** Consulta de la central a Tierra: baja por el enlace real, con su retraso. */
+  const consultaBk = (m) => enviarBk("/api/central/consultas", { sobre: BACKEND_ID[m.pid] || null, texto: m.texto, nivel: (NIVEL_MSJ[m.nivel] || NIVEL_MSJ.aviso).backend, de: m.de || "CMO" });
+  const emergenciasBk = () => leerBk("/api/emergencias");
+  const bandejaBk = () => leerBk("/api/tierra/bandeja");
+
+  /** Manda un aviso de Tierra por el backend de Julio (si está corriendo). Devuelve su id o null. */
   async function avisoBackend(m) {
-    if (!backend) return false;
+    if (!backend) return null;
     const nivel = NIVEL_MSJ[m.nivel] || NIVEL_MSJ.aviso;
     const cuerpo = { tipo: nivel.backend ? "alerta" : "aviso", para: BACKEND_ID[m.pid] || "todos", texto: m.texto, de: m.de || "Cirujano de vuelo" };
     // Variable con el id del catálogo que usa el backend (signos de la playera y el brazalete).
@@ -562,8 +599,8 @@
     if (nivel.backend) { cuerpo.nivel = nivel.backend; if (m.variable) cuerpo.variable = VAR_BACKEND[m.variable] || (IND[m.variable] && IND[m.variable].varId) || m.variable; }
     try {
       const r = await fetch("/api/tierra/avisos", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cuerpo) });
-      return r.ok;
-    } catch { return false; }
+      return r.ok ? (await r.json()).id : null;
+    } catch { return null; }
   }
 
   // ---------------------------------------------------------------- escenario (lo mismo que cuenta el teléfono)
@@ -777,6 +814,7 @@
     filaVital, filaAnimo, anillo, metasYDosis, panelRegion, centroCuerpo, conectarCuerpo,
     MALESTARES, NOMBRE_VAR, indice, indices, tendencia, RUMBO, barrasIndice, detalleIndice, grafIndice,
     OWLT_ESCENARIO_MIN, owltSeg, get backend() { return backend; }, detectarBackend, avisoBackend,
+    DESDE_BACKEND, alEventoBk, nombreVar, avisoAbordoBk, consultaBk, emergenciasBk, bandejaBk,
     leerEnlace, enviarEnlace, etapa, llegados, enCamino, segTxt, NIVEL_MSJ,
     alLlegar: (f) => oyentesLlegada.push(f), alTicEnlace: (f) => oyentesEnlace.push(f),
     paquetesEscenario, notasTierra, ambiente, toast,

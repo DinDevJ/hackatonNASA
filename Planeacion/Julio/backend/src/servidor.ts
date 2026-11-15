@@ -18,6 +18,7 @@ import { readFileSync, existsSync, statSync } from 'node:fs';
 import { reiniciarEstados } from './ingesta.ts';
 import { cargarReferencias, referencias, type CargaReferencias } from './referencias.ts';
 import { estadoApp } from './app.ts';
+import { avisoAbordo, cerrarEmergencia, consultaATierra, leerEmergencias, registrarEmergencia } from './abordo.ts';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 /** App móvil del equipo (Diana, Katy): se sirve tal cual en /app/. Se puede cambiar con APP_MOVIL. */
@@ -31,7 +32,7 @@ const PUERTO = Number(process.env.PUERTO ?? 8787);
 /** Referencias clínicas (umbrales absolutos). Puede no existir. Se puede cambiar con MEDIBLES. */
 const RUTA_MEDIBLES = resolve(process.env.MEDIBLES ?? join(AQUI, '..', 'semillas', 'medibles.json'));
 /** Sube al cambiar algo que la pasarela o el simulador necesiten. */
-export const VERSION_BACKEND = '0.6.0';
+export const VERSION_BACKEND = '0.7.0';
 
 class ErrorHttp extends Error {
   estado: number;
@@ -349,10 +350,19 @@ export function construir(db: BD) {
   ruta('GET', '/api/tierra/avisos', () => todos(`SELECT * FROM subida ORDER BY id DESC LIMIT 100`));
   ruta('GET', '/api/avisos', () => todos(`SELECT * FROM subida WHERE entregado = 1 ORDER BY id DESC LIMIT 100`));
 
+  // ── A bordo: avisos de la CMO, consultas a Tierra y emergencias (abordo.ts) ──
+  const conError = async <T>(f: () => T | Promise<T>) => { try { return await f(); } catch (e) { throw new ErrorHttp(400, (e as Error).message); } };
+  ruta('POST', '/api/abordo/avisos', async (req) => conError(async () => avisoAbordo(db, await cuerpoJson(req))));
+  ruta('GET', '/api/abordo/avisos', () => todos(`SELECT * FROM abordo ORDER BY id DESC LIMIT 100`));
+  ruta('POST', '/api/central/consultas', async (req) => conError(async () => ({ ...consultaATierra(db, await cuerpoJson(req)), enlace: leerEnlace(db) })));
+  ruta('GET', '/api/emergencias', (_r, _p, q) => leerEmergencias(db, q.get('tripulante') ?? undefined));
+  ruta('POST', '/api/emergencias', async (req) => conError(async () => registrarEmergencia(db, await cuerpoJson(req))));
+  ruta('PUT', '/api/emergencias/:id', async (req, p) => conError(async () => cerrarEmergencia(db, Number(p.id), (await cuerpoJson<{ resultado: string }>(req)).resultado)));
+
   // ── Sólo para la demo: deja la misión en blanco, conserva la configuración ──
   ruta('POST', '/api/demo/reiniciar', () => {
     db.exec(`DELETE FROM muestras; DELETE FROM alertas; DELETE FROM asignaciones; DELETE FROM fases;
-             DELETE FROM bajada; DELETE FROM subida;`);
+             DELETE FROM bajada; DELETE FROM subida; DELETE FROM abordo; DELETE FROM emergencias;`);
     reiniciarEstados();
     return { ok: true };
   });
@@ -404,7 +414,7 @@ export function construir(db: BD) {
       res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
       res.write(': conectado\n\n');
       const enviar = (tipo: string) => (d: unknown) => res.write(`event: ${tipo}\ndata: ${JSON.stringify(d)}\n\n`);
-      const tipos = ['muestra', 'alerta', 'rechazo', 'tierra', 'aviso', 'enlace'];   // 'trama' no: Tierra recibe las crudas por el enlace
+      const tipos = ['muestra', 'alerta', 'rechazo', 'tierra', 'aviso', 'enlace', 'emergencia'];   // 'trama' no: Tierra recibe las crudas por el enlace
       const oyentes = tipos.map((tp) => [tp, enviar(tp)] as const);
       for (const [tp, f] of oyentes) bus.on(tp, f);
       const latido = setInterval(() => res.write(': latido\n\n'), 15000);

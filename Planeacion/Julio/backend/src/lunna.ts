@@ -78,6 +78,18 @@ export interface Evaluacion {
   z: number;
   estado: 'verde' | 'ambar' | 'rojo';
   fuera_de_banda: boolean;
+  /**
+   * P(una desviación así de grande | la persona sigue en su estado nominal).
+   * Es la P(E|H) del teorema de Bayes: cuanto más baja, menos creíble que sea ruido.
+   */
+  prob_nominal: number;
+}
+
+/** Función de error (Abramowitz y Stegun 7.1.26, error < 1,5·10⁻⁷). */
+function erf(x: number): number {
+  const s = Math.sign(x), a = Math.abs(x), t = 1 / (1 + 0.3275911 * a);
+  const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-a * a);
+  return s * y;
 }
 
 /** Centrado de covariables. Valores de referencia, no "ideales". */
@@ -161,5 +173,6 @@ export function evaluar(valor: number, pred: Prediccion, prior: Prior): Evaluaci
     z,
     estado: az >= 3 ? 'rojo' : az >= 2 ? 'ambar' : 'verde',
     fuera_de_banda: valor < pred.banda[0] || valor > pred.banda[1],
+    prob_nominal: 1 - erf(az / Math.SQRT2),
   };
 }

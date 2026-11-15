@@ -1,4 +1,5 @@
 import { test, beforeEach } from 'node:test';
+import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { abrir, type BD } from '../src/db.ts';
 import { cargarInicial } from '../src/semillas.ts';
@@ -15,7 +16,7 @@ let db: BD;
 beforeEach(() => {
   reiniciarEstados();
   db = abrir(':memory:');
-  cargarInicial(db, new URL('../semillas/inicial.json', import.meta.url).pathname);
+  cargarInicial(db, fileURLToPath(new URL('../semillas/inicial.json', import.meta.url)));
   db.prepare(`INSERT INTO fases VALUES (?, 'orbita')`).run(T0);
   db.prepare(`INSERT INTO asignaciones (dispositivo, tripulante, desde) VALUES (102, 'ana', ?)`).run('2026-12-01T00:00:00Z');
 });

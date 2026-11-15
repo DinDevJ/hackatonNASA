@@ -261,7 +261,7 @@ function vigilar(db: BD, tripulante: string, variable: string, t: string): void 
   if (ev.estado !== 'verde') ultimoEstado.set(`${k}|alertado`, '1');
 
   const alerta = {
-    tripulante, variable, estado: ev.estado, z: Number(ev.z.toFixed(2)), valor,
+    tripulante, variable, estado: ev.estado, z: Number(ev.z.toFixed(2)), prob_nominal: Number(ev.prob_nominal.toPrecision(3)), valor,
     esperado: Number(pred.esperado.toFixed(2)), banda: pred.banda.map((x) => Number(x.toFixed(2))),
     t_scet: t, entorno: pred.entorno, extrapolado: pred.extrapolado, pesos: pred.pesos,
   };

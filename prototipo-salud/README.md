@@ -221,6 +221,13 @@ vuelo) que solo ejercita el flujo y nunca se mezcla con datos reales. **Todos lo
 validado en astronautas y nada es un diagnóstico**; las reglas R1–R5 y la FEVE no mueven este semáforo. Interfaces,
 decisiones y límites: `motor/DISENO.md`. Instalación sobre una copia existente: `NOTA-INSTALACION-PADECIMIENTOS.md`.
 
+### Validación y ejemplos (`validacion/`)
+- `python -m validacion.inspiration4 [--rellenar-simulado]`: prueba con laboratorios abiertos de Inspiration4 (OSDR OSD-569/575).
+  Solo reales: todo GRIS (3 tomas prevuelo < 5). Con relleno SIMULADO: ningún ROJO; coincide en el potasio bajo de C003 en R+1.
+  No prueba nada clínico. Ver `validacion/README.md`.
+- `python -m validacion.ejemplo_aprende`: autocalibración personal con datos SIMULADO. La misma FC de 85 lpm da z personal 9.17
+  (alerta) en SIM-A, con base 58.1 lpm, y 0.43 (normal) en SIM-B, con base 83.6 lpm; z poblacional 1.32 en ambos.
+
 ## Base de la nave (eva.db, opcional)
 
 El motor puede leer las muestras de la base de la nave (Planeacion/Julio/backend) y guardar ahí sus evaluaciones y los

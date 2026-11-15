@@ -133,3 +133,18 @@ Paleta: `#B541FA` morado · `#4FD2E9` cian · blanco · `#192584` azul profundo 
 
 `index.html` · `estilos.css` · `luna.js` (avatar y fases) · `datos.js` (datos simulados con semilla fija) ·
 `app.js` (pantallas, tutoriales, emergencia) · `demo.js` (demo automática).
+
+## Conectada al backend de EVA (notificaciones de Tierra)
+
+Con el backend corriendo (`cd Planeacion/Julio/backend && npm start`), la app se sirve en
+**http://localhost:8787/app/** y también se abre al tocar el smartphone en el simulador
+(`/simulador`, pestaña *Frontend*; *Backend* muestra la terminal del teléfono).
+
+`notificaciones.js` escucha los avisos y las alertas que el cirujano de vuelo manda desde la
+consola de Tierra (`/tierra`) y, cuando llegan a bordo, los muestra como notificación del
+teléfono: arriba, sobre la app, con vibración si el equipo la tiene. Las alertas rojas se quedan
+hasta descartarlas; las demás se van solas. Un toque abre el texto completo; el segundo, la
+pantalla de Tierra.
+
+- La ve la persona activa si el mensaje es para ella o para toda la tripulación; la CMO ve todos.
+- Abierta sola con `python -m http.server`, no hay backend y este archivo no hace nada.

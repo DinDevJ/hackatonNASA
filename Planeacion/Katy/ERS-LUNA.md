@@ -1,15 +1,33 @@
-# ERS · Especificación de Requisitos de Software de LUNA
+# ERS · Especificación de Requisitos de Software de Lunna
 
 Equipo Monarcas · NASA Space Apps 2026 · reto *Create Health Monitoring Software for
 Astronauts on Space Missions*
 
 | Campo | Valor |
 |---|---|
-| Producto | **LUNA** (antes EVA) |
+| Producto | **Lunna** (antes EVA y Lunna) |
 | Versión del documento | 1.0 · 14 nov 2026 |
 | Base | ISO/IEC/IEEE 29148:2018 (sucesora de IEEE 830), adaptada a un hackathon |
 | Fuentes internas | [Propuesta unificada](Propuesta-EVA.md) · documentos de Julio, Iker, Leo, Diana, Fani y Katy (enlazados en cada sección) |
 | Entrega | **Domingo 15 nov 2026, 11:59 p.m. hora local** |
+
+> **Actualización · 14 nov 2026 (auditoría de Lunna).** El producto se llama **Lunna**: antes
+> se llamó EVA y LUNA. Los identificadores técnicos `eva.ble.v1`, `eva.telemetry.v1` y
+> `EVA-SIM` se conservan (C-08). Estructura actual de la app móvil
+> (`Planeacion/Leo/maqueta-eva/`):
+>
+> | Pestaña | Qué tiene |
+> |---|---|
+> | **Inicio** | Cuerpo Lunna primero (escáner con zoom al órgano), clima espacial, tarjetas de alerta y mosaico con los seis indicadores del reto |
+> | **Registrar** | Lo que los sensores no miden: check-in, presión, temperatura, agua, masa, comida, síntomas, mente, tira de orina |
+> | **Ciclo** | Solo para ellas y privado; en fase lútea, tu normal de pulso y HRV se ensancha 1,5× (propuesta del equipo) |
+> | **Reportes** | Alertas, signos, reflejos (PVT-B), radiación con dosis personal, Tierra, vista de la CMO, logros |
+> | **Ajustes** | Persona y día (se guardan juntos), tema, privacidad, Lunna, ayuda |
+> | **Lunna flotante** | Burbuja tipo AssistiveTouch sobre todas las pantallas: lo que ve hoy, cómo monitorea, clima, qué procesa |
+>
+> Comportamiento corregido en la auditoría: el SOS atiende a quien lo presiona (o a quien se
+> elija) y se puede cancelar; "Volver" usa una pila de navegación; lo que se registra hoy
+> reemplaza el valor simulado del día y se recalcula todo.
 
 **Cómo se lee:**
 
@@ -39,7 +57,7 @@ Astronauts on Space Missions*
 9. [Casos de uso y escenarios](#9-casos-de-uso-y-escenarios)
 10. [Trazabilidad con el reto y el jurado](#10-trazabilidad-con-el-reto-y-el-jurado)
 11. [Estado actual del código](#11-estado-actual-del-código)
-12. [Fuera de alcance y concepto LUNA Band](#12-fuera-de-alcance-y-concepto-luna-band)
+12. [Fuera de alcance y concepto Lunna Band](#12-fuera-de-alcance-y-concepto-lunna-band)
 13. [Criterios de aceptación de la demo](#13-criterios-de-aceptación-de-la-demo)
 14. [Inconsistencias y decisiones pendientes](#14-inconsistencias-y-decisiones-pendientes)
 15. [Glosario](#15-glosario)
@@ -51,13 +69,13 @@ Astronauts on Space Missions*
 
 ### 1.1 Propósito
 
-Este documento dice **qué tiene que hacer LUNA**, con qué datos y con qué reglas, para que el
+Este documento dice **qué tiene que hacer Lunna**, con qué datos y con qué reglas, para que el
 equipo sepa qué construir y el jurado pueda comprobar que cada función tiene un fundamento.
 Junta en un solo lugar lo que está repartido en las propuestas y el código del equipo.
 
 ### 1.2 Alcance
 
-LUNA es un software de monitoreo de salud para tripulaciones de misiones largas. Su cadena es:
+Lunna es un software de monitoreo de salud para tripulaciones de misiones largas. Su cadena es:
 
     Recabar → Organizar → Monitorear → Prevenir → Asistir en emergencias
 
@@ -68,22 +86,22 @@ LUNA es un software de monitoreo de salud para tripulaciones de misiones largas.
 - **Prevenir:** reglas multivariables auditables con protocolo, seguimiento y cierre.
 - **Asistir:** modo emergencia, buddy check, guía paso a paso y paquete prioritario a Tierra.
 
-**Lo que LUNA no es:** no es un dispositivo médico, no diagnostica, no sustituye al CMO ni al
+**Lo que Lunna no es:** no es un dispositivo médico, no diagnostica, no sustituye al CMO ni al
 cirujano de vuelo, y no inventa protocolos clínicos (§8).
 
 **Tesis** ([Julio](../Julio/comportamiento-del-software.md)): el monitoreo diario existe para
-que, cuando pase lo malo, LUNA ya sepa cómo es esa persona cuando está bien.
+que, cuando pase lo malo, Lunna ya sepa cómo es esa persona cuando está bien.
 
 ### 1.3 Por qué tiene que decidir a bordo
 
-- NASA tardó una **mediana de 17 min** en emitir la alerta de un evento solar (análisis de
+- NASA tardó una **mediana de 17 min** (sobre 51 eventos de dos ventanas de 2024; con los 71 eventos de 2024 que tienen alerta sale **12 min**) en emitir la alerta de un evento solar (análisis de
   Julio con DONKI) ✅.
 - Hasta Marte, cada mensaje tarda **4 a 24 min** en llegar; ida y vuelta, hasta ~48 min ✅.
 - La propia literatura de NASA dice que el paradigma médico actual será insuficiente para la
   Luna y Marte por los retrasos de comunicación ✅
   ([comportamiento §1](../Julio/comportamiento-del-software.md#1-actores-del-sistema)).
 - **No hay una tabla pública de NASA** de "signo vital X > Y → llamar al cirujano"; por eso
-  LUNA compara a cada persona consigo misma (Iker) ✅.
+  Lunna compara a cada persona consigo misma (Iker) ✅.
 
 ### 1.4 Documentos relacionados
 
@@ -101,7 +119,7 @@ que, cuando pase lo malo, LUNA ya sepa cómo es esa persona cuando está bien.
 | [Viabilidad de Diana](../Diana/viabilidad/RESULTADOS-diana.md) | Reglas YAML probadas (30/30) |
 | [Viabilidad de Katy](viabilidad/RESULTADOS-viabilidad.md) · [variables Persona 5](investigacion-variables-persona5.md) | Orina, intestino, hueso, salud femenina |
 | [Módulo biomédico (Bloque 2)](../../BLOQUE-2/readme_m_dulo_biom_dico_nasa_space_apps_2026.md) | Motor Python de radiación, riñón, hueso, laboratorio |
-| [Concepto de reloj](Propuesta-reloj-LUNA.md) | LUNA Band (no se programa) |
+| [Concepto de reloj](Propuesta-reloj-LUNA.md) | Lunna Band (no se programa) |
 
 ---
 
@@ -109,12 +127,12 @@ que, cuando pase lo malo, LUNA ya sepa cómo es esa persona cuando está bien.
 
 ### 2.1 Perspectiva del producto
 
-LUNA es **software independiente del hardware**. No habla con relojes: habla con una trama.
+Lunna es **software independiente del hardware**. No habla con relojes: habla con una trama.
 Cualquier fuente que la cumpla (reloj, camiseta, hábitat, captura manual o datos sintéticos)
 entra por un adaptador, y el motor no sabe qué hay detrás.
 
 ```
- FUENTES                         LUNA (a bordo, sin red)                    SALIDAS
+ FUENTES                         Lunna (a bordo, sin red)                    SALIDAS
 ┌───────────────────┐   ┌──────────────────────────────────────────┐   ┌─────────────────┐
 │ Dispositivo BLE   │──►│ Adaptador → validador → almacén cifrado  │──►│ Laptop: panel   │
 │ (eva.ble.v1)      │   │        │                                 │   │ iPad: personal  │
@@ -175,7 +193,7 @@ entra por un adaptador, y el motor no sabe qué hay detrás.
 | C-05 | Sin imágenes ni voces de menores de 18 años | Space Apps ✅ |
 | C-06 | Licencias de datos respetadas (CGMacros sin uso comercial, etc.) | Leo ✅ |
 | C-07 | No se suben datasets descargados ni claves al repo | Equipo 🔶 |
-| C-08 | Los identificadores técnicos `eva.ble.v1`, `eva.telemetry.v1` y `EVA-SIM` **se conservan** aunque el producto se llame LUNA: cambiarlos rompería el código probado | 🔶 propuesta de este ERS |
+| C-08 | Los identificadores técnicos `eva.ble.v1`, `eva.telemetry.v1` y `EVA-SIM` **se conservan** aunque el producto se llame Lunna: cambiarlos rompería el código probado | 🔶 propuesta de este ERS |
 
 ### 2.6 Suposiciones y dependencias
 
@@ -206,11 +224,11 @@ entra por un adaptador, y el motor no sabe qué hay detrás.
 
 ### 3.2 Interfaz con dispositivos (Bluetooth)
 
-LUNA no programa ningún reloj. Define lo que **cualquier** dispositivo tiene que entregar.
+Lunna no programa ningún reloj. Define lo que **cualquier** dispositivo tiene que entregar.
 
 | ID | Requisito | Prior. | Estado |
 |---|---|---|---|
-| RI-HW-01 | LUNA **debe** leer la trama `eva.ble.v1`: paquetes de 20 bytes, servicio `4d6f6e61-7263-6173-4556-41000000000x` | 🔴 | ✅ códec, 19/19 pruebas |
+| RI-HW-01 | Lunna **debe** leer la trama `eva.ble.v1`: paquetes de 20 bytes, servicio `4d6f6e61-7263-6173-4556-41000000000x` | 🔴 | ✅ códec, 19/19 pruebas |
 | RI-HW-02 | **Debe** entender los 4 tipos de paquete: `VITALES` (1 s), `LATIDOS` (1 s), `HABITAT` (5 s), `EVENTO` (botón) | 🔴 | ✅ |
 | RI-HW-03 | **Debe** leer la característica `CAPACIDADES` y **no mostrar** la pantalla de una variable que el dispositivo no da (ni vacía ni en cero) | 🔴 | ✅ en la trama · ⬜ en la UI |
 | RI-HW-04 | Un campo con valor reservado (`0xFF`, `0xFFFF`, `0x7FFF`) **debe** llegar como `null`, nunca como cero | 🔴 | ✅ |
@@ -256,7 +274,7 @@ LUNA no programa ningún reloj. Define lo que **cualquier** dispositivo tiene qu
 
 Los **22 módulos** de la propuesta. Ninguno se quita: la prioridad decide el orden.
 
-### 4.1 🔴 Módulo 1 · Panel de salud y Cuerpo LUNA
+### 4.1 🔴 Módulo 1 · Panel de salud y Cuerpo Lunna
 
 **De quién:** Katy · Fani · Diana · Iker
 
@@ -340,7 +358,7 @@ Los **22 módulos** de la propuesta. Ninguno se quita: la prioridad decide el or
 | RF-05-04 | **Debe** recordar mediciones dentro de la rutina (check-in matutino, PVT-B, presión, agua) | Notificación a la hora programada | ⬜ |
 | RF-05-05 | **Debe** preguntar "¿Estás bien?" ante una lectura crítica y escalar si no hay respuesta | 15 s sin respuesta → alerta al compañero | ⬜ |
 | RF-05-06 | La emergencia **debe** verse igual en los tres: ▲ rojo a pantalla completa con la instrucción | Mismo texto en los tres tamaños | ⬜ |
-| RF-05-07 | Las notificaciones de la pantalla bloqueada **no deben** tener texto médico | "LUNA tiene un aviso para ti" | ⬜ |
+| RF-05-07 | Las notificaciones de la pantalla bloqueada **no deben** tener texto médico | "Lunna tiene un aviso para ti" | ⬜ |
 
 ### 4.6 🔴 Módulo 6 · Privacidad: quién ve qué
 
@@ -488,7 +506,7 @@ Los **22 módulos** de la propuesta. Ninguno se quita: la prioridad decide el or
 | RF-21-01 | 21 Cognición | **Debería** comparar DSST y Fractal 2-Back contra la basal (alerta con z ≤ −1,5 [A]) | ⬜ |
 | RF-21-02 | 21 Cognición | **Debería** repetir pruebas en cada cambio de gravedad (tándem, Romberg, funcionales como formularios de posvuelo) | ✅ formularios (Leo) |
 | RF-22-01 | 22 Hardware real | **Debe** tener adaptadores para cualquier fuente: reloj BLE, Bio-Monitor, ultrasonido, hábitat | ✅ reloj y manual · ⬜ resto |
-| RF-22-02 | 22 Hardware real | El reloj LUNA Band **se presenta como concepto** (§12) | 💡 |
+| RF-22-02 | 22 Hardware real | El reloj Lunna Band **se presenta como concepto** (§12) | 💡 |
 
 ### 4.17 Funciones transversales
 
@@ -540,7 +558,7 @@ Los **22 módulos** de la propuesta. Ninguno se quita: la prioridad decide el or
 | `ruido` | `04:A28` | dBA | 5 s | ✅ | 16 |
 | `lux` | `03:V49` Luz | lux | 5 s | ✅ | 2 |
 
-### 5.3 Variables que LUNA calcula
+### 5.3 Variables que Lunna calcula
 
 | Se calcula | A partir de | Variable | Estado |
 |---|---|---|---|
@@ -580,7 +598,7 @@ Los **22 módulos** de la propuesta. Ninguno se quita: la prioridad decide el or
 | Salud reproductiva y hormonal nueva (`R01`–`R24`) | 24 |
 | **Total de trabajo** | **388**, repartidas entre 5 personas ([asignación](../ASIGNACION_VARIABLES_MONARCAS.md)) |
 
-LUNA no usa las 388 en la demo. Usa las de §5.2–§5.4; el resto queda documentado con su
+Lunna no usa las 388 en la demo. Usa las de §5.2–§5.4; el resto queda documentado con su
 fuente, su nivel de obtención y si se puede medir en vuelo.
 
 ---
@@ -680,7 +698,7 @@ Excepción única al ✋ del diario: **riesgo de hacerse daño** → CMO y ciruj
 
 | ID | Requisito | Medida |
 |---|---|---|
-| RNF-DIS-01 | LUNA **debe** funcionar sin ninguna red | Demo completa en modo avión |
+| RNF-DIS-01 | Lunna **debe** funcionar sin ninguna red | Demo completa en modo avión |
 | RNF-DIS-02 | La app **debe** instalarse como PWA y abrir sin conexión (service worker) | Abre con la red apagada |
 | RNF-DIS-03 | Si el LLM o la voz fallan, el semáforo y las alertas **deben** seguir | Prueba con el LLM apagado |
 | RNF-DIS-04 | Si se pierde la conexión con una fuente, **debe** decirlo y mostrar la hora del último dato | "sin conexión" en ≤ 10 s |
@@ -748,9 +766,9 @@ Reglas que **no se negocian**. Un jurado técnico las lee como criterio.
 
 | ID | Regla |
 |---|---|
-| RS-01 | LUNA **avisa, no diagnostica.** Cada aviso dice qué vio y de dónde sale el umbral |
+| RS-01 | Lunna **avisa, no diagnostica.** Cada aviso dice qué vio y de dónde sale el umbral |
 | RS-02 | **El contenido clínico no se inventa.** Todo paso clínico va marcado "ilustrativo" o con fuente citada (la RCP en microgravedad es distinta y no la conocemos) |
-| RS-03 | LUNA **nunca** se presenta como sustituto del CMO ni del entrenamiento médico |
+| RS-03 | Lunna **nunca** se presenta como sustituto del CMO ni del entrenamiento médico |
 | RS-04 | El modo emergencia lleva un aviso visible de lo anterior |
 | RS-05 | **La detección de crisis no la decide el LLM.** Se dispara por regla; la conversación se detiene, aparece "contacta al CMO ahora" y el modelo no genera más |
 | RS-06 | La SpO₂ de muñeca **nunca** es la única alerta; se confirma con el pulsioxímetro |
@@ -768,8 +786,8 @@ Reglas que **no se negocian**. Un jurado técnico las lee como criterio.
 | | |
 |---|---|
 | Actor | Astronauta |
-| Disparo | 07:30, abre LUNA en el iPad |
-| Flujo | 1. LUNA ya sincronizó la noche (sueño, HRV, FC en reposo). 2. Check-in de 20 s. 3. PVT-B de 3 min. 4. El motor calcula z contra 14 días y evalúa el YAML. 5. Semáforo, el porqué y qué hacer |
+| Disparo | 07:30, abre Lunna en el iPad |
+| Flujo | 1. Lunna ya sincronizó la noche (sueño, HRV, FC en reposo). 2. Check-in de 20 s. 3. PVT-B de 3 min. 4. El motor calcula z contra 14 días y evalúa el YAML. 5. Semáforo, el porqué y qué hacer |
 | Resultado | Estado del día en ≤ 4 min |
 | Requisitos | RF-TR-01, RF-TR-02, RF-02-01 a 05, RF-08-01 |
 
@@ -803,14 +821,14 @@ Reglas que **no se negocian**. Un jurado técnico las lee como criterio.
 | | |
 |---|---|
 | Actor | Rescatista (cualquier tripulante) |
-| Flujo | 1. Un toque en el botón de emergencia. 2. "¿Quién es el paciente?" 3. LUNA trae su línea base. 4. Abre el registro con SCET en T+0. 5. Avisa al CMO salvo que sea el paciente. 6. Pasos uno por pantalla, sellados. 7. Paquete prioritario |
+| Flujo | 1. Un toque en el botón de emergencia. 2. "¿Quién es el paciente?" 3. Lunna trae su línea base. 4. Abre el registro con SCET en T+0. 5. Avisa al CMO salvo que sea el paciente. 6. Pasos uno por pantalla, sellados. 7. Paquete prioritario |
 | Requisitos | RF-03-01 a 08 |
 
 ### CU-05 · Hipoxia (ilustrativo, maqueta de Leo)
 
 SpO₂ 97 → 84 %, pulso 62 → 128, respiración 14 → 26, presión 116/74 → 94/60. Se activa
 sola por SpO₂; el avatar mengua; los pasos dicen "ilustrativo". Si el O₂ de cabina también
-está bajo, LUNA dice que afecta a todos. Requisitos: RF-03-01, RF-03-15, RF-19-06, §6.1.
+está bajo, Lunna dice que afecta a todos. Requisitos: RF-03-01, RF-03-15, RF-19-06, §6.1.
 
 ### CU-06 · Check-in de salud mental con ítem 9
 
@@ -820,11 +838,11 @@ total sea bajo; el asistente se detiene. Requisitos: RF-08-02 a 05, RS-05.
 ### CU-07 · Tira de orina por foto
 
 Foto con el iPad → modelo o colorimetría → densidad y proteína. Si la orina está
-concentrada, LUNA no alarma por proteína sola. Requisitos: RF-10-10, §6.3.
+concentrada, Lunna no alarma por proteína sola. Requisitos: RF-10-10, §6.3.
 
 ### CU-08 · Dispositivo nuevo
 
-Se conecta una fuente que no da HRV. LUNA lee `CAPACIDADES` y la pantalla de HRV **no
+Se conecta una fuente que no da HRV. Lunna lee `CAPACIDADES` y la pantalla de HRV **no
 aparece**. Requisitos: RI-HW-03, RNF-POR-03.
 
 ---
@@ -835,7 +853,7 @@ aparece**. Requisitos: RI-HW-03, RNF-POR-03.
 
 Fuente: [página del reto](https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/) ✅.
 
-| El reto pide o sugiere | Requisitos de LUNA |
+| El reto pide o sugiere | Requisitos de Lunna |
 |---|---|
 | Herramienta visual para que el astronauta evalúe su propia salud | RF-01-01 a 07 |
 | Guía de tratamientos y mejoras | RF-02-06, RF-07-05, RF-13-01 |
@@ -884,11 +902,11 @@ Fuente: [página del reto](https://www.spaceappschallenge.org/2026/challenges/he
 
 ---
 
-## 12. Fuera de alcance y concepto LUNA Band
+## 12. Fuera de alcance y concepto Lunna Band
 
 | Fuera de alcance | Por qué |
 |---|---|
-| **Software de reloj** | El reto pide software; LUNA recibe datos de cualquier dispositivo por la trama |
+| **Software de reloj** | El reto pide software; Lunna recibe datos de cualquier dispositivo por la trama |
 | Diagnóstico médico | RS-01 |
 | Protocolos clínicos reales | RS-02 |
 | Laboratorio en tiempo real (sangre, orina de laboratorio) | A bordo las muestras se congelan y se analizan en Tierra |
@@ -896,9 +914,9 @@ Fuente: [página del reto](https://www.spaceappschallenge.org/2026/challenges/he
 | Polisomnografía, EEG, Epworth | Sin equipo operativo o con licencia (Leo) |
 | Certificación de vuelo | Fuera del hackathon |
 
-**LUNA Band (💡 concepto, una diapositiva):** un celular o un iPad no se lleva siempre
+**Lunna Band (💡 concepto, una diapositiva):** un celular o un iPad no se lleva siempre
 puesto, y a bordo no hay ningún equipo que se lleve siempre, mida signos vitales sin parar y
-avise a la tripulación. LUNA Band sería la siguiente fuente de datos de LUNA y hablaría la
+avise a la tripulación. Lunna Band sería la siguiente fuente de datos de Lunna y hablaría la
 misma trama `eva.ble.v1`. Qué mediría que la camiseta Bio-Monitor no mide, cómo ayudaría en
 emergencias y qué haría falta para que vuele:
 [Propuesta-reloj-LUNA.md](Propuesta-reloj-LUNA.md).
@@ -931,11 +949,11 @@ pausa todo lo 🟡 y 🔵 y el equipo completo termina el núcleo.
 
 | # | Tema | Qué pasa | Qué hacer |
 |---|---|---|---|
-| 1 | **Número de eventos de DONKI** | Son conjuntos distintos, no un error: **51** eventos de dos ventanas de 2024 (la mediana de 17 min se calculó sobre ellos), **119** de todo 2024 (bajados después) y **71** de esos 119 con alerta emitida (análisis de Katy) | Al citar la mediana de 17 min, decir "sobre 51 eventos"; o que Julio la recalcule con los 119 |
-| 2 | **Nombre del asistente** | La maqueta de Leo llama "Luna" al asistente y "EVA" a la app; ahora el producto es LUNA | Decidir si el asistente también se llama Luna o tiene otro nombre |
+| 1 | **Número de eventos de DONKI** | Son conjuntos distintos, no un error: **51** eventos de dos ventanas de 2024 (la mediana de 17 min se calculó sobre ellos), **119** de todo 2024 (bajados después) y **71** de esos 119 con alerta emitida (análisis de Katy) | Citar siempre la cifra con su conjunto: **17 min sobre 51 eventos**; **12 min sobre los 71 de 2024 con alerta** (recalculado el 14 nov con `donki-sep-2024-01-01_2024-12-31.json`; un evento tiene la alerta 39 min antes de la hora registrada) |
+| 2 | **Nombre del asistente** | La maqueta de Leo llama "Luna" al asistente y "EVA" a la app; ahora el producto es Lunna | Decidir si el asistente también se llama Luna o tiene otro nombre |
 | 3 | **Huawei Watch 5** | El código de Leo y de Julio tiene adaptadores para el Watch 5; la decisión nueva es no programar reloj | Dejarlos como **un adaptador más** (RF-22-01), sin presentarlo como el producto |
 | 4 | **Identificadores `eva.*`** | El código usa `eva.ble.v1`, `eva.telemetry.v1`, `EVA-SIM` | Conservarlos (C-08) o renombrar todo junto antes de la demo |
-| 5 | **"¿Por qué LUNA si la demo va a Marte?"** | Pregunta probable del jurado | Definir la respuesta de una frase |
+| 5 | **"¿Por qué Lunna si la demo va a Marte?"** | Pregunta probable del jurado | Definir la respuesta de una frase |
 | 6 | Umbral de alarma de dosis | 3000 µSv/h sale de la ISS, con 1 Gy ≈ 1 Sv | Mantener ⚠️ en pantalla |
 | 7 | Umbrales de SpO₂ y fiebre | ≤ 92 / ≤ 88 % y ≥ 39,4 °C son propuesta, no oficiales | Rotularlos 🔶 |
 | 8 | Glucómetro a bordo | No encontrado | Entrada manual |

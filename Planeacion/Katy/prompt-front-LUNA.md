@@ -1,13 +1,31 @@
-# Prompt para desarrollar el front de LUNA
+# Prompt para desarrollar el front de Lunna
 
 Pégalo completo en un agente de código (Claude Code, Cursor, etc.) abierto en la raíz del repo
 `hackatonNASA`. Está dividido en partes: contexto, estructura común, **los 22 módulos uno por
 uno**, orden de construcción, reglas y criterios de aceptación.
 
+> **Actualización · 14 nov 2026 (auditoría de Lunna).** El producto se llama **Lunna**: antes
+> se llamó EVA y LUNA. Los identificadores técnicos `eva.ble.v1`, `eva.telemetry.v1` y
+> `EVA-SIM` se conservan (C-08). Estructura actual de la app móvil
+> (`Planeacion/Leo/maqueta-eva/`):
+>
+> | Pestaña | Qué tiene |
+> |---|---|
+> | **Inicio** | Cuerpo Lunna primero (escáner con zoom al órgano), clima espacial, tarjetas de alerta y mosaico con los seis indicadores del reto |
+> | **Registrar** | Lo que los sensores no miden: check-in, presión, temperatura, agua, masa, comida, síntomas, mente, tira de orina |
+> | **Ciclo** | Solo para ellas y privado; en fase lútea, tu normal de pulso y HRV se ensancha 1,5× (propuesta del equipo) |
+> | **Reportes** | Alertas, signos, reflejos (PVT-B), radiación con dosis personal, Tierra, vista de la CMO, logros |
+> | **Ajustes** | Persona y día (se guardan juntos), tema, privacidad, Lunna, ayuda |
+> | **Lunna flotante** | Burbuja tipo AssistiveTouch sobre todas las pantallas: lo que ve hoy, cómo monitorea, clima, qué procesa |
+>
+> Comportamiento corregido en la auditoría: el SOS atiende a quien lo presiona (o a quien se
+> elija) y se puede cancelar; "Volver" usa una pila de navegación; lo que se registra hoy
+> reemplaza el valor simulado del día y se recalcula todo.
+
 ---
 
 ```text
-Eres el desarrollador front de LUNA, un software de monitoreo de salud para astronautas
+Eres el desarrollador front de Lunna, un software de monitoreo de salud para astronautas
 (NASA Space Apps 2026, reto "Create Health Monitoring Software for Astronauts on Space
 Missions"). Equipo Monarcas. La entrega es el domingo 15 nov 2026 a las 11:59 p.m.:
 prioriza que el núcleo funcione de punta a punta antes que cualquier extra.
@@ -34,10 +52,10 @@ PARTE 1 · CONTEXTO
 Si dos documentos se contradicen, sigue el ERS y anótalo en tu reporte final. No inventes
 lo que no esté escrito: pregunta.
 
-## 1.2 Qué es LUNA
+## 1.2 Qué es Lunna
 
 Cadena: Recabar → Organizar → Monitorear → Prevenir → Asistir en emergencias.
-Tesis: el monitoreo diario existe para que, cuando pase lo malo, LUNA ya sepa cómo es esa
+Tesis: el monitoreo diario existe para que, cuando pase lo malo, Lunna ya sepa cómo es esa
 persona cuando está bien. Por eso todo se compara contra "tu normal" (línea base de 14 días).
 
 ## 1.3 Contexto de la demo (úsalo en todas las pantallas)
@@ -78,11 +96,11 @@ Porta el diseño; no lo rediseñes.
   usa el parche del equipo y el texto "proyecto para NASA Space Apps Challenge 2026".
 
 Cambios obligatorios respecto a la maqueta:
-- El producto se llama LUNA (la maqueta dice EVA). NO renombres `eva.ble.v1`,
+- El producto se llama Lunna (la maqueta dice EVA). NO renombres `eva.ble.v1`,
   `eva.telemetry.v1` ni `EVA-SIM`: rompería código probado.
 - Retraso con Tierra: 18 min (la maqueta dice 12).
 - Selector de idioma español / inglés; todas las cadenas en archivos de traducción.
-- El asistente se llama "Luna" mientras el equipo no decida otra cosa.
+- El asistente se llama "Lunna", igual que la app.
 
 ## 1.6 Datos: reutiliza, no reescribas
 
@@ -152,7 +170,7 @@ Cada módulo dice: para qué sirve, quién lo ve, qué muestra en cada tamaño, 
 estados, datos, reglas, IDs del ERS y cuándo está terminado.
 
 ──────────────────────────────────────────────────────────────────────────────
-M1 · INICIO Y CUERPO LUNA (el dashboard) 🔴
+M1 · INICIO Y CUERPO Lunna (el dashboard) 🔴
 ──────────────────────────────────────────────────────────────────────────────
 Para qué: en 5 segundos, saber cómo estoy hoy y qué tengo que mirar.
 Quién: cada astronauta ve lo suyo. (El estado de los demás está en M10.)
@@ -161,7 +179,7 @@ Qué muestra:
 - Saludo + Luna con su globo: "Todo va bien, pero hay 2 cosas que vale la pena mirar hoy."
 - Tarjeta de clima espacial (último evento de DONKI, abre M9).
 - Tarjetas de alerta abiertas (abren M3), arriba de todo si hay ámbar o rojo.
-- **Cuerpo LUNA:** figura humana neutra, de frente, con regiones clicables. Cada región se
+- **Cuerpo Lunna:** figura humana neutra, de frente, con regiones clicables. Cada región se
   pinta con el PEOR estado de sus indicadores y lleva su forma (● ■ ▲) para no depender
   del color:
   | Región | Indicadores | Peligro HRP |
@@ -372,7 +390,7 @@ Terminado cuando: Mei ve la alerta de Ana con su evidencia y no ve el diario de 
 ──────────────────────────────────────────────────────────────────────────────
 M12 · COMUNICACIÓN CON TIERRA 🔴
 ──────────────────────────────────────────────────────────────────────────────
-Para qué: mostrar por qué LUNA decide a bordo: Tierra siempre llega tarde.
+Para qué: mostrar por qué Lunna decide a bordo: Tierra siempre llega tarde.
 Qué muestra:
 - Cola de salida priorizada: rojos abiertos → ámbares → resúmenes diarios → series crudas.
   Cada paquete con su SCET y estado (en cola / enviado / recibido).
@@ -403,7 +421,7 @@ Terminado cuando: cambiando de Ana a Tomás, el corazón de Ana deja de verse y 
 "apta"; la ubicación de Mei solo aparece durante el evento solar.
 
 ──────────────────────────────────────────────────────────────────────────────
-M14 · ASISTENTE LUNA (voz y globo) 🔴
+M14 · ASISTENTE Lunna (voz y globo) 🔴
 ──────────────────────────────────────────────────────────────────────────────
 Para qué: decir en lenguaje humano lo que el motor ya decidió.
 Qué muestra: el avatar con su fase y su globo en todas las pantallas; botón de voz;
@@ -483,7 +501,7 @@ M21 · AYUDA Y AJUSTES 🔴
 ──────────────────────────────────────────────────────────────────────────────
 Base: Ayuda de la maqueta.
 Qué muestra: repetir tutoriales, glosario simple (SCET, CMO, tu normal, [A]/[T]), idioma
-ES/EN, personalidad del asistente, "qué es real y qué es simulado", aviso "LUNA no es un
+ES/EN, personalidad del asistente, "qué es real y qué es simulado", aviso "Lunna no es un
 dispositivo médico", créditos y fuentes.
 ERS: RI-UI-06, RI-UI-08, RNF-USA-04.
 
@@ -502,7 +520,7 @@ ERS: RF-TR-04, §13.
 NO SE PROGRAMAN (🔵 o concepto)
 ──────────────────────────────────────────────────────────────────────────────
 Botiquín, perfiles de entorno, motor diagnóstico probabilístico, DTN, pruebas cognitivas
-largas, conexión con hardware real y el reloj LUNA Band. Como mucho, una pantalla de
+largas, conexión con hardware real y el reloj Lunna Band. Como mucho, una pantalla de
 "visión" en Ayuda con texto e imagen.
 
 ══════════════════════════════════════════════════════════════════════════════
@@ -525,7 +543,7 @@ PARTE 4 · ORDEN DE CONSTRUCCIÓN
 PARTE 5 · REGLAS QUE NO SE NEGOCIAN (ERS §8)
 ══════════════════════════════════════════════════════════════════════════════
 
-- LUNA avisa, no diagnostica. Cada aviso dice qué vio y de dónde sale el umbral.
+- Lunna avisa, no diagnostica. Cada aviso dice qué vio y de dónde sale el umbral.
 - No inventes contenido clínico. Todo paso clínico va marcado "Ilustrativo" o con fuente.
 - La SpO₂ de muñeca nunca es la única alerta.
 - Un valor estimado nunca se muestra sin su incertidumbre.

@@ -269,18 +269,19 @@
   // ================================================================ vista: Hoy
   function vistaHoy(p) {
     K.marcarPestana("hoy");
+    // La tripulación va primero y a todo lo ancho: los cuerpos son lo que el cirujano de vuelo mira primero.
     p.innerHTML = `${K.tarjetaMision({ etq: `Lo que llegó de la nave · ${SCET()}`, extra: `<p class="cn-nota" style="margin-top:4px">${ic("hora", "ic-sm")} ${ANTIG()}: es el pasado de la nave, no su estado de ahora.</p>` })}
+      <section class="cn-tripulacion" aria-labelledby="t-trip">
+        <div class="cn-encabezado"><h2 id="t-trip">Tripulación</h2><span class="tenue">Estado al ${SCET()} · ${ANTIG()}</span>
+          <div class="cn-leyenda cn-empuja">${sem(0, "En su normal")}${sem(1, "Atención")}${sem(2, "Actúa ahora")}${sem(null, "Sin dato")}</div></div>
+        <ul class="cn-trip-lista">${K.PERSONAS.map((x) => {
+          const r = K.indices(x.id).find((i) => i.completo && i.valor > 0);
+          return `<li>${K.tarjetaTripulante(x, `#tripulante/${x.id}`, r ? `Pronóstico: ${esc(r.mal.corto)} ${fmt(r.valor, 2)}` : "Sin riesgos · ver lo que llegó")}</li>`;
+        }).join("")}</ul>
+      </section>
       <div class="cn-rejilla cn-2" style="margin-top:16px">
         <div class="cn-pila">
           ${tarjetaEnlace()}
-          <section aria-labelledby="t-trip">
-            <div class="cn-encabezado" style="margin:4px 0 12px"><h2 id="t-trip" style="font-size:19px">Tripulación</h2><span class="tenue">Estado al ${SCET()} · ${ANTIG()}</span></div>
-            <ul class="cn-trip-lista">${K.PERSONAS.map((x) => {
-              const r = K.indices(x.id).find((i) => i.completo && i.valor > 0);
-              return `<li>${K.tarjetaTripulante(x, `#tripulante/${x.id}`, r ? `Pronóstico: ${esc(r.mal.corto)} ${fmt(r.valor, 2)}` : "Sin riesgos · ver lo que llegó")}</li>`;
-            }).join("")}</ul>
-            <div class="cn-leyenda">${sem(0, "En su normal")}${sem(1, "Atención")}${sem(2, "Actúa ahora")}${sem(null, "Sin dato")}</div>
-          </section>
           <section class="tarjeta" aria-labelledby="t-band"><h2 id="t-band">${pastilla("bandeja", "#5B8DFF", "#1F4FD8")} Bandeja de la nave <a class="cn-empuja enlace" href="#mensajes">Mensajes</a></h2>
             <div id="bandeja">${bandejaHtml(null, 6)}</div></section>
         </div>

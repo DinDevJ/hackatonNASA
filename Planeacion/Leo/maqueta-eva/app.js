@@ -27,7 +27,7 @@
     glucometro: [],
     checkins: mem.leer("checkins", 3),
     persona: mem.leer("persona", "MS-2"), // quién se ve en Hoy (simulación)
-    dia: 112,
+    dia: mem.leer("dia", 112), // se guarda junto con la persona (bug 11)
     // Katy: estado de los módulos de Registrar, Reportes, Ciclo y Configuración
     tema: mem.leer("tema", "auto"), humor: mem.leer("humor", 2), voz: mem.leer("voz", true),
     registros: [], agua: 0, estres: 35, phq: null, crisis: false, diario: "",
@@ -174,6 +174,9 @@
     else if (!opc.volver && !opc.reemplazar && actual && actual !== destino) pila.push(actual);
     if (!pila.length && !ES_TAB.has(destino)) tabActiva = raizDe(destino);
     actual = destino;
+    if (estado.dia < 106 || estado.dia > M.ULTIMO_DIA) estado.dia = 112;
+    mem.guardar("persona", estado.persona);
+    mem.guardar("dia", estado.dia);
     if (destino !== "emergencia") actualizarFase();
     const p = $("#pantalla");
     p.innerHTML = "";
@@ -411,6 +414,15 @@
     let tQuieta = 0;
     const despertar = () => { boton.classList.remove("quieta"); clearTimeout(tQuieta); tQuieta = setTimeout(() => boton.classList.add("quieta"), 3000); };
     despertar();
+
+    // Mientras haces scroll se repliega medio oculta contra su borde y vuelve al soltar (bug 12).
+    let tScroll = 0;
+    $("#pantalla").addEventListener("scroll", () => {
+      boton.classList.add("replegada", pos.lado === "izq" ? "a-la-izq" : "a-la-der");
+      boton.classList.remove(pos.lado === "izq" ? "a-la-der" : "a-la-izq");
+      clearTimeout(tScroll);
+      tScroll = setTimeout(() => boton.classList.remove("replegada"), 700);
+    }, { passive: true });
 
     // Arrastrar.
     let arr = null;

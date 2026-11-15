@@ -21,7 +21,7 @@
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-cajon: cubic-bezier(0.32, 0.72, 0, 1);
-  --letra: ui-rounded, "SF Pro Rounded", "Nunito", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --letra: "Segoe UI Variable Text", "SF Pro Text", "Inter", "Helvetica Neue", "Segoe UI", Roboto, system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }

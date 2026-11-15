@@ -6,15 +6,16 @@ ni del reloj.
 
 ## Nuevo en la pantalla Hoy: Cuerpo LUNA y lo que Luna ve
 
-Integra en esta maqueta, con su mismo estilo, el panel de salud (módulo 1) que se hizo en `app/`.
+Integra en esta maqueta el panel de salud (módulo 1) que se hizo en `app/`.
 
 | Qué | Dónde | Cómo funciona |
 |---|---|---|
-| **Cuerpo LUNA** realista | `cuerpo.js`, `cuerpo.css` | Figura de frente con volumen. **Cambia según el sexo de cada tripulante:** mujer (hombros más estrechos, cintura, cadera, pecho, pelo largo) u hombre (hombros y cuello más anchos, torso recto, pectorales, pelo corto) |
-| Zonas que se tocan | `cuerpo.js` | Cabeza, ojos, corazón, pulmones, abdomen, riñones y vejiga, huesos y músculos, piel (sensor de muñeca) y un halo de radiación alrededor del cuerpo. Cada zona toma el peor estado de sus indicadores y lleva su forma: ● en tu normal · ■ atención · ▲ actúa ahora · ○ sin dato |
-| Hoja de cada zona | `app.js` → `abrirRegion` | Sus indicadores con semáforo, procedencia y gráfica de 14 días, el peligro del HRP y "¿por qué se mide esto?" |
-| Lista de zonas | `app.js` | La misma información sin la figura, navegable con teclado. "Salud femenina" solo aparece a ellas y con candado |
-| **Lo que Luna ve hoy** | `motor.js` → `lunaDice` | Luna cuenta lo que miden los sensores contra tu normal: qué señales, con qué números, qué regla se cumplió y qué hacer. No diagnostica |
+| **Cuerpo LUNA**, lo primero de Hoy | `cuerpo.js`, `cuerpo.css` | Escáner azul marino estilo holograma médico: esqueleto tenue, **arterias con flujo**, **corazón anatómico** (aorta, vena cava, tronco pulmonar, coronarias) que late, pulmones con lóbulos, hígado, estómago, intestinos, riñones y vejiga. **Cambia según el sexo:** mujer (hombros más estrechos, cintura, cadera, pecho, pelo largo) u hombre (hombros y cuello más anchos, torso recto, pectorales, pelo corto) |
+| Zonas que se tocan | `cuerpo.js` | Cabeza, ojos, corazón, pulmones, abdomen, riñones y vejiga, músculos, piel (sensor de muñeca) y halo de radiación. Cada zona lleva el peor estado de sus indicadores en su contorno y su marca: ● en tu normal · ■ atención · ▲ actúa ahora · ○ sin dato |
+| **Zoom y panel tecnológico** | `app.js` → `abrirRegion` | Al tocar un órgano, la figura se acerca a él y la información sale de ese punto hasta cubrir la pantalla: visor del órgano, peligro del HRP, indicadores con semáforo, procedencia y gráfica de 14 días. Al cerrar, vuelve al cuerpo completo |
+| Fila de zonas | `app.js` | La misma información sin la figura, navegable con teclado. "Salud femenina" solo aparece a ellas y con candado |
+| **Luna flotante** | `app.js` → `crearLunaFlotante` | Burbuja como AssistiveTouch: se arrastra, se pega al borde, se atenúa si no se usa y recuerda su lugar. Su cara y una insignia dicen cuántas cosas hay que mirar. Al tocarla abre **"Lo que Luna ve hoy"**: qué señales, con qué números contra tu normal, qué regla se cumplió y qué hacer. No diagnostica |
+| Letra | `estilos.css` | Sans técnica del sistema (Segoe UI Variable, SF Pro, Inter) y monoespaciada para los datos |
 | Fichas | `app.js` → `ficha` | Presión, temperatura, ánimo, SpO₂ y respiración: valor, tu normal, gráfica, por qué, cómo se mide y umbral con su fuente. Corazón, Sueño y Glucosa ganan la tarjeta "contra tu normal" |
 | Simulación | Hoy, arriba | Cambia de tripulante (Ana, Luis, Mei, Tomás) y de día (106–115) para recorrer el escenario |
 

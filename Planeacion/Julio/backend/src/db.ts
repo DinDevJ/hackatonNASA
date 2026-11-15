@@ -101,6 +101,35 @@ CREATE TABLE IF NOT EXISTS alertas (
   t_scet TEXT NOT NULL, creada TEXT NOT NULL,
   enviada_tierra INTEGER NOT NULL DEFAULT 0
 );
+
+-- ── Enlace con Tierra ──
+CREATE TABLE IF NOT EXISTS enlace (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  owlt_s REAL NOT NULL,            -- retraso de un trayecto (Marte: 240 a 1440 s)
+  abierto INTEGER NOT NULL         -- ventana de comunicación abierta o cerrada
+);
+
+-- Nave → Tierra. Se encola al crearse; sale cuando hay ventana; llega OWLT después.
+CREATE TABLE IF NOT EXISTS bajada (
+  id INTEGER PRIMARY KEY,
+  tipo TEXT NOT NULL,              -- 'alerta' · 'resumen'
+  datos TEXT NOT NULL,             -- JSON
+  prioridad INTEGER NOT NULL,      -- 0 rojo · 1 ámbar · 2 resto
+  t_scet TEXT NOT NULL,            -- cuándo ocurrió a bordo
+  t_envio TEXT,                    -- cuándo salió de la nave
+  t_ert TEXT,                      -- cuándo llega a Tierra
+  notificado INTEGER NOT NULL DEFAULT 0
+);
+
+-- Tierra → nave: avisos del cirujano de vuelo o del control de misión.
+CREATE TABLE IF NOT EXISTS subida (
+  id INTEGER PRIMARY KEY,
+  de TEXT NOT NULL, para TEXT NOT NULL, texto TEXT NOT NULL, prioridad TEXT NOT NULL,
+  t_redactado TEXT NOT NULL,
+  t_envio TEXT,
+  t_llegada TEXT,
+  entregado INTEGER NOT NULL DEFAULT 0
+);
 `;
 
 export function abrir(ruta = 'eva.db'): BD {

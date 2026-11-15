@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EVA · Simulador de misión</title>
+<style>
+:root{
+  --bg:#070b14; --panel:#0f1626; --panel2:#141d31; --line:#22304a; --fg:#e7eef9; --dim:#8a9bb8;
+  --ok:#34d399; --warn:#fbbf24; --bad:#f87171; --acc:#60a5fa; --acc2:#a78bfa; --earth:#38bdf8;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#0b1222,#070b14)}
+header h1{font-size:1.05rem;margin:0;letter-spacing:.02em}
+header h1 span{color:var(--dim);font-weight:400}
+.ctrl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{background:var(--acc);color:#04111f;border:0;border-radius:8px;padding:7px 12px;font-weight:700;cursor:pointer;font-size:.85rem}
+button.sec{background:transparent;color:var(--fg);border:1px solid var(--line)}
+button.peligro{background:var(--bad);color:#2a0606}
+button:disabled{opacity:.4;cursor:not-allowed}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;border:1px solid var(--line);font-size:.78rem;color:var(--dim);white-space:nowrap}
+.pill b{color:var(--fg)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)}
+main{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,1fr);gap:14px;padding:14px 16px}
+@media(max-width:980px){main{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px}
+#escena{position:relative;overflow:hidden}
+#escena svg{display:block;width:100%;height:auto}
+.disp{cursor:pointer}
+.disp .halo{fill:transparent;stroke:transparent;stroke-width:2;transition:all .2s}
+.disp:hover .halo,.disp.sel .halo{stroke:var(--acc);fill:rgba(96,165,250,.12)}
+.disp.apagado{opacity:.35}
+.lbl{fill:var(--fg);font-size:12px;font-weight:600;pointer-events:none}
+.sub{fill:#a9b8d2;font-size:10.5px;pointer-events:none}
+.lbl,.sub{paint-order:stroke;stroke:#0c1424;stroke-width:4px;stroke-linejoin:round}
+.guia{stroke:#4b5d80;stroke-width:1;pointer-events:none}
+.disp:focus{outline:none}
+.disp:focus-visible .halo{stroke:var(--acc);fill:rgba(96,165,250,.12)}
+.enl{stroke:var(--line);stroke-width:2;fill:none}
+.enl.ble{stroke:var(--acc);stroke-dasharray:5 5;animation:flujo 1.2s linear infinite}
+.enl.json{stroke:var(--acc2);stroke-dasharray:5 5;animation:flujo 1.4s linear infinite}
+.enl.tierra{stroke:var(--earth);stroke-dasharray:2 7;animation:flujo 2.4s linear infinite}
+.enl.cortado{stroke:var(--bad);stroke-dasharray:3 6;animation:none;opacity:.6}
+@keyframes flujo{to{stroke-dashoffset:-20}}
+#detalle{padding:16px;min-height:420px}
+#detalle h2{margin:0 0 2px;font-size:1.05rem}
+#detalle .rol{color:var(--dim);margin:0 0 12px;font-size:.85rem}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.met{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.met .k{color:var(--dim);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em}
+.met .v{font-size:1.25rem;font-weight:700;font-variant-numeric:tabular-nums}
+.met .v small{font-size:.75rem;color:var(--dim);font-weight:500}
+label.fila{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 4px;font-size:.82rem;color:var(--dim)}
+input[type=range]{width:100%}
+select,textarea,input[type=text]{width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:7px;font:inherit}
+textarea{resize:vertical;min-height:60px}
+.sw{display:flex;align-items:center;gap:10px;margin:10px 0}
+.sw input{width:18px;height:18px}
+pre.hex{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;font-size:.72rem;overflow:auto;margin:8px 0 0;color:#9fd1ff}
+.lista{display:flex;flex-direction:column;gap:6px;margin-top:8px;max-height:260px;overflow:auto}
+.item{background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--dim);border-radius:8px;padding:7px 10px;font-size:.82rem}
+.item.rojo{border-left-color:var(--bad)} .item.ambar{border-left-color:var(--warn)} .item.verde{border-left-color:var(--ok)}
+.item.aviso{border-left-color:var(--earth)}
+.item .t{color:var(--dim);font-size:.72rem}
+.banda{position:relative;height:22px;background:var(--bg);border:1px solid var(--line);border-radius:6px;margin:4px 0 10px}
+.banda .rango{position:absolute;top:3px;bottom:3px;background:rgba(52,211,153,.22);border:1px solid rgba(52,211,153,.6);border-radius:4px}
+.banda .esp{position:absolute;top:0;bottom:0;width:2px;background:var(--ok)}
+.banda .act{position:absolute;top:-3px;width:10px;height:26px;margin-left:-5px;border-radius:3px;background:var(--fg)}
+.banda .act.fuera{background:var(--bad)}
+.var-h{display:flex;justify-content:space-between;font-size:.8rem}
+.var-h span:last-child{color:var(--dim);font-variant-numeric:tabular-nums}
+.pesos{display:flex;height:6px;border-radius:3px;overflow:hidden;margin-top:-6px;margin-bottom:12px}
+.pesos i{display:block}
+#log{grid-column:1/-1;padding:10px 14px;max-height:170px;overflow:auto;font:12px/1.6 ui-monospace,Menlo,Consolas,monospace;color:var(--dim)}
+#log .e{color:var(--fg)} #log .a{color:var(--warn)} #log .r{color:var(--bad)} #log .ti{color:var(--earth)}
+.nota{font-size:.75rem;color:var(--dim);margin-top:10px}
+.cta{margin:14px 0 0;padding:12px;border:1px dashed var(--line);border-radius:10px;color:var(--dim);font-size:.85rem}
+</style>
+</head>
+<body>
+<header>
+  <h1>EVA · Simulador de misión <span>— LUNNA en vivo</span></h1>
+  <div class="ctrl">
+    <span class="pill"><span class="dot" id="d-back"></span> backend <b id="v-back">…</b></span>
+    <span class="pill">día de misión <b id="v-dia">—</b></span>
+    <span class="pill">tramas <b id="v-tramas">0</b></span>
+    <button id="b-preparar">Preparar misión · 112 días</button>
+    <button id="b-vivo" class="sec" disabled>▶ En vivo</button>
+    <button id="b-reiniciar" class="sec">Reiniciar</button>
+  </div>
+</header>
+
+<main>
+  <section class="card" id="escena">
+    <svg viewBox="0 0 900 560" role="img" aria-label="Astronauta con sus dispositivos, computadora central y Tierra">
+      <defs>
+        <radialGradient id="gTierra" cx="40%" cy="35%"><stop offset="0" stop-color="#7dd3fc"/><stop offset=".55" stop-color="#0ea5e9"/><stop offset="1" stop-color="#0c4a6e"/></radialGradient>
+        <linearGradient id="gTraje" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#e9eef6"/><stop offset="1" stop-color="#b9c4d6"/></linearGradient>
+        <linearGradient id="gVisor" x1="0" x2="1"><stop offset="0" stop-color="#1e3a5f"/><stop offset="1" stop-color="#0b1626"/></linearGradient>
+      </defs>
+      <!-- estrellas -->
+      <g fill="#fff" opacity=".35"><circle cx="40" cy="30" r="1"/><circle cx="120" cy="80" r="1.2"/><circle cx="310" cy="24" r=".8"/><circle cx="520" cy="60" r="1"/><circle cx="600" cy="22" r="1.3"/><circle cx="760" cy="50" r=".9"/><circle cx="860" cy="120" r="1"/><circle cx="700" cy="520" r="1"/><circle cx="60" cy="520" r="1.1"/><circle cx="460" cy="540" r=".8"/></g>
+      <!-- nave -->
+      <rect x="18" y="40" width="600" height="480" rx="22" fill="#0c1424" stroke="#1d2a44" stroke-width="2"/>
+      <text x="38" y="66" class="sub">NAVE · tránsito a Marte</text>
+
+      <!-- enlaces -->
+      <path id="e-A" class="enl" d="M232 330 L238 400"/>
+      <path id="e-B" class="enl" d="M200 205 L222 395"/>
+      <path id="e-esp" class="enl ble" d="M262 410 L430 300"/>
+      <path id="e-reloj" class="enl json" d="M126 342 L84 424"/>
+      <path id="e-cel" class="enl json" d="M92 440 L430 320"/>
+      <path id="e-tierra" class="enl tierra" d="M560 300 L780 300"/>
+
+      <!-- astronauta -->
+      <g transform="translate(70,90)">
+        <rect x="88" y="78" width="104" height="70" rx="16" fill="#9aa7bd"/>          <!-- mochila -->
+        <rect x="60" y="88" width="160" height="150" rx="40" fill="url(#gTraje)"/>    <!-- torso -->
+        <rect x="26" y="98" width="40" height="140" rx="20" fill="url(#gTraje)" transform="rotate(10 46 98)"/>
+        <rect x="214" y="98" width="40" height="140" rx="20" fill="url(#gTraje)" transform="rotate(-10 234 98)"/>
+        <rect x="78" y="228" width="52" height="170" rx="24" fill="url(#gTraje)"/>
+        <rect x="150" y="228" width="52" height="170" rx="24" fill="url(#gTraje)"/>
+        <rect x="70" y="384" width="66" height="34" rx="14" fill="#7d8aa1"/>
+        <rect x="144" y="384" width="66" height="34" rx="14" fill="#7d8aa1"/>
+        <circle cx="140" cy="48" r="50" fill="url(#gTraje)"/>                          <!-- casco -->
+        <ellipse cx="140" cy="52" rx="34" ry="28" fill="url(#gVisor)"/>
+        <path d="M118 40 q10 -10 26 -8" stroke="#7fb3ff" stroke-width="3" fill="none" opacity=".6"/>
+        <rect x="60" y="226" width="160" height="16" rx="8" fill="#5b6b86"/>           <!-- cinturón -->
+        <text x="140" y="440" text-anchor="middle" class="lbl">Ana · especialista</text>
+      </g>
+
+      <!-- dispositivos -->
+      <g class="disp" data-id="B" transform="translate(200,205)">
+        <circle class="halo" r="22"/><rect x="-16" y="-10" width="32" height="20" rx="6" fill="#a78bfa"/>
+        <line class="guia" x1="18" y1="0" x2="126" y2="-18"/>
+        <text x="130" y="-20" class="lbl">B · banda pectoral</text><text x="130" y="-6" class="sub">respiración · presión arterial</text>
+      </g>
+      <g class="disp" data-id="A" transform="translate(232,330)">
+        <circle class="halo" r="20"/><circle r="10" fill="#f472b6"/>
+        <line class="guia" x1="12" y1="0" x2="114" y2="-10"/>
+        <text x="118" y="-12" class="lbl">A · pulsioxímetro</text><text x="118" y="2" class="sub">FC · SpO₂ · temperatura</text>
+      </g>
+      <g class="disp" data-id="esp" transform="translate(250,410)">
+        <circle class="halo" r="24"/><rect x="-18" y="-11" width="36" height="22" rx="4" fill="#111827" stroke="#60a5fa" stroke-width="2"/>
+        <rect x="-11" y="-5" width="10" height="10" fill="#60a5fa"/>
+        <line class="guia" x1="20" y1="4" x2="96" y2="18"/>
+        <text x="100" y="20" class="lbl">ESP32</text><text x="100" y="34" class="sub">concentrador BLE</text>
+      </g>
+      <g class="disp" data-id="reloj" transform="translate(128,330)">
+        <circle class="halo" r="20"/><rect x="-9" y="-11" width="18" height="22" rx="5" fill="#0f172a" stroke="#cbd5e1" stroke-width="2"/>
+        <line class="guia" x1="-10" y1="-8" x2="-50" y2="-30"/>
+        <text x="-54" y="-40" text-anchor="end" class="lbl">Reloj</text><text x="-54" y="-27" text-anchor="end" class="sub">opcional</text>
+      </g>
+      <g class="disp" data-id="cel" transform="translate(78,440)">
+        <circle class="halo" r="22"/><rect x="-10" y="-17" width="20" height="34" rx="4" fill="#0f172a" stroke="#cbd5e1" stroke-width="2"/>
+        <circle cx="0" cy="12" r="2" fill="#cbd5e1"/>
+        <text x="0" y="36" text-anchor="middle" class="lbl">Celular</text><text x="0" y="50" text-anchor="middle" class="sub">opcional · avisos</text>
+      </g>
+      <g class="disp" data-id="pc" transform="translate(495,300)">
+        <circle class="halo" r="62"/>
+        <rect x="-58" y="-40" width="116" height="72" rx="8" fill="#0b1220" stroke="#60a5fa" stroke-width="2"/>
+        <rect x="-50" y="-32" width="100" height="56" rx="4" fill="#0e1b33"/>
+        <polyline id="pc-onda" points="-46,0 -30,0 -24,-14 -16,14 -8,0 46,0" fill="none" stroke="#34d399" stroke-width="2"/>
+        <rect x="-18" y="32" width="36" height="8" fill="#22304a"/>
+        <text x="0" y="62" text-anchor="middle" class="lbl">Computadora central</text>
+        <text x="0" y="77" text-anchor="middle" class="sub">backend · LUNNA</text>
+      </g>
+      <g class="disp" data-id="tierra" transform="translate(825,300)">
+        <circle class="halo" r="56"/><circle r="44" fill="url(#gTierra)"/>
+        <path d="M-20 -18 q12 -8 22 4 q6 10 -6 16 q-14 4 -16 -20z M8 14 q14 -4 18 8 q-8 10 -18 -8z" fill="#22c55e" opacity=".75"/>
+        <text x="0" y="66" text-anchor="middle" class="lbl">Tierra</text>
+        <text x="0" y="81" text-anchor="middle" class="sub" id="t-owlt">retraso —</text>
+      </g>
+      <g id="paquetes"></g>
+    </svg>
+  </section>
+
+  <section class="card" id="detalle"></section>
+  <section class="card" id="log"></section>
+</main>
+
+<script>
+'use strict';
+// ═══════════ Estado ═══════════
+const DIA = 86400000;
+const S = {
+  lanzamiento: null, vivo: false, tramas: 0, temporizador: null,
+  encendido: { A: true, B: true, reloj: true, cel: true },
+  bleConectado: true, colaEsp: [], descartadas: 0, enviadasEsp: 0,
+  seq: { 2561: 0, 2817: 0, reloj: 0 },
+  anom: { fatiga: 0, hipoxia: 0, fiebre: 0, hiper: 0 },
+  contactoReloj: true,
+  ultimos: {}, ultimoHex: { A: '', B: '' },
+  alertas: [], bandeja: [], avisos: [], enlace: { owlt_s: 20, abierto: true },
+  pred: [], sel: 'pc',
+};
+const BASAL = { fc: 62, spo2: 98, fr: 14, temp: 36.6, sis: 115, dia: 75 };
+const DELTA = { fc: -0.08, spo2: -0.005, fr: -0.04, temp: 1.0, sis: -0.06, dia: -0.10 };
+const NOMBRE = { '04:A4': 'Frecuencia cardiaca', '04:A3': 'SpO₂', '04:A2': 'Frec. respiratoria', '04:A1': 'Temperatura', '01:V1': 'PA sistólica', 'X:PAD': 'PA diastólica', 'X:PAM': 'PA media' };
+const $ = (q) => document.querySelector(q);
+const api = async (ruta, metodo = 'GET', cuerpo) => {
+  const r = await fetch(ruta, { method: metodo, headers: { 'content-type': 'application/json' }, body: cuerpo ? JSON.stringify(cuerpo) : undefined });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || r.status);
+  return j;
+};
+const gauss = () => Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random());
+const hora = (iso) => new Date(iso).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+// ═══════════ Perfil EVA en el navegador (igual que esquema.ts y trama_eva.h) ═══════════
+const ESQ = {
+  3: [['u8', 1], ['u8', 1], ['i16', 0.01]],   // A: fc · spo2 · temp
+  4: [['u8', 1], ['u8', 1], ['u8', 1]],       // B: fr · sis · dia
+};
+const RANGO = { u8: [0, 255], i16: [-32768, 32767] };
+function codificar(idDisp, idEsq, seq, tSeg, valores) {
+  const campos = ESQ[idEsq];
+  const tam = 13 + campos.reduce((s, [t]) => s + (t === 'u8' ? 1 : 2), 0);
+  const b = new Uint8Array(tam), dv = new DataView(b.buffer);
+  dv.setUint8(0, 1); dv.setUint32(1, idDisp, true); dv.setUint16(5, idEsq, true);
+  dv.setUint16(7, seq & 0xffff, true); dv.setUint32(9, tSeg, true);
+  let off = 13;
+  campos.forEach(([t, esc], i) => {
+    const [lo, hi] = RANGO[t];
+    const crudo = Math.min(hi, Math.max(lo, Math.floor(valores[i] / esc + 0.5)));
+    if (t === 'u8') { dv.setUint8(off, crudo); off += 1; } else { dv.setInt16(off, crudo, true); off += 2; }
+  });
+  return b;
+}
+const b64 = (u8) => btoa(String.fromCharCode(...u8));
+const hex = (u8) => [...u8].map((x) => x.toString(16).padStart(2, '0')).join(' ');
+
+// ═══════════ Fisiología simulada ═══════════
+function valor(v, t, conAnomalias) {
+  const dia = (t - S.lanzamiento) / DIA, base = BASAL[v];
+  const ruido = v === 'spo2' ? 0.006 : 0.035;
+  if (dia < 0) return v === 'temp' ? base + 0.15 * gauss() : base * (1 + ruido * gauss());
+  let x = v === 'temp' ? base + DELTA.temp + 0.2 * gauss() : base * (1 + DELTA[v] + ruido * gauss());
+  if (v === 'fc' && dia < 3) x *= 1 + 0.05 * (1 - dia / 3);
+  if (conAnomalias) {
+    if (v === 'fc') x *= 1 + S.anom.fatiga / 100;
+    if (v === 'spo2') x -= S.anom.hipoxia;
+    if (v === 'temp') x += S.anom.fiebre;
+    if (v === 'sis') x += S.anom.hiper;
+    if (v === 'dia') x += S.anom.hiper * 0.6;
+  }
+  return x;
+}
+function lecturaA(t, anom) { return [valor('fc', t, anom), Math.min(100, valor('spo2', t, anom)), valor('temp', t, anom)]; }
+function lecturaB(t, anom) { return [valor('fr', t, anom), valor('sis', t, anom), valor('dia', t, anom)]; }
+
+// ═══════════ Preparar misión: 119 días de historia ═══════════
+async function preparar() {
+  const b = $('#b-preparar'); b.disabled = true; $('#b-vivo').disabled = true;
+  try {
+    detener();
+    await api('/api/demo/reiniciar', 'POST');
+    S.alertas = []; S.bandeja = []; S.avisos = []; S.tramas = 0; S.colaEsp = []; S.seq = { 2561: 0, 2817: 0, reloj: 0 };
+    S.lanzamiento = Date.now() - 112 * DIA;
+    const inicioTierra = new Date(S.lanzamiento - 7 * DIA).toISOString();
+    await api('/api/fases', 'POST', { desde: inicioTierra, entorno: 'tierra' });
+    await api('/api/fases', 'POST', { desde: new Date(S.lanzamiento).toISOString(), entorno: 'orbita' });
+    for (const d of [2561, 2817, 302]) await api('/api/asignaciones', 'POST', { dispositivo: d, tripulante: 'ana', desde: inicioTierra });
+    log('e', 'Misión preparada: lanzamiento hace 112 días. Rellenando historia…');
+
+    let lote = [];
+    const enviar = async () => { if (!lote.length) return; await api('/api/tramas/binaria', 'POST', { b64: lote }); S.tramas += lote.length; lote = []; pintarCabecera(); };
+    for (let d = -7; d < 112; d++) {
+      for (let k = 0; k < 12; k++) {
+        const t = S.lanzamiento + d * DIA + (k + 0.5) * (DIA / 12), ts = Math.floor(t / 1000);
+        lote.push(b64(codificar(2561, 3, S.seq[2561]++, ts, lecturaA(t, false))));
+        lote.push(b64(codificar(2817, 4, S.seq[2817]++, ts, lecturaB(t, false))));
+      }
+      if (lote.length >= 480) { b.textContent = `Rellenando… día ${d}`; await enviar(); }
+    }
+    await enviar();
+    log('e', `Historia lista: ${S.tramas} tramas binarias de 119 días. LUNNA ya calibró a Ana (días 0–13).`);
+    await refrescar();
+    $('#b-vivo').disabled = false;
+    iniciar();
+  } catch (e) { log('r', 'Error al preparar: ' + e.message); }
+  b.textContent = 'Preparar misión · 112 días'; b.disabled = false;
+}
+
+// ═══════════ En vivo: lo que hace el ESP32 cada segundo ═══════════
+function tick() {
+  const t = Date.now(), ts = Math.floor(t / 1000);
+  // El ESP32 encola siempre; sólo vacía la cola si hay conexión BLE.
+  if (S.encendido.A) { const v = lecturaA(t, true); S.colaEsp.push({ disp: 2561, esq: 3, ts, v }); S.ultimos.A = v; }
+  if (S.encendido.B) { const v = lecturaB(t, true); S.colaEsp.push({ disp: 2817, esq: 4, ts, v }); S.ultimos.B = v; }
+  if (S.colaEsp.length > 1800) { S.descartadas += S.colaEsp.length - 1800; S.colaEsp.splice(0, S.colaEsp.length - 1800); }
+  if (S.bleConectado && S.colaEsp.length) {
+    const salen = S.colaEsp.splice(0, 40).map((r) => {
+      const u8 = codificar(r.disp, r.esq, S.seq[r.disp]++, r.ts, r.v);
+      S.ultimoHex[r.disp === 2561 ? 'A' : 'B'] = hex(u8);
+      return b64(u8);
+    });
+    S.enviadasEsp += salen.length;
+    api('/api/tramas/binaria', 'POST', { b64: salen }).then(() => { S.tramas += salen.length; pintarCabecera(); }).catch((e) => log('r', e.message));
+    paquete('e-esp', '#60a5fa');
+  }
+  // Reloj → celular → central (JSON), cada 5 s.
+  if (S.seq.reloj++ % 5 === 0 && S.encendido.reloj && S.encendido.cel) {
+    const fc = Math.round(valor('fc', t, true));
+    S.ultimos.reloj = fc;
+    api('/api/tramas', 'POST', { frame: 'eva.telemetry.v1', source: { id: 'reloj-ana', kind: 'wrist' }, subject: 'ana',
+      t_scet: new Date(ts * 1000).toISOString(), seq: S.seq.reloj,
+      samples: [{ var: '04:A4', value: fc, unit: 'bpm', origin: 'sensor', quality: { contacto: S.contactoReloj } }] }).catch(() => {});
+    paquete('e-cel', '#a78bfa');
+  }
+  if (S.sel === 'esp' || S.sel === 'A' || S.sel === 'B' || S.sel === 'reloj') pintarDetalle();
+}
+function iniciar() { if (S.temporizador) return; S.vivo = true; S.temporizador = setInterval(tick, 1000); pintarCabecera(); log('e', 'En vivo: el ESP32 manda una trama de A y una de B por segundo.'); }
+function detener() { clearInterval(S.temporizador); S.temporizador = null; S.vivo = false; pintarCabecera(); }
+
+// ═══════════ Animación de paquetes ═══════════
+function paquete(idEnlace, color) {
+  const p = document.getElementById(idEnlace); if (!p) return;
+  const L = p.getTotalLength(), c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  c.setAttribute('r', 4); c.setAttribute('fill', color); $('#paquetes').appendChild(c);
+  const t0 = performance.now(), dur = idEnlace === 'e-tierra' ? 1600 : 700;
+  (function paso(ahora) {
+    const k = Math.min(1, (ahora - t0) / dur), pt = p.getPointAtLength(L * (idEnlace === 'e-tierra-sube' ? 1 - k : k));
+    c.setAttribute('cx', pt.x); c.setAttribute('cy', pt.y);
+    if (k < 1) requestAnimationFrame(paso); else c.remove();
+  })(t0);
+}
+function paqueteInverso(idEnlace, color) {
+  const p = document.getElementById(idEnlace), L = p.getTotalLength();
+  const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  c.setAttribute('r', 5); c.setAttribute('fill', color); $('#paquetes').appendChild(c);
+  const t0 = performance.now();
+  (function paso(ahora) {
+    const k = Math.min(1, (ahora - t0) / 1600), pt = p.getPointAtLength(L * (1 - k));
+    c.setAttribute('cx', pt.x); c.setAttribute('cy', pt.y);
+    if (k < 1) requestAnimationFrame(paso); else c.remove();
+  })(t0);
+}
+
+// ═══════════ Eventos del backend ═══════════
+function conectarEventos() {
+  const es = new EventSource('/api/stream');
+  es.addEventListener('muestra', (e) => { const m = JSON.parse(e.data); S.ultimosVar = S.ultimosVar || {}; S.ultimosVar[m.variable] = m.valor; });
+  es.addEventListener('alerta', (e) => {
+    const a = JSON.parse(e.data); S.alertas.unshift(a);
+    const nivel = a.estado === 'rojo' ? 'r' : a.estado === 'ambar' ? 'a' : 'e';
+    log(nivel, `LUNNA · ${a.estado.toUpperCase()} · ${NOMBRE[a.variable] || a.variable}: ${a.valor} (esperado ${a.esperado}, z=${a.z}, P(nominal)=${a.prob_nominal})`);
+    $('#pc-onda').setAttribute('stroke', a.estado === 'rojo' ? '#f87171' : a.estado === 'ambar' ? '#fbbf24' : '#34d399');
+    if (S.sel === 'pc') pintarDetalle();
+  });
+  es.addEventListener('tierra', (e) => {
+    const b = JSON.parse(e.data); S.bandeja.unshift(b);
+    paquete('e-tierra', '#38bdf8');
+    if (b.tipo === 'alerta') log('ti', `Tierra recibe alerta de ${b.datos.tripulante} (${b.datos.estado}), ocurrida a las ${hora(b.t_scet)}: llegó con ${Math.round((Date.parse(b.t_ert) - Date.parse(b.t_scet)) / 1000)} s de antigüedad`);
+    if (S.sel === 'tierra') pintarDetalle();
+  });
+  es.addEventListener('aviso', (e) => {
+    const a = JSON.parse(e.data); S.avisos.unshift(a);
+    paqueteInverso('e-tierra', '#38bdf8');
+    log('ti', `Aviso de Tierra para ${a.para}: «${a.texto}» (redactado a las ${hora(a.t_redactado)})`);
+    if (S.sel === 'cel' || S.sel === 'pc' || S.sel === 'tierra') pintarDetalle();
+  });
+  es.addEventListener('enlace', (e) => { S.enlace = JSON.parse(e.data); pintarEnlace(); });
+  es.onerror = () => { $('#d-back').className = 'dot bad'; };
+  es.onopen = () => { $('#d-back').className = 'dot ok'; };
+}
+
+async function refrescar() {
+  try { S.pred = await api('/api/prediccion/ana'); } catch {}
+  if (S.sel === 'pc') pintarDetalle();
+}
+
+// ═══════════ Pintado ═══════════
+function log(c, txt) {
+  const el = $('#log'), d = document.createElement('div');
+  d.className = c; d.textContent = `${new Date().toLocaleTimeString('es')}  ${txt}`;
+  el.prepend(d); while (el.children.length > 120) el.lastChild.remove();
+}
+function pintarCabecera() {
+  $('#v-tramas').textContent = S.tramas.toLocaleString('es');
+  $('#v-dia').textContent = S.lanzamiento ? Math.floor((Date.now() - S.lanzamiento) / DIA) : '—';
+  $('#b-vivo').textContent = S.vivo ? '⏸ Pausar' : '▶ En vivo';
+}
+function pintarEnlace() {
+  const e = S.enlace;
+  $('#t-owlt').textContent = e.abierto ? `retraso ${e.owlt_s} s` : 'ventana CERRADA';
+  $('#e-tierra').setAttribute('class', 'enl ' + (e.abierto ? 'tierra' : 'cortado'));
+}
+function pintarEnlacesLocales() {
+  $('#e-esp').setAttribute('class', 'enl ' + (S.bleConectado ? 'ble' : 'cortado'));
+  $('#e-cel').setAttribute('class', 'enl ' + (S.encendido.cel ? 'json' : 'cortado'));
+  $('#e-reloj').setAttribute('class', 'enl ' + (S.encendido.reloj && S.encendido.cel ? 'json' : 'cortado'));
+  for (const k of ['A', 'B', 'reloj', 'cel']) document.querySelector(`.disp[data-id="${k}"]`).classList.toggle('apagado', !S.encendido[k]);
+}
+const met = (k, v, u = '') => `<div class="met"><div class="k">${k}</div><div class="v">${v}<small> ${u}</small></div></div>`;
+const f1 = (x) => (x == null || Number.isNaN(x) ? '—' : (+x).toFixed(1));
+const sw = (id, txt, on) => `<label class="sw"><input type="checkbox" id="${id}" ${on ? 'checked' : ''}> ${txt}</label>`;
+const rango = (id, txt, val, min, max, paso, uni) => `<label class="fila" for="${id}">${txt}<b id="${id}-v">${val} ${uni}</b></label><input type="range" id="${id}" min="${min}" max="${max}" step="${paso}" value="${val}">`;
+
+const VISTAS = {
+  A: () => `<h2>Dispositivo A · pulsioxímetro del traje</h2><p class="rol">Mide FC, SpO₂ y temperatura. Va cableado al ESP32. id <b>2561</b>, esquema <b>3</b>.</p>
+    <div class="grid2">${met('FC', f1(S.ultimos.A?.[0]), 'bpm')}${met('SpO₂', f1(S.ultimos.A?.[1]), '%')}${met('Temperatura', f1(S.ultimos.A?.[2]), '°C')}${met('Trama', '17', 'bytes')}</div>
+    ${sw('s-A', 'Encendido', S.encendido.A)}
+    <h3 style="margin:14px 0 0;font-size:.9rem">Provocar una anomalía</h3>
+    ${rango('r-fatiga', 'Fatiga: FC por encima de lo normal', S.anom.fatiga, 0, 40, 1, '%')}
+    ${rango('r-hipoxia', 'Hipoxia: SpO₂ más baja', S.anom.hipoxia, 0, 10, 0.5, 'pts')}
+    ${rango('r-fiebre', 'Fiebre: temperatura más alta', S.anom.fiebre, 0, 3, 0.1, '°C')}
+    <div class="nota">Última trama binaria (cabecera de 13 B + carga):</div><pre class="hex">${S.ultimoHex.A || '—'}</pre>
+    <div class="nota">LUNNA evalúa la mediana de 24 h: con la anomalía puesta, la alerta tarda unos 20–40 s en aparecer.</div>`,
+  B: () => `<h2>Dispositivo B · banda pectoral</h2><p class="rol">Respiración y presión arterial. id <b>2817</b>, esquema <b>4</b>. La PA media no viaja: la calcula la central con la fórmula del esquema.</p>
+    <div class="grid2">${met('Respiración', f1(S.ultimos.B?.[0]), 'resp/min')}${met('PA sistólica', f1(S.ultimos.B?.[1]), 'mmHg')}${met('PA diastólica', f1(S.ultimos.B?.[2]), 'mmHg')}${met('PA media', S.ultimosVar?.['X:PAM'] ?? '—', 'mmHg · fórmula')}</div>
+    ${sw('s-B', 'Encendido', S.encendido.B)}
+    ${rango('r-hiper', 'Hipertensión: PA por encima de lo normal', S.anom.hiper, 0, 40, 1, 'mmHg')}
+    <div class="nota">Última trama binaria:</div><pre class="hex">${S.ultimoHex.B || '—'}</pre>`,
+  esp: () => `<h2>ESP32 · concentrador</h2><p class="rol">Recoge A y B y los manda por Bluetooth LE a la computadora central. Si se corta la conexión, guarda las lecturas y las manda con su hora real al reconectar.</p>
+    <div class="grid2">${met('Conexión BLE', S.bleConectado ? '<span style="color:var(--ok)">conectado</span>' : '<span style="color:var(--bad)">cortada</span>')}${met('En cola', S.colaEsp.length, `/ 1800`)}${met('Enviadas', S.enviadasEsp.toLocaleString('es'))}${met('Perdidas por cola llena', S.descartadas)}</div>
+    ${sw('s-ble', 'Conexión Bluetooth con la central', S.bleConectado)}
+    <div class="nota">Prueba: corta la conexión 20 s, mira crecer la cola, y vuelve a conectar. Ninguna lectura se pierde y todas llegan con la hora en que se tomaron.</div>`,
+  reloj: () => `<h2>Reloj inteligente · opcional</h2><p class="rol">Frecuencia cardiaca por PPG. No habla con la central directamente: la reenvía el celular en JSON (lo que construyen Katia y Diana).</p>
+    <div class="grid2">${met('FC', S.ultimos.reloj ?? '—', 'bpm')}${met('Contacto del sensor', S.contactoReloj ? 'sí' : '<span style="color:var(--warn)">correa floja</span>')}</div>
+    ${sw('s-reloj', 'Encendido', S.encendido.reloj)}${sw('s-contacto', 'Contacto con la piel', S.contactoReloj)}
+    <div class="nota">Sin contacto, la central guarda la muestra marcada pero LUNNA no la evalúa.</div>`,
+  cel: () => `<h2>Celular · opcional</h2><p class="rol">Reenvía el reloj a la central y muestra al astronauta los avisos que llegan de Tierra.</p>
+    ${sw('s-cel', 'Encendido', S.encendido.cel)}
+    <h3 style="margin:10px 0 0;font-size:.9rem">Avisos recibidos</h3>
+    <div class="lista">${S.avisos.length ? S.avisos.map((a) => `<div class="item aviso"><b>${a.de}</b> → ${a.para}<br>${a.texto}<div class="t">redactado ${hora(a.t_redactado)} · llegó ${hora(a.t_llegada)}</div></div>`).join('') : '<div class="nota">Ninguno todavía. Redacta uno desde Tierra.</div>'}</div>`,
+  pc: () => {
+    const filas = S.pred.map((p) => {
+      const act = S.ultimosVar?.[p.variable];
+      const lo = Math.min(p.banda[0], act ?? p.banda[0], p.basal) , hi = Math.max(p.banda[1], act ?? p.banda[1], p.basal);
+      const pad = (hi - lo) * 0.15 || 1, a = lo - pad, b = hi + pad, x = (v) => ((v - a) / (b - a)) * 100;
+      const fuera = act != null && (act < p.banda[0] || act > p.banda[1]);
+      const w = p.pesos;
+      return `<div class="var-h"><span>${NOMBRE[p.variable] || p.variable}${p.extrapolado ? ' · <em>extrapolado</em>' : ''}</span><span>actual ${act ?? '—'} · esperado ${f1(p.esperado)} [${f1(p.banda[0])}–${f1(p.banda[1])}]</span></div>
+        <div class="banda"><div class="rango" style="left:${x(p.banda[0])}%;width:${x(p.banda[1]) - x(p.banda[0])}%"></div><div class="esp" style="left:${x(p.esperado)}%"></div>${act != null ? `<div class="act ${fuera ? 'fuera' : ''}" style="left:${x(act)}%"></div>` : ''}</div>
+        <div class="pesos" title="peso de cada fuente"><i style="width:${w.poblacion * 100}%;background:#64748b"></i><i style="width:${w.historial * 100}%;background:#a78bfa"></i><i style="width:${w.vuelo * 100}%;background:#34d399"></i></div>`;
+    }).join('');
+    return `<h2>Computadora central · LUNNA</h2><p class="rol">Atribuye cada trama a su tripulante, la guarda, y compara lo medido con lo esperado para Ana en este entorno.</p>
+      ${filas || '<div class="cta">Pulsa <b>Preparar misión</b> para generar 112 días de historia: LUNNA necesita los primeros 14 para conocer a Ana.</div>'}
+      <div class="nota">Barra de color: de dónde sale la predicción — <span style="color:#94a3b8">literatura</span> · <span style="color:#a78bfa">misión anterior</span> · <span style="color:#34d399">sus datos en vuelo</span>.</div>
+      <h3 style="margin:14px 0 0;font-size:.9rem">Alertas</h3>
+      <div class="lista">${S.alertas.length ? S.alertas.map((a) => `<div class="item ${a.estado}"><b>${a.estado.toUpperCase()}</b> · ${NOMBRE[a.variable] || a.variable}: ${a.valor} (esperado ${a.esperado})<div class="t">z = ${a.z} · P(nominal) = ${a.prob_nominal} · ${hora(a.t_scet)}</div></div>`).join('') : '<div class="nota">Sin alertas. Provoca una anomalía en el dispositivo A o B.</div>'}</div>`;
+  },
+  tierra: () => `<h2>Tierra · control de misión</h2><p class="rol">Recibe alertas y resúmenes con el retraso de la luz, y manda avisos a la tripulación. Todo lo que se genera sin ventana espera en cola.</p>
+    ${sw('s-ventana', 'Ventana de comunicación abierta', S.enlace.abierto)}
+    ${rango('r-owlt', 'Retraso por trayecto (Marte: 240–1440 s)', S.enlace.owlt_s, 0, 1440, 5, 's')}
+    <h3 style="margin:12px 0 4px;font-size:.9rem">Mandar un aviso</h3>
+    <select id="av-para"><option value="ana">Ana</option><option value="todos">Toda la tripulación</option></select>
+    <textarea id="av-texto" style="margin-top:6px" placeholder="p. ej. Vimos tu evento de fatiga. Descansa hoy y repite el check-in mañana."></textarea>
+    <button id="b-aviso" style="margin-top:6px">Enviar a la nave</button>
+    <h3 style="margin:14px 0 0;font-size:.9rem">Bandeja de entrada</h3>
+    <div class="lista">${S.bandeja.length ? S.bandeja.slice(0, 40).map((b) => b.tipo === 'alerta'
+      ? `<div class="item ${b.datos.estado}"><b>Alerta ${b.datos.estado}</b> · ${b.datos.tripulante} · ${NOMBRE[b.datos.variable] || b.datos.variable}: ${b.datos.valor}<div class="t">ocurrió ${hora(b.t_scet)} · llegó ${hora(b.t_ert)} · <b>${Math.round((Date.parse(b.t_ert) - Date.parse(b.t_scet)) / 1000)} s de antigüedad</b></div></div>`
+      : `<div class="item"><b>Resumen</b> · ${b.datos.length} variables<div class="t">ocurrió ${hora(b.t_scet)} · llegó ${hora(b.t_ert)}</div></div>`).join('') : '<div class="nota">Nada todavía. Cada 30 s llega un resumen, y cada alerta al instante (más el retraso).</div>'}</div>`,
+};
+
+function pintarDetalle() {
+  const foco = document.activeElement;
+  if (foco && (foco.tagName === 'TEXTAREA' || (foco.tagName === 'INPUT' && foco.type === 'range'))) return; // no interrumpir al usuario
+  $('#detalle').innerHTML = VISTAS[S.sel]();
+  conectarControles();
+}
+
+function conectarControles() {
+  const on = (id, f) => { const el = document.getElementById(id); if (el) el.addEventListener('change', f); };
+  for (const k of ['A', 'B', 'reloj', 'cel']) on('s-' + k, (e) => { S.encendido[k] = e.target.checked; pintarEnlacesLocales(); log('e', `${k} ${e.target.checked ? 'encendido' : 'apagado'}`); });
+  on('s-ble', (e) => { S.bleConectado = e.target.checked; pintarEnlacesLocales(); log(S.bleConectado ? 'e' : 'a', S.bleConectado ? `BLE reconectado: el ESP32 vacía ${S.colaEsp.length} lecturas guardadas` : 'BLE cortado: el ESP32 empieza a guardar lecturas'); pintarDetalle(); });
+  on('s-contacto', (e) => { S.contactoReloj = e.target.checked; });
+  for (const [id, k, u] of [['r-fatiga', 'fatiga', '%'], ['r-hipoxia', 'hipoxia', 'pts'], ['r-fiebre', 'fiebre', '°C'], ['r-hiper', 'hiper', 'mmHg']]) {
+    const el = document.getElementById(id); if (!el) continue;
+    el.addEventListener('input', (e) => { S.anom[k] = +e.target.value; document.getElementById(id + '-v').textContent = `${e.target.value} ${u}`; });
+    el.addEventListener('change', (e) => { log('a', `Anomalía «${k}» = ${e.target.value} ${u}`); el.blur(); });
+  }
+  on('s-ventana', async (e) => { S.enlace = await api('/api/enlace', 'PUT', { abierto: e.target.checked }); pintarEnlace(); log('ti', e.target.checked ? 'Ventana con Tierra ABIERTA: sale lo que estaba en cola' : 'Ventana con Tierra CERRADA: todo se guarda en cola'); });
+  const ow = document.getElementById('r-owlt');
+  if (ow) {
+    ow.addEventListener('input', (e) => { document.getElementById('r-owlt-v').textContent = `${e.target.value} s`; });
+    ow.addEventListener('change', async (e) => { S.enlace = await api('/api/enlace', 'PUT', { owlt_s: +e.target.value }); pintarEnlace(); ow.blur(); });
+  }
+  const ba = document.getElementById('b-aviso');
+  if (ba) ba.addEventListener('click', async () => {
+    const texto = document.getElementById('av-texto').value.trim();
+    if (!texto) return;
+    await api('/api/tierra/avisos', 'POST', { para: document.getElementById('av-para').value, texto, de: 'Cirujano de vuelo' });
+    log('ti', `Tierra envía un aviso: llegará a la nave en ${S.enlace.abierto ? S.enlace.owlt_s + ' s' : 'cuanto se abra la ventana'}`);
+    document.getElementById('av-texto').value = ''; document.activeElement.blur();
+  });
+}
+
+function seleccionar(id) {
+  S.sel = id;
+  document.querySelectorAll('.disp').forEach((g) => g.classList.toggle('sel', g.dataset.id === id));
+  if (id === 'pc') refrescar();
+  if (id === 'tierra') api('/api/tierra/bandeja').then((b) => { S.bandeja = b; pintarDetalle(); }).catch(() => {});
+  pintarDetalle();
+}
+
+// ═══════════ Arranque ═══════════
+// Área de clic que cubre icono Y etiqueta: los huecos entre letras no captan el clic.
+document.querySelectorAll('.disp').forEach((g) => {
+  const bb = g.getBBox(), r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  r.setAttribute('x', bb.x - 6); r.setAttribute('y', bb.y - 6);
+  r.setAttribute('width', bb.width + 12); r.setAttribute('height', bb.height + 12);
+  r.setAttribute('fill', 'transparent'); r.setAttribute('rx', 10);
+  g.insertBefore(r, g.firstChild);
+  g.setAttribute('tabindex', '0'); g.setAttribute('role', 'button');
+  g.addEventListener('click', () => seleccionar(g.dataset.id));
+  g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); seleccionar(g.dataset.id); } });
+});
+$('#b-preparar').addEventListener('click', preparar);
+$('#b-vivo').addEventListener('click', () => (S.vivo ? detener() : iniciar()));
+$('#b-reiniciar').addEventListener('click', async () => { detener(); await api('/api/demo/reiniciar', 'POST'); S.lanzamiento = null; S.alertas = []; S.bandeja = []; S.avisos = []; S.pred = []; S.tramas = 0; $('#b-vivo').disabled = true; pintarCabecera(); pintarDetalle(); log('e', 'Misión reiniciada.'); });
+
+(async () => {
+  try {
+    const s = await api('/api/salud');
+    $('#v-back').textContent = 'v' + s.version; $('#d-back').className = 'dot ok';
+    S.enlace = await api('/api/enlace'); pintarEnlace();
+    const fases = await api('/api/fases');
+    const orb = fases.find((f) => f.entorno === 'orbita');
+    if (orb) { S.lanzamiento = Date.parse(orb.desde); $('#b-vivo').disabled = false; S.avisos = await api('/api/avisos'); log('e', 'Misión existente recuperada.'); }
+  } catch (e) { $('#v-back').textContent = 'sin conexión'; $('#d-back').className = 'dot bad'; }
+  conectarEventos(); pintarEnlacesLocales(); pintarCabecera(); seleccionar('pc');
+  setInterval(() => { refrescar(); pintarCabecera(); }, 5000);
+  log('e', 'Haz clic en cualquier elemento: dispositivos, ESP32, computadora central o Tierra.');
+})();
+</script>
+</body>
+</html>

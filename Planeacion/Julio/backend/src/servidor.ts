@@ -13,9 +13,14 @@ import { validarEsquema, type Esquema } from './esquema.ts';
 import { bus, entornoEn, ingerirBinaria, ingerirJson, prediccionPara, type TramaJson } from './ingesta.ts';
 import { ENTORNOS, type Entorno, type Prior } from './lunna.ts';
 import { cargarInicial, importarSemillas, type SalidaTipo } from './semillas.ts';
+import { escribirEnlace, iniciarEnlace, leerEnlace, redactarAviso } from './enlace.ts';
+import { readFileSync, existsSync } from 'node:fs';
+import { reiniciarEstados } from './ingesta.ts';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const PUERTO = Number(process.env.PUERTO ?? 8787);
+/** Sube al cambiar algo que la pasarela o el simulador necesiten. */
+export const VERSION_BACKEND = '0.3.0';
 
 class ErrorHttp extends Error {
   estado: number;
@@ -45,12 +50,61 @@ function ruta(metodo: string, camino: string, h: Manejador) {
   rutas.push({ metodo, patron, claves, h });
 }
 
+const ARRANQUE = Date.now();
+const recientes: string[] = [];
+function anotar(linea: string): void {
+  const l = `${new Date().toLocaleTimeString('es')}  ${linea}`;
+  recientes.unshift(l);
+  recientes.length = Math.min(recientes.length, 15);
+  console.log(l);
+}
+
+/** Lo que se ve al abrir http://localhost:8787: texto plano, se refresca solo. */
+function estadoTexto(db: BD): string {
+  const n = (sql: string) => (db.prepare(sql).get() as { n: number }).n;
+  const e = leerEnlace(db);
+  const seg = Math.floor((Date.now() - ARRANQUE) / 1000);
+  return [
+    `EVA · computadora central · backend v${VERSION_BACKEND}`,
+    `CORRIENDO desde hace ${Math.floor(seg / 60)} min ${seg % 60} s`,
+    '',
+    `entorno actual       ${entornoEn(db, ahora())}`,
+    `tripulantes          ${n('SELECT COUNT(*) AS n FROM tripulantes')}`,
+    `dispositivos         ${n('SELECT COUNT(*) AS n FROM dispositivos')}`,
+    `asignaciones activas ${n('SELECT COUNT(*) AS n FROM asignaciones WHERE hasta IS NULL')}`,
+    `muestras guardadas   ${n('SELECT COUNT(*) AS n FROM muestras')}`,
+    `alertas de LUNNA     ${n('SELECT COUNT(*) AS n FROM alertas')}`,
+    '',
+    `enlace con Tierra    ${e.abierto ? 'ABIERTO' : 'CERRADO'} · retraso ${e.owlt_s} s`,
+    `  en cola en la nave ${n('SELECT COUNT(*) AS n FROM bajada WHERE t_envio IS NULL')}`,
+    `  avisos de Tierra   ${n('SELECT COUNT(*) AS n FROM subida WHERE entregado = 1')} entregados`,
+    '',
+    'actividad reciente',
+    ...(recientes.length ? recientes.map((r) => '  ' + r) : ['  (nada todavía)']),
+    '',
+    'API: /api/salud · /api/estado · /api/alertas · /api/stream · ver backend/README.md',
+  ].join('\n');
+}
+
+/** Actividad en la terminal y en la página de estado. */
+function registrarActividad(): void {
+  let muestras = 0;
+  bus.on('muestra', () => { muestras++; });
+  setInterval(() => { if (muestras) { anotar(`+${muestras} muestras`); muestras = 0; } }, 10_000);
+  bus.on('alerta', (a: Record<string, unknown>) =>
+    anotar(`LUNNA ${String(a.estado).toUpperCase()} · ${a.tripulante} · ${a.variable} = ${a.valor} (esperado ${a.esperado}, z=${a.z})`));
+  bus.on('rechazo', (r: string[]) => anotar(`rechazo: ${r.slice(0, 2).join(' · ')}`));
+  bus.on('tierra', (b: Record<string, unknown>) => anotar(`→ Tierra recibe ${b.tipo}`));
+  bus.on('aviso', (a: Record<string, unknown>) => anotar(`← aviso de Tierra para ${a.para}: «${a.texto}»`));
+  bus.on('enlace', (e: Record<string, unknown>) => anotar(`enlace ${e.abierto ? 'abierto' : 'cerrado'}, retraso ${e.owlt_s} s`));
+}
+
 export function construir(db: BD) {
   const todos = (sql: string, ...a: Array<string | number | null>) => db.prepare(sql).all(...a);
   const uno = (sql: string, ...a: Array<string | number | null>) => db.prepare(sql).get(...a);
   rutas.length = 0;
 
-  ruta('GET', '/api/salud', () => ({ ok: true, hora: ahora(), entorno: entornoEn(db, ahora()) }));
+  ruta('GET', '/api/salud', () => ({ ok: true, version: VERSION_BACKEND, hora: ahora(), entorno: entornoEn(db, ahora()) }));
 
   // ── Registro de variables (edición desde la interfaz) ──
   ruta('GET', '/api/variables', () => todos(`SELECT * FROM variables ORDER BY id`));
@@ -227,6 +281,39 @@ export function construir(db: BD) {
     return { confirmadas: ids?.length ?? 0 };
   });
 
+  // ── Enlace con Tierra ──
+  ruta('GET', '/api/enlace', () => leerEnlace(db));
+  ruta('PUT', '/api/enlace', async (req) => {
+    try { return escribirEnlace(db, await cuerpoJson<{ owlt_s?: number; abierto?: boolean }>(req)); }
+    catch (e) { throw new ErrorHttp(400, (e as Error).message); }
+  });
+  ruta('GET', '/api/tierra/bandeja', () => {
+    const t = ahora();
+    return (todos(`SELECT * FROM bajada WHERE t_ert IS NOT NULL AND t_ert <= ? ORDER BY id DESC LIMIT 100`, t) as Array<Record<string, unknown>>)
+      .map((b) => ({ ...b, datos: JSON.parse(String(b.datos)),
+        antiguedad_al_llegar_s: Math.round((Date.parse(String(b.t_ert)) - Date.parse(String(b.t_scet))) / 1000) }));
+  });
+  ruta('GET', '/api/tierra/pendientes', () => ({
+    en_cola_nave: (uno(`SELECT COUNT(*) AS n FROM bajada WHERE t_envio IS NULL`) as { n: number }).n,
+    en_vuelo_a_tierra: (uno(`SELECT COUNT(*) AS n FROM bajada WHERE t_envio IS NOT NULL AND t_ert > ?`, ahora()) as { n: number }).n,
+    avisos_en_cola_tierra: (uno(`SELECT COUNT(*) AS n FROM subida WHERE t_envio IS NULL`) as { n: number }).n,
+    avisos_en_vuelo_a_nave: (uno(`SELECT COUNT(*) AS n FROM subida WHERE t_envio IS NOT NULL AND entregado = 0`) as { n: number }).n,
+  }));
+  ruta('POST', '/api/tierra/avisos', async (req) => {
+    try { return { id: redactarAviso(db, await cuerpoJson(req)), enlace: leerEnlace(db) }; }
+    catch (e) { throw new ErrorHttp(400, (e as Error).message); }
+  });
+  ruta('GET', '/api/tierra/avisos', () => todos(`SELECT * FROM subida ORDER BY id DESC LIMIT 100`));
+  ruta('GET', '/api/avisos', () => todos(`SELECT * FROM subida WHERE entregado = 1 ORDER BY id DESC LIMIT 100`));
+
+  // ── Sólo para la demo: deja la misión en blanco, conserva la configuración ──
+  ruta('POST', '/api/demo/reiniciar', () => {
+    db.exec(`DELETE FROM muestras; DELETE FROM alertas; DELETE FROM asignaciones; DELETE FROM fases;
+             DELETE FROM bajada; DELETE FROM subida;`);
+    reiniciarEstados();
+    return { ok: true };
+  });
+
   return createServer(async (req: IncomingMessage, res: ServerResponse) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', 'content-type');
@@ -235,15 +322,30 @@ export function construir(db: BD) {
 
     const url = new URL(req.url ?? '/', 'http://x');
 
+    // Página de estado: al abrir http://localhost:8787 se ve que el backend corre.
+    if (req.method === 'GET' && url.pathname === '/') {
+      res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', refresh: '2' }).end(estadoTexto(db));
+      return;
+    }
+    // Simulador visual: queda aparcado en /simulador, fuera de la ruta principal.
+    if (req.method === 'GET' && url.pathname === '/simulador') {
+      const html = join(AQUI, '..', 'web', 'simulador.html');
+      if (existsSync(html)) {
+        res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(readFileSync(html));
+        return;
+      }
+    }
+
     // Eventos en vivo: muestras, alertas y rechazos.
     if (req.method === 'GET' && url.pathname === '/api/stream') {
       res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
       res.write(': conectado\n\n');
       const enviar = (tipo: string) => (d: unknown) => res.write(`event: ${tipo}\ndata: ${JSON.stringify(d)}\n\n`);
-      const m = enviar('muestra'), a = enviar('alerta'), r = enviar('rechazo');
-      bus.on('muestra', m); bus.on('alerta', a); bus.on('rechazo', r);
+      const tipos = ['muestra', 'alerta', 'rechazo', 'tierra', 'aviso', 'enlace'];
+      const oyentes = tipos.map((tp) => [tp, enviar(tp)] as const);
+      for (const [tp, f] of oyentes) bus.on(tp, f);
       const latido = setInterval(() => res.write(': latido\n\n'), 15000);
-      req.on('close', () => { clearInterval(latido); bus.off('muestra', m); bus.off('alerta', a); bus.off('rechazo', r); });
+      req.on('close', () => { clearInterval(latido); for (const [tp, f] of oyentes) bus.off(tp, f); });
       return;
     }
 
@@ -271,8 +373,20 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const { nuevos } = cargarInicial(db, join(AQUI, '..', 'semillas', 'inicial.json'));
   const añadidos = Object.entries(nuevos).filter(([, n]) => n > 0).map(([k, n]) => `${n} ${k}`);
   if (añadidos.length) console.log(`Semillas: añadidos ${añadidos.join(', ')}`);
-  construir(db).listen(PUERTO, () => {
-    console.log(`EVA · computadora central en http://localhost:${PUERTO}`);
+  const srv = construir(db);
+  iniciarEnlace(db);
+  registrarActividad();
+  srv.on('error', (e: NodeJS.ErrnoException) => {
+    if (e.code === 'EADDRINUSE') {
+      console.error(`\n✗ El puerto ${PUERTO} ya está en uso: hay OTRO backend corriendo (quizá una versión vieja).`);
+      console.error('  Ciérralo (Ctrl+C en su terminal, o cierra esa terminal) y vuelve a ejecutar npm start.\n');
+      process.exit(1);
+    }
+    throw e;
+  });
+  srv.listen(PUERTO, () => {
+    console.log(`EVA · backend v${VERSION_BACKEND}`);
+    console.log(`  estado:           http://localhost:${PUERTO}   (se refresca solo)`);
     console.log(`  eventos en vivo:  http://localhost:${PUERTO}/api/stream`);
   });
 }

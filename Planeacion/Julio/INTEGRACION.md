@@ -13,7 +13,10 @@ Cómo funciona, cómo se conecta y dónde están los límites.
   dispositivo B (a, b, c) ─┘  esp32/              │ pasarela/   backend/      │        │
                                                   │                  │     alertas     │
   celular o reloj del astronauta ── JSON ────────►│                  └──► frontend     │
-  (opcional, Katia y Diana)                       └────────────────────────(Fany)──────┘
+  (opcional, Katia y Diana)                       └──────────┬─────────────(Fany)──────┘
+                                                             │ alertas y resúmenes ▲
+                                                             ▼   avisos de vuelta  │
+                                                          TIERRA  (retraso de la luz)
 ```
 
 | Pieza | Carpeta | Qué hace | Lenguaje |
@@ -124,6 +127,16 @@ Al conectar, la pasarela hace tres cosas, en este orden:
 - La **pasarela** guarda hasta 50 000 tramas si el backend no responde, y reintenta.
 - El **backend** ignora los duplicados, así que reenviar es seguro.
 
+### Enlace con Tierra
+
+La central manda a Tierra **cada alerta al instante** y **un resumen cada 30 s**. Tierra
+manda **avisos** a la tripulación. En los dos sentidos:
+
+- Todo llega `owlt_s` segundos después de salir (20 s por defecto para que se vea; en
+  Marte serían de 240 a 1 440).
+- Con la **ventana cerrada** nada sale: se guarda en cola y sale al abrirse.
+- Tierra ve **cuándo ocurrió** cada cosa y **con qué antigüedad llegó**.
+
 ---
 
 ## 6. Cómo integrarlo
@@ -146,9 +159,16 @@ python pasarela_ble.py --prueba --asignar 2561=ana --asignar 2817=ana
 La pasarela genera las mismas tramas que el firmware. También está el simulador de
 misión completa: `npm run sim` dentro de `backend/`.
 
+Al abrir **http://localhost:8787** se ve el estado del backend en texto plano, y la
+terminal de `npm start` muestra la actividad en vivo.
+
 No hace falta borrar el `eva.db`: al arrancar, el backend añade lo que falte de las
-semillas sin tocar lo que ya existe, y lo indica en consola
-(`Semillas: añadidos 2 esquemas, 2 dispositivos`).
+semillas sin tocar lo que ya existe.
+
+⚠️ **Si la pasarela dice que el backend es una versión vieja**, o aparece
+`FOREIGN KEY constraint failed`, hay otro `npm start` antiguo abierto en otra terminal
+ocupando el puerto. Ciérrenlo y arranquen de nuevo; el backend nuevo avisa si el puerto
+está ocupado.
 
 ### Con el ESP32
 
@@ -198,7 +218,8 @@ Detalle de las llamadas en `backend/README.md`.
 | Pasarela → backend → base de datos → estado | ✅ de punta a punta en modo prueba |
 | Fórmula en un campo virtual (presión media) | ✅ calculada y con la fórmula registrada |
 | LUNNA detecta la fatiga simulada sin falsos positivos | ✅ 119 días, 4 tripulantes, 2 alertas verdaderas |
-| Backend: 18 pruebas | ✅ |
+| Backend: 19 pruebas | ✅ |
+| Enlace con Tierra: retraso, ventana cerrada y avisos de vuelta | ✅ |
 | Firmware compilado y subido a un ESP32 | ❌ no hay placa |
 | Conexión BLE real entre ESP32 y PC | ❌ no hay placa; la pasarela usa `bleak`, que funciona en Windows |
 | LUNNA con datos humanos reales | ❌ los datos son sintéticos |

@@ -36,6 +36,16 @@
   };
   const M = window.MOTOR, C = window.CUERPO;
   const persona = () => M.PERSONAS.find((x) => x.id === estado.persona) || M.PERSONAS[0];
+  // Comida, Síntomas, Fuerza y check-in son de cada persona (bug 6). Ana trae los datos de ejemplo
+  // de Leo; los demás empiezan "Sin registro hoy" hasta que anoten algo.
+  const DATOS_PERSONA = {};
+  const inicialPersona = (pid) => (pid === "MS-2"
+    ? { comidas: D.comidasHoy.slice(), apetito: 6, calidadSueno: 62, dolor: 2, zonaDolor: [], cefalea: false, intensidadCefalea: 0, mareo: [], animo: null, glucometro: [], tocado: { comida: true, sintomas: true, fuerza: true, cgm: true } }
+    : { comidas: [], apetito: 6, calidadSueno: 62, dolor: 0, zonaDolor: [], cefalea: false, intensidadCefalea: 0, mareo: [], animo: null, glucometro: [], tocado: {} });
+  const datosDe = (pid) => DATOS_PERSONA[pid] || (DATOS_PERSONA[pid] = inicialPersona(pid));
+  for (const k of ["comidas", "apetito", "calidadSueno", "dolor", "zonaDolor", "cefalea", "intensidadCefalea", "mareo", "animo", "glucometro", "tocado"]) {
+    Object.defineProperty(estado, k, { get: () => datosDe(estado.persona)[k], set: (v) => { datosDe(estado.persona)[k] = v; }, enumerable: true, configurable: true });
+  }
 
   // ---------- Avisos ----------
   let avisoT = 0;
@@ -246,12 +256,12 @@
     const sec = [
       { id: "corazon", nombre: "Corazón", icono: "corazon", valor: "68", u: "lpm", ok: true, txt: "En tu normal" },
       { id: "sueno", nombre: "Sueño", icono: "luna", valor: fmt(s.horas), u: "h", ok: s.horas >= 6, txt: s.horas >= 6 ? "Bien" : "Poco" },
-      { id: "comida", nombre: "Comida", icono: "manzana", valor: Math.round((c.kcal / D.REF.kcal.meta) * 100), u: "%", ok: c.kcal >= 0.8 * D.REF.kcal.meta, txt: "de la meta" },
-      { id: "glucosa", nombre: "Glucosa", icono: "gota", valor: tir, u: "% rango", ok: tir >= 70, txt: "En rango" },
-      { id: "sintomas", nombre: "Síntomas", icono: "curita", valor: estado.dolor, u: "/10", ok: estado.dolor < 4, txt: "Dolor de espalda" },
-      { id: "fuerza", nombre: "Fuerza", icono: "pesa", valor: fmt(xRM), u: "× peso", ok: xRM >= D.REF.fuerza.min * 0.9, txt: "Estimada" },
+      { id: "comida", nombre: "Comida", icono: "manzana", valor: Math.round((c.kcal / D.REF.kcal.meta) * 100), u: "%", ok: c.kcal >= 0.8 * D.REF.kcal.meta, txt: "de la meta", sinRegistro: !estado.tocado.comida },
+      { id: "glucosa", nombre: "Tiempo en rango", icono: "gota", valor: tir, u: "% rango", ok: tir >= 70, txt: "En rango", sinRegistro: !estado.tocado.cgm },
+      { id: "sintomas", nombre: "Síntomas", icono: "curita", valor: estado.dolor, u: "/10", ok: estado.dolor < 4, txt: "Dolor de espalda", sinRegistro: !estado.tocado.sintomas },
+      { id: "fuerza", nombre: "Fuerza", icono: "pesa", valor: fmt(xRM), u: "× peso", ok: xRM >= D.REF.fuerza.min * 0.9, txt: "Estimada", sinRegistro: !estado.tocado.fuerza },
     ];
-    return sec;
+    return sec.map((x) => (x.sinRegistro ? { ...x, ok: true } : x));
   }
   /** Fase de Lunna según los signos: llena si todo está en su normal; mengua con cada alerta. */
   function actualizarFase() {
@@ -601,7 +611,6 @@
       const sec = resumen();
       const P = persona();
       const ev = M.evaluar(P.id, estado.dia);
-      const esAna = P.id === "MS-2"; // las secciones detalladas de la maqueta (comida, síntomas, fuerza) son de Ana
       // Mosaico (RF-01-02): los seis del reto siempre visibles, más las secciones de Leo.
       const tile = (id, nombre, icono, color, k, leo) => {
         let valor, u, n, txt;
@@ -610,9 +619,9 @@
           valor = vv.v; u = vv.u; n = ev.nivelDe(k);
           txt = ESTADO_TXT[n == null ? "nd" : n];
         } else {
-          valor = leo.valor; u = leo.u; n = esAna ? (leo.ok ? 0 : 1) : null; txt = esAna ? leo.txt : "Ver detalle";
+          valor = leo.sinRegistro ? "–" : leo.valor; u = leo.sinRegistro ? "" : leo.u; n = leo.sinRegistro ? null : (leo.ok ? 0 : 1); txt = leo.sinRegistro ? "Sin registro hoy" : leo.txt;
         }
-        const destino = k && !(M.IND[k].seccion && esAna) ? `ficha-${k}` : id;
+        const destino = k && !M.IND[k].seccion ? `ficha-${k}` : id;
         return `<button data-seccion="${destino}" aria-label="${nombre}: ${valor} ${u}, ${ESTADO_TXT[n == null ? "nd" : n]}">
           <div class="fila" style="gap:8px"><div class="pastilla-ic" style="--ic1:${color.fondo};--ic2:${color.tinta}">${ic(icono)}</div><span class="nombre">${nombre}</span></div>
           <div class="valor">${valor}<small>${u}</small></div>
@@ -627,7 +636,7 @@
         tile("presion", "Presión", "gota", { fondo: "#FF7A9A", tinta: "#D9365F" }, "presion"),
         tile("temperatura", "Temperatura", "fuego", { fondo: "#FF9F45", tinta: "#E8620C" }, "temperatura"),
         tile("animo", "Ánimo", "chispa", { fondo: "#33C3B3", tinta: "#0E8F86" }, "animo"),
-        tile("glucosa", "Glucosa", "gota", COLOR.glucosa, "glucosa"),
+        tile("glucosa", "Glucosa en ayunas", "gota", COLOR.glucosa, "glucosa"),
         tile("comida", "Comida", "manzana", COLOR.comida, null, S.comida),
         tile("sintomas", "Síntomas", "curita", COLOR.sintomas, null, S.sintomas),
         tile("fuerza", "Fuerza", "pesa", COLOR.fuerza, null, S.fuerza),
@@ -658,7 +667,6 @@
         </section>
         <div class="seccion-cab"><h2>Datos de tu cuerpo</h2><div class="racha" title="Días seguidos registrando">${ic("estrella", "ic-relleno")}<b>${estado.checkins}</b></div></div>
         <div class="mosaico">${tiles.join("")}</div>
-        ${esAna ? "" : `<p class="tenue-12" style="margin:-4px 0 12px">Comida, Síntomas y Fuerza de esta maqueta son datos de ejemplo de Ana.</p>`}
         ${window.APP.tripulacionInicio ? window.APP.tripulacionInicio(P, ev) : ""}
         <div class="parche-fila" style="margin-top:14px">
           <svg class="parche" viewBox="0 0 64 64" role="img" aria-label="Parche de misión LUNNA, Equipo Monarcas">
@@ -841,6 +849,7 @@
       pintar();
       $$("[data-comida]", p).forEach((b) => b.addEventListener("click", () => {
         estado.comidas.push(b.dataset.comida);
+        estado.tocado.comida = true;
         const c = pintar();
         if (c.sodio > D.REF.sodio.max) { luna.poner("preocupada"); globo.innerHTML = "¡Ups! El <b>sodio</b> ya pasó la meta de hoy."; }
         else if (c.kcal >= D.REF.kcal.meta) { luna.poner("celebra"); globo.innerHTML = "¡Meta de energía <b>cumplida</b>!"; }
@@ -849,6 +858,7 @@
       }));
       $("#apetito", p).addEventListener("input", (e) => {
         estado.apetito = Number(e.target.value);
+        estado.tocado.comida = true;
         luna.poner(estado.apetito <= 3 ? "empatica" : "rica");
         globo.innerHTML = estado.apetito <= 3 ? "Poco apetito es muy común aquí arriba. Probemos algo que te guste." : "¡Buen apetito!";
       });
@@ -863,17 +873,22 @@
       const ruta = g.map((pt, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(pt.mg).toFixed(1)}`).join(" ");
       const tir = tiempoEnRango();
       const media = Math.round(g.reduce((s, v) => s + v.mg, 0) / g.length);
-      p.innerHTML = `${cabecera("Glucosa", "Parche CGM · 24 h", "glucosa", COLOR.glucosa, "gota")}
-        ${lunaGlobo(`Estuviste en rango el <b>${tir}%</b> del día. ¡Muy estable!`)}
+      const ayunas = M.estadoIndicador(estado.persona, "glucosa", estado.dia);
+      const vAy = ayunas.valor != null ? ayunas.valor : ayunas.ultimo && ayunas.ultimo.valor;
+      const conParche = !!estado.tocado.cgm;
+      p.innerHTML = `${cabecera("Glucosa", "En ayunas y tiempo en rango", "glucosa", COLOR.glucosa, "gota")}
+        ${lunaGlobo(`${vAy != null ? `Glucosa en ayunas: <b>${vAy} mg/dL</b>. ` : ""}${conParche ? `Con el parche estuviste en rango el <b>${tir} %</b> del día.` : "Hoy no llevas parche de glucosa continua."}`)}
         ${tarjetaNormal("glucosa")}
-        <div class="tarjeta"><h3>${ic("gota")} Últimas 24 h <span class="espacio"></span>${ref("glucosa")}</h3>
+        ${conParche ? "" : `<div class="tarjeta"><h3>${ic("gota")} Tiempo en rango</h3><div class="tenue">Sin registro hoy: no llevas el parche de glucosa continua.</div></div>`}
+        <div class="tarjeta" ${conParche ? "" : "hidden"}><h3>${ic("gota")} Tiempo en rango · parche, 24 h <span class="espacio"></span>${ref("glucosa")}</h3>
+          <div class="valor-grande"><b>${tir}</b><span class="u">% del día entre 70 y 180 mg/dL</span></div>
           <svg class="grafica-glucosa" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Glucosa de las últimas 24 horas, media ${media} mg/dL">
             <rect x="0" y="${y(180)}" width="${w}" height="${y(70) - y(180)}" fill="#E3F6EC"/>
             <path d="${ruta}" fill="none" stroke="#2F6FD6" stroke-width="2.4" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
           </svg>
           <div class="escala-etq"><span>0 h</span><span>Media <b>${media} mg/dL</b></span><span>24 h</span></div></div>
         <div class="tarjeta"><h3>${ic("mas")} Glucómetro de dedo</h3>
-          <div class="tenue" style="margin-bottom:8px">Lo mide el médico de a bordo. Escribe el número.</div>
+          <div class="tenue" style="margin-bottom:8px">Lo mide la CMO. Escribe el número.</div>
           <div class="campo"><input id="glu" type="number" inputmode="numeric" min="20" max="600" placeholder="mg/dL" aria-label="Glucosa en mg/dL"/><button class="btn" id="glu-btn">Guardar</button></div>
           <div class="tenue" id="glu-lista" style="margin-top:8px"></div></div>`;
       const luna = LUNA.crear($(".luna-aqui", p), { cara: tir >= 70 ? "feliz" : "pensando", accesorio: "gota", tam: 88 });
@@ -926,6 +941,8 @@
         else if (estado.mareo.length && !estado.mareo.includes("ninguno")) { luna.poner("empatica"); globo.innerHTML = "El mareo es muy común los primeros días. Aquí estoy."; }
         else { luna.poner("feliz"); globo.innerHTML = "¡Qué bueno! Te sientes bien."; }
       };
+      p.addEventListener("input", () => { estado.tocado.sintomas = true; });
+      p.addEventListener("click", (e) => { if (e.target.closest("[data-zona], [data-mareo], #cef-si, #cef-no")) estado.tocado.sintomas = true; });
       $("#dolor", p).addEventListener("input", (e) => { estado.dolor = Number(e.target.value); $("#dolor-txt", p).innerHTML = `${estado.dolor}<small style="font-size:14px">/10</small>`; reaccionar(); });
       $$("[data-zona]", p).forEach((b) => b.addEventListener("click", () => {
         const k = b.dataset.zona; const i = estado.zonaDolor.indexOf(k);
@@ -954,6 +971,13 @@
     },
 
     fuerza(p) {
+      if (!estado.tocado.fuerza) {
+        p.innerHTML = `${cabecera("Fuerza", "ARED · peso muerto", "fuerza", COLOR.fuerza, "pesa")}
+          ${lunaGlobo("Aún no hay sesiones de ARED registradas hoy.")}
+          <div class="tarjeta"><h3>${ic("pesa")} Sin registro hoy</h3><div class="tenue">Cuando registres una sesión de peso muerto en el ARED, aquí verás tu fuerza estimada contra la meta de 1,6× tu peso [A].</div></div>`;
+        LUNA.crear($(".luna-aqui", p), { cara: "tranquila", accesorio: "pesa", tam: 88 });
+        return;
+      }
       const rm = unoRM();
       const x = Math.round((rm / D.PERFIL.masaKg) * 100) / 100;
       const ok = x >= D.REF.fuerza.min;
@@ -1016,6 +1040,7 @@
         // Lo registrado hoy reemplaza el valor simulado del día y se recalcula todo (bug 4).
         const d = new Date(), hora = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
         M.registrar(estado.persona, estado.dia, "animo", estado.estres, hora);
+        estado.tocado.sintomas = true;
         const cara = { feliz: "Genial", tranquila: "Bien", preocupada: "Regular", empatica: "Mal" }[estado.animo];
         estado.registros.unshift({ t: "Check-in", v: `${cara ? cara + " · " : ""}estrés ${estado.estres} · espalda ${estado.dolor}/10${estado.cefalea ? " · cefalea" : ""}`, hora, ic: "chispa" });
         actualizarFase();

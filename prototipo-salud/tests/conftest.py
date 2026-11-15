@@ -27,3 +27,9 @@ def _overrides_limpios(_overrides_aislados):
     yield
     if _overrides_aislados is not None and _overrides_aislados.exists():
         _overrides_aislados.unlink()
+
+
+@pytest.fixture(autouse=True)
+def _sin_eva_db(monkeypatch):
+    """Ningún test toca una eva.db real: EVA_DB sin definir salvo que el test la fije."""
+    monkeypatch.delenv("EVA_DB", raising=False)

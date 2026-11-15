@@ -125,8 +125,49 @@ def _vacio() -> dict:
     return {"version": 1, "nota": NOTA_OVERRIDES, "ligas": {}, "umbrales": {}}
 
 
+def _con_bd(ruta):
+    """Conexión a eva.db (EVA_DB) con la tabla pesos_usuario si `ruta` es None; si no, None (se usa overrides.json)."""
+    if ruta is not None:
+        return None
+    from . import evadb
+    con = evadb.conectar()
+    if con is None:
+        return None
+    if evadb.faltan(con, ("pesos_usuario",)):
+        con.close()
+        return None
+    return con
+
+
+def origen_overrides() -> str:
+    """Texto para la UI: dónde se guardan los cambios del usuario («eva.db: <ruta>» o «overrides.json»)."""
+    from . import evadb
+    return evadb.origen_overrides()
+
+
+def firma_overrides():
+    """Valor que cambia cuando cambian los overrides (para invalidar cachés de la UI)."""
+    from . import evadb
+    if _con_bd(None) is not None or evadb.ruta_eva_db() is not None:
+        return ("bd", evadb.firma_bd())
+    try:
+        return ("json", RUTA_OVERRIDES.stat().st_mtime_ns)
+    except OSError:
+        return None
+
+
 def leer_overrides(ruta=None) -> dict:
-    """Lee overrides.json; si no existe devuelve la estructura vacía (sin crear el archivo)."""
+    """Lee los overrides: de eva.db (tabla pesos_usuario) si `ruta` es None y hay BD; si no, de overrides.json.
+    Si no existen devuelve la estructura vacía (sin crear nada)."""
+    con = _con_bd(ruta)
+    if con is not None:
+        from . import evadb
+        try:
+            base = _vacio()
+            base.update(evadb.leer_pesos_usuario(con))
+            return base
+        finally:
+            con.close()
     r = _ruta(ruta)
     if not r.exists():
         return _vacio()
@@ -140,10 +181,18 @@ def leer_overrides(ruta=None) -> dict:
 
 
 def _escribir(d: dict, ruta) -> None:
-    r = _ruta(ruta)
-    r.parent.mkdir(parents=True, exist_ok=True)
     d["version"] = 1
     d["nota"] = NOTA_OVERRIDES
+    con = _con_bd(ruta)
+    if con is not None:
+        from . import evadb
+        try:
+            evadb.escribir_pesos_usuario(con, d)
+        finally:
+            con.close()
+        return
+    r = _ruta(ruta)
+    r.parent.mkdir(parents=True, exist_ok=True)
     with open(r, "w", encoding="utf-8") as f:
         json.dump(d, f, ensure_ascii=False, indent=2)
         f.write("\n")
@@ -203,7 +252,15 @@ def guardar_override_umbral(nombre: str, valor, ruta=None) -> dict:
 
 
 def restaurar(ruta=None) -> bool:
-    """Borra overrides.json: vuelven los valores de las tablas con fuente y los umbrales por defecto."""
+    """Borra los overrides (filas de pesos_usuario o overrides.json): vuelven los valores de las tablas con fuente
+    y los umbrales por defecto."""
+    con = _con_bd(ruta)
+    if con is not None:
+        from . import evadb
+        try:
+            return evadb.vaciar_pesos_usuario(con)
+        finally:
+            con.close()
     r = _ruta(ruta)
     if r.exists():
         r.unlink()

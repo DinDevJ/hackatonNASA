@@ -1,4 +1,4 @@
-/* LUNNA · módulos de la app sobre la maqueta de Leo y el motor de Diana (ERS-LUNA.md).
+/* Lunna · módulos de la app sobre la maqueta de Leo y el motor de Diana (ERS-LUNA.md).
  * Navegación: Inicio · Registrar · Ciclo (solo ellas) · Reportes · Configuración.
  * Lunna (IA) vive en el botón flotante: lo que ve hoy, cómo monitorea, clima espacial, qué procesa,
  * biblioteca y hablar. Todo es SIMULADO salvo los eventos solares de NASA DONKI. */
@@ -29,7 +29,7 @@
     return diaC <= sang ? "menstruacion" : diaC <= dur - 14 ? "folicular" : "lutea";
   };
   M.configurarCiclo(faseCicloDe);
-  const fechaLarga = (d) => fechaDia(d).toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+  const fechaLarga = (d) => { const t = fechaDia(d).toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }); return t.charAt(0).toUpperCase() + t.slice(1); };
   const titulo = (t, extra) => `<header class="titulo-grande"><div><p class="sup">${fechaLarga(E.dia)} · día ${E.dia}</p><h1>${t}</h1></div>${extra || ""}</header>`;
   const ICONO_SUB = {
     "Tripulación": ["equipo", "#5B8DFF", "#1F4FD8"], "Evento solar": ["sol", "#FF8A65", "#E5484D"], "Mente": ["cerebro", "#33C3B3", "#0E8F86"],
@@ -248,7 +248,7 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
     pared(p) {
       const act = solarActivo() && E.solar.min < 9;
       p.innerHTML = `<div class="pared ${act ? "pared-roja" : ""}">
-        <div class="pared-cab"><b>LUNNA · panel de pared</b><span>Día ${E.dia} · ${solarActivo() ? hora(E.solar.min) : "07:45"}</span><button class="btn btn-sm btn-suave" data-volver="equipo">${ic("atras", "ic-sm")} Salir</button></div>
+        <div class="pared-cab"><b>Lunna · panel de pared</b><span>Día ${E.dia} · ${solarActivo() ? hora(E.solar.min) : "07:45"}</span><button class="btn btn-sm btn-suave" data-volver="equipo">${ic("atras", "ic-sm")} Salir</button></div>
         ${solarActivo() ? `<div class="banner-rojo"><b>▲ Evento solar</b><span>${act ? "Todos al refugio blindado" : "4 de 4 en el refugio"}</span></div>` : `<div class="pared-amb">${AMBIENTE(ev().cabina).slice(0, 4).map((a) => sem(a[4], a[0])).join("")}</div>`}
         <div class="pared-grid">${M.PERSONAS.map((x) => { const n = ev(x.id).general; return `<div class="pared-p n${n}"><svg viewBox="-8 -8 16 16" class="pared-forma">${A.C.forma(n, 0, 0, 7)}</svg><b>${x.nombre}</b><span>${x.rol}</span>${solarActivo() ? `<span>${E.solar.llego[x.id] ? "✔ refugio" : "◌"}</span>` : ""}</div>`; }).join("")}</div>
         <p class="pared-pie">${ic("candado", "ic-sm")} Panel público: solo estado ●■▲ y alertas del ambiente. Sin números ni diagnósticos.</p></div>`;
@@ -261,7 +261,7 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
         $("#ir115", p).addEventListener("click", () => { E.dia = 115; ir("solar"); }); return;
       }
       const s = E.solar, yo = P(), par = parejaDe(yo.id), n = M.PERSONAS.filter((x) => s.llego[x.id]).length, ev0 = DONKI[0];
-      const RAD = ["Deja lo que estés haciendo y ve al refugio blindado.", "Quédate dentro: NASA pide montarlo en ≤ 1 h y poder permanecer hasta 24 h.", "Confirma a tu pareja en LUNA."];
+      const RAD = ["Deja lo que estés haciendo y ve al refugio blindado.", "Quédate dentro: NASA pide montarlo en ≤ 1 h y poder permanecer hasta 24 h.", "Confirma a tu pareja en Lunna."];
       const filaP = (x) => {
         const ok = s.llego[x.id], ub = x.id === yo.id ? "✔" : acceso(yo.id, x.id, "ubicacion");
         if (!ok && s.min >= 7 && ub === "✔" && x.id !== yo.id) registrarAcceso(yo.id, x.id, "ubicacion");
@@ -281,7 +281,7 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
           <p class="tenue-12">${ic("candado", "ic-sm")} La ubicación solo se comparte durante la emergencia y solo con quien la necesita.</p></div>
         <div class="tarjeta"><h3>${ic("planeta")} Evento real usado como modelo <span class="espacio"></span><span class="ref ref-A">NASA DONKI</span></h3>
           <div class="dato">ID <b>${ev0.id}</b></div><div class="dato">Instrumento <b>${ev0.inst}</b></div><div class="dato">Alerta emitida <b>${ev0.lat} min después</b></div>
-          <p class="tenue-12">Más 18 min de viaje de la señal hasta la nave: cuando el aviso llega, la dosis ya empezó. Por eso LUNNA decide a bordo.</p></div>
+          <p class="tenue-12">Más 18 min de viaje de la señal hasta la nave: cuando el aviso llega, la dosis ya empezó. Por eso Lunna decide a bordo.</p></div>
         <div class="tarjeta registro"><h3>${ic("escudo")} Registro sellado (SCET)</h3><ol>${s.log.map((x) => `<li><b>${x.h}</b> ${x.txt}</li>`).join("")}</ol></div>
         ${!s.cerrado && s.min >= 9 ? `<button class="btn btn-ancho" id="cerrar-sol">${ic("check")} La tasa se normaliza (11:31): cerrar evento</button>` : ""}`;
       const ll = $("#llegue", p); if (ll) ll.addEventListener("click", () => { s.llego[yo.id] = true; logSolar(s.min, `${yo.nombre} confirma que llegó al refugio`); ir("solar"); });
@@ -363,7 +363,7 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
       }).join("");
       const semana = Array.from({ length: 7 }, (_, i) => { const d = ((diaC - 4 + i - 1 + dur) % dur) + 1, f = new Date(hoy.getTime() + (i - 3) * 864e5); return `<div class="sem-dia ${i === 3 ? "hoy" : ""}"><small>${f.toLocaleDateString("es-MX", { weekday: "narrow", timeZone: "UTC" })}</small><span class="cd-${fase(d)}">${f.getUTCDate()}</span>${C.registro[f.toISOString().slice(0, 10)] ? "<i></i>" : ""}</div>`; }).join("");
       p.innerHTML = `${titulo("Ciclo", `<span class="priv-chip">${ic("candado", "ic-sm")} Privado</span>`)}
-        ${supr ? `<div class="tarjeta ciclo-supr"><h3>${ic("escudo")} Supresión menstrual activa</h3><p>DIU de levonorgestrel. LUNNA no calcula fases; sigue registrando sangrado inesperado y síntomas.</p></div>` : `
+        ${supr ? `<div class="tarjeta ciclo-supr"><h3>${ic("escudo")} Supresión menstrual activa</h3><p>DIU de levonorgestrel. Lunna no calcula fases; sigue registrando sangrado inesperado y síntomas.</p></div>` : `
         <div class="ciclo-anillo">
           <svg viewBox="0 0 260 260" role="img" aria-label="Día ${diaC} de ${dur} del ciclo, ${NOMBRE[fase(diaC)]}">${puntos}</svg>
           <div class="ciclo-centro"><small>Día del ciclo</small><b>${diaC}</b><span class="cd-txt-${fase(diaC)}">${NOMBRE[fase(diaC)]}</span>
@@ -602,7 +602,7 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
           <div class="chips"><span class="ref ref-A">${ic("escudo", "ic-sm")}NASA</span><span class="tenue-12">umbral oficial [A]</span></div>
           <div class="chips"><span class="ref ref-T">${ic("info", "ic-sm")}Tierra</span><span class="tenue-12">umbral clínico [T], no validado en el espacio</span></div>
           <div class="chips"><span class="etq etq-normal">tu normal</span><span class="tenue-12">tus últimos 14 días</span></div></div>
-        <div class="aviso-fijo">${ic("alerta", "ic-sm")}<span>LUNNA no es un dispositivo médico, no diagnostica y no sustituye a la CMO ni al cirujano de vuelo.</span></div>
+        <div class="aviso-fijo">${ic("alerta", "ic-sm")}<span>Lunna no es un dispositivo médico, no diagnostica y no sustituye a la CMO ni al cirujano de vuelo.</span></div>
         <p class="tenue-12 creditos">Equipo Monarcas · proyecto para NASA Space Apps Challenge 2026. Sin logos de NASA.</p>`;
     },
   };

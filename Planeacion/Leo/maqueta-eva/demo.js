@@ -1,4 +1,4 @@
-/* Demo automática de LUNNA (días 112 → 115). Solo se activa con ?demo en la URL.
+/* Demo automática de Lunna (días 112 → 115). Solo se activa con ?demo en la URL.
  * Un dedo simulado toca la propia app; una leyenda explica cada escena. No guarda nada.
  * Primitivas (dedo, leyenda, controles) de la demo original de Leo. */
 (function () {
@@ -57,7 +57,7 @@
 
   async function guion() {
     await espera(800);
-    await escena("D112 · 07:30", "Ana abre LUNA. Su Cuerpo marca la cabeza y el corazón en atención.");
+    await escena("D112 · 07:30", "Ana abre Lunna. Su Cuerpo marca la cabeza y el corazón en atención.");
     await tocar('.esc-regiones [data-region="cabeza"]');
     await espera(2400);
     try { await tocar(".hud .hud-x", 2500); } catch { /* sin animación (pestaña oculta): sigue sin el panel */ }

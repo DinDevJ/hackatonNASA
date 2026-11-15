@@ -47,7 +47,7 @@
   function tarjetaPronosticoRapido() {
     const filas = K.PERSONAS.map((x) => {
       const r = K.indices(x.id).find((i) => i.completo && i.valor > 0);
-      if (!r) return `<a class="cn-fila" href="#tripulante/${x.id}" style="text-decoration:none;color:inherit"><span class="avatar" style="--c:${x.color}">${x.nombre[0]}</span><span><b>${esc(x.nombre)}</b><small>Sin señales en ningún padecimiento: todos los índices completos en 0</small></span><span class="num">0</span></a>`;
+      if (!r) return `<a class="cn-fila" href="#tripulante/${x.id}" style="text-decoration:none;color:inherit"><span class="avatar" style="--c:${x.color}">${x.nombre[0]}</span><span><b>${esc(x.nombre)} · sin riesgos</b><small>${ic("check", "ic-sm")} Todos sus índices en 0: nada que vigilar hoy</small></span><span class="num">0</span></a>`;
       const t = K.tendencia(x.id, r.mid);
       return `<a class="cn-fila" href="#tripulante/${x.id}" style="text-decoration:none;color:inherit"><span class="avatar" style="--c:${x.color}">${x.nombre[0]}</span>
         <span><b>${esc(x.nombre)} · ${esc(r.mal.corto)}</b><span class="cn-pista" style="margin-top:4px"><i style="--v:${r.valor.toFixed(3)}"></i></span><small>${esc(r.mal.riesgo)}</small></span>
@@ -55,7 +55,7 @@
     }).join("");
     return `<section class="tarjeta" aria-labelledby="t-pr"><h2 id="t-pr">${pastilla("tendencia", "#A97BFF", "#6B3FD8")} Pronóstico rápido <a class="cn-empuja enlace" href="#pronosticos">Ver todo</a></h2>
       <div class="cn-filas">${filas}</div>
-      <p class="cn-nota" style="margin-top:8px">El padecimiento con el índice más alto de cada quien (pesos fisiológicos de Leo). ↗ ↘ → es la tendencia de los últimos días, ilustrativa.</p></section>`;
+      <p class="cn-nota" style="margin-top:8px">El padecimiento con el índice más alto de cada quien. ↗ ↘ → es la tendencia de los últimos días, ilustrativa.</p></section>`;
   }
   function tarjetaAmbiente() {
     return `<section class="tarjeta" aria-labelledby="t-amb"><h2 id="t-amb">${pastilla("ondas", "#33C3B3", "#0E8F86")} Ambiente de cabina <span class="cn-empuja tenue">${SCET()}</span></h2>
@@ -65,7 +65,7 @@
     const cab = M.cabina(K.dia);
     return `<section class="tarjeta" aria-labelledby="t-clima"><h2 id="t-clima">${pastilla("sol", "#FF8A65", "#E5484D")} Clima espacial</h2>
       ${cab.solar ? `<div class="aviso-card ac-rojo">${sem(2, false)}<span><b>Evento de partículas solares</b><small>La nave reporta ${cab.tasa.toLocaleString("es-ES")} µSv/h y tripulación en el refugio. Tierra lo vio en DONKI ${M.DONKI.latenciaMin} min después del inicio.</small></span></div>`
-        : `<div class="cn-fila">${sem(0, false)}<span><b>Sin eventos solares</b><small>Tasa de dosis a bordo ${cab.tasa} µSv/h (diseño &lt; 54)</small></span><span></span></div>`}
+        : K.positivo("sol", "Clima espacial en calma", `Sin riesgo por radiación: la nave reporta ${cab.tasa} µSv/h, dentro del diseño (&lt; 54)`)}
       <p class="cn-nota">Modelo del día 115: evento real <b>${M.DONKI.id}</b> de NASA DONKI. <a class="enlace" href="${M.DONKI.url}" target="_blank" rel="noopener">Ver en DONKI</a></p></section>`;
   }
 
@@ -88,7 +88,7 @@
         <p><b>${esc(x.titulo)}.</b> ${esc(x.texto)}</p>${x.evidencia ? `<ul style="margin:0;padding-left:18px;font:12px var(--mono);color:var(--texto-2)">${x.evidencia.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>` : ""}
         ${x.tipo !== "resumen" ? `<div class="acciones"><button type="button" class="cn-boton" data-responder-esc="${x.id}">${ic("mensaje", "ic-sm")}Responder</button>${x.pid ? `<a class="cn-boton" href="#tripulante/${x.pid}">${ic("usuario", "ic-sm")}Ver a ${esc(nombreDe(x.pid))}</a>` : ""}</div>` : ""}</div>`);
     }
-    return (max ? html.slice(0, max) : html).join("") || `<div class="cn-vacio">Nada nuevo de la nave.</div>`;
+    return (max ? html.slice(0, max) : html).join("") || K.positivo("check", "Todo tranquilo en la nave", "No llegó nada que pida respuesta.");
   }
   function conectarBandeja(cont) {
     $$("[data-responder]", cont).forEach((b) => b.addEventListener("click", () => {
@@ -222,7 +222,7 @@
             <div class="cn-encabezado" style="margin:4px 0 12px"><h2 id="t-trip" style="font-size:19px">Tripulación</h2><span class="tenue">Estado al ${SCET()} · ${ANTIG()}</span></div>
             <ul class="cn-trip-lista">${K.PERSONAS.map((x) => {
               const r = K.indices(x.id).find((i) => i.completo && i.valor > 0);
-              return `<li>${K.tarjetaTripulante(x, `#tripulante/${x.id}`, r ? `Pronóstico: ${esc(r.mal.corto)} ${fmt(r.valor, 2)}` : "Índices en 0 · ver lo que llegó")}</li>`;
+              return `<li>${K.tarjetaTripulante(x, `#tripulante/${x.id}`, r ? `Pronóstico: ${esc(r.mal.corto)} ${fmt(r.valor, 2)}` : "Sin riesgos · ver lo que llegó")}</li>`;
             }).join("")}</ul>
             <div class="cn-leyenda">${sem(0, "En su normal")}${sem(1, "Atención")}${sem(2, "Actúa ahora")}${sem(null, "Sin dato")}</div>
           </section>
@@ -255,8 +255,8 @@
           ${["fc", "hrv", "presion", "spo2", "fr", "temperatura", "glucosa"].map((k) => K.filaVital(pid, k, d)).join("")}</section>
         <div class="cn-hud-centro" id="centro">${K.centroCuerpo(pid, d, "tierra", sel.region)}</div>
         <div class="cn-hud-der cn-pila">
-          <section class="tarjeta" aria-labelledby="t-pro"><h2 id="t-pro">${pastilla("tendencia", "#A97BFF", "#6B3FD8")} Pronóstico de ${esc(x.nombre)} <span class="cn-empuja tenue">pesos de Leo</span></h2>
-            ${tres.length ? K.grafIndice(pid, tres, d) : `<div class="cn-vacio">Sin índices completos para graficar.</div>`}
+          <section class="tarjeta" aria-labelledby="t-pro"><h2 id="t-pro">${pastilla("tendencia", "#A97BFF", "#6B3FD8")} Pronóstico de ${esc(x.nombre)} </h2>
+            ${tres.length ? K.grafIndice(pid, tres, d) : K.positivo("check", "Sin riesgos que vigilar", "Ningún padecimiento tiene datos fuera de su normal.")}
             <div id="ind-barras" style="margin-top:12px">${K.barrasIndice(pid, d, { sel: s })}</div></section>
           <section class="tarjeta" aria-labelledby="t-cab"><h2 id="t-cab">${pastilla("cerebro", "#A97BFF", "#6B3FD8")} Cabeza y desempeño</h2>
             ${K.filaVital(pid, "sueno", d)}${K.filaVital(pid, "lapsos", d)}${K.filaAnimo(pid, d, "tierra")}</section>
@@ -309,7 +309,7 @@
         ${v == null ? "–" : fmt(v, 2)}${r.regla ? `<small>${forma(2, 9)}</small>` : r.completo ? "" : "<small>incompleto</small>"}</button></td>`;
     };
     const s = sel.mapa;
-    p.innerHTML = `<div class="cn-encabezado"><div><h1>Pronósticos</h1><p class="sub">Índice por padecimiento de cada tripulante · ${SCET()} · pesos fisiológicos de Leo · ilustrativo, no diagnóstico</p></div></div>
+    p.innerHTML = `<div class="cn-encabezado"><div><h1>Pronósticos</h1><p class="sub">Índice por padecimiento de cada tripulante · ${SCET()} · ilustrativo, no diagnóstico</p></div></div>
       <section class="tarjeta" aria-labelledby="t-mapa"><h2 id="t-mapa">${pastilla("grafica", "#A97BFF", "#6B3FD8")} Mapa de la tripulación <span class="cn-empuja tenue">toca una celda</span></h2>
         <div class="cn-tabla-caja"><table class="cn-mapa"><thead><tr><th></th>${mal.map((m) => `<th scope="col" title="${esc(m.nombre)}">${esc(m.corto)}</th>`).join("")}</tr></thead>
           <tbody>${K.PERSONAS.map((x) => `<tr><th scope="row"><span style="display:inline-flex;align-items:center;gap:8px"><span class="avatar" style="--c:${x.color};width:26px;height:26px;font-size:12px">${x.nombre[0]}</span>${esc(x.nombre)}</span></th>${mal.map((m) => celda(x, m)).join("")}</tr>`).join("")}</tbody></table></div>
@@ -322,7 +322,7 @@
           <ol style="margin:0;padding-left:18px;display:grid;gap:6px;font-size:13px">
             <li>Cada variable se compara con <b>su normal</b> de 14 días (z robusto, el mismo motor del teléfono).</li>
             <li>Gana <b>puntos</b> solo en la dirección fisiológica del padecimiento: |z| &lt; 1 → 0 · 1–2 → 1 · 2–3 → 2 · &gt; 3 → 3. Presión, SpO₂ y CO₂ usan los umbrales del teléfono: atención → 2, alerta → 3.</li>
-            <li><b>Índice</b> = Σ peso × puntos / máximo posible, con los pesos 0–3 de la tabla de Leo (11 padecimientos × 9 variables).</li>
+            <li><b>Índice</b> = Σ peso × puntos / máximo posible, con los pesos fisiológicos 0–3 (11 padecimientos × 9 variables).</li>
             <li>Lo que no se mide a diario (síntomas, pulso irregular, ortostatismo, fase circadiana) queda fuera y se muestra la <b>cobertura</b>.</li>
             <li>La tendencia a 3 días es una <b>extrapolación lineal</b> de los últimos 5 días: ilustrativa, no un modelo validado.</li>
           </ol>
@@ -331,7 +331,7 @@
       <section style="margin-top:16px" aria-labelledby="t-tend"><h2 id="t-tend" style="font-size:19px;margin:0 0 12px">Hacia dónde va cada quien</h2>
         <div class="cn-rejilla cn-2b">${K.PERSONAS.map((x) => {
           const tres = K.indices(x.id, d).filter((i) => i.completo && i.valor != null).slice(0, 3).map((i) => i.mid);
-          return `<section class="tarjeta"><h2><span class="avatar" style="--c:${x.color};width:28px;height:28px;font-size:13px">${x.nombre[0]}</span>${esc(x.nombre)} <span class="cn-empuja">${sem(K.ev(x.id, d).general)}</span></h2>${tres.length ? K.grafIndice(x.id, tres, d) : `<div class="cn-vacio">Sin índices completos.</div>`}</section>`;
+          return `<section class="tarjeta"><h2><span class="avatar" style="--c:${x.color};width:28px;height:28px;font-size:13px">${x.nombre[0]}</span>${esc(x.nombre)} <span class="cn-empuja">${sem(K.ev(x.id, d).general)}</span></h2>${tres.length ? K.grafIndice(x.id, tres, d) : K.positivo("check", "Sin riesgos que vigilar", "Ningún padecimiento tiene datos fuera de su normal.")}</section>`;
         }).join("")}</div></section>`;
     $$("[data-celda]", p).forEach((b) => b.addEventListener("click", () => { const [pid, mid] = b.dataset.celda.split("|"); sel.mapa = { pid, mid: +mid }; ir(); }));
     $("#msj-sel", p).addEventListener("click", () => {

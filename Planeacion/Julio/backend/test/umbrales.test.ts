@@ -395,3 +395,13 @@ test('app por HTTP: 404 claro si el tripulante no existe, y /api/referencias', a
     await new Promise((ok) => srv.close(ok));
   }
 });
+
+test('ventana del criterio personal: 24 h por defecto, se acorta sólo dentro de los límites', async () => {
+  const { ventanaPersonal, fijarVentanaPersonal, VENTANA_PERSONAL_MISION_MIN } = await import('../src/ingesta.ts');
+  assert.equal(ventanaPersonal(), VENTANA_PERSONAL_MISION_MIN);
+  assert.equal(fijarVentanaPersonal(3), 3);
+  assert.throws(() => fijarVentanaPersonal(0), /1 a 1440/);
+  assert.throws(() => fijarVentanaPersonal(2000), /1 a 1440/);
+  fijarVentanaPersonal(VENTANA_PERSONAL_MISION_MIN);
+  assert.equal(ventanaPersonal(), 1440);
+});

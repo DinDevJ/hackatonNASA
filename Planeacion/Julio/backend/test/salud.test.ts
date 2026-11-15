@@ -9,12 +9,12 @@ const filasCsv = (f: string) => parsearCsv(readFileSync(join(RUTA_MODELO_DEFECTO
 const cuenta = (db: ReturnType<typeof abrir>, t: string) =>
   (db.prepare(`SELECT COUNT(*) AS n FROM ${t}`).get() as { n: number }).n;
 
-test('semilla: 20 padecimientos y 348 vínculos contra los CSV reales', () => {
+test('semilla: 20 padecimientos y 350 vínculos contra los CSV reales', () => {
   const db = abrir(':memory:');
   const r = sembrarSalud(db);
   assert.equal(r.error, undefined);
   assert.equal(r.padecimientos, 20);
-  assert.equal(r.vinculos, 348);
+  assert.equal(r.vinculos, 350);
   assert.equal(cuenta(db, 'padecimientos'), filasCsv('PADECIMIENTOS.csv').length - 1);
   assert.equal(cuenta(db, 'padecimiento_variable'), filasCsv('PADECIMIENTO-VARIABLE.csv').length - 1);
 });
@@ -27,7 +27,7 @@ test('idempotente y no toca pesos_usuario ni evaluaciones', () => {
   db.prepare(`INSERT INTO evaluaciones (tripulante, padecimiento_id, color, hora, canal, detalle)
     VALUES ('T1','P07','GRIS','2026-01-01T00:00:00Z','SIMULADO','{}')`).run();
   const r = sembrarSalud(db);
-  assert.deepEqual([r.padecimientos, r.vinculos], [20, 348]);
+  assert.deepEqual([r.padecimientos, r.vinculos], [20, 350]);
   assert.equal(cuenta(db, 'pesos_usuario'), 1);
   assert.equal(cuenta(db, 'evaluaciones'), 1);
 });

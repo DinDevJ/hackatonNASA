@@ -592,8 +592,8 @@ def puerta(filas_contrato: pd.DataFrame, *, ecg_en_reposo: bool | dict = False,
             etq.append(ETIQ_ECO)
             ml = metric.strip().lower()
             if ml in EF_ALIAS and tipo == "medicion":
-                var, decide = "01:V18", False
-                etq.append("contexto: 01:V18 no tiene ligas, no puntua (a.2, a.5)")
+                var = "01:V18"
+                etq.append("FEVI de eco: entra como N4 en P01 y P02 (peso 1, evidencia C); no puede dar ROJO sola; no es diagnostico")
             elif model == "panecho" and ml in PANECHO_VOLUMENES and tipo == "medicion":
                 var = PANECHO_VOLUMENES[ml]
                 if "nivel_video" in quality and c["agregado"]:
@@ -636,7 +636,7 @@ def puerta(filas_contrato: pd.DataFrame, *, ecg_en_reposo: bool | dict = False,
             metodo=None, decide=decide, calidad_buena=calidad_declarada_buena(quality) and sin_dato_txt is None,
             z_pob_permitido=z_pob, sin_dato=sin_dato_txt, origen=origen, metric=metric, quality=quality, run_id=run_id,
             etiquetas=unir_etiquetas(*etq),
-            notas=" | ".join(x for x in (nota_extra, recortar(texto, 200) if texto is not None else "",
+            notas=" | ".join(x for x in (f"modelo={model}" if model in MODELOS_ECO else "", nota_extra, recortar(texto, 200) if texto is not None else "",
                                          recortar(notes, 300)) if x)))
 
     df_obs, df_rech = obs_a_df(obs), rechazadas_a_df(rech)

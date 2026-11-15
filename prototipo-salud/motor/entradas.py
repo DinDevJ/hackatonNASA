@@ -541,3 +541,39 @@ def reunir(raw_dir: str | Path | None = None, sens_df: pd.DataFrame | None = Non
             avisos.append(f"ATENCION: {sid} tiene filas simuladas y reales mezcladas ({n_sim} de {len(g)} simuladas); "
                           "marcada mixta=True. El canal real no debe usar sus filas simuladas (G1).")
     return {"obs": obs, "rechazadas": rech, "avisos": _unico(avisos), "meta_simulado": meta, "personas": personas}
+
+
+# ------------------------------------------------------------------------------------- eco (FEVI)
+METRICA_FEVI = {"echonet_dynamic": "EF", "panecho": "EF", "echoclip": "ejection_fraction_zero_shot",
+                "echoprime": "ejection_fraction"}
+
+
+def desde_eco(feve: float | None, *, subject_id: str, timestamp: Any, modelo: str, simulado: bool,
+              quality: str | None = None, checkpoint: str | None = None, version: str | None = None,
+              archivo_origen: str | None = None, run_id: str | None = None,
+              study_id: str | None = None) -> tuple[pd.DataFrame, pd.DataFrame, list[str]]:
+    """Una FEVI (%) de un modelo de eco -> una fila del contrato de 14 columnas -> `calidad.puerta` (la misma de outputs/raw).
+
+    Es N4 (modelo de investigacion, no diagnostico). `simulado` es obligatorio. Calidad vacia = `sin_calidad_declarada`
+    (no cuenta como buena). `feve=None` -> `sin_dato`. Devuelve (obs, rechazadas, avisos)."""
+    if not isinstance(simulado, bool):
+        raise ValueError("`simulado` debe ser bool (G1): lo simulado se marca SIMULADO")
+    if modelo not in cal.MODELOS_ECO or modelo not in METRICA_FEVI:
+        raise ValueError(f"modelo {modelo!r} no entrega FEVI; admitidos: {sorted(METRICA_FEVI)}")
+    q = (quality or "").strip()
+    if feve is None or (isinstance(feve, float) and math.isnan(feve)):
+        valor, q = "", "sin_dato: el adaptador no dio FEVI"
+    else:
+        valor = float(feve)
+        q = q or "sin_calidad_declarada"
+    notes = "; ".join([
+        f"modelo={modelo}", f"version={version or 'no declarada'}", f"checkpoint={checkpoint or 'no declarado'}",
+        f"archivo_origen={archivo_origen or 'no declarado'}", f"simulado={'si' if simulado else 'no'}",
+        "modelo de investigacion, no diagnostico"])
+    fila = {"subject_id": subject_id, "study_id": study_id or "", "timestamp": timestamp,
+            "source": "modelo_preentrenado", "model": modelo, "metric": METRICA_FEVI[modelo], "value": valor,
+            "unit": "%", "quality": q, "simulated": simulado, "tipo": "medicion", "run_id": run_id or "",
+            "input_file": archivo_origen or "", "notes": notes}
+    df = pd.DataFrame([fila], columns=CONTRATO_COLUMNAS)
+    df["value"] = df["value"].astype(object)
+    return cal.puerta(df, origen="eco")

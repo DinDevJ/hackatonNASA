@@ -89,7 +89,10 @@ def test_feve_no_cambia_ningun_color(tmp_path):
     ca = {p["padecimiento_id"]: (p["color"], p["T"], p["T_inf"]) for p in a["personas"]["R1"]["padecimientos"]}
     cb = {p["padecimiento_id"]: (p["color"], p["T"], p["T_inf"]) for p in b["personas"]["R1"]["padecimientos"]}
     assert ca == cb
-    assert not any(l["variable_id"] == "01:V18" for p in b["personas"]["R1"]["padecimientos"] for l in p["ligas"])
+    # 01:V18 ya tiene ligas (P01 y P02), pero con decide=False no hay dato en ellas
+    for pid in ("P01", "P02"):
+        l = liga(pad(b, "R1", pid), "01:V18")
+        assert l.get("criterio") is None and l.get("valor") is None
 
 
 def test_rojo_centinela_solo_con_persona_y_no_n4(tmp_path):

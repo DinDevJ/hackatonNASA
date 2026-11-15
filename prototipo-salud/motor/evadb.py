@@ -15,6 +15,9 @@
     * method = `metodo` solo si está en el vocabulario del motor; si no, vacío.
     * simulated = false: la BD no distingue el simulador de hardware (`npm run sim`). Si los datos vienen de él,
       también son SIMULADOS aunque aquí figuren como reales. notes = 'origen=eva.db; ...'.
+    * EXCEPCION: una muestra con procedencia 'modelo_eco' cuyo JSON de calidad trae clase == 'modelo_eco' (la escribe
+      `guardar_muestra_eco`) se lee con device_class 'modelo_eco', quality = el del JSON, simulated = `simulado` del JSON
+      y modelo/checkpoint/archivo en notes. Sigue siendo N4 (modelo de investigación, no diagnóstico).
 - Basales (`basales`): se leen y se exponen en el resultado (`basales`), pero NO se pasan al motor: el motor construye la
   base personal desde los puntos prevuelo (autocalibración) y no tiene un punto de entrada para una media impuesta; forzarla
   cambiaría la semántica.
@@ -157,10 +160,16 @@ def leer_muestras(con, avisos: list | None = None) -> pd.DataFrame:
         notas = f"origen=eva.db; procedencia={r['procedencia']}; muestra_id={r['id']}"
         if r["disp"]:
             notas += f"; dispositivo={r['disp']}"
+        clase, calidad, sim = "desconocido", "", "false"
+        if isinstance(q, dict) and q.get("clase") == "modelo_eco":
+            clase, calidad = "modelo_eco", str(q.get("quality") or "")
+            sim = "true" if q.get("simulado") is True else "false"
+            notas += (f"; modelo={q.get('modelo')}; checkpoint={q.get('checkpoint')}; archivo={q.get('archivo_origen')}"
+                      f"; modelo de investigacion, no diagnostico")
         out.append({
             "subject_id": r["tripulante"], "timestamp": r["t_scet"], "variable_id": r["variable"], "value": r["valor"],
-            "unit": r["unidad"] or "", "device_class": "desconocido", "quality": "", "context": "",
-            "method": metodo if metodo in cal.METODOS else "", "simulated": "false", "notes": notas})
+            "unit": r["unidad"] or "", "device_class": clase, "quality": calidad, "context": "",
+            "method": metodo if metodo in cal.METODOS else "", "simulated": sim, "notes": notas})
     if sin_contacto:
         avisos.append(f"{sin_contacto} muestras de eva.db sin contacto omitidas.")
     if sin_valor:
@@ -168,6 +177,49 @@ def leer_muestras(con, avisos: list | None = None) -> pd.DataFrame:
     if calidad_ilegible:
         avisos.append(f"{calidad_ilegible} muestras con calidad JSON ilegible (se usaron sin ella).")
     return pd.DataFrame(out, columns=cal.NATIVO_COLUMNAS)
+
+
+def guardar_muestra_eco(feve, *, subject_id, timestamp, modelo, simulado, quality=None, checkpoint=None, version=None,
+                        archivo_origen=None, run_id=None, ruta=None) -> dict:
+    """Guarda una FEVI (%) de un modelo de eco en `muestras` (variable 01:V18, procedencia 'modelo_eco'). Idempotente:
+    misma (tripulante, variable, t_scet, procedencia) no se vuelve a insertar. No crea esquema ni lanza si falta la tabla.
+    Es un dato de modelo de investigación (N4), no un diagnóstico; `simulado` queda en el JSON de calidad."""
+    if not isinstance(simulado, bool):
+        raise ValueError("`simulado` debe ser bool")
+    from .entradas import METRICA_FEVI
+    if modelo not in METRICA_FEVI:
+        raise ValueError(f"modelo {modelo!r} no entrega FEVI; admitidos: {sorted(METRICA_FEVI)}")
+    if feve is None or (isinstance(feve, float) and feve != feve):
+        return {"guardada": False, "aviso": "sin dato: el adaptador no dio FEVI; no se inserta nada"}
+    con = conectar(ruta)
+    if con is None:
+        return {"guardada": False, "error": "no hay BD (EVA_DB sin definir o archivo inexistente)"}
+    try:
+        f = faltan(con, ("muestras",))
+        if f:
+            return {"guardada": False, "error": aviso_faltan(f)}
+        ts = pd.Timestamp(timestamp)
+        ts = ts.tz_localize("UTC") if ts.tzinfo is None else ts.tz_convert("UTC")
+        t_scet = ts.strftime("%Y-%m-%dT%H:%M:%SZ")
+        ahora = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        calidad = json.dumps({"clase": "modelo_eco", "quality": (quality or "").strip() or "sin_calidad_declarada",
+                              "modelo": modelo, "version": version, "checkpoint": checkpoint,
+                              "archivo_origen": archivo_origen, "run_id": run_id, "simulado": simulado, "nivel": "N4",
+                              "aviso": "modelo de investigación, no diagnóstico"}, ensure_ascii=False)
+        with _transaccion(con):
+            ya = con.execute("SELECT id FROM muestras WHERE tripulante=? AND variable='01:V18' AND t_scet=? "
+                             "AND procedencia='modelo_eco'", (str(subject_id), t_scet)).fetchone()
+            if ya:
+                return {"guardada": False, "existente": True, "id": ya["id"]}
+            cur = con.execute(
+                "INSERT INTO muestras (tripulante, variable, valor, unidad, procedencia, calidad, t_scet, t_recibida, "
+                "dispositivo, seq) VALUES (?,?,?,?,?,?,?,?,NULL,NULL)",
+                (str(subject_id), "01:V18", float(feve), "%", "modelo_eco", calidad, t_scet, ahora))
+            return {"guardada": True, "existente": False, "id": cur.lastrowid, "t_scet": t_scet}
+    except sqlite3.Error as e:
+        return {"guardada": False, "error": f"{type(e).__name__}: {e}"}
+    finally:
+        con.close()
 
 
 def leer_mision(con) -> dict:

@@ -826,6 +826,7 @@
       ${k === "presion" ? `<div class="pa-leyenda"><span><i class="pa-sis"></i>Sistólica (arriba)</span><span><i class="pa-dia-i"></i>Diastólica (abajo)</span><span>mmHg · manguito</span></div>` : ""}
       ${grafNormal(pid, k, estado.dia)}
       <div class="tenue-12">${e.normal ? `Últimos 14 días · la franja es tu normal (${M.texto(k, e.normal.banda[0])} a ${M.texto(k, e.normal.banda[1])})` : ind.abs ? `Sin tu normal: se compara con el umbral (${ind.abs.texto})` : ""}</div>
+      ${ind.varId ? `<div class="tenue-12 ref-motor" data-var="${ind.varId}"></div>` : ""}
     </div>`;
   }
 

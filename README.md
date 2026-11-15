@@ -16,6 +16,11 @@ el sistema ya sepa cómo es esa persona cuando está bien.
 Cada quien trabaja en su propia carpeta dentro de `Planeacion/` para evitar
 conflictos al mezclar ramas.
 
+## Computadora central
+
+**[Planeacion/Julio/backend](Planeacion/Julio/backend/README.md)** — backend de EVA y modelo
+**LUNNA**. Contratos para la interfaz, los dispositivos intermedios, las semillas y el hardware.
+
 ## Documentos actuales
 
 | Documento | Qué contiene |

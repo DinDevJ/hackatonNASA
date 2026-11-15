@@ -528,6 +528,7 @@
   function etiquetas(k, e) {
     const ind = M.IND[k];
     const t = [];
+    if (e && e.registrado) t.push(`<span class="etq etq-reg">registrado${e.registrado.hora ? " " + e.registrado.hora : ""}</span>`);
     if (!ind.sinNormal) t.push(`<span class="etq etq-normal">tu normal</span>`);
     if (ind.abs) t.push(`<span class="ref ref-${ind.abs.tipo}" title="${ind.abs.texto}">${ic(ind.abs.tipo === "A" ? "escudo" : "info", "ic-sm")}${ind.abs.tipo === "A" ? "NASA" : "Tierra"}</span>`);
     if (ind.abs && ind.abs.propuesta) t.push(`<span class="etq etq-prop">propuesta</span>`);
@@ -540,7 +541,7 @@
     const ind = M.IND[k];
     const u = e.valor != null ? e.valor : e.ultimo ? e.ultimo.valor : null;
     if (u == null) return { v: "–", u: ind.unidad };
-    if (k === "presion") return { v: `${u}/${M.SERIES[pid].diastolica[M.idx(e.ultimo.dia)]}`, u: "mmHg" };
+    if (k === "presion") return { v: `${u}/${M.serieCon(pid, "diastolica")[M.idx(e.ultimo.dia)]}`, u: "mmHg" };
     if (k === "sueno") return { v: fmt(u.toFixed(1)), u: "h" };
     if (ind.ic) return { v: `≈${u}`, u: `${ind.unidad} (${u - ind.ic}–${u + ind.ic})` };
     return { v: fmt(ind.dec ? u.toFixed(ind.dec) : u), u: ind.unidad };
@@ -616,6 +617,7 @@
           <div class="fila" style="gap:8px"><div class="pastilla-ic" style="--ic1:${color.fondo};--ic2:${color.tinta}">${ic(icono)}</div><span class="nombre">${nombre}</span></div>
           <div class="valor">${valor}<small>${u}</small></div>
           <span class="estado estado-${claseN(n)}">${sem(n, txt)}</span>
+          ${k && ev.ind[k].registrado ? `<span class="etq etq-reg">registrado${ev.ind[k].registrado.hora ? " " + ev.ind[k].registrado.hora : ""}</span>` : ""}
         </button>`;
       };
       const S = Object.fromEntries(sec.map((x) => [x.id, x]));
@@ -691,6 +693,7 @@
         ${lunaGlobo(frase)}
         ${ind.aviso ? `<div class="aviso-fijo">${ic("info", "ic-sm")}<span>${ind.aviso}</span></div>` : ""}
         ${tarjetaNormal(k)}
+        ${k === "temperatura" && M.registro(P.id, estado.dia, "temp_central") ? `<div class="tarjeta"><h3>${ic("fuego")} Termómetro de hoy</h3><div class="valor-grande"><b>${fmt(M.registro(P.id, estado.dia, "temp_central").valor.toFixed(1))}</b><span class="u">°C</span></div><div class="etiquetas"><span class="etq etq-reg">registrado ${M.registro(P.id, estado.dia, "temp_central").hora || ""}</span><span class="etq etq-proc">temperatura central</span></div><p class="tenue-12">Es la temperatura central, distinta de la de piel de la muñeca: no se mezclan. Fiebre ≥ 39,4 °C sostenida para contactar a la CMO (umbral propuesto, no oficial).</p></div>` : ""}
         <div class="tarjeta"><dl class="explica">
           <dt>¿Por qué se mide en el espacio?</dt><dd>${ind.porQue}</dd>
           <dt>Cómo se mide</dt><dd>${ind.como}</dd>
@@ -978,6 +981,11 @@
         ${lunaGlobo("¡Hola! ¿Cómo amaneciste hoy?")}
         <section class="tarjeta ck-bloque"><h2>¿Cómo amaneciste?</h2>
           <div class="ck-animo">${animos.map(([c, n, i], k) => `<button class="ck-op ck-op${k}" data-animo="${c}" aria-pressed="${estado.animo === c}"><span>${ic(i)}</span><small>${n}</small></button>`).join("")}</div></section>
+        <section class="tarjeta ck-bloque"><h2>Estrés ahora</h2>
+          <div class="ck-num"><b id="ck-estres">${estado.estres}</b><small>/100</small></div>
+          <input class="deslizador" id="ck-estres-in" type="range" min="0" max="100" value="${estado.estres}" aria-label="Estrés de 0 a 100"/>
+          <div class="escala-etq"><span>Tranquila/o</span><span>Al límite</span></div>
+          <p class="tenue-12">Es lo que Inicio muestra como Ánimo, contra tu normal.</p></section>
         <section class="tarjeta ck-bloque"><h2>Dolor de espalda</h2>
           <div class="ck-num"><b id="ck-dolor">${estado.dolor}</b><small>/10</small></div>
           <input class="deslizador" id="ck-dolor-in" type="range" min="0" max="10" value="${estado.dolor}" aria-label="Dolor de espalda de 0 a 10"/>
@@ -993,6 +1001,7 @@
         luna.poner(estado.animo);
         globo.innerHTML = { feliz: "¡Me encanta! A darle con todo.", tranquila: "Bien. Un día tranquilo también cuenta.", preocupada: "Te entiendo. Vamos paso a paso.", empatica: "Lo siento. ¿Quieres que lo veamos con el médico de a bordo?" }[estado.animo];
       }));
+      $("#ck-estres-in", p).addEventListener("input", (e) => { estado.estres = Number(e.target.value); $("#ck-estres", p).textContent = estado.estres; });
       $("#ck-dolor-in", p).addEventListener("input", (e) => {
         estado.dolor = Number(e.target.value);
         $("#ck-dolor", p).textContent = estado.dolor;
@@ -1004,10 +1013,17 @@
         if (estado.cefalea) { luna.poner("empatica"); globo.innerHTML = "Ay. ¿Cuánto? Puedes detallarlo en <b>Síntomas</b>."; }
       }));
       $("#ck-listo", p).addEventListener("click", () => {
+        // Lo registrado hoy reemplaza el valor simulado del día y se recalcula todo (bug 4).
+        const d = new Date(), hora = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+        M.registrar(estado.persona, estado.dia, "animo", estado.estres, hora);
+        const cara = { feliz: "Genial", tranquila: "Bien", preocupada: "Regular", empatica: "Mal" }[estado.animo];
+        estado.registros.unshift({ t: "Check-in", v: `${cara ? cara + " · " : ""}estrés ${estado.estres} · espalda ${estado.dolor}/10${estado.cefalea ? " · cefalea" : ""}`, hora, ic: "chispa" });
+        actualizarFase();
+        if (lunaF) lunaF.actualizar("checkin");
         estado.checkins++;
         mem.guardar("checkins", estado.checkins);
         luna.poner("celebra", "estrella");
-        globo.innerHTML = `¡Check-in hecho! Llevas <b>${estado.checkins}</b> días seguidos.`;
+        globo.innerHTML = `¡Check-in hecho! Llevas <b>${estado.checkins}</b> días seguidos. Tu estrés de hoy ya cuenta en Inicio.`;
         aviso("+1 estrella por registrar");
       });
     },

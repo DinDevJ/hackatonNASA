@@ -1,0 +1,99 @@
+direccion,tipo_direccion,signo,provisional,nota
+↑,una_direccion,1,sí [P·S10],
+↓,una_direccion,-1,sí [P·S10],
+presente,presencia,1,sí [P·S10],
+cambio,dos_direcciones,0,sí [P·S10],
+positivo,presencia,1,sí [P·S10],
+alterada,dos_direcciones,0,sí [P·S10],
+alterado,dos_direcciones,0,sí [P·S10],
+uso,presencia,1,sí [P·S10],
+fase desplazada,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+irregular,presencia,1,sí [P·S10],01:V31: ritmo irregular presente (informado); en 03:V52 (regularidad de horarios) requiere codificación humana
+no usado,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+presente / ↑,presencia,1,sí [P·S10],se evalúa solo la presencia; la intensidad no se usa
+presentes,presencia,1,sí [P·S10],
+↑ al ponerse de pie,criterio,1,sí [P·S10],aumento de FC ≥30 lpm (McGee 1999; Freeman 2011) en 01:V48
+↑ uso,una_direccion,1,sí [P·S10],
+alerta activa,presencia,1,sí [P·S10],
+cambio de contenido,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+cambio de fase,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+cefalea con CO2 alto,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+cálculo visible / hidronefrosis,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+desalineado,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+desplazamiento hipermetrópico,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+desviación del diferencial,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+deterioro,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+disbiosis,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+dolor / exudado,presencia,1,sí [P·S10],
+estancado o retrógrado,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+estrés,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+fase/amplitud alterada,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+fenotipo,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+fuera de rango,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+hallazgo clínico,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+hipoestrogenismo / hipogonadismo,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+luz azul antes de dormir,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+mancha ciega agrandada,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+más corto = más dosis,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+no completa la prueba / presíncope,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+no cumplida,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+no usada,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+oscuro,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+"palpitaciones, síncope",presencia,1,sí [P·S10],
+parestesia tras EVA,presencia,1,sí [P·S10],
+patrón atípico,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+perfil alterado,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+positivo (hematuria),presencia,1,sí [P·S10],
+presencia,presencia,1,sí [P·S10],
+"presente (hinchazón yugular, dolor de cuello)",presencia,1,sí [P·S10],
+"presente (mareo, presíncope)",presencia,1,sí [P·S10],
+"presente (náusea, vómito)",presencia,1,sí [P·S10],
+"presente (visión cercana borrosa, escotoma)",presencia,1,sí [P·S10],
+presente tras EVA,presencia,1,sí [P·S10],
+presente tras EVA (dolor articular),presencia,1,sí [P·S10],
+refractario,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+ritmo alterado,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+sin respuesta,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+tercer cuarto,dependiente_fase,0,sí [P·S10],depende del cuarto de misión: no implementado
+ácido o >7.2,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+↑ (hemólisis),una_direccion,1,sí [P·S10],
+↑ (lapso ≥355 ms),una_direccion,1,sí [P·S10],"el lapso >=355 ms define un lapso, no un corte; se evalúa por z (d.1)"
+↑ (n/24 h),una_direccion,1,sí [P·S10],tasa extrapolada a 24 h [P·S12]
+↑ (≥10),criterio,1,sí [P·S10],"PHQ-9 >=10, Kroenke 2001"
+↑ (≥450 ms ♂ / ≥460 ms ♀) o ↓ (≤390 ms),criterio,0,sí [P·S10],QTc Rautaharju 2009; criterio de d.1
+↑ cansancio,una_direccion,1,sí [P·S10],
+↑ carga microbiana,una_direccion,1,sí [P·S10],
+↑ dicéntricos,una_direccion,1,sí [P·S10],
+↑ duración,una_direccion,1,sí [P·S10],
+↑ en vuelo / ↓ postvuelo,dependiente_fase,0,sí [P·S10],signo +1 en VT/VTa y -1 en POST; en PRE no aplica
+↑ fatiga,una_direccion,1,sí [P·S10],
+↑ grado,una_direccion,1,sí [P·S10],
+↑ media / ↓ tiempo en rango,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+↑ o ↓,dos_direcciones,0,sí [P·S10],
+↑ rebote,una_direccion,1,sí [P·S10],
+↑ sodio/sulfato,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+↑ somnolencia,una_direccion,1,sí [P·S10],
+↑ tiempo,una_direccion,1,sí [P·S10],
+↑ uso de analgésicos,una_direccion,1,sí [P·S10],
+↑/↓,dos_direcciones,0,sí [P·S10],
+↓ (cinética),una_direccion,-1,sí [P·S10],
+↓ (descompresión),una_direccion,-1,sí [P·S10],
+↓ (despresurización),una_direccion,-1,sí [P·S10],
+↓ (respuesta insuficiente),una_direccion,-1,sí [P·S10],
+↓ (≤ −1.5 DE vs. prevuelo),criterio,-1,sí [P·S10],"Cognition, NTRS 20240012108"
+↓ / subgrupos,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+↓ B / ↑ homocisteína,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+↓ HF / ↑ LF,una_direccion,-1,sí [P·S10],se evalúa ln RMSSD como proxy de ↓ HF; el adaptador no produce LF/HF [P·S14]
+↓ adherencia,una_direccion,-1,sí [P·S10],
+↓ al ponerse de pie (≥20/10 mmHg en 3 min),criterio,-1,sí [P·S10],Freeman 2011; se usa la caída sistólica ≥20 mmHg (d.1)
+↓ altura / desecación,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+↓ apetito,una_direccion,-1,sí [P·S10],
+↓ carga / volumen,una_direccion,-1,sí [P·S10],
+↓ con sangrado,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+↓ desempeño,una_direccion,-1,sí [P·S10],
+↓ horas / insomnio,una_direccion,-1,sí [P·S10],se evalúa solo ↓ horas; insomnio requiere codificación
+↓ masa magra,una_direccion,-1,sí [P·S10],
+↓ o a destiempo,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+↓ positivo / ↑ negativo,no_automatica,0,sí [P·S10],requiere codificación humana (1 = se cumple lo descrito en la columna direccion)
+↓ puntuación,una_direccion,-1,sí [P·S10],
+↓ sueño profundo/REM,una_direccion,-1,sí [P·S10],

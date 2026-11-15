@@ -3,47 +3,41 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>EVA · Simulador de misión</title>
+<title>Maqueta de aeronave interactiva para simular sistema LUNNA</title>
 <style>
 :root{
-  --bg:#070b14; --panel:#0f1626; --panel2:#141d31; --line:#22304a; --fg:#e7eef9; --dim:#8a9bb8;
-  --ok:#34d399; --warn:#fbbf24; --bad:#f87171; --acc:#60a5fa; --earth:#38bdf8;
+  --bg:#070b14; --line:#22304a; --fg:#e7eef9; --dim:#8a9bb8;
+  --ok:#34d399; --bad:#f87171; --acc:#60a5fa; --earth:#38bdf8;
   --dev:#f43f5e; --cuerpo:#dbe4f0;
-  --tty:#05070a; --ttyfg:#d6e2d6;
 }
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#0b1222,#070b14)}
-header h1{font-size:1.05rem;margin:0;letter-spacing:.02em}
-header h1 span{color:var(--dim);font-weight:400}
-.ctrl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-button{background:var(--acc);color:#04111f;border:0;border-radius:8px;padding:7px 12px;font-weight:700;cursor:pointer;font-size:.85rem}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:fixed;inset:0 0 auto 0;height:52px;z-index:5;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--line);background:rgba(7,11,20,.92);backdrop-filter:blur(6px)}
+header h1{font-size:1rem;margin:0;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctrl{display:flex;gap:8px;align-items:center;flex:none}
+button{background:var(--acc);color:#04111f;border:0;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer;font-size:.82rem}
 button.sec{background:transparent;color:var(--fg);border:1px solid var(--line)}
 button:disabled{opacity:.4;cursor:not-allowed}
-.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;border:1px solid var(--line);font-size:.78rem;color:var(--dim);white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;border:1px solid var(--line);font-size:.76rem;color:var(--dim);white-space:nowrap}
 .pill b{color:var(--fg)}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
 .dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)}
-main{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(340px,1fr);gap:14px;padding:14px 16px}
-@media(max-width:980px){main{grid-template-columns:1fr}}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px}
-#escena{position:relative;overflow:hidden;background:radial-gradient(ellipse at 30% 40%,#101a30 0,#0b1222 55%,#080d18 100%)}
-#escena svg{display:block;width:100%;height:auto}
-.limite{display:flex;gap:10px;align-items:flex-start;margin:0 14px 14px;padding:10px 12px;border:1px solid #3a2330;background:rgba(244,63,94,.07);border-radius:10px;font-size:.82rem;color:#e9c9d1}
-.limite b{color:#fff}
-.limite i{flex:none;width:10px;height:10px;margin-top:5px;border-radius:2px;background:var(--dev)}
+@media(max-width:820px){.pill{display:none} header h1{font-size:.85rem}}
 
-/* ── escena ── */
+/* ── maqueta a pantalla completa ── */
+#escena{position:fixed;inset:52px 0 0 0;background:radial-gradient(ellipse at 35% 45%,#101a30 0,#0b1222 55%,#070b14 100%)}
+#escena svg{display:block;width:100%;height:100%}
+.pista{position:fixed;left:16px;bottom:14px;z-index:2;max-width:min(560px,calc(100vw - 32px));padding:8px 12px;border:1px solid #3a2330;background:rgba(20,8,14,.75);border-radius:10px;font-size:.8rem;color:#e9c9d1}
+.pista b{color:#fff}
 .cuerpo{fill:#111c31;stroke:var(--cuerpo);stroke-width:2.2;stroke-linejoin:round}
 .disp,.equipo{cursor:pointer}
 .disp .forma{transition:filter .2s,opacity .2s}
-.disp:hover .forma,.disp.sel .forma{filter:drop-shadow(0 0 6px rgba(244,63,94,.9))}
+.disp:hover .forma,.disp.abierto .forma{filter:drop-shadow(0 0 6px rgba(244,63,94,.9))}
 .disp:focus,.equipo:focus{outline:none}
 .disp:focus-visible .forma{filter:drop-shadow(0 0 6px #60a5fa)}
 .disp.apagado .forma{opacity:.25;filter:grayscale(1)}
-.disp.sel .lbl{fill:#fff}
 .equipo .marco{transition:stroke .2s}
-.equipo:hover .marco,.equipo.sel .marco,.equipo:focus-visible .marco{stroke:#93c5fd}
+.equipo:hover .marco,.equipo.abierto .marco,.equipo:focus-visible .marco{stroke:#93c5fd}
 .lbl{fill:var(--fg);font-size:13px;font-weight:650}
 .sub{fill:#a9b8d2;font-size:11px}
 .lbl,.sub{paint-order:stroke;stroke:#0b1222;stroke-width:4px;stroke-linejoin:round;pointer-events:none}
@@ -63,216 +57,156 @@ main{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(340px,1fr);gap:14
 .enl.cortado{stroke:#7f1d1d}
 @keyframes flujo{to{stroke-dashoffset:-16}}
 
-/* ── terminal (estilo consola de equipo de red) ── */
-#detalle{display:flex;flex-direction:column;height:min(720px,calc(100vh - 110px));min-height:520px;overflow:hidden;background:var(--tty);border-color:#1f2a1f}
-@media(max-width:980px){#detalle{height:640px}}
-.barra{display:flex;align-items:center;gap:8px;padding:8px 10px;background:linear-gradient(#1c2530,#131a22);border-bottom:1px solid #263241}
-.barra .luces{display:flex;gap:6px}
-.barra .luces i{width:11px;height:11px;border-radius:50%;background:#ef4444}
-.barra .luces i:nth-child(2){background:#f59e0b} .barra .luces i:nth-child(3){background:#22c55e}
-.barra .titulo{flex:1;text-align:center;font:600 12.5px ui-monospace,Menlo,Consolas,monospace;color:#c9d6e3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tabs{display:flex;gap:2px}
-.tabs button{background:#0d131a;color:#8aa0b5;border:1px solid #263241;border-radius:6px;padding:3px 10px;font:600 12px ui-monospace,Menlo,Consolas,monospace}
-.tabs button.on{background:#e7eef9;color:#05070a;border-color:#e7eef9}
-.tty{font:12.5px/1.55 ui-monospace,"Cascadia Mono",Menlo,Consolas,monospace;color:var(--ttyfg);margin:0}
-#tty-estado{padding:10px 12px 8px;border-bottom:1px dashed #1f2a1f;white-space:pre;overflow-x:auto;flex:none}
-#tty-log{flex:1;overflow:auto;padding:8px 12px;overflow-wrap:anywhere}
-#tty-log>div{padding:1px 0}
-#tty-log .ind{padding-left:13ch}
-.prompt{padding:6px 12px 10px;border-top:1px solid #121a12;flex:none}
-.cursor{display:inline-block;width:.6em;background:#d6e2d6;animation:parpadeo 1s steps(1) infinite}
-@keyframes parpadeo{50%{opacity:0}}
-.tty .t{color:#5b6b5b} .tty .pr{color:#7dd3fc} .tty .tx{color:#fbbf24;font-weight:700} .tty .rx{color:#4ade80;font-weight:700}
-.tty .hc{color:#3f8f9f} .tty .hx{color:#67e8f9} .tty .dc{color:#f1f5f9} .tty .dim{color:#7b8b7b}
-.tty .err{color:#f87171;font-weight:700} .tty .warn{color:#fbbf24} .tty .sys{color:#c4b5fd} .tty .ok{color:#4ade80} .tty .az{color:#38bdf8}
-.tty .up{color:#4ade80} .tty .down{color:#f87171}
-#config{flex:1;overflow:auto;padding:16px;background:var(--panel);color:var(--fg)}
-#config h2{margin:0 0 2px;font-size:1.05rem}
-#config h3{margin:14px 0 2px;font-size:.9rem}
-#config .rol{color:var(--dim);margin:0 0 12px;font-size:.85rem}
-
-/* ── controles ── */
-label.fila{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 4px;font-size:.82rem;color:var(--dim)}
-input[type=range]{width:100%;accent-color:var(--dev)}
-select,textarea{width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:7px;font:inherit}
-textarea{resize:vertical;min-height:60px}
-.sw{display:flex;align-items:center;gap:10px;margin:10px 0}
-.sw input{width:18px;height:18px;accent-color:var(--acc)}
-.lista{display:flex;flex-direction:column;gap:6px;margin-top:8px;max-height:260px;overflow:auto}
-.item{background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--dim);border-radius:8px;padding:7px 10px;font-size:.82rem}
-.item.rojo{border-left-color:var(--bad)} .item.ambar{border-left-color:var(--warn)} .item.verde{border-left-color:var(--ok)}
-.item.aviso{border-left-color:var(--earth)}
-.item .t{color:var(--dim);font-size:.72rem}
-.banda{position:relative;height:22px;background:var(--bg);border:1px solid var(--line);border-radius:6px;margin:4px 0 10px}
-.banda .rango{position:absolute;top:3px;bottom:3px;background:rgba(52,211,153,.22);border:1px solid rgba(52,211,153,.6);border-radius:4px}
-.banda .esp{position:absolute;top:0;bottom:0;width:2px;background:var(--ok)}
-.banda .act{position:absolute;top:-3px;width:10px;height:26px;margin-left:-5px;border-radius:3px;background:var(--fg)}
-.banda .act.fuera{background:var(--bad)}
-.var-h{display:flex;justify-content:space-between;gap:8px;font-size:.8rem}
-.var-h span:last-child{color:var(--dim);font-variant-numeric:tabular-nums;text-align:right}
-.pesos{display:flex;height:6px;border-radius:3px;overflow:hidden;margin-top:-6px;margin-bottom:12px}
-.pesos i{display:block}
-.mide{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
-.mide span{font-size:.75rem;padding:2px 8px;border-radius:99px;background:rgba(244,63,94,.12);border:1px solid rgba(244,63,94,.35);color:#fecdd3}
-#log{grid-column:1/-1;padding:10px 14px;max-height:170px;overflow:auto;font:12px/1.6 ui-monospace,Menlo,Consolas,monospace;color:var(--dim)}
-#log .e{color:var(--fg)} #log .a{color:var(--warn)} #log .r{color:var(--bad)} #log .ti{color:var(--earth)}
-.nota{font-size:.75rem;color:var(--dim);margin-top:10px}
-.cta{margin:14px 0 0;padding:12px;border:1px dashed var(--line);border-radius:10px;color:var(--dim);font-size:.85rem}
+/* ── terminales flotantes ── */
+.ventana{position:fixed;z-index:10;width:min(560px,calc(100vw - 16px));height:min(340px,calc(100vh - 80px));min-width:300px;min-height:160px;
+  display:flex;flex-direction:column;background:#05070a;border:1px solid #2a3442;border-radius:10px;overflow:hidden;resize:both;
+  box-shadow:0 18px 50px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.03)}
+.vbarra{display:flex;align-items:center;gap:10px;padding:7px 10px;background:linear-gradient(#232c38,#161d26);cursor:grab;user-select:none;touch-action:none;flex:none}
+.vbarra:active{cursor:grabbing}
+.vbarra .luces{display:flex;gap:6px}
+.vbarra .luces i{width:12px;height:12px;border-radius:50%;background:#f59e0b}
+.vbarra .luces i.cerrar{background:#ef4444;cursor:pointer}
+.vbarra .luces i:nth-child(3){background:#22c55e}
+.vbarra .vtitulo{flex:1;text-align:center;font:600 12px ui-monospace,Menlo,Consolas,monospace;color:#c9d6e3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-right:52px}
+.vlog{flex:1;overflow:auto;padding:8px 12px;font:12.5px/1.6 ui-monospace,"Cascadia Mono",Menlo,Consolas,monospace;color:#d6e2d6;overflow-wrap:anywhere}
+.vlog .t{color:#6b7b6b} .vlog .hx{color:#67e8f9} .vlog .dim{color:#7b8b7b} .vlog .rojo{color:#f87171} .vlog .amb{color:#fbbf24}
+.vlog .verde{color:#4ade80} .vlog .az{color:#38bdf8} .vlog .cmd{color:#fff}
+.vcmd{display:flex;gap:8px;align-items:center;padding:6px 12px 8px;border-top:1px solid #141b14;font:12.5px ui-monospace,Menlo,Consolas,monospace;color:#7dd3fc;flex:none}
+.vcmd input{flex:1;background:transparent;border:0;outline:0;color:#e5f0e5;font:inherit;caret-color:#d6e2d6}
 </style>
 </head>
 <body>
 <header>
-  <h1>EVA · Simulador de misión <span>— LUNNA en vivo</span></h1>
+  <h1>Maqueta de aeronave interactiva para simular sistema LUNNA</h1>
   <div class="ctrl">
     <span class="pill"><span class="dot" id="d-back"></span> backend <b id="v-back">…</b></span>
-    <span class="pill">día de misión <b id="v-dia">—</b></span>
-    <span class="pill">tramas <b id="v-tramas">0</b></span>
-    <button id="b-preparar">Preparar misión · 112 días</button>
+    <span class="pill">día <b id="v-dia">—</b></span>
+    <button id="b-preparar">Preparar misión</button>
     <button id="b-vivo" class="sec" disabled>▶ En vivo</button>
     <button id="b-reiniciar" class="sec">Reiniciar</button>
   </div>
 </header>
 
-<main>
-  <section class="card" id="escena">
-    <svg viewBox="0 0 1000 640" role="img" aria-label="Astronauta con playera de sensores, reloj y brazalete; celular, computadora central y Tierra">
-      <defs>
-        <pattern id="rayado" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)">
-          <rect width="7" height="7" fill="rgba(244,63,94,.22)"/>
-          <line x1="0" y1="0" x2="0" y2="7" stroke="#f43f5e" stroke-width="2.2"/>
-        </pattern>
-        <radialGradient id="gTierra" cx="38%" cy="32%"><stop offset="0" stop-color="#7dd3fc"/><stop offset=".55" stop-color="#0ea5e9"/><stop offset="1" stop-color="#0c4a6e"/></radialGradient>
-        <clipPath id="recorteCuerpo"><path d="M0,0 C5.7,0.0 12.3,0.7 17,3 C21.7,5.3 25.5,9.3 28,14 C30.5,18.7 31.5,25.2 32,31 C32.5,36.8 32.0,43.7 31,49 C30.0,54.3 28.2,59.0 26,63 C23.8,67.0 19.8,70.3 18,73 C16.2,75.7 15.5,76.0 15,79 C14.5,82.0 13.5,87.8 15,91 C16.5,94.2 19.2,95.8 24,98 C28.8,100.2 37.7,102.2 44,104 C50.3,105.8 57.0,106.8 62,109 C67.0,111.2 70.8,113.3 74,117 C77.2,120.7 79.3,124.7 81,131 C82.7,137.3 83.0,147.5 84,155.0 C85.0,162.5 86.0,169.1 87,176.2 C88.0,183.3 88.8,189.7 90,197.4 C91.2,205.1 92.7,213.9 94,222.2 C95.3,230.4 96.7,238.7 98,246.9 C99.3,255.2 100.8,264.0 102,271.7 C103.2,279.4 104.2,287.0 105,292.9 C105.8,298.8 105.8,302.0 107,307.0 C108.2,312.0 110.5,317.0 112,323 C113.5,329.0 115.7,336.3 116,343 C116.3,349.7 115.5,357.7 114,363 C112.5,368.3 109.5,373.2 107,375 C104.5,376.8 101.2,376.2 99,374 C96.8,371.8 95.3,366.8 94,362 C92.7,357.2 92.3,349.5 91,345 C89.7,340.5 86.5,339.0 86,335 C85.5,331.0 87.3,325.7 88,321 C88.7,316.3 90.0,312.3 90,307.0 C90.0,301.7 89.0,296.4 88,289.3 C87.0,282.2 85.3,272.9 84,264.6 C82.7,256.4 81.3,248.1 80,239.8 C78.7,231.6 77.3,223.1 76,215.1 C74.7,207.1 73.3,198.4 72,191.8 C70.7,185.2 69.3,179.1 68,175.5 C66.7,171.9 65.2,167.9 64,170 C62.8,172.1 62.0,180.5 61,188 C60.0,195.5 59.0,205.5 58,215 C57.0,224.5 55.2,235.0 55,245 C54.8,255.0 55.7,265.0 57,275 C58.3,285.0 61.7,295.0 63,305 C64.3,315.0 65.0,323.3 65,335 C65.0,346.7 63.8,361.7 63,375 C62.2,388.3 61.2,401.2 60,415 C58.8,428.8 57.3,443.8 56,458 C54.7,472.2 53.3,487.7 52,500 C50.7,512.3 48.0,524.0 48,532 C48.0,540.0 50.8,543.0 52,548 C53.2,553.0 55.3,558.0 55,562 C54.7,566.0 53.8,569.8 50,572 C46.2,574.2 37.0,575.3 32,575 C27.0,574.7 22.3,573.2 20,570 C17.7,566.8 18.0,561.3 18,556 C18.0,550.7 19.7,547.3 20,538 C20.3,528.7 20.3,513.0 20,500 C19.7,487.0 18.7,473.3 18,460 C17.3,446.7 17.0,433.3 16,420 C15.0,406.7 13.3,392.0 12,380 C10.7,368.0 9.5,355.8 8,348 C6.5,340.2 4.3,336.2 3,333 C1.7,329.8 1.0,329.0 0,329 C-1.0,329.0 -1.7,329.8 -3,333 C-4.3,336.2 -6.5,340.2 -8,348 C-9.5,355.8 -10.7,368.0 -12,380 C-13.3,392.0 -15.0,406.7 -16,420 C-17.0,433.3 -17.3,446.7 -18,460 C-18.7,473.3 -19.7,487.0 -20,500 C-20.3,513.0 -20.3,528.7 -20,538 C-19.7,547.3 -18.0,550.7 -18,556 C-18.0,561.3 -17.7,566.8 -20,570 C-22.3,573.2 -27.0,574.7 -32,575 C-37.0,575.3 -46.2,574.2 -50,572 C-53.8,569.8 -54.7,566.0 -55,562 C-55.3,558.0 -53.2,553.0 -52,548 C-50.8,543.0 -48.0,540.0 -48,532 C-48.0,524.0 -50.7,512.3 -52,500 C-53.3,487.7 -54.7,472.2 -56,458 C-57.3,443.8 -58.8,428.8 -60,415 C-61.2,401.2 -62.2,388.3 -63,375 C-63.8,361.7 -65.0,346.7 -65,335 C-65.0,323.3 -64.3,315.0 -63,305 C-61.7,295.0 -58.3,285.0 -57,275 C-55.7,265.0 -54.8,255.0 -55,245 C-55.2,235.0 -57.0,224.5 -58,215 C-59.0,205.5 -60.0,195.5 -61,188 C-62.0,180.5 -62.8,172.1 -64,170 C-65.2,167.9 -66.7,171.9 -68,175.5 C-69.3,179.1 -70.7,185.2 -72,191.8 C-73.3,198.4 -74.7,207.1 -76,215.1 C-77.3,223.1 -78.7,231.6 -80,239.8 C-81.3,248.1 -82.7,256.4 -84,264.6 C-85.3,272.9 -87.0,282.2 -88,289.3 C-89.0,296.4 -90.0,301.7 -90,307.0 C-90.0,312.3 -88.7,316.3 -88,321 C-87.3,325.7 -85.5,331.0 -86,335 C-86.5,339.0 -89.7,340.5 -91,345 C-92.3,349.5 -92.7,357.2 -94,362 C-95.3,366.8 -96.8,371.8 -99,374 C-101.2,376.2 -104.5,376.8 -107,375 C-109.5,373.2 -112.5,368.3 -114,363 C-115.5,357.7 -116.3,349.7 -116,343 C-115.7,336.3 -113.5,329.0 -112,323 C-110.5,317.0 -108.2,312.0 -107,307.0 C-105.8,302.0 -105.8,298.8 -105,292.9 C-104.2,287.0 -103.2,279.4 -102,271.7 C-100.8,264.0 -99.3,255.2 -98,246.9 C-96.7,238.7 -95.3,230.4 -94,222.2 C-92.7,213.9 -91.2,205.1 -90,197.4 C-88.8,189.7 -88.0,183.3 -87,176.2 C-86.0,169.1 -85.0,162.5 -84,155.0 C-83.0,147.5 -82.7,137.3 -81,131 C-79.3,124.7 -77.2,120.7 -74,117 C-70.8,113.3 -67.0,111.2 -62,109 C-57.0,106.8 -50.3,105.8 -44,104 C-37.7,102.2 -28.8,100.2 -24,98 C-19.2,95.8 -16.5,94.2 -15,91 C-13.5,87.8 -14.5,82.0 -15,79 C-15.5,76.0 -16.2,75.7 -18,73 C-19.8,70.3 -23.8,67.0 -26,63 C-28.2,59.0 -30.0,54.3 -31,49 C-32.0,43.7 -32.5,36.8 -32,31 C-31.5,25.2 -30.5,18.7 -28,14 C-25.5,9.3 -21.7,5.3 -17,3 C-12.3,0.7 -5.7,0.0 0,0Z"/></clipPath>
-      </defs>
+<section id="escena">
+  <svg viewBox="0 0 1000 640" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Astronauta con playera de sensores, reloj y brazalete; celular, computadora central y Tierra">
+    <defs>
+      <pattern id="rayado" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)">
+        <rect width="7" height="7" fill="rgba(244,63,94,.22)"/>
+        <line x1="0" y1="0" x2="0" y2="7" stroke="#f43f5e" stroke-width="2.2"/>
+      </pattern>
+      <radialGradient id="gTierra" cx="38%" cy="32%"><stop offset="0" stop-color="#7dd3fc"/><stop offset=".55" stop-color="#0ea5e9"/><stop offset="1" stop-color="#0c4a6e"/></radialGradient>
+      <clipPath id="recorteCuerpo"><path d="M0,0 C5.7,0.0 12.3,0.7 17,3 C21.7,5.3 25.5,9.3 28,14 C30.5,18.7 31.5,25.2 32,31 C32.5,36.8 32.0,43.7 31,49 C30.0,54.3 28.2,59.0 26,63 C23.8,67.0 19.8,70.3 18,73 C16.2,75.7 15.5,76.0 15,79 C14.5,82.0 13.5,87.8 15,91 C16.5,94.2 19.2,95.8 24,98 C28.8,100.2 37.7,102.2 44,104 C50.3,105.8 57.0,106.8 62,109 C67.0,111.2 70.8,113.3 74,117 C77.2,120.7 79.3,124.7 81,131 C82.7,137.3 83.0,147.5 84,155.0 C85.0,162.5 86.0,169.1 87,176.2 C88.0,183.3 88.8,189.7 90,197.4 C91.2,205.1 92.7,213.9 94,222.2 C95.3,230.4 96.7,238.7 98,246.9 C99.3,255.2 100.8,264.0 102,271.7 C103.2,279.4 104.2,287.0 105,292.9 C105.8,298.8 105.8,302.0 107,307.0 C108.2,312.0 110.5,317.0 112,323 C113.5,329.0 115.7,336.3 116,343 C116.3,349.7 115.5,357.7 114,363 C112.5,368.3 109.5,373.2 107,375 C104.5,376.8 101.2,376.2 99,374 C96.8,371.8 95.3,366.8 94,362 C92.7,357.2 92.3,349.5 91,345 C89.7,340.5 86.5,339.0 86,335 C85.5,331.0 87.3,325.7 88,321 C88.7,316.3 90.0,312.3 90,307.0 C90.0,301.7 89.0,296.4 88,289.3 C87.0,282.2 85.3,272.9 84,264.6 C82.7,256.4 81.3,248.1 80,239.8 C78.7,231.6 77.3,223.1 76,215.1 C74.7,207.1 73.3,198.4 72,191.8 C70.7,185.2 69.3,179.1 68,175.5 C66.7,171.9 65.2,167.9 64,170 C62.8,172.1 62.0,180.5 61,188 C60.0,195.5 59.0,205.5 58,215 C57.0,224.5 55.2,235.0 55,245 C54.8,255.0 55.7,265.0 57,275 C58.3,285.0 61.7,295.0 63,305 C64.3,315.0 65.0,323.3 65,335 C65.0,346.7 63.8,361.7 63,375 C62.2,388.3 61.2,401.2 60,415 C58.8,428.8 57.3,443.8 56,458 C54.7,472.2 53.3,487.7 52,500 C50.7,512.3 48.0,524.0 48,532 C48.0,540.0 50.8,543.0 52,548 C53.2,553.0 55.3,558.0 55,562 C54.7,566.0 53.8,569.8 50,572 C46.2,574.2 37.0,575.3 32,575 C27.0,574.7 22.3,573.2 20,570 C17.7,566.8 18.0,561.3 18,556 C18.0,550.7 19.7,547.3 20,538 C20.3,528.7 20.3,513.0 20,500 C19.7,487.0 18.7,473.3 18,460 C17.3,446.7 17.0,433.3 16,420 C15.0,406.7 13.3,392.0 12,380 C10.7,368.0 9.5,355.8 8,348 C6.5,340.2 4.3,336.2 3,333 C1.7,329.8 1.0,329.0 0,329 C-1.0,329.0 -1.7,329.8 -3,333 C-4.3,336.2 -6.5,340.2 -8,348 C-9.5,355.8 -10.7,368.0 -12,380 C-13.3,392.0 -15.0,406.7 -16,420 C-17.0,433.3 -17.3,446.7 -18,460 C-18.7,473.3 -19.7,487.0 -20,500 C-20.3,513.0 -20.3,528.7 -20,538 C-19.7,547.3 -18.0,550.7 -18,556 C-18.0,561.3 -17.7,566.8 -20,570 C-22.3,573.2 -27.0,574.7 -32,575 C-37.0,575.3 -46.2,574.2 -50,572 C-53.8,569.8 -54.7,566.0 -55,562 C-55.3,558.0 -53.2,553.0 -52,548 C-50.8,543.0 -48.0,540.0 -48,532 C-48.0,524.0 -50.7,512.3 -52,500 C-53.3,487.7 -54.7,472.2 -56,458 C-57.3,443.8 -58.8,428.8 -60,415 C-61.2,401.2 -62.2,388.3 -63,375 C-63.8,361.7 -65.0,346.7 -65,335 C-65.0,323.3 -64.3,315.0 -63,305 C-61.7,295.0 -58.3,285.0 -57,275 C-55.7,265.0 -54.8,255.0 -55,245 C-55.2,235.0 -57.0,224.5 -58,215 C-59.0,205.5 -60.0,195.5 -61,188 C-62.0,180.5 -62.8,172.1 -64,170 C-65.2,167.9 -66.7,171.9 -68,175.5 C-69.3,179.1 -70.7,185.2 -72,191.8 C-73.3,198.4 -74.7,207.1 -76,215.1 C-77.3,223.1 -78.7,231.6 -80,239.8 C-81.3,248.1 -82.7,256.4 -84,264.6 C-85.3,272.9 -87.0,282.2 -88,289.3 C-89.0,296.4 -90.0,301.7 -90,307.0 C-90.0,312.3 -88.7,316.3 -88,321 C-87.3,325.7 -85.5,331.0 -86,335 C-86.5,339.0 -89.7,340.5 -91,345 C-92.3,349.5 -92.7,357.2 -94,362 C-95.3,366.8 -96.8,371.8 -99,374 C-101.2,376.2 -104.5,376.8 -107,375 C-109.5,373.2 -112.5,368.3 -114,363 C-115.5,357.7 -116.3,349.7 -116,343 C-115.7,336.3 -113.5,329.0 -112,323 C-110.5,317.0 -108.2,312.0 -107,307.0 C-105.8,302.0 -105.8,298.8 -105,292.9 C-104.2,287.0 -103.2,279.4 -102,271.7 C-100.8,264.0 -99.3,255.2 -98,246.9 C-96.7,238.7 -95.3,230.4 -94,222.2 C-92.7,213.9 -91.2,205.1 -90,197.4 C-88.8,189.7 -88.0,183.3 -87,176.2 C-86.0,169.1 -85.0,162.5 -84,155.0 C-83.0,147.5 -82.7,137.3 -81,131 C-79.3,124.7 -77.2,120.7 -74,117 C-70.8,113.3 -67.0,111.2 -62,109 C-57.0,106.8 -50.3,105.8 -44,104 C-37.7,102.2 -28.8,100.2 -24,98 C-19.2,95.8 -16.5,94.2 -15,91 C-13.5,87.8 -14.5,82.0 -15,79 C-15.5,76.0 -16.2,75.7 -18,73 C-19.8,70.3 -23.8,67.0 -26,63 C-28.2,59.0 -30.0,54.3 -31,49 C-32.0,43.7 -32.5,36.8 -32,31 C-31.5,25.2 -30.5,18.7 -28,14 C-25.5,9.3 -21.7,5.3 -17,3 C-12.3,0.7 -5.7,0.0 0,0Z"/></clipPath>
+    </defs>
 
-      <g fill="#fff" opacity=".35"><circle cx="40" cy="30" r="1"/><circle cx="470" cy="70" r="1.2"/><circle cx="610" cy="24" r=".8"/><circle cx="700" cy="420" r="1"/><circle cx="960" cy="40" r="1.3"/><circle cx="560" cy="560" r=".9"/><circle cx="980" cy="330" r="1"/><circle cx="660" cy="470" r="1"/><circle cx="60" cy="560" r="1.1"/><circle cx="430" cy="600" r=".8"/></g>
+    <g fill="#fff" opacity=".35"><circle cx="40" cy="30" r="1"/><circle cx="470" cy="70" r="1.2"/><circle cx="610" cy="24" r=".8"/><circle cx="700" cy="420" r="1"/><circle cx="960" cy="40" r="1.3"/><circle cx="560" cy="560" r=".9"/><circle cx="980" cy="330" r="1"/><circle cx="660" cy="470" r="1"/><circle cx="60" cy="560" r="1.1"/><circle cx="430" cy="600" r=".8"/></g>
 
-      <path id="c-cel" class="enl vivo" d="M690 262 L775 185"/>
-      <path id="c-tierra" class="enl vivo" d="M830 222 L830 458"/>
+    <path id="c-cel" class="enl vivo" d="M690 262 L775 185"/>
+    <path id="c-tierra" class="enl vivo" d="M830 222 L830 458"/>
 
-      <!-- ═══ astronauta ═══ -->
-      <g transform="translate(330,40)">
-        <path class="cuerpo" d="M0,0 C5.7,0.0 12.3,0.7 17,3 C21.7,5.3 25.5,9.3 28,14 C30.5,18.7 31.5,25.2 32,31 C32.5,36.8 32.0,43.7 31,49 C30.0,54.3 28.2,59.0 26,63 C23.8,67.0 19.8,70.3 18,73 C16.2,75.7 15.5,76.0 15,79 C14.5,82.0 13.5,87.8 15,91 C16.5,94.2 19.2,95.8 24,98 C28.8,100.2 37.7,102.2 44,104 C50.3,105.8 57.0,106.8 62,109 C67.0,111.2 70.8,113.3 74,117 C77.2,120.7 79.3,124.7 81,131 C82.7,137.3 83.0,147.5 84,155.0 C85.0,162.5 86.0,169.1 87,176.2 C88.0,183.3 88.8,189.7 90,197.4 C91.2,205.1 92.7,213.9 94,222.2 C95.3,230.4 96.7,238.7 98,246.9 C99.3,255.2 100.8,264.0 102,271.7 C103.2,279.4 104.2,287.0 105,292.9 C105.8,298.8 105.8,302.0 107,307.0 C108.2,312.0 110.5,317.0 112,323 C113.5,329.0 115.7,336.3 116,343 C116.3,349.7 115.5,357.7 114,363 C112.5,368.3 109.5,373.2 107,375 C104.5,376.8 101.2,376.2 99,374 C96.8,371.8 95.3,366.8 94,362 C92.7,357.2 92.3,349.5 91,345 C89.7,340.5 86.5,339.0 86,335 C85.5,331.0 87.3,325.7 88,321 C88.7,316.3 90.0,312.3 90,307.0 C90.0,301.7 89.0,296.4 88,289.3 C87.0,282.2 85.3,272.9 84,264.6 C82.7,256.4 81.3,248.1 80,239.8 C78.7,231.6 77.3,223.1 76,215.1 C74.7,207.1 73.3,198.4 72,191.8 C70.7,185.2 69.3,179.1 68,175.5 C66.7,171.9 65.2,167.9 64,170 C62.8,172.1 62.0,180.5 61,188 C60.0,195.5 59.0,205.5 58,215 C57.0,224.5 55.2,235.0 55,245 C54.8,255.0 55.7,265.0 57,275 C58.3,285.0 61.7,295.0 63,305 C64.3,315.0 65.0,323.3 65,335 C65.0,346.7 63.8,361.7 63,375 C62.2,388.3 61.2,401.2 60,415 C58.8,428.8 57.3,443.8 56,458 C54.7,472.2 53.3,487.7 52,500 C50.7,512.3 48.0,524.0 48,532 C48.0,540.0 50.8,543.0 52,548 C53.2,553.0 55.3,558.0 55,562 C54.7,566.0 53.8,569.8 50,572 C46.2,574.2 37.0,575.3 32,575 C27.0,574.7 22.3,573.2 20,570 C17.7,566.8 18.0,561.3 18,556 C18.0,550.7 19.7,547.3 20,538 C20.3,528.7 20.3,513.0 20,500 C19.7,487.0 18.7,473.3 18,460 C17.3,446.7 17.0,433.3 16,420 C15.0,406.7 13.3,392.0 12,380 C10.7,368.0 9.5,355.8 8,348 C6.5,340.2 4.3,336.2 3,333 C1.7,329.8 1.0,329.0 0,329 C-1.0,329.0 -1.7,329.8 -3,333 C-4.3,336.2 -6.5,340.2 -8,348 C-9.5,355.8 -10.7,368.0 -12,380 C-13.3,392.0 -15.0,406.7 -16,420 C-17.0,433.3 -17.3,446.7 -18,460 C-18.7,473.3 -19.7,487.0 -20,500 C-20.3,513.0 -20.3,528.7 -20,538 C-19.7,547.3 -18.0,550.7 -18,556 C-18.0,561.3 -17.7,566.8 -20,570 C-22.3,573.2 -27.0,574.7 -32,575 C-37.0,575.3 -46.2,574.2 -50,572 C-53.8,569.8 -54.7,566.0 -55,562 C-55.3,558.0 -53.2,553.0 -52,548 C-50.8,543.0 -48.0,540.0 -48,532 C-48.0,524.0 -50.7,512.3 -52,500 C-53.3,487.7 -54.7,472.2 -56,458 C-57.3,443.8 -58.8,428.8 -60,415 C-61.2,401.2 -62.2,388.3 -63,375 C-63.8,361.7 -65.0,346.7 -65,335 C-65.0,323.3 -64.3,315.0 -63,305 C-61.7,295.0 -58.3,285.0 -57,275 C-55.7,265.0 -54.8,255.0 -55,245 C-55.2,235.0 -57.0,224.5 -58,215 C-59.0,205.5 -60.0,195.5 -61,188 C-62.0,180.5 -62.8,172.1 -64,170 C-65.2,167.9 -66.7,171.9 -68,175.5 C-69.3,179.1 -70.7,185.2 -72,191.8 C-73.3,198.4 -74.7,207.1 -76,215.1 C-77.3,223.1 -78.7,231.6 -80,239.8 C-81.3,248.1 -82.7,256.4 -84,264.6 C-85.3,272.9 -87.0,282.2 -88,289.3 C-89.0,296.4 -90.0,301.7 -90,307.0 C-90.0,312.3 -88.7,316.3 -88,321 C-87.3,325.7 -85.5,331.0 -86,335 C-86.5,339.0 -89.7,340.5 -91,345 C-92.3,349.5 -92.7,357.2 -94,362 C-95.3,366.8 -96.8,371.8 -99,374 C-101.2,376.2 -104.5,376.8 -107,375 C-109.5,373.2 -112.5,368.3 -114,363 C-115.5,357.7 -116.3,349.7 -116,343 C-115.7,336.3 -113.5,329.0 -112,323 C-110.5,317.0 -108.2,312.0 -107,307.0 C-105.8,302.0 -105.8,298.8 -105,292.9 C-104.2,287.0 -103.2,279.4 -102,271.7 C-100.8,264.0 -99.3,255.2 -98,246.9 C-96.7,238.7 -95.3,230.4 -94,222.2 C-92.7,213.9 -91.2,205.1 -90,197.4 C-88.8,189.7 -88.0,183.3 -87,176.2 C-86.0,169.1 -85.0,162.5 -84,155.0 C-83.0,147.5 -82.7,137.3 -81,131 C-79.3,124.7 -77.2,120.7 -74,117 C-70.8,113.3 -67.0,111.2 -62,109 C-57.0,106.8 -50.3,105.8 -44,104 C-37.7,102.2 -28.8,100.2 -24,98 C-19.2,95.8 -16.5,94.2 -15,91 C-13.5,87.8 -14.5,82.0 -15,79 C-15.5,76.0 -16.2,75.7 -18,73 C-19.8,70.3 -23.8,67.0 -26,63 C-28.2,59.0 -30.0,54.3 -31,49 C-32.0,43.7 -32.5,36.8 -32,31 C-31.5,25.2 -30.5,18.7 -28,14 C-25.5,9.3 -21.7,5.3 -17,3 C-12.3,0.7 -5.7,0.0 0,0Z"/>
-
-        <g class="disp" data-id="playera" tabindex="0" role="button" aria-label="Playera con sensores">
-          <g class="forma">
-            <path clip-path="url(#recorteCuerpo)" fill="url(#rayado)" stroke="#f43f5e" stroke-width="1.5"
-                  d="M0,104 L13,92 L28,99 L62,109 L76,120 L84,145 L90,184 L69,190 L66,178 L60,215 L58,260 L62,306 L0,311 L-62,306 L-58,260 L-60,215 L-66,178 L-69,190 L-90,184 L-84,145 L-76,120 L-62,109 L-28,99 L-13,92 Z"/>
-            <circle cx="-20" cy="148" r="5" fill="#fff1f2" stroke="#e11d48" stroke-width="2"/>
-            <circle cx="20" cy="148" r="5" fill="#fff1f2" stroke="#e11d48" stroke-width="2"/>
-            <path d="M-57,196 Q0,206 57,196" fill="none" stroke="#fff1f2" stroke-width="2.5" stroke-dasharray="5 3"/>
-            <circle cx="48" cy="172" r="4" fill="#fde68a" stroke="#e11d48" stroke-width="1.5"/>
-            <rect x="-50" y="252" width="28" height="18" rx="3" fill="#0b1220" stroke="#fff1f2" stroke-width="1.5"/>
-            <rect x="-45" y="257" width="8" height="8" fill="#f43f5e"/>
-          </g>
-        </g>
-
-        <g class="disp" data-id="brazalete" tabindex="0" role="button" aria-label="Brazalete de presión">
-          <g class="forma"><rect x="-92" y="194" width="24" height="18" rx="4" fill="#f43f5e" stroke="#fff1f2" stroke-width="1.5" transform="rotate(4 -80 203)"/></g>
-        </g>
-
-        <g class="disp" data-id="reloj" tabindex="0" role="button" aria-label="Reloj inteligente">
-          <g class="forma">
-            <rect x="87" y="299" width="23" height="16" rx="3" fill="#f43f5e" stroke="#fff1f2" stroke-width="1.5" transform="rotate(-4 98 307)"/>
-            <rect x="93" y="303" width="11" height="8" rx="2" fill="#0b1220"/>
-          </g>
+    <!-- ═══ astronauta ═══ -->
+    <g transform="translate(330,40)">
+      <path class="cuerpo" d="M0,0 C5.7,0.0 12.3,0.7 17,3 C21.7,5.3 25.5,9.3 28,14 C30.5,18.7 31.5,25.2 32,31 C32.5,36.8 32.0,43.7 31,49 C30.0,54.3 28.2,59.0 26,63 C23.8,67.0 19.8,70.3 18,73 C16.2,75.7 15.5,76.0 15,79 C14.5,82.0 13.5,87.8 15,91 C16.5,94.2 19.2,95.8 24,98 C28.8,100.2 37.7,102.2 44,104 C50.3,105.8 57.0,106.8 62,109 C67.0,111.2 70.8,113.3 74,117 C77.2,120.7 79.3,124.7 81,131 C82.7,137.3 83.0,147.5 84,155.0 C85.0,162.5 86.0,169.1 87,176.2 C88.0,183.3 88.8,189.7 90,197.4 C91.2,205.1 92.7,213.9 94,222.2 C95.3,230.4 96.7,238.7 98,246.9 C99.3,255.2 100.8,264.0 102,271.7 C103.2,279.4 104.2,287.0 105,292.9 C105.8,298.8 105.8,302.0 107,307.0 C108.2,312.0 110.5,317.0 112,323 C113.5,329.0 115.7,336.3 116,343 C116.3,349.7 115.5,357.7 114,363 C112.5,368.3 109.5,373.2 107,375 C104.5,376.8 101.2,376.2 99,374 C96.8,371.8 95.3,366.8 94,362 C92.7,357.2 92.3,349.5 91,345 C89.7,340.5 86.5,339.0 86,335 C85.5,331.0 87.3,325.7 88,321 C88.7,316.3 90.0,312.3 90,307.0 C90.0,301.7 89.0,296.4 88,289.3 C87.0,282.2 85.3,272.9 84,264.6 C82.7,256.4 81.3,248.1 80,239.8 C78.7,231.6 77.3,223.1 76,215.1 C74.7,207.1 73.3,198.4 72,191.8 C70.7,185.2 69.3,179.1 68,175.5 C66.7,171.9 65.2,167.9 64,170 C62.8,172.1 62.0,180.5 61,188 C60.0,195.5 59.0,205.5 58,215 C57.0,224.5 55.2,235.0 55,245 C54.8,255.0 55.7,265.0 57,275 C58.3,285.0 61.7,295.0 63,305 C64.3,315.0 65.0,323.3 65,335 C65.0,346.7 63.8,361.7 63,375 C62.2,388.3 61.2,401.2 60,415 C58.8,428.8 57.3,443.8 56,458 C54.7,472.2 53.3,487.7 52,500 C50.7,512.3 48.0,524.0 48,532 C48.0,540.0 50.8,543.0 52,548 C53.2,553.0 55.3,558.0 55,562 C54.7,566.0 53.8,569.8 50,572 C46.2,574.2 37.0,575.3 32,575 C27.0,574.7 22.3,573.2 20,570 C17.7,566.8 18.0,561.3 18,556 C18.0,550.7 19.7,547.3 20,538 C20.3,528.7 20.3,513.0 20,500 C19.7,487.0 18.7,473.3 18,460 C17.3,446.7 17.0,433.3 16,420 C15.0,406.7 13.3,392.0 12,380 C10.7,368.0 9.5,355.8 8,348 C6.5,340.2 4.3,336.2 3,333 C1.7,329.8 1.0,329.0 0,329 C-1.0,329.0 -1.7,329.8 -3,333 C-4.3,336.2 -6.5,340.2 -8,348 C-9.5,355.8 -10.7,368.0 -12,380 C-13.3,392.0 -15.0,406.7 -16,420 C-17.0,433.3 -17.3,446.7 -18,460 C-18.7,473.3 -19.7,487.0 -20,500 C-20.3,513.0 -20.3,528.7 -20,538 C-19.7,547.3 -18.0,550.7 -18,556 C-18.0,561.3 -17.7,566.8 -20,570 C-22.3,573.2 -27.0,574.7 -32,575 C-37.0,575.3 -46.2,574.2 -50,572 C-53.8,569.8 -54.7,566.0 -55,562 C-55.3,558.0 -53.2,553.0 -52,548 C-50.8,543.0 -48.0,540.0 -48,532 C-48.0,524.0 -50.7,512.3 -52,500 C-53.3,487.7 -54.7,472.2 -56,458 C-57.3,443.8 -58.8,428.8 -60,415 C-61.2,401.2 -62.2,388.3 -63,375 C-63.8,361.7 -65.0,346.7 -65,335 C-65.0,323.3 -64.3,315.0 -63,305 C-61.7,295.0 -58.3,285.0 -57,275 C-55.7,265.0 -54.8,255.0 -55,245 C-55.2,235.0 -57.0,224.5 -58,215 C-59.0,205.5 -60.0,195.5 -61,188 C-62.0,180.5 -62.8,172.1 -64,170 C-65.2,167.9 -66.7,171.9 -68,175.5 C-69.3,179.1 -70.7,185.2 -72,191.8 C-73.3,198.4 -74.7,207.1 -76,215.1 C-77.3,223.1 -78.7,231.6 -80,239.8 C-81.3,248.1 -82.7,256.4 -84,264.6 C-85.3,272.9 -87.0,282.2 -88,289.3 C-89.0,296.4 -90.0,301.7 -90,307.0 C-90.0,312.3 -88.7,316.3 -88,321 C-87.3,325.7 -85.5,331.0 -86,335 C-86.5,339.0 -89.7,340.5 -91,345 C-92.3,349.5 -92.7,357.2 -94,362 C-95.3,366.8 -96.8,371.8 -99,374 C-101.2,376.2 -104.5,376.8 -107,375 C-109.5,373.2 -112.5,368.3 -114,363 C-115.5,357.7 -116.3,349.7 -116,343 C-115.7,336.3 -113.5,329.0 -112,323 C-110.5,317.0 -108.2,312.0 -107,307.0 C-105.8,302.0 -105.8,298.8 -105,292.9 C-104.2,287.0 -103.2,279.4 -102,271.7 C-100.8,264.0 -99.3,255.2 -98,246.9 C-96.7,238.7 -95.3,230.4 -94,222.2 C-92.7,213.9 -91.2,205.1 -90,197.4 C-88.8,189.7 -88.0,183.3 -87,176.2 C-86.0,169.1 -85.0,162.5 -84,155.0 C-83.0,147.5 -82.7,137.3 -81,131 C-79.3,124.7 -77.2,120.7 -74,117 C-70.8,113.3 -67.0,111.2 -62,109 C-57.0,106.8 -50.3,105.8 -44,104 C-37.7,102.2 -28.8,100.2 -24,98 C-19.2,95.8 -16.5,94.2 -15,91 C-13.5,87.8 -14.5,82.0 -15,79 C-15.5,76.0 -16.2,75.7 -18,73 C-19.8,70.3 -23.8,67.0 -26,63 C-28.2,59.0 -30.0,54.3 -31,49 C-32.0,43.7 -32.5,36.8 -32,31 C-31.5,25.2 -30.5,18.7 -28,14 C-25.5,9.3 -21.7,5.3 -17,3 C-12.3,0.7 -5.7,0.0 0,0Z"/>
+      <g class="disp" data-id="playera" tabindex="0" role="button" aria-label="Playera con sensores: abrir terminal">
+        <g class="forma">
+          <path clip-path="url(#recorteCuerpo)" fill="url(#rayado)" stroke="#f43f5e" stroke-width="1.5"
+                d="M0,104 L13,92 L28,99 L62,109 L76,120 L84,145 L90,184 L69,190 L66,178 L60,215 L58,260 L62,306 L0,311 L-62,306 L-58,260 L-60,215 L-66,178 L-69,190 L-90,184 L-84,145 L-76,120 L-62,109 L-28,99 L-13,92 Z"/>
+          <circle cx="-20" cy="148" r="5" fill="#fff1f2" stroke="#e11d48" stroke-width="2"/>
+          <circle cx="20" cy="148" r="5" fill="#fff1f2" stroke="#e11d48" stroke-width="2"/>
+          <path d="M-57,196 Q0,206 57,196" fill="none" stroke="#fff1f2" stroke-width="2.5" stroke-dasharray="5 3"/>
+          <circle cx="48" cy="172" r="4" fill="#fde68a" stroke="#e11d48" stroke-width="1.5"/>
+          <rect x="-50" y="252" width="28" height="18" rx="3" fill="#0b1220" stroke="#fff1f2" stroke-width="1.5"/>
+          <rect x="-45" y="257" width="8" height="8" fill="#f43f5e"/>
         </g>
       </g>
-
-      <!-- etiquetas -->
-      <g class="disp etq" data-id="playera">
-        <line class="guia" x1="218" y1="146" x2="300" y2="178"/>
-        <text x="214" y="140" text-anchor="end" class="lbl rojo">Playera con sensores</text>
-        <text x="214" y="155" text-anchor="end" class="sub">FC (ECG) · respiración · temperatura</text>
+      <g class="disp" data-id="brazalete" tabindex="0" role="button" aria-label="Brazalete de presión: abrir terminal">
+        <g class="forma"><rect x="-92" y="194" width="24" height="18" rx="4" fill="#f43f5e" stroke="#fff1f2" stroke-width="1.5" transform="rotate(4 -80 203)"/></g>
       </g>
-      <g class="disp etq" data-id="brazalete">
-        <line class="guia" x1="218" y1="243" x2="238" y2="243"/>
-        <text x="214" y="237" text-anchor="end" class="lbl rojo">Brazalete de presión</text>
-        <text x="214" y="252" text-anchor="end" class="sub">opcional · PA sistólica y diastólica</text>
+      <g class="disp" data-id="reloj" tabindex="0" role="button" aria-label="Reloj inteligente: abrir terminal">
+        <g class="forma">
+          <rect x="87" y="299" width="23" height="16" rx="3" fill="#f43f5e" stroke="#fff1f2" stroke-width="1.5" transform="rotate(-4 98 307)"/>
+          <rect x="93" y="303" width="11" height="8" rx="2" fill="#0b1220"/>
+        </g>
       </g>
-      <g class="disp etq" data-id="playera">
-        <line class="guia" x1="218" y1="330" x2="282" y2="302"/>
-        <text x="214" y="326" text-anchor="end" class="lbl rojo">ESP32 dentro de la playera</text>
-        <text x="214" y="341" text-anchor="end" class="sub">sensores por cable · sale por Bluetooth</text>
-      </g>
-      <g class="disp etq" data-id="reloj">
-        <line class="guia" x1="442" y1="356" x2="468" y2="374"/>
-        <text x="472" y="380" class="lbl rojo">Reloj inteligente</text>
-        <text x="472" y="395" class="sub">opcional · FC (PPG) · SpO₂</text>
-      </g>
-      <text x="330" y="632" text-anchor="middle" class="sub">Ana · especialista de misión</text>
+    </g>
 
-      <g id="ondas"></g>
+    <g class="disp etq" data-id="playera">
+      <line class="guia" x1="218" y1="146" x2="300" y2="178"/>
+      <text x="214" y="140" text-anchor="end" class="lbl rojo">Playera con sensores</text>
+      <text x="214" y="155" text-anchor="end" class="sub">FC (ECG) · respiración · temperatura</text>
+    </g>
+    <g class="disp etq" data-id="brazalete">
+      <line class="guia" x1="218" y1="243" x2="238" y2="243"/>
+      <text x="214" y="237" text-anchor="end" class="lbl rojo">Brazalete de presión</text>
+      <text x="214" y="252" text-anchor="end" class="sub">opcional · PA sistólica y diastólica</text>
+    </g>
+    <g class="disp etq" data-id="playera">
+      <line class="guia" x1="218" y1="330" x2="282" y2="302"/>
+      <text x="214" y="326" text-anchor="end" class="lbl rojo">ESP32 dentro de la playera</text>
+      <text x="214" y="341" text-anchor="end" class="sub">sensores por cable · sale por Bluetooth</text>
+    </g>
+    <g class="disp etq" data-id="reloj">
+      <line class="guia" x1="442" y1="356" x2="468" y2="374"/>
+      <text x="472" y="380" class="lbl rojo">Reloj inteligente</text>
+      <text x="472" y="395" class="sub">opcional · FC (PPG) · SpO₂</text>
+    </g>
+    <text x="330" y="632" text-anchor="middle" class="sub">Ana · especialista de misión</text>
 
-      <g class="equipo" data-id="cel" tabindex="0" role="button" aria-label="Smartphone">
-        <rect class="marco" x="670" y="260" width="40" height="70" rx="8" fill="#0b1220" stroke="#cbd5e1" stroke-width="2"/>
-        <rect x="675" y="270" width="30" height="46" rx="2" fill="#0e1b33"/>
-        <circle cx="690" cy="323" r="2.5" fill="#cbd5e1"/>
-        <circle id="cel-badge" cx="708" cy="262" r="0" fill="#38bdf8"/>
-        <text x="690" y="352" text-anchor="middle" class="lbl">Smartphone</text>
-        <text x="690" y="367" text-anchor="middle" class="sub">opcional · avisos</text>
-      </g>
+    <g id="ondas"></g>
 
-      <g class="equipo" data-id="pc" tabindex="0" role="button" aria-label="Computadora central">
-        <rect class="marco" x="755" y="88" width="150" height="100" rx="10" fill="#0b1220" stroke="#60a5fa" stroke-width="2.2"/>
-        <rect x="765" y="98" width="130" height="80" rx="5" fill="#0e1b33"/>
-        <polyline id="pc-onda" points="772,140 800,140 808,120 818,160 828,140 888,140" fill="none" stroke="#34d399" stroke-width="2.2"/>
-        <text id="pc-con" x="830" y="170" text-anchor="middle" class="sub">— conectados</text>
-        <rect x="815" y="188" width="30" height="10" fill="#22304a"/>
-        <rect x="780" y="198" width="100" height="18" rx="4" fill="#111c31" stroke="#22304a"/>
-        <text x="830" y="70" text-anchor="middle" class="lbl">PC central</text>
-        <text x="830" y="54" text-anchor="middle" class="sub">backend · LUNNA</text>
-      </g>
+    <g class="equipo" data-id="cel" tabindex="0" role="button" aria-label="Smartphone: abrir terminal">
+      <rect class="marco" x="670" y="260" width="40" height="70" rx="8" fill="#0b1220" stroke="#cbd5e1" stroke-width="2"/>
+      <rect x="675" y="270" width="30" height="46" rx="2" fill="#0e1b33"/>
+      <circle cx="690" cy="323" r="2.5" fill="#cbd5e1"/>
+      <circle id="cel-badge" cx="708" cy="262" r="0" fill="#38bdf8"/>
+      <text x="690" y="352" text-anchor="middle" class="lbl">Smartphone</text>
+      <text x="690" y="367" text-anchor="middle" class="sub">opcional · avisos</text>
+    </g>
 
-      <g class="equipo" data-id="tierra" tabindex="0" role="button" aria-label="Tierra">
-        <circle class="marco" cx="830" cy="522" r="62" fill="url(#gTierra)" stroke="#0c4a6e" stroke-width="2"/>
-        <path d="M800 490 q14 -10 26 4 q8 12 -6 20 q-18 6 -20 -24z M842 530 q18 -6 24 10 q-10 14 -24 -10z M790 548 q10 -4 16 6 q-6 8 -16 -6z" fill="#22c55e" opacity=".8"/>
-        <text x="830" y="606" text-anchor="middle" class="lbl">TIERRA</text>
-        <text x="830" y="621" text-anchor="middle" class="sub" id="t-owlt">retraso —</text>
-      </g>
+    <g class="equipo" data-id="pc" tabindex="0" role="button" aria-label="Computadora central: abrir terminal">
+      <rect class="marco" x="755" y="88" width="150" height="100" rx="10" fill="#0b1220" stroke="#60a5fa" stroke-width="2.2"/>
+      <rect x="765" y="98" width="130" height="80" rx="5" fill="#0e1b33"/>
+      <polyline id="pc-onda" points="772,140 800,140 808,120 818,160 828,140 888,140" fill="none" stroke="#34d399" stroke-width="2.2"/>
+      <text id="pc-con" x="830" y="170" text-anchor="middle" class="sub">— conectados</text>
+      <rect x="815" y="188" width="30" height="10" fill="#22304a"/>
+      <rect x="780" y="198" width="100" height="18" rx="4" fill="#111c31" stroke="#22304a"/>
+      <text x="830" y="70" text-anchor="middle" class="lbl">PC central</text>
+      <text x="830" y="54" text-anchor="middle" class="sub">backend · LUNNA</text>
+    </g>
 
-      <g id="paquetes"></g>
-    </svg>
-    <div class="limite"><i></i><div>Cada aparato con Bluetooth se conecta <b>directo a la PC central</b>. La única limitante es <b>qué puede medir cada dispositivo</b>: si un aparato mide algo, se registra su esquema y entra sin cambiar el software.</div></div>
-  </section>
+    <g class="equipo" data-id="tierra" tabindex="0" role="button" aria-label="Tierra: abrir terminal">
+      <circle class="marco" cx="830" cy="522" r="62" fill="url(#gTierra)" stroke="#0c4a6e" stroke-width="2"/>
+      <path d="M800 490 q14 -10 26 4 q8 12 -6 20 q-18 6 -20 -24z M842 530 q18 -6 24 10 q-10 14 -24 -10z M790 548 q10 -4 16 6 q-6 8 -16 -6z" fill="#22c55e" opacity=".8"/>
+      <text x="830" y="606" text-anchor="middle" class="lbl">TIERRA</text>
+      <text x="830" y="621" text-anchor="middle" class="sub" id="t-owlt">retraso —</text>
+    </g>
 
-  <section class="card" id="detalle">
-    <div class="barra">
-      <div class="luces"><i></i><i></i><i></i></div>
-      <div class="titulo" id="t-titulo">pc-central</div>
-      <div class="tabs"><button data-tab="cli" class="on">CLI</button><button data-tab="config" id="tab-config">Config</button></div>
-    </div>
-    <div id="cuerpo" style="display:flex;flex-direction:column;flex:1;min-height:0"></div>
-  </section>
-  <section class="card" id="log"></section>
-</main>
+    <g id="paquetes"></g>
+  </svg>
+</section>
+<div class="pista">Haz clic en cualquier equipo para abrir su <b>terminal</b> y ver las tramas que envía. La única limitante del sistema es <b>qué puede medir cada dispositivo</b>.</div>
 
 <script>
 'use strict';
 // ═══════════ Estado ═══════════
 const DIA = 86400000;
 const S = {
-  lanzamiento: null, vivo: false, tramas: 0, temporizador: null, tic: 0,
+  lanzamiento: null, vivo: false, temporizador: null, tic: 0,
   encendido: { playera: true, brazalete: true, reloj: true, cel: true },
-  bleConectado: true, colaEsp: [], descartadas: 0, enviadasEsp: 0,
+  bleConectado: true, colaEsp: [], descartadas: 0,
   seq: { 401: 0, 201: 0, reloj: 0 },
   anom: { fatiga: 0, taquipnea: 0, fiebre: 0, hipoxia: 0, hiper: 0 },
-  contactoReloj: true,
-  ultimos: {}, ultimosVar: {}, version: '',
-  alertas: [], bandeja: [], avisos: [], enlace: { owlt_s: 20, abierto: true },
-  pred: [], sel: 'pc', tab: 'cli',
+  contactoReloj: true, ultimosVar: {}, version: '',
+  enlace: { owlt_s: 20, abierto: true }, pred: [],
   consola: { playera: [], brazalete: [], reloj: [], cel: [], pc: [], tierra: [] },
-  rx: { playera: 0, brazalete: 0, reloj: 0 }, tx: { cel: 0, tierra: 0 },
 };
 const BASAL = { fc: 62, spo2: 98, fr: 14, temp: 36.6, sis: 115, dia: 75 };
 const DELTA = { fc: -0.08, spo2: -0.005, fr: -0.04, temp: 1.0, sis: -0.06, dia: -0.10 };
-const NOMBRE = { '04:A4': 'Frecuencia cardiaca', '04:A3': 'SpO₂', '04:A2': 'Frec. respiratoria', '04:A1': 'Temperatura', '01:V1': 'PA sistólica', 'X:PAD': 'PA diastólica', 'X:PAM': 'PA media' };
+const NOMBRE = { '04:A4': 'frecuencia cardiaca', '04:A3': 'SpO₂', '04:A2': 'frec. respiratoria', '04:A1': 'temperatura', '01:V1': 'PA sistólica', 'X:PAD': 'PA diastólica', 'X:PAM': 'PA media' };
 const CORTO = { '04:A4': 'fc', '04:A3': 'spo2', '04:A2': 'fr', '04:A1': 'temp', '01:V1': 'pa_sis', 'X:PAD': 'pa_dia', 'X:PAM': 'pa_media' };
-const NODO = { playera: 'playera-01', brazalete: 'brazalete-201', reloj: 'reloj-ana', cel: 'smartphone', pc: 'pc-central', tierra: 'tierra-mcc' };
-const IFACE = { playera: 'ble0', brazalete: 'ble1', reloj: 'ble2', cel: 'ble3' };
+const NODO = { playera: 'playera-01', brazalete: 'brazalete-201', reloj: 'reloj-ana', cel: 'smartphone', pc: 'pc-central', tierra: 'tierra' };
 const COLOR = { playera: '#fb7185', brazalete: '#f9a8d4', reloj: '#fcd34d', tierra: '#38bdf8', aviso: '#a7f3d0' };
 const POS = { playera: [294, 302], brazalete: [250, 243], reloj: [429, 347], cel: [690, 260], pc: [830, 138] };
-const $ = (q) => document.querySelector(q);
+const $ = (q, r = document) => r.querySelector(q);
 const api = async (ruta, metodo = 'GET', cuerpo) => {
   const r = await fetch(ruta, { method: metodo, headers: { 'content-type': 'application/json' }, body: cuerpo ? JSON.stringify(cuerpo) : undefined });
   const j = await r.json().catch(() => ({}));
@@ -280,77 +214,142 @@ const api = async (ruta, metodo = 'GET', cuerpo) => {
   return j;
 };
 const gauss = () => Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random());
-const hora = (iso) => new Date(iso).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+const hora = (ms) => new Date(ms).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const pad = (x, n) => String(x).padEnd(n);
 
-// ═══════════ Perfil EVA en el navegador (igual que esquema.ts y trama_eva.h) ═══════════
+// ═══════════ Perfil EVA (igual que esquema.ts y trama_eva.h) ═══════════
 const ESQ = {
-  5: { nombre: 'playera-esp32-v1', campos: [['fc', 'u8', 1], ['fr', 'u8', 1], ['temp', 'i16', 0.01]] },
-  2: { nombre: 'brazalete-pa-v1', campos: [['sis', 'u8', 1], ['dia', 'u8', 1]] },
+  5: [['fc', 'u8', 1], ['fr', 'u8', 1], ['temp', 'i16', 0.01]],   // playera
+  2: [['sis', 'u8', 1], ['dia', 'u8', 1]],                          // brazalete (pa_media la calcula la central)
 };
 const RANGO = { u8: [0, 255], i16: [-32768, 32767] };
 function codificar(idDisp, idEsq, seq, tSeg, valores) {
-  const campos = ESQ[idEsq].campos;
-  const tam = 13 + campos.reduce((s, [, t]) => s + (t === 'u8' ? 1 : 2), 0);
-  const b = new Uint8Array(tam), dv = new DataView(b.buffer);
+  const campos = ESQ[idEsq];
+  const b = new Uint8Array(13 + campos.reduce((s, [, t]) => s + (t === 'u8' ? 1 : 2), 0)), dv = new DataView(b.buffer);
   dv.setUint8(0, 1); dv.setUint32(1, idDisp, true); dv.setUint16(5, idEsq, true);
   dv.setUint16(7, seq & 0xffff, true); dv.setUint32(9, tSeg, true);
   let off = 13;
-  campos.forEach(([, t, esc], i) => {
+  campos.forEach(([, t, e], i) => {
     const [lo, hi] = RANGO[t];
-    const crudo = Math.min(hi, Math.max(lo, Math.floor(valores[i] / esc + 0.5)));
+    const crudo = Math.min(hi, Math.max(lo, Math.floor(valores[i] / e + 0.5)));
     if (t === 'u8') { dv.setUint8(off, crudo); off += 1; } else { dv.setInt16(off, crudo, true); off += 2; }
   });
   return b;
 }
-// Lo que la central lee de vuelta: así se ve exactamente qué viajó.
 function decodificar(b) {
-  const dv = new DataView(b.buffer), esq = dv.getUint16(5, true), campos = ESQ[esq].campos;
-  const cab = { ver: dv.getUint8(0), disp: dv.getUint32(1, true), esq, seq: dv.getUint16(7, true), t: dv.getUint32(9, true) };
-  let off = 13; const v = {};
-  for (const [k, t, e] of campos) { if (t === 'u8') { v[k] = dv.getUint8(off); off++; } else { v[k] = +(dv.getInt16(off, true) * e).toFixed(2); off += 2; } }
-  return { cab, v };
+  const dv = new DataView(b.buffer), campos = ESQ[dv.getUint16(5, true)];
+  let off = 13; const v = [];
+  for (const [k, t, e] of campos) { const x = t === 'u8' ? dv.getUint8(off) : +(dv.getInt16(off, true) * e).toFixed(2); off += t === 'u8' ? 1 : 2; v.push(`${k}=${x}`); }
+  return { t: dv.getUint32(9, true) * 1000, txt: v.join(' ') };
 }
 const b64 = (u8) => btoa(String.fromCharCode(...u8));
-const hexHtml = (u8) => { const h = [...u8].map((x) => x.toString(16).padStart(2, '0')); return `<span class="hc">${h.slice(0, 13).join(' ')}</span> <span class="hx">${h.slice(13).join(' ')}</span>`; };
-const decHtml = ({ cab, v }) => `<span class="dim">ver=${cab.ver} disp=${cab.disp} esq=${cab.esq} seq=${cab.seq} t=${hora(cab.t * 1000)}</span> │ <span class="dc">${Object.entries(v).map(([k, x]) => `${k}=${x}`).join(' ')}</span>`;
+const hex = (u8) => [...u8].map((x) => x.toString(16).padStart(2, '0')).join(' ');
 
-// ═══════════ Consolas ═══════════
-function marca() { const d = new Date(); return d.toLocaleTimeString('es', { hour12: false }) + '.' + String(d.getMilliseconds()).padStart(3, '0'); }
+// ═══════════ Terminales ═══════════
 function tr(nodo, html) {
-  const linea = `<div><span class="t">${marca()}</span> ${html}</div>`;
-  const c = S.consola[nodo]; c.push(linea); if (c.length > 400) c.splice(0, c.length - 400);
-  if (S.sel === nodo && S.tab === 'cli') {
-    const el = $('#tty-log'); if (!el) return;
-    const abajo = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
-    el.insertAdjacentHTML('beforeend', linea);
-    while (el.children.length > 400) el.firstChild.remove();
-    if (abajo) el.scrollTop = el.scrollHeight;
-  }
+  const linea = `<div><span class="t">${hora(Date.now())}</span> ${html}</div>`;
+  const c = S.consola[nodo]; c.push(linea); if (c.length > 500) c.splice(0, c.length - 500);
+  const log = $(`.ventana[data-nodo="${nodo}"] .vlog`); if (!log) return;
+  const abajo = log.scrollHeight - log.scrollTop - log.clientHeight < 60;
+  log.insertAdjacentHTML('beforeend', linea);
+  while (log.children.length > 500) log.firstChild.remove();
+  if (abajo) log.scrollTop = log.scrollHeight;
 }
-const ind = (html) => `<div class="ind">${html}</div>`;
-const syslog = (nodos, nivel, codigo, txt) => nodos.forEach((n) => tr(n, `<span class="${nivel <= 3 ? 'err' : 'sys'}">%${codigo}</span>: ${txt}`));
-const updown = (iface, quien, arriba) => `Interface ${iface} (${quien}), changed state to <span class="${arriba ? 'up' : 'down'}">${arriba ? 'up' : 'down'}</span>`;
+function trTrama(nodo, u8, ahora) {
+  const d = decodificar(u8), tarde = Math.round((ahora - d.t) / 1000);
+  tr(nodo, `enviada trama <span class="hx">${hex(u8)}</span> <span class="dim">${d.txt}${tarde > 1 ? ` · medida a las ${hora(d.t)}` : ''}</span>`);
+  tr('pc', `recibida trama de ${NODO[nodo]} <span class="hx">${hex(u8)}</span> <span class="dim">${d.txt}</span>`);
+}
 
-// Envío de tramas binarias: consola del dispositivo (TX) y de la central (RX).
-function trazarBinaria(nodo, tramas) {
-  const disp = NODO[nodo], ifc = IFACE[nodo];
-  if (tramas.length > 3) {
-    tr(nodo, `<span class="tx">TX</span> ${ifc} ▶ pc-central  <span class="warn">ráfaga de ${tramas.length} tramas</span> (vaciando la cola, cada una con su hora original)`);
-    tr('pc', `<span class="rx">RX</span> ${ifc} ◀ ${disp}  <span class="warn">ráfaga de ${tramas.length} tramas</span>`);
-  }
-  for (const u8 of tramas.slice(-Math.min(tramas.length, 2))) {
-    const d = decodificar(u8);
-    tr(nodo, `<span class="tx">TX</span> ${ifc} ▶ pc-central  BLE NOTIFY ${u8.length} B  seq=${d.cab.seq}` + ind(hexHtml(u8)) + ind(decHtml(d)));
-    tr('pc', `<span class="rx">RX</span> ${ifc} ◀ ${disp}  ${u8.length} B  esquema ${d.cab.esq} (${ESQ[d.cab.esq].nombre})` + ind(hexHtml(u8)) + ind(decHtml(d)));
-    if (d.cab.esq === 2) tr('pc', `<span class="sys">fórmula</span> pa_media = round((sis + 2·dia) / 3 · 10) / 10 = <span class="dc">${Math.round((d.v.sis + 2 * d.v.dia) / 3 * 10) / 10}</span>`);
-  }
+let zTop = 10, abiertas = 0;
+function abrirTerminal(nodo, ev) {
+  let w = $(`.ventana[data-nodo="${nodo}"]`);
+  if (w) { w.style.zIndex = ++zTop; $('input', w).focus(); return; }
+  w = document.createElement('div');
+  w.className = 'ventana'; w.dataset.nodo = nodo; w.style.zIndex = ++zTop;
+  w.innerHTML = `<div class="vbarra"><span class="luces"><i class="cerrar" title="Cerrar"></i><i></i><i></i></span><span class="vtitulo">${NODO[nodo]} — terminal</span></div>
+    <div class="vlog">${S.consola[nodo].join('')}</div>
+    <form class="vcmd"><span>${NODO[nodo]}$</span><input autocomplete="off" spellcheck="false" placeholder="escribe «ayuda»" aria-label="Comando para ${NODO[nodo]}"></form>`;
+  document.body.appendChild(w);
+  // Junto al equipo que se pulsó, sin salirse de la pantalla.
+  const ancho = w.offsetWidth, alto = w.offsetHeight;
+  const x0 = (ev?.clientX ?? innerWidth / 2) + 24 + (abiertas % 4) * 18, y0 = (ev?.clientY ?? innerHeight / 2) - 40 + (abiertas % 4) * 18;
+  w.style.left = Math.max(8, Math.min(innerWidth - ancho - 8, x0 + ancho > innerWidth ? x0 - ancho - 48 : x0)) + 'px';
+  w.style.top = Math.max(60, Math.min(innerHeight - alto - 8, y0)) + 'px';
+  abiertas++;
+  const log = $('.vlog', w); log.scrollTop = log.scrollHeight;
+  w.addEventListener('pointerdown', () => { w.style.zIndex = ++zTop; });
+  $('.cerrar', w).addEventListener('click', () => { w.remove(); marcarAbiertos(); });
+  arrastrable(w, $('.vbarra', w));
+  $('form', w).addEventListener('submit', (e) => { e.preventDefault(); const i = $('input', w); comando(nodo, i.value.trim()); i.value = ''; });
+  marcarAbiertos();
+  if (nodo === 'cel') $('#cel-badge').setAttribute('r', 0);
 }
-const trazarRespuesta = (r) => {
-  if (r.rechazos?.length) syslog(['pc'], 3, 'EVA-3-RECHAZO', esc(r.rechazos.slice(0, 2).join(' · ')));
-  else tr('pc', `<span class="ok">backend ✓</span> ${r.aceptadas} muestras guardadas${r.duplicadas ? ` · ${r.duplicadas} duplicadas ignoradas` : ''} → LUNNA evalúa`);
+function arrastrable(w, asa) {
+  let dx = 0, dy = 0;
+  asa.addEventListener('pointerdown', (e) => {
+    if (e.target.classList.contains('cerrar')) return;
+    dx = e.clientX - w.offsetLeft; dy = e.clientY - w.offsetTop; asa.setPointerCapture(e.pointerId);
+  });
+  asa.addEventListener('pointermove', (e) => {
+    if (!asa.hasPointerCapture(e.pointerId)) return;
+    w.style.left = Math.max(-w.offsetWidth + 80, Math.min(innerWidth - 80, e.clientX - dx)) + 'px';
+    w.style.top = Math.max(52, Math.min(innerHeight - 36, e.clientY - dy)) + 'px';
+  });
+}
+function marcarAbiertos() {
+  document.querySelectorAll('.disp,.equipo').forEach((g) => g.classList.toggle('abierto', !!$(`.ventana[data-nodo="${g.dataset.id}"]`)));
+}
+
+// ── Comandos: la única forma de tocar algo sin interfaz gráfica ──
+const AYUDA = {
+  playera: ['apagar | encender', 'ble off | ble on      (cortar o recuperar el Bluetooth)', 'fatiga N              (FC +N %)', 'taquipnea N           (respiración +N %)', 'fiebre N              (temperatura +N °C)'],
+  brazalete: ['apagar | encender', 'hipertension N        (presión +N mmHg)'],
+  reloj: ['apagar | encender', 'contacto off | contacto on', 'hipoxia N             (SpO₂ −N puntos)'],
+  cel: ['apagar | encender'],
+  pc: ['lunna                 (lo esperado vs lo medido para Ana)'],
+  tierra: ['aviso TEXTO           (manda un aviso a la nave)', 'ventana abrir | ventana cerrar', 'retraso N             (segundos por trayecto)'],
 };
+async function comando(nodo, txt) {
+  if (!txt) return;
+  tr(nodo, `<span class="cmd">$ ${esc(txt)}</span>`);
+  const [c, ...resto] = txt.split(/\s+/), arg = resto.join(' '), n = Number(resto[0]);
+  const ok = (m) => tr(nodo, `<span class="verde">${m}</span>`), mal = (m) => tr(nodo, `<span class="rojo">${m}</span>`);
+  const num = (k, uni, max) => { if (!Number.isFinite(n) || n < 0 || n > max) return mal(`uso: ${c} N (0–${max})`); S.anom[k] = n; ok(`${k} = ${n} ${uni}`); };
+  if (c === 'ayuda' || c === 'help') return [...AYUDA[nodo], 'limpiar'].forEach((l) => tr(nodo, `<span class="dim">  ${esc(l)}</span>`));
+  if (c === 'limpiar' || c === 'clear') { S.consola[nodo] = []; $(`.ventana[data-nodo="${nodo}"] .vlog`).innerHTML = ''; return; }
+  if ((c === 'apagar' || c === 'encender') && nodo in S.encendido) {
+    S.encendido[nodo] = c === 'encender'; pintarEnlacesLocales(); ok(c === 'encender' ? 'encendido' : 'apagado');
+    tr('pc', `<span class="${c === 'encender' ? 'verde' : 'amb'}">${NODO[nodo]} ${c === 'encender' ? 'conectado' : 'desconectado'}</span>`); return;
+  }
+  if (nodo === 'playera' && c === 'ble' && (arg === 'on' || arg === 'off')) {
+    S.bleConectado = arg === 'on'; pintarEnlacesLocales();
+    if (S.bleConectado) { ok(`Bluetooth conectado: se envían ${S.colaEsp.length} tramas guardadas`); tr('pc', '<span class="verde">playera-01 reconectada</span>'); }
+    else { tr(nodo, '<span class="amb">Bluetooth cortado: las tramas se guardan en cola</span>'); tr('pc', '<span class="amb">playera-01 sin conexión</span>'); }
+    return;
+  }
+  if (nodo === 'playera' && ['fatiga', 'taquipnea', 'fiebre'].includes(c)) return num(c, { fatiga: '%', taquipnea: '%', fiebre: '°C' }[c], { fatiga: 60, taquipnea: 100, fiebre: 4 }[c]);
+  if (nodo === 'brazalete' && c === 'hipertension') return num('hiper', 'mmHg', 60);
+  if (nodo === 'reloj' && c === 'hipoxia') return num('hipoxia', 'puntos', 15);
+  if (nodo === 'reloj' && c === 'contacto' && (arg === 'on' || arg === 'off')) { S.contactoReloj = arg === 'on'; return ok(`contacto con la piel: ${arg === 'on' ? 'sí' : 'no'}`); }
+  if (nodo === 'pc' && c === 'lunna') {
+    await refrescar();
+    if (!S.pred.length) return mal('sin datos: pulsa «Preparar misión»');
+    tr(nodo, `<span class="dim">${`${'variable'.padEnd(10)}${'medido'.padEnd(9)}${'esperado'.padEnd(10)}banda 95 %`.replace(/ /g, '&nbsp;')}</span>`);
+    for (const p of S.pred) {
+      const act = S.ultimosVar[p.variable], fuera = act != null && (act < p.banda[0] || act > p.banda[1]);
+      tr(nodo, `${(CORTO[p.variable] || p.variable).padEnd(10)}${String(act ?? '—').padEnd(9)}${p.esperado.toFixed(1).padEnd(10)}${p.banda[0].toFixed(1)}–${p.banda[1].toFixed(1)}`.replace(/ /g, '&nbsp;') + (fuera ? ' <span class="amb">fuera*</span>' : ''));
+    }
+    return tr(nodo, '<span class="dim">* lectura suelta; LUNNA sólo alerta si se sale la mediana de 24 h</span>');
+  }
+  if (nodo === 'tierra' && c === 'aviso' && arg) {
+    await api('/api/tierra/avisos', 'POST', { para: 'ana', texto: arg, de: 'Cirujano de vuelo' });
+    return tr(nodo, `enviado aviso «${esc(arg)}» <span class="dim">${S.enlace.abierto ? `llegará en ${S.enlace.owlt_s} s` : 'en cola hasta que se abra la ventana'}</span>`);
+  }
+  if (nodo === 'tierra' && c === 'ventana' && (arg === 'abrir' || arg === 'cerrar')) { S.enlace = await api('/api/enlace', 'PUT', { abierto: arg === 'abrir' }); pintarEnlace(); return ok(`ventana ${arg === 'abrir' ? 'abierta' : 'cerrada'}`); }
+  if (nodo === 'tierra' && c === 'retraso' && Number.isFinite(n) && n >= 0) { S.enlace = await api('/api/enlace', 'PUT', { owlt_s: n }); pintarEnlace(); return ok(`retraso = ${n} s`); }
+  mal(`comando no reconocido: ${esc(c)} · escribe «ayuda»`);
+}
 
 // ═══════════ Fisiología simulada ═══════════
 function valor(v, t, conAnomalias) {
@@ -374,10 +373,10 @@ const lecturaBrazalete = (t, a) => [valor('sis', t, a), valor('dia', t, a)];
 function tramaReloj(t, a) {
   const fc = Math.round(valor('fc', t, a)), spo2 = Math.min(100, Math.round(valor('spo2', t, a) * 10) / 10);
   const q = { contacto: S.contactoReloj };
-  return { fc, spo2, json: { frame: 'eva.telemetry.v1', source: { id: 'reloj-ana', kind: 'wrist' }, subject: 'ana',
+  return { frame: 'eva.telemetry.v1', source: { id: 'reloj-ana', kind: 'wrist' }, subject: 'ana',
     t_scet: new Date(Math.floor(t / 1000) * 1000).toISOString(), seq: S.seq.reloj++,
     samples: [{ var: '04:A4', value: fc, unit: 'bpm', origin: 'sensor', quality: q },
-              { var: '04:A3', value: spo2, unit: '%', origin: 'sensor', quality: q }] } };
+              { var: '04:A3', value: spo2, unit: '%', origin: 'sensor', quality: q }] };
 }
 
 // ═══════════ Preparar misión: 119 días de historia ═══════════
@@ -386,84 +385,71 @@ async function preparar() {
   try {
     detener();
     await api('/api/demo/reiniciar', 'POST');
-    S.alertas = []; S.bandeja = []; S.avisos = []; S.tramas = 0; S.colaEsp = []; S.seq = { 401: 0, 201: 0, reloj: 0 };
+    S.colaEsp = []; S.seq = { 401: 0, 201: 0, reloj: 0 };
     S.lanzamiento = Date.now() - 112 * DIA;
     const inicioTierra = new Date(S.lanzamiento - 7 * DIA).toISOString();
     await api('/api/fases', 'POST', { desde: inicioTierra, entorno: 'tierra' });
     await api('/api/fases', 'POST', { desde: new Date(S.lanzamiento).toISOString(), entorno: 'orbita' });
     for (const d of [401, 201, 302]) await api('/api/asignaciones', 'POST', { dispositivo: d, tripulante: 'ana', desde: inicioTierra });
-    syslog(['pc'], 5, 'EVA-5-ASIGNACION', 'dispositivos 401, 201 y 302 asignados a <span class="dc">ana</span>');
-    log('e', 'Misión preparada: lanzamiento hace 112 días. Rellenando historia…');
-    tr('pc', '<span class="sys">cargando historia de la misión (119 días, 12 lecturas por día y dispositivo)…</span>');
-
-    let bin = [], json = [];
+    tr('pc', 'dispositivos 401, 201 y 302 asignados a ana · cargando 119 días de historia…');
+    let bin = [], json = [], total = 0;
     const enviar = async () => {
-      if (bin.length) { await api('/api/tramas/binaria', 'POST', { b64: bin }); S.tramas += bin.length; bin = []; }
-      if (json.length) { await api('/api/tramas', 'POST', json); S.tramas += json.length; json = []; }
-      pintarCabecera();
+      if (bin.length) { await api('/api/tramas/binaria', 'POST', { b64: bin }); total += bin.length; bin = []; }
+      if (json.length) { await api('/api/tramas', 'POST', json); total += json.length; json = []; }
     };
     for (let d = -7; d < 112; d++) {
       for (let k = 0; k < 12; k++) {
         const t = S.lanzamiento + d * DIA + (k + 0.5) * (DIA / 12), ts = Math.floor(t / 1000);
         bin.push(b64(codificar(401, 5, S.seq[401]++, ts, lecturaPlayera(t, false))));
         bin.push(b64(codificar(201, 2, S.seq[201]++, ts, lecturaBrazalete(t, false))));
-        json.push(tramaReloj(t, false).json);
+        json.push(tramaReloj(t, false));
       }
       if (bin.length >= 480) { b.textContent = `Rellenando… día ${d}`; await enviar(); }
     }
     await enviar();
-    tr('pc', `<span class="ok">historia cargada</span>: ${S.tramas.toLocaleString('es')} tramas · LUNNA calibró a ana con los días 0–13 y congeló la calibración`);
-    log('e', `Historia lista: ${S.tramas} tramas de 119 días. LUNNA ya calibró a Ana (días 0–13).`);
-    await refrescar();
+    tr('pc', `<span class="verde">historia cargada: ${total.toLocaleString('es')} tramas · LUNNA calibró a ana con los días 0–13</span>`);
+    $('#v-dia').textContent = 112;
     $('#b-vivo').disabled = false;
     iniciar();
-  } catch (e) { log('r', 'Error al preparar: ' + e.message); }
-  b.textContent = 'Preparar misión · 112 días'; b.disabled = false;
+  } catch (e) { tr('pc', `<span class="rojo">error al preparar: ${esc(e.message)}</span>`); }
+  b.textContent = 'Preparar misión'; b.disabled = false;
 }
 
 // ═══════════ En vivo: cada segundo ═══════════
 function tick() {
   const t = Date.now(), ts = Math.floor(t / 1000), cada5 = S.tic++ % 5 === 0;
-
-  // Playera: el ESP32 lee sus sensores y encola; sólo vacía la cola si hay Bluetooth.
+  // Playera: el ESP32 lee y encola; sólo vacía la cola con Bluetooth.
   if (S.encendido.playera) {
-    const v = lecturaPlayera(t, true); S.colaEsp.push({ ts, v }); S.ultimos.playera = v;
-    if (!S.bleConectado) tr('playera', `<span class="warn">cola</span> sin enlace: lectura guardada en RAM · ${S.colaEsp.length}/1800`);
+    S.colaEsp.push({ ts, v: lecturaPlayera(t, true) });
+    if (!S.bleConectado) tr('playera', `<span class="amb">sin conexión: trama guardada en cola (${S.colaEsp.length})</span>`);
   }
   if (S.colaEsp.length > 1800) { S.descartadas += S.colaEsp.length - 1800; S.colaEsp.splice(0, S.colaEsp.length - 1800); }
   if (S.bleConectado && S.colaEsp.length) {
     const tramas = S.colaEsp.splice(0, 40).map((r) => codificar(401, 5, S.seq[401]++, r.ts, r.v));
-    S.enviadasEsp += tramas.length; S.rx.playera += tramas.length;
-    trazarBinaria('playera', tramas);
-    api('/api/tramas/binaria', 'POST', { b64: tramas.map(b64) }).then((r) => { S.tramas += tramas.length; pintarCabecera(); trazarRespuesta(r); }).catch((e) => log('r', e.message));
+    tramas.forEach((u8) => trTrama('playera', u8, t));
+    api('/api/tramas/binaria', 'POST', { b64: tramas.map(b64) }).catch((e) => tr('pc', `<span class="rojo">${esc(e.message)}</span>`));
     paquete(POS.playera, POS.pc, COLOR.playera);
   }
-
-  // Brazalete: mide cada cierto tiempo y manda su propia trama por Bluetooth.
+  // Brazalete: su propia trama, directo a la central.
   if (cada5 && S.encendido.brazalete) {
-    const v = lecturaBrazalete(t, true), u8 = codificar(201, 2, S.seq[201]++, ts, v);
-    S.ultimos.brazalete = v; S.rx.brazalete++;
-    trazarBinaria('brazalete', [u8]);
-    api('/api/tramas/binaria', 'POST', { b64: [b64(u8)] }).then((r) => { S.tramas++; pintarCabecera(); trazarRespuesta(r); }).catch(() => {});
+    const u8 = codificar(201, 2, S.seq[201]++, ts, lecturaBrazalete(t, true));
+    trTrama('brazalete', u8, t);
+    api('/api/tramas/binaria', 'POST', { b64: [b64(u8)] }).catch(() => {});
     paquete(POS.brazalete, POS.pc, COLOR.brazalete);
   }
-
-  // Reloj: FC y SpO₂ cada 5 s, directo a la central, en JSON.
+  // Reloj: JSON, directo a la central.
   if (cada5 && S.encendido.reloj) {
-    const r = tramaReloj(t, true), txt = JSON.stringify(r.json);
-    S.ultimos.reloj = [r.fc, r.spo2]; S.rx.reloj++;
-    const resumen = `<span class="dc">fc=${r.fc} spo2=${r.spo2}</span> <span class="dim">contacto=${S.contactoReloj ? 'sí' : 'NO'}</span>`;
-    tr('reloj', `<span class="tx">TX</span> ble2 ▶ pc-central  JSON eva.telemetry.v1 ${txt.length} B  seq=${r.json.seq}` + ind(`<span class="hx">${esc(txt.slice(0, 150))}…</span>`) + ind(resumen));
-    tr('pc', `<span class="rx">RX</span> ble2 ◀ reloj-ana  JSON ${txt.length} B` + ind(resumen + (S.contactoReloj ? '' : ' <span class="warn">→ se guarda pero LUNNA no la evalúa</span>')));
-    api('/api/tramas', 'POST', r.json).then(([res]) => { S.tramas++; pintarCabecera(); trazarRespuesta(res); }).catch(() => {});
+    const j = tramaReloj(t, true), txt = JSON.stringify(j);
+    tr('reloj', `enviada trama <span class="hx">${esc(txt)}</span>`);
+    tr('pc', `recibida trama de reloj-ana <span class="hx">${esc(txt)}</span>${S.contactoReloj ? '' : ' <span class="amb">(sin contacto: se guarda, no se evalúa)</span>'}`);
+    api('/api/tramas', 'POST', j).catch(() => {});
     paquete(POS.reloj, POS.pc, COLOR.reloj);
   }
-  pintarEstado();
 }
-function iniciar() { if (S.temporizador) return; S.vivo = true; S.temporizador = setInterval(tick, 1000); pintarCabecera(); log('e', 'En vivo: la playera manda 1 trama por segundo; brazalete y reloj, 1 cada 5 s.'); }
-function detener() { clearInterval(S.temporizador); S.temporizador = null; S.vivo = false; pintarCabecera(); }
+function iniciar() { if (S.temporizador) return; S.vivo = true; S.temporizador = setInterval(tick, 1000); $('#b-vivo').textContent = '⏸ Pausar'; }
+function detener() { clearInterval(S.temporizador); S.temporizador = null; S.vivo = false; $('#b-vivo').textContent = '▶ En vivo'; }
 
-// ═══════════ Ondas y paquetes (sobres, como en un simulador de redes) ═══════════
+// ═══════════ Ondas y paquetes ═══════════
 const NS = 'http://www.w3.org/2000/svg';
 function ondas(id, [cx, cy], [tx, ty], clase = '', radios = [12, 20, 28], abre = 0.5) {
   const g = document.createElementNS(NS, 'g'); g.id = 'o-' + id; g.setAttribute('class', 'ondas ' + clase); g.dataset.clase = clase;
@@ -494,253 +480,50 @@ function conectarEventos() {
   const es = new EventSource('/api/stream');
   es.addEventListener('muestra', (e) => { const m = JSON.parse(e.data); S.ultimosVar[m.variable] = m.valor; });
   es.addEventListener('alerta', (e) => {
-    const a = JSON.parse(e.data); S.alertas.unshift(a);
-    const nivel = a.estado === 'rojo' ? 'r' : a.estado === 'ambar' ? 'a' : 'e';
-    log(nivel, `LUNNA · ${a.estado.toUpperCase()} · ${NOMBRE[a.variable] || a.variable}: ${a.valor} (esperado ${a.esperado}, z=${a.z}, P(nominal)=${a.prob_nominal})`);
-    const cls = a.estado === 'rojo' ? 'err' : a.estado === 'ambar' ? 'warn' : 'ok';
-    tr('pc', `<span class="${cls}">%LUNNA-${a.estado === 'rojo' ? 2 : a.estado === 'ambar' ? 4 : 6}-${a.estado.toUpperCase()}</span>: ${a.tripulante} · ${NOMBRE[a.variable] || a.variable} mediana 24 h = <span class="dc">${a.valor}</span>` +
-      ind(`esperado ${a.esperado} · banda 95 % [${(a.banda || []).join(' – ')}] · z = ${a.z} · P(nominal) = ${a.prob_nominal}`) +
-      (a.estado !== 'verde' ? ind(`<span class="az">DTN</span> alerta encolada para Tierra (prioridad ${a.estado === 'rojo' ? 0 : 1})`) : ''));
+    const a = JSON.parse(e.data), cls = a.estado === 'rojo' ? 'rojo' : a.estado === 'ambar' ? 'amb' : 'verde';
+    tr('pc', `<span class="${cls}">alerta LUNNA ${a.estado.toUpperCase()}: ${a.tripulante} · ${NOMBRE[a.variable] || a.variable} ${a.valor} (esperado ${a.esperado}, z=${a.z}, P(normal)=${a.prob_nominal})</span>`);
     $('#pc-onda').setAttribute('stroke', a.estado === 'rojo' ? '#f87171' : a.estado === 'ambar' ? '#fbbf24' : '#34d399');
-    if (S.sel === 'pc' && S.tab === 'config') pintarDetalle();
   });
-  es.addEventListener('rechazo', (e) => syslog(['pc'], 3, 'EVA-3-RECHAZO', esc(JSON.parse(e.data).slice(0, 2).join(' · '))));
+  es.addEventListener('rechazo', (e) => tr('pc', `<span class="rojo">trama rechazada: ${esc(JSON.parse(e.data).slice(0, 2).join(' · '))}</span>`));
   es.addEventListener('tierra', (e) => {
-    const b = JSON.parse(e.data); S.bandeja.unshift(b); S.tx.tierra++;
+    const b = JSON.parse(e.data), edad = Math.round((Date.parse(b.t_ert) - Date.parse(b.t_scet)) / 1000);
+    const que = b.tipo === 'alerta' ? `alerta ${b.datos.estado} de ${b.datos.tripulante}: ${NOMBRE[b.datos.variable] || b.datos.variable} ${b.datos.valor}` : `resumen de ${b.datos.length} variables`;
     paquete([830, 222], [830, 458], COLOR.tierra, 1600);
-    const edad = Math.round((Date.parse(b.t_ert) - Date.parse(b.t_scet)) / 1000);
-    const que = b.tipo === 'alerta' ? `ALERTA ${b.datos.estado} · ${b.datos.tripulante} · ${NOMBRE[b.datos.variable] || b.datos.variable} = ${b.datos.valor}` : `RESUMEN · ${b.datos.length} variables`;
-    tr('pc', `<span class="tx">TX</span> dtn0 ▶ tierra-mcc  ${que}`);
-    tr('tierra', `<span class="rx">RX</span> dtn0 ◀ pc-central  <span class="${b.tipo === 'alerta' ? 'err' : 'dc'}">${que}</span>` + ind(`ocurrió ${hora(b.t_scet)} · llegó ${hora(b.t_ert)} · <span class="warn">${edad} s de antigüedad</span>`));
-    if (b.tipo === 'alerta') log('ti', `Tierra recibe alerta de ${b.datos.tripulante} (${b.datos.estado}), ocurrida a las ${hora(b.t_scet)}: llegó con ${edad} s de antigüedad`);
-    if (S.sel === 'tierra' && S.tab === 'config') pintarDetalle();
+    tr('pc', `enviado a Tierra: ${que}`);
+    tr('tierra', `recibido${b.tipo === 'alerta' ? '' : ''} <span class="${b.tipo === 'alerta' ? 'rojo' : 'az'}">${que}</span> <span class="dim">· ocurrió a las ${hora(Date.parse(b.t_scet))}, llegó con ${edad} s de retraso</span>`);
   });
   es.addEventListener('aviso', (e) => {
-    const a = JSON.parse(e.data); S.avisos.unshift(a);
+    const a = JSON.parse(e.data);
     paquete([830, 458], [830, 222], COLOR.tierra, 1600);
-    tr('pc', `<span class="rx">RX</span> dtn0 ◀ tierra-mcc  aviso para ${a.para}: <span class="dc">«${esc(a.texto)}»</span>`);
+    tr('pc', `recibido aviso de Tierra para ${a.para}: «${esc(a.texto)}»`);
     if (S.encendido.cel) {
-      tr('pc', `<span class="tx">TX</span> ble3 ▶ smartphone  aviso (${new Blob([a.texto]).size} B)`);
-      tr('cel', `<span class="rx">RX</span> ble3 ◀ pc-central  <span class="az">AVISO de ${esc(a.de)}</span>` + ind(`<span class="dc">«${esc(a.texto)}»</span>`) + ind(`redactado ${hora(a.t_redactado)} · llegó ${hora(a.t_llegada)}`));
-      setTimeout(() => { paquete(POS.pc, POS.cel, COLOR.aviso, 700); $('#cel-badge').setAttribute('r', 6); }, 1600);
-    } else tr('pc', '<span class="warn">smartphone apagado</span>: el aviso queda en la central');
-    log('ti', `Aviso de Tierra para ${a.para}: «${a.texto}» (redactado a las ${hora(a.t_redactado)})`);
-    if (['cel', 'tierra'].includes(S.sel) && S.tab === 'config') pintarDetalle();
+      tr('pc', 'enviado aviso al smartphone');
+      tr('cel', `recibido aviso de ${esc(a.de)}: <span class="az">«${esc(a.texto)}»</span> <span class="dim">· redactado a las ${hora(Date.parse(a.t_redactado))}</span>`);
+      setTimeout(() => { paquete(POS.pc, POS.cel, COLOR.aviso, 700); if (!$('.ventana[data-nodo="cel"]')) $('#cel-badge').setAttribute('r', 6); }, 1600);
+    }
   });
   es.addEventListener('enlace', (e) => {
     const antes = S.enlace.abierto; S.enlace = JSON.parse(e.data); pintarEnlace();
-    if (antes !== S.enlace.abierto) syslog(['pc', 'tierra'], S.enlace.abierto ? 5 : 3, S.enlace.abierto ? 'LINK-5-UPDOWN' : 'LINK-3-UPDOWN', updown('dtn0', 'enlace con Tierra', S.enlace.abierto));
+    if (antes !== S.enlace.abierto) ['pc', 'tierra'].forEach((n) => tr(n, `<span class="${S.enlace.abierto ? 'verde' : 'amb'}">ventana con Tierra ${S.enlace.abierto ? 'abierta' : 'cerrada: todo se guarda en cola'}</span>`));
   });
   es.onerror = () => { $('#d-back').className = 'dot bad'; };
   es.onopen = () => { $('#d-back').className = 'dot ok'; };
 }
-async function refrescar() {
-  try { S.pred = await api('/api/prediccion/ana'); } catch {}
-  if (S.sel === 'pc') { if (S.tab === 'config') pintarDetalle(); else pintarEstado(); }
-}
+async function refrescar() { try { S.pred = await api('/api/prediccion/ana'); } catch {} }
 
-// ═══════════ Pintado ═══════════
-function log(c, txt) {
-  const el = $('#log'), d = document.createElement('div');
-  d.className = c; d.textContent = `${new Date().toLocaleTimeString('es')}  ${txt}`;
-  el.prepend(d); while (el.children.length > 120) el.lastChild.remove();
-}
-function pintarCabecera() {
-  $('#v-tramas').textContent = S.tramas.toLocaleString('es');
-  $('#v-dia').textContent = S.lanzamiento ? Math.floor((Date.now() - S.lanzamiento) / DIA) : '—';
-  $('#b-vivo').textContent = S.vivo ? '⏸ Pausar' : '▶ En vivo';
-}
+// ═══════════ Pintado de la maqueta ═══════════
 function pintarEnlace() {
   const e = S.enlace;
   $('#t-owlt').textContent = e.abierto ? `retraso ${e.owlt_s} s` : 'ventana CERRADA';
   $('#o-tierra')?.setAttribute('class', 'ondas tierra ' + (e.abierto ? '' : 'cortado'));
   $('#c-tierra').setAttribute('class', 'enl ' + (e.abierto ? 'vivo' : 'cortado'));
 }
-const activo = () => ({ playera: S.encendido.playera && S.bleConectado, brazalete: S.encendido.brazalete, reloj: S.encendido.reloj, cel: S.encendido.cel });
 function pintarEnlacesLocales() {
-  const a = activo();
+  const a = { playera: S.encendido.playera && S.bleConectado, brazalete: S.encendido.brazalete, reloj: S.encendido.reloj, cel: S.encendido.cel };
   for (const k of Object.keys(a)) { const g = $('#o-' + k); if (g) g.setAttribute('class', `ondas ${g.dataset.clase} ${a[k] ? '' : 'cortado'}`); }
   $('#c-cel').setAttribute('class', 'enl ' + (S.encendido.cel ? 'vivo' : 'cortado'));
   for (const k of ['playera', 'brazalete', 'reloj']) document.querySelectorAll(`.disp[data-id="${k}"]`).forEach((g) => g.classList.toggle('apagado', !S.encendido[k]));
   $('#pc-con').textContent = `${Object.values(a).filter(Boolean).length} conectados`;
-}
-
-// ── "show ..." de cada equipo: se repinta cada segundo ──
-const ud = (x) => (x ? '<span class="up">up</span>  ' : '<span class="down">down</span>');
-const f1 = (x) => (x == null || Number.isNaN(x) ? '—' : (+x).toFixed(1));
-const f2 = (x) => (x == null || Number.isNaN(x) ? '—' : (+x).toFixed(2));
-const PR = (n, cmd) => `<span class="pr">${NODO[n]}#</span> ${cmd}\n`;
-const ESTADO = {
-  playera: () => PR('playera', 'show status') +
-    ` dispositivo  401 · esquema 5 (playera-esp32-v1) · lleva: ana\n` +
-    ` sensores     ECG → fc · banda torácica → fr · termómetro axilar → temp\n` +
-    ` encendida    ${S.encendido.playera ? 'sí' : '<span class="down">no</span>'}        ble0 → pc-central  ${ud(S.encendido.playera && S.bleConectado)}\n` +
-    ` cola ESP32   ${S.colaEsp.length}/1800   enviadas ${S.enviadasEsp}   perdidas ${S.descartadas}\n` +
-    ` lectura      fc=${f1(S.ultimos.playera?.[0])} lpm  fr=${f1(S.ultimos.playera?.[1])} rpm  temp=${f2(S.ultimos.playera?.[2])} °C`,
-  brazalete: () => PR('brazalete', 'show status') +
-    ` dispositivo  201 · esquema 2 (brazalete-pa-v1) · lleva: ana\n` +
-    ` sensores     manguito inflable → pa_sis, pa_dia   (pa_media la calcula la central)\n` +
-    ` encendido    ${S.encendido.brazalete ? 'sí' : '<span class="down">no</span>'}        ble1 → pc-central  ${ud(S.encendido.brazalete)}\n` +
-    ` lectura      sis=${f1(S.ultimos.brazalete?.[0])}  dia=${f1(S.ultimos.brazalete?.[1])} mmHg   cada 5 s (uno real: cada varios min)`,
-  reloj: () => PR('reloj', 'show status') +
-    ` dispositivo  302 · perfil JSON eva.telemetry.v1 · lleva: ana\n` +
-    ` sensores     PPG verde → fc · PPG rojo/IR → spo2\n` +
-    ` encendido    ${S.encendido.reloj ? 'sí' : '<span class="down">no</span>'}        ble2 → pc-central  ${ud(S.encendido.reloj)}\n` +
-    ` contacto     ${S.contactoReloj ? 'sí' : '<span class="warn">NO (correa floja)</span>'}\n` +
-    ` lectura      fc=${S.ultimos.reloj?.[0] ?? '—'} lpm  spo2=${S.ultimos.reloj?.[1] ?? '—'} %`,
-  cel: () => PR('cel', 'show status') +
-    ` encendido    ${S.encendido.cel ? 'sí' : '<span class="down">no</span>'}        ble3 ↔ pc-central  ${ud(S.encendido.cel)}\n` +
-    ` avisos       ${S.avisos.length} recibidos${S.avisos[0] ? `\n último       «${esc(S.avisos[0].texto.slice(0, 60))}»` : ''}`,
-  pc: () => {
-    const a = activo();
-    let s = PR('pc', 'show interfaces brief') +
-      ` <span class="dim">${pad('Interfaz', 9)}${pad('Equipo', 22)}${pad('Estado', 8)}Perfil          Tramas</span>\n` +
-      ` ${pad('ble0', 9)}${pad('playera-01 (401)', 22)}${ud(a.playera)}  EVA binario     ${S.rx.playera}\n` +
-      ` ${pad('ble1', 9)}${pad('brazalete-201 (201)', 22)}${ud(a.brazalete)}  EVA binario     ${S.rx.brazalete}\n` +
-      ` ${pad('ble2', 9)}${pad('reloj-ana (302)', 22)}${ud(a.reloj)}  JSON            ${S.rx.reloj}\n` +
-      ` ${pad('ble3', 9)}${pad('smartphone', 22)}${ud(a.cel)}  avisos          ${S.avisos.length}\n` +
-      ` ${pad('dtn0', 9)}${pad('tierra-mcc', 22)}${ud(S.enlace.abierto)}  owlt ${pad(S.enlace.owlt_s + ' s', 10)} ${S.tx.tierra}\n\n` +
-      PR('pc', 'show lunna ana') +
-      ` <span class="dim">${pad('Variable', 10)}${pad('Actual', 8)}${pad('Esperado', 10)}${pad('Banda 95 %', 16)}Estado</span>\n`;
-    if (!S.pred.length) return s + ' <span class="dim">(sin datos: pulsa «Preparar misión»)</span>';
-    for (const p of S.pred) {
-      const act = S.ultimosVar[p.variable], fuera = act != null && (act < p.banda[0] || act > p.banda[1]);
-      s += ` ${pad(CORTO[p.variable] || p.variable, 10)}${pad(act ?? '—', 8)}${pad(f1(p.esperado), 10)}${pad(`${f1(p.banda[0])}–${f1(p.banda[1])}`, 16)}${act == null ? '<span class="dim">—</span>' : fuera ? '<span class="warn">fuera*</span>' : '<span class="ok">ok</span>'}\n`;
-    }
-    return s + ' <span class="dim">* lectura suelta. LUNNA sólo alerta si se sale la MEDIANA de 24 h.</span>';
-  },
-  tierra: () => PR('tierra', 'show enlace') +
-    ` ventana      ${S.enlace.abierto ? '<span class="up">ABIERTA</span>' : '<span class="down">CERRADA</span> (todo espera en cola)'}\n` +
-    ` retraso      ${S.enlace.owlt_s} s por trayecto (Marte: 240–1440 s)\n` +
-    ` recibido     ${S.bandeja.filter((b) => b.tipo === 'alerta').length} alertas · ${S.bandeja.filter((b) => b.tipo !== 'alerta').length} resúmenes\n` +
-    ` enviado      ${S.avisos.length} avisos entregados a la nave`,
-};
-function pintarEstado() { const el = $('#tty-estado'); if (el) el.innerHTML = ESTADO[S.sel](); }
-
-// ── pestaña Config: los controles de cada equipo ──
-const sw = (id, txt, on) => `<label class="sw"><input type="checkbox" id="${id}" ${on ? 'checked' : ''}> ${txt}</label>`;
-const rango = (id, txt, val, min, max, paso, uni) => `<label class="fila" for="${id}">${txt}<b id="${id}-v">${val} ${uni}</b></label><input type="range" id="${id}" min="${min}" max="${max}" step="${paso}" value="${val}">`;
-const mide = (...xs) => `<div class="mide">${xs.map((x) => `<span>${x}</span>`).join('')}</div>`;
-const CONFIG = {
-  playera: () => `<h2>Playera con sensores</h2>
-    <p class="rol">Los sensores no tienen radio: van cableados a un <b>ESP32 cosido en la playera</b>, que los manda por Bluetooth directo a la PC central.</p>
-    ${mide('electrodos de ECG → FC', 'banda torácica → respiración', 'termómetro axilar → temperatura')}
-    ${sw('s-playera', 'Puesta y encendida', S.encendido.playera)}
-    ${sw('s-ble', 'Conexión Bluetooth con la PC central', S.bleConectado)}
-    <div class="nota">Prueba: corta el Bluetooth 20 s y mira la consola: el ESP32 guarda cada lectura. Al reconectar sale una ráfaga y cada trama lleva la hora en que se midió.</div>
-    <h3>Provocar una anomalía</h3>
-    ${rango('r-fatiga', 'Fatiga: FC por encima de lo normal', S.anom.fatiga, 0, 40, 1, '%')}
-    ${rango('r-taquipnea', 'Taquipnea: respiración acelerada', S.anom.taquipnea, 0, 60, 1, '%')}
-    ${rango('r-fiebre', 'Fiebre: temperatura más alta', S.anom.fiebre, 0, 3, 0.1, '°C')}
-    <div class="nota">LUNNA evalúa la mediana de 24 h: con la anomalía puesta, la alerta tarda unos 20–40 s. Mírala en la consola de la PC central.</div>`,
-  brazalete: () => `<h2>Brazalete de presión · opcional</h2>
-    <p class="rol">Aparato propio con Bluetooth: va directo a la PC central, no pasa por la playera. La PA media no viaja: la calcula la central con la fórmula del esquema.</p>
-    ${mide('manguito inflable → PA sistólica y diastólica')}
-    ${sw('s-brazalete', 'Puesto y encendido', S.encendido.brazalete)}
-    ${rango('r-hiper', 'Hipertensión: PA por encima de lo normal', S.anom.hiper, 0, 40, 1, 'mmHg')}`,
-  reloj: () => `<h2>Reloj inteligente · opcional</h2>
-    <p class="rol">Va por Bluetooth directo a la PC central y manda JSON.</p>
-    ${mide('PPG → FC', 'PPG rojo/IR → SpO₂')}
-    ${sw('s-reloj', 'Puesto y encendido', S.encendido.reloj)}${sw('s-contacto', 'Contacto con la piel', S.contactoReloj)}
-    ${rango('r-hipoxia', 'Hipoxia: SpO₂ más baja', S.anom.hipoxia, 0, 10, 0.5, 'pts')}
-    <div class="nota">Ojo: un reloj comercial no habla el protocolo EVA. La FC suele salir por el perfil Bluetooth estándar de ritmo cardiaco; la SpO₂ normalmente sólo la da la app del fabricante.</div>`,
-  cel: () => `<h2>Smartphone · opcional</h2><p class="rol">No hace falta para medir. Le muestra al astronauta los avisos que llegan de Tierra.</p>
-    ${sw('s-cel', 'Encendido', S.encendido.cel)}
-    <h3>Avisos recibidos</h3>
-    <div class="lista">${S.avisos.length ? S.avisos.map((a) => `<div class="item aviso"><b>${esc(a.de)}</b> → ${esc(a.para)}<br>${esc(a.texto)}<div class="t">redactado ${hora(a.t_redactado)} · llegó ${hora(a.t_llegada)}</div></div>`).join('') : '<div class="nota">Ninguno todavía. Redacta uno desde Tierra.</div>'}</div>`,
-  pc: () => {
-    const filas = S.pred.map((p) => {
-      const act = S.ultimosVar[p.variable];
-      const lo = Math.min(p.banda[0], act ?? p.banda[0], p.basal), hi = Math.max(p.banda[1], act ?? p.banda[1], p.basal);
-      const m = (hi - lo) * 0.15 || 1, a = lo - m, b = hi + m, x = (v) => ((v - a) / (b - a)) * 100;
-      const fuera = act != null && (act < p.banda[0] || act > p.banda[1]);
-      const w = p.pesos;
-      return `<div class="var-h"><span>${NOMBRE[p.variable] || p.variable}${p.extrapolado ? ' · <em>extrapolado</em>' : ''}</span><span>actual ${act ?? '—'} · esperado ${f1(p.esperado)} [${f1(p.banda[0])}–${f1(p.banda[1])}]</span></div>
-        <div class="banda"><div class="rango" style="left:${x(p.banda[0])}%;width:${x(p.banda[1]) - x(p.banda[0])}%"></div><div class="esp" style="left:${x(p.esperado)}%"></div>${act != null ? `<div class="act ${fuera ? 'fuera' : ''}" style="left:${x(act)}%"></div>` : ''}</div>
-        <div class="pesos" title="peso de cada fuente"><i style="width:${w.poblacion * 100}%;background:#64748b"></i><i style="width:${w.historial * 100}%;background:#a78bfa"></i><i style="width:${w.vuelo * 100}%;background:#34d399"></i></div>`;
-    }).join('');
-    return `<h2>LUNNA · lo esperado para Ana</h2><p class="rol">Banda verde: lo normal para ella en este entorno. Marca blanca: lo que mide ahora (roja si se sale).</p>
-      ${filas || '<div class="cta">Pulsa <b>Preparar misión</b> para generar 112 días de historia: LUNNA necesita los primeros 14 para conocer a Ana.</div>'}
-      <div class="nota">Barra de color: de dónde sale la predicción — <span style="color:#94a3b8">literatura</span> · <span style="color:#a78bfa">misión anterior</span> · <span style="color:#34d399">sus datos en vuelo</span>.</div>
-      <h3>Alertas</h3>
-      <div class="lista">${S.alertas.length ? S.alertas.map((a) => `<div class="item ${a.estado}"><b>${a.estado.toUpperCase()}</b> · ${NOMBRE[a.variable] || a.variable}: ${a.valor} (esperado ${a.esperado})<div class="t">z = ${a.z} · P(nominal) = ${a.prob_nominal} · ${hora(a.t_scet)}</div></div>`).join('') : '<div class="nota">Sin alertas. Provoca una anomalía en la playera, el brazalete o el reloj.</div>'}</div>`;
-  },
-  tierra: () => `<h2>Tierra · control de misión</h2><p class="rol">Recibe alertas y resúmenes con el retraso de la luz, y manda avisos a la tripulación.</p>
-    ${sw('s-ventana', 'Ventana de comunicación abierta', S.enlace.abierto)}
-    ${rango('r-owlt', 'Retraso por trayecto (Marte: 240–1440 s)', S.enlace.owlt_s, 0, 1440, 5, 's')}
-    <h3>Mandar un aviso</h3>
-    <select id="av-para"><option value="ana">Ana</option><option value="todos">Toda la tripulación</option></select>
-    <textarea id="av-texto" style="margin-top:6px" placeholder="p. ej. Vimos tu evento de fatiga. Descansa hoy y repite el check-in mañana."></textarea>
-    <button id="b-aviso" style="margin-top:6px">Enviar a la nave</button>
-    <h3>Bandeja de entrada</h3>
-    <div class="lista">${S.bandeja.length ? S.bandeja.slice(0, 40).map((b) => b.tipo === 'alerta'
-      ? `<div class="item ${b.datos.estado}"><b>Alerta ${b.datos.estado}</b> · ${b.datos.tripulante} · ${NOMBRE[b.datos.variable] || b.datos.variable}: ${b.datos.valor}<div class="t">ocurrió ${hora(b.t_scet)} · llegó ${hora(b.t_ert)} · <b>${Math.round((Date.parse(b.t_ert) - Date.parse(b.t_scet)) / 1000)} s de antigüedad</b></div></div>`
-      : `<div class="item"><b>Resumen</b> · ${b.datos.length} variables<div class="t">ocurrió ${hora(b.t_scet)} · llegó ${hora(b.t_ert)}</div></div>`).join('') : '<div class="nota">Nada todavía. Cada 30 s llega un resumen, y cada alerta al instante (más el retraso).</div>'}</div>`,
-};
-
-function pintarDetalle() {
-  const foco = document.activeElement;
-  if (S.tab === 'config' && foco && (foco.tagName === 'TEXTAREA' || (foco.tagName === 'INPUT' && foco.type === 'range'))) return; // no interrumpir al usuario
-  $('#t-titulo').textContent = `${NODO[S.sel]} — ${S.tab === 'cli' ? 'consola' : S.sel === 'pc' ? 'LUNNA' : 'configuración'}`;
-  $('#tab-config').textContent = S.sel === 'pc' ? 'LUNNA' : 'Config';
-  document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === S.tab));
-  const c = $('#cuerpo');
-  if (S.tab === 'cli') {
-    c.innerHTML = `<pre class="tty" id="tty-estado"></pre><div class="tty" id="tty-log">${S.consola[S.sel].join('')}</div>
-      <div class="tty prompt"><span class="pr">${NODO[S.sel]}#</span> debug tramas <span class="cursor">&nbsp;</span></div>`;
-    pintarEstado();
-    const l = $('#tty-log'); l.scrollTop = l.scrollHeight;
-  } else {
-    c.innerHTML = `<div id="config">${CONFIG[S.sel]()}</div>`;
-    conectarControles();
-  }
-}
-
-function conectarControles() {
-  const on = (id, f) => { const el = document.getElementById(id); if (el) el.addEventListener('change', f); };
-  const NOM = { playera: 'Playera', brazalete: 'Brazalete', reloj: 'Reloj', cel: 'Smartphone' };
-  for (const k of Object.keys(NOM)) on('s-' + k, (e) => {
-    S.encendido[k] = e.target.checked; pintarEnlacesLocales();
-    syslog([k, 'pc'], e.target.checked ? 5 : 3, e.target.checked ? 'LINK-5-UPDOWN' : 'LINK-3-UPDOWN', updown(IFACE[k], NODO[k], e.target.checked && (k !== 'playera' || S.bleConectado)));
-    log('e', `${NOM[k]} ${e.target.checked ? 'encendido' : 'apagado'}`);
-  });
-  on('s-ble', (e) => {
-    S.bleConectado = e.target.checked; pintarEnlacesLocales();
-    syslog(['playera', 'pc'], S.bleConectado ? 5 : 3, S.bleConectado ? 'LINK-5-UPDOWN' : 'LINK-3-UPDOWN', updown('ble0', 'playera-01', S.bleConectado));
-    if (S.bleConectado) tr('playera', `<span class="sys">sincronizar hora</span>: la PC escribe la hora UTC · se vaciarán ${S.colaEsp.length} lecturas en cola`);
-    log(S.bleConectado ? 'e' : 'a', S.bleConectado ? `Bluetooth reconectado: el ESP32 vacía ${S.colaEsp.length} lecturas guardadas` : 'Bluetooth cortado: el ESP32 de la playera empieza a guardar lecturas');
-  });
-  on('s-contacto', (e) => { S.contactoReloj = e.target.checked; syslog(['reloj'], e.target.checked ? 5 : 4, 'SENSOR-4-CONTACTO', e.target.checked ? 'contacto con la piel recuperado' : 'sin contacto con la piel: las muestras se marcan'); });
-  for (const [id, k, u] of [['r-fatiga', 'fatiga', '%'], ['r-taquipnea', 'taquipnea', '%'], ['r-hipoxia', 'hipoxia', 'pts'], ['r-fiebre', 'fiebre', '°C'], ['r-hiper', 'hiper', 'mmHg']]) {
-    const el = document.getElementById(id); if (!el) continue;
-    el.addEventListener('input', (e) => { S.anom[k] = +e.target.value; document.getElementById(id + '-v').textContent = `${e.target.value} ${u}`; });
-    el.addEventListener('change', (e) => { log('a', `Anomalía «${k}» = ${e.target.value} ${u}`); el.blur(); });
-  }
-  on('s-ventana', async (e) => { S.enlace = await api('/api/enlace', 'PUT', { abierto: e.target.checked }); pintarEnlace(); log('ti', e.target.checked ? 'Ventana con Tierra ABIERTA: sale lo que estaba en cola' : 'Ventana con Tierra CERRADA: todo se guarda en cola'); });
-  const ow = document.getElementById('r-owlt');
-  if (ow) {
-    ow.addEventListener('input', (e) => { document.getElementById('r-owlt-v').textContent = `${e.target.value} s`; });
-    ow.addEventListener('change', async (e) => { S.enlace = await api('/api/enlace', 'PUT', { owlt_s: +e.target.value }); pintarEnlace(); ow.blur(); });
-  }
-  const ba = document.getElementById('b-aviso');
-  if (ba) ba.addEventListener('click', async () => {
-    const texto = document.getElementById('av-texto').value.trim(), para = document.getElementById('av-para').value;
-    if (!texto) return;
-    await api('/api/tierra/avisos', 'POST', { para, texto, de: 'Cirujano de vuelo' });
-    const cuando = S.enlace.abierto ? `llegará en ${S.enlace.owlt_s} s` : 'en cola hasta que abra la ventana';
-    tr('tierra', `<span class="tx">TX</span> dtn0 ▶ pc-central  aviso para ${para}: <span class="dc">«${esc(texto)}»</span>` + ind(`<span class="warn">${cuando}</span>`));
-    log('ti', `Tierra envía un aviso: ${cuando}`);
-    document.getElementById('av-texto').value = ''; document.activeElement.blur();
-  });
-}
-
-function seleccionar(id) {
-  S.sel = id;
-  document.querySelectorAll('.disp,.equipo').forEach((g) => g.classList.toggle('sel', g.dataset.id === id));
-  if (id === 'cel') $('#cel-badge').setAttribute('r', 0);
-  if (id === 'pc') refrescar();
-  if (id === 'tierra') api('/api/tierra/bandeja').then((b) => { S.bandeja = b; if (S.sel === 'tierra') S.tab === 'cli' ? pintarEstado() : pintarDetalle(); }).catch(() => {});
-  pintarDetalle();
 }
 
 // ═══════════ Arranque ═══════════
@@ -756,17 +539,22 @@ document.querySelectorAll('.etq').forEach((g) => {
   r.setAttribute('fill', 'transparent'); g.insertBefore(r, g.firstChild);
 });
 document.querySelectorAll('.disp,.equipo').forEach((g) => {
-  g.addEventListener('click', () => seleccionar(g.dataset.id));
-  g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); seleccionar(g.dataset.id); } });
+  g.addEventListener('click', (e) => abrirTerminal(g.dataset.id, e));
+  g.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault(); const r = g.getBoundingClientRect();
+    abrirTerminal(g.dataset.id, { clientX: r.right, clientY: r.top + r.height / 2 });
+  });
 });
-document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => { S.tab = b.dataset.tab; pintarDetalle(); }));
 $('#b-preparar').addEventListener('click', preparar);
 $('#b-vivo').addEventListener('click', () => (S.vivo ? detener() : iniciar()));
 $('#b-reiniciar').addEventListener('click', async () => {
   detener(); await api('/api/demo/reiniciar', 'POST');
-  S.lanzamiento = null; S.alertas = []; S.bandeja = []; S.avisos = []; S.pred = []; S.tramas = 0;
+  S.lanzamiento = null; S.pred = [];
   for (const k of Object.keys(S.consola)) S.consola[k] = [];
-  $('#b-vivo').disabled = true; pintarCabecera(); pintarDetalle(); log('e', 'Misión reiniciada.');
+  document.querySelectorAll('.vlog').forEach((l) => { l.innerHTML = ''; });
+  $('#b-vivo').disabled = true; $('#v-dia').textContent = '—';
+  tr('pc', 'misión reiniciada');
 });
 
 (async () => {
@@ -774,22 +562,13 @@ $('#b-reiniciar').addEventListener('click', async () => {
     const s = await api('/api/salud'); S.version = s.version;
     $('#v-back').textContent = 'v' + s.version; $('#d-back').className = 'dot ok';
     S.enlace = await api('/api/enlace'); pintarEnlace();
-    const fases = await api('/api/fases');
-    const orb = fases.find((f) => f.entorno === 'orbita');
-    if (orb) { S.lanzamiento = Date.parse(orb.desde); $('#b-vivo').disabled = false; S.avisos = await api('/api/avisos'); log('e', 'Misión existente recuperada.'); }
-  } catch (e) { $('#v-back').textContent = 'sin conexión'; $('#d-back').className = 'dot bad'; }
-  // Arranque de cada equipo, como al encender un aparato de red.
-  tr('pc', `<span class="sys">EVA central v${S.version || '?'} — LUNNA</span> · pasarela BLE lista · base de datos abierta`);
-  for (const k of ['playera', 'brazalete', 'reloj', 'cel']) {
-    syslog([k], 5, 'LINK-5-CHANGED', updown(IFACE[k], 'pc-central', true));
-    syslog(['pc'], 5, 'LINK-5-CHANGED', updown(IFACE[k], NODO[k], true));
-  }
-  tr('playera', '<span class="sys">hora recibida</span> de pc-central · esquema publicado: {"id":401,"esquema":5,"campos":["fc:u8","fr:u8","temp:i16*0.01"]}');
-  syslog(['pc', 'tierra'], 5, 'LINK-5-CHANGED', updown('dtn0', 'enlace con Tierra', S.enlace.abierto));
-  tr('pc', '<span class="dim">pulsa «Preparar misión» y luego haz clic en cualquier equipo para ver su consola</span>');
-  conectarEventos(); pintarEnlacesLocales(); pintarEnlace(); pintarCabecera(); seleccionar('pc');
-  setInterval(() => { refrescar(); pintarCabecera(); }, 5000);
-  log('e', 'Haz clic en cualquier cosa: la playera, el reloj, el brazalete, el celular, la PC central o la Tierra.');
+    const orb = (await api('/api/fases')).find((f) => f.entorno === 'orbita');
+    if (orb) { S.lanzamiento = Date.parse(orb.desde); $('#b-vivo').disabled = false; $('#v-dia').textContent = Math.floor((Date.now() - S.lanzamiento) / DIA); }
+  } catch { $('#v-back').textContent = 'sin conexión'; $('#d-back').className = 'dot bad'; }
+  tr('pc', `backend v${S.version || '?'} corriendo · esperando tramas`);
+  tr('playera', 'hora recibida de pc-central · lista para enviar');
+  tr('tierra', 'control de misión en línea · escribe «ayuda»');
+  conectarEventos(); pintarEnlacesLocales(); pintarEnlace();
 })();
 </script>
 </body>

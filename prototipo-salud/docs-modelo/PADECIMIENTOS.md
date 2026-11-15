@@ -1,6 +1,6 @@
 # Padecimientos ligados a variables del equipo (pesos para estadística)
 
-14 nov 2026. Solo investigación; **nada es diagnóstico**. Archivos: `PADECIMIENTOS.csv` (20 filas) y `PADECIMIENTO-VARIABLE.csv` (348 ligas, todas con peso 1–3; los pesos 0 no se listan).
+14 nov 2026. Solo investigación; **nada es diagnóstico**. Archivos: `PADECIMIENTOS.csv` (20 filas) y `PADECIMIENTO-VARIABLE.csv` (350 ligas, todas con peso 1–3; los pesos 0 no se listan).
 
 ## Método
 
@@ -30,8 +30,8 @@
 
 | ID | Padecimiento | n variables | n A o B | Las 3 de mayor peso (peso y nivel) |
 |---|---|---|---|---|
-| P01 | Arritmia / fibrilación auricular | 14 | 3 | `01:V31` Ritmo cardíaco (fibrilación auricular  (3A); `01:V33` Extrasístoles ventriculares y taquicar (3C); `01:V45` Síntomas: palpitaciones, síncope, dolo (2B) |
-| P02 | Desacondicionamiento e intolerancia ortostática | 17 | 4 | `01:V47` Caída de la presión arterial al poners (3A); `01:V48` Aumento de la frecuencia cardíaca al p (2B); `01:V50` Síntomas de presíncope: mareo, náusea, (2B) |
+| P01 | Arritmia / fibrilación auricular | 15 | 3 | `01:V31` Ritmo cardíaco (fibrilación auricular  (3A); `01:V33` Extrasístoles ventriculares y taquicar (3C); `01:V45` Síntomas: palpitaciones, síncope, dolo (2B) |
+| P02 | Desacondicionamiento e intolerancia ortostática | 18 | 4 | `01:V47` Caída de la presión arterial al poners (3A); `01:V48` Aumento de la frecuencia cardíaca al p (2B); `01:V50` Síntomas de presíncope: mareo, náusea, (2B) |
 | P03 | Hipoxia / problema respiratorio | 8 | 3 | `04:A3` SpO2 (3A); `04:A2` Frecuencia respiratoria (3B); `04:A25` O2 inspirado (PIO2) (3C) |
 | P04 | Infección, fiebre o desregulación inmune | 25 | 9 | `04:A1` Temperatura corporal (3B); `01:V3` Frecuencia cardíaca en reposo (2A); `04:A17` Erupción cutánea / hipersensibilidad ( (2B) |
 | P05 | Pérdida de sueño y desalineación circadiana | 31 | 3 | `03:V30` Tiempo total de sueño (actigrafía) (3B); `03:V44` Alineación circadiana del episodio de  (3C); `03:V45` Melatonina salival (inicio en luz tenu (3C) |
@@ -50,7 +50,7 @@
 | P18 | Dolor de espalda y elongación de columna | 9 | 0 | `02:V58` Dolor de espalda: presencia e intensid (3C); `02:V59` Localización, día de inicio y duración (2C); `02:V61` Estatura de pie (2C) |
 | P19 | Nutrición inadecuada y pérdida de masa corporal | 12 | 0 | `01:V8` Masa corporal (3C); `02:V81` Ingesta energética (3C); `02:V76` 25-OH vitamina D sérica (2C) |
 | P20 | Metabolismo de la glucosa / resistencia a la insulina | 9 | 0 | `02:V86` Glucosa plasmática en ayunas (3C); `02:V87` Glucosa a las 2 h de sobrecarga oral ( (3C); `02:V89` HbA1c (3C) |
-Totales: 348 ligas; A = 9, B = 31, C = 308.
+Totales: 350 ligas; A = 9, B = 31, C = 310.
 
 ## Huecos
 

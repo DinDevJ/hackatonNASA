@@ -23,7 +23,7 @@ def bd(tmp_path, monkeypatch):
     r = subprocess.run(["node", "--experimental-strip-types", "--disable-warning=ExperimentalWarning",
                         str(BACKEND / "src" / "migrar.ts")], env=env, capture_output=True, text=True, timeout=60)
     assert r.returncode == 0, r.stderr
-    assert "20 padecimientos, 348 vínculos" in r.stdout
+    assert "20 padecimientos, 350 vínculos" in r.stdout
     monkeypatch.setenv("EVA_DB", str(ruta))
     return ruta
 
@@ -47,7 +47,7 @@ def _poblar(ruta):
 def test_semilla_y_lectura(bd):
     con = evadb.conectar()
     assert con.execute("SELECT COUNT(*) FROM padecimientos").fetchone()[0] == 20
-    assert con.execute("SELECT COUNT(*) FROM padecimiento_variable").fetchone()[0] == 348
+    assert con.execute("SELECT COUNT(*) FROM padecimiento_variable").fetchone()[0] == 350
     con.close()
     _poblar(bd)
     info = evadb.reunir()

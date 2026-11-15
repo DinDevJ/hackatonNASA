@@ -8,6 +8,7 @@ P01,01:V33,Extrasístoles ventriculares y taquicardia ventricular,3,presencia,,C
 P01,01:V34,Intervalo QTc (Bazett),2,↑ (≥450 ms ♂ / ≥460 ms ♀) o ↓ (≤390 ms),,B,"Rautaharju et al. 2009, AHA/ACCF/HRS; https://pubmed.ncbi.nlm.nih.gov/19281931/",2.0,1.0,sí en vuelo,
 P01,01:V35,Intervalo PR,1,↑,,C,,1.0,1.5,solo pre-post vuelo,
 P01,01:V36,Volumen de la aurícula izquierda,1,↑,,C,,1.0,1.5,solo pre-post vuelo,
+P01,01:V18,Fracción de eyección del ventrículo izquierdo,1,↓ (<52 % ♂ / <54 % ♀),,C,"Lang et al. 2015, Eur Heart J Cardiovasc Imaging (ASE/EACVI: FEVI <52 % ♂ / <54 % ♀ sugiere función sistólica anormal) [terrestre]; https://doi.org/10.1093/ehjci/jev014 | Al-Khatib et al. 2018, Circulation (AHA/ACC/HRS: FEVI ≤35 % como estratificador de riesgo de arritmia ventricular) [terrestre]; https://doi.org/10.1161/CIR.0000000000000549 | Hamilton et al. 2011, Echocardiography (FEVI medida en la ISS con eco guiada a distancia, n = 6; no estuvo entre las variables con efecto atribuible al vuelo); https://doi.org/10.1111/j.1540-8175.2011.01385.x",1.0,1.5,sí en vuelo,
 P01,01:V37,"Onda P promediada (duración filtrada, voltaje RMS de los últimos 20 ms, amplitud)",1,↑ duración,,C,,1.0,1.5,sí en vuelo,
 P01,01:V38,Alternancia de la onda T (microvoltios),1,presente,,C,,1.0,1.5,solo análogo,
 P01,01:V39,Potasio sérico y urinario,1,↓,,C,,1.0,1.5,sí en vuelo,
@@ -23,6 +24,7 @@ P02,01:V51,Noradrenalina plasmática al ponerse de pie,1,↓ (respuesta insufici
 P02,01:V1,Presión arterial sistólica / diastólica en reposo,1,↓,,C,,1.0,1.5,sí en vuelo,alta
 P02,01:V4,Volumen sistólico,1,↓,,C,,1.0,1.5,sí en vuelo,
 P02,01:V17,Masa y volumen telediastólico del ventrículo izquierdo,1,↓,,C,,1.0,1.5,solo pre-post vuelo,
+P02,01:V18,Fracción de eyección del ventrículo izquierdo,1,↓ (<52 % ♂ / <54 % ♀),,C,"Lang et al. 2015, Eur Heart J Cardiovasc Imaging (ASE/EACVI: FEVI <52 % ♂ / <54 % ♀ sugiere función sistólica anormal) [terrestre]; https://doi.org/10.1093/ehjci/jev014 | Hamilton et al. 2011, Echocardiography (FEVI medida en la ISS con eco guiada a distancia, n = 6; no estuvo entre las variables con efecto atribuible al vuelo); https://doi.org/10.1111/j.1540-8175.2011.01385.x",1.0,1.5,sí en vuelo,
 P02,01:V26,Renina y aldosterona,1,↑,,C,,1.0,1.5,sí en vuelo,
 P02,01:V52,Carga de fluidos y sal antes de la reentrada,1,no cumplida,,C,,1.0,1.5,no encontrado,
 P02,01:V53,Uso de prenda de compresión,1,no usada,,C,,1.0,1.5,no encontrado,

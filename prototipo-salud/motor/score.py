@@ -106,6 +106,19 @@ def _criterio(vid: str, crit: dict, d: dict, vs: dict, sexo):
             else:
                 alto = False
         return bool(alto or corto), f"QTc {v:g} ms"
+    if reg == "fevi_baja":
+        if sexo == "M":
+            bajo = v < crit["umbral_m"]
+        elif sexo == "F":
+            bajo = v < crit["umbral_f"]
+        else:                                            # sin sexo: como D16 del QTc
+            if v < crit["umbral_m"]:
+                bajo = True
+            elif v < crit["umbral_f"]:
+                return None, "indeterminado: falta sexo (entre 52 y 54 %)"
+            else:
+                bajo = False
+        return bool(bajo), f"FEVI {v:g} %"
     if reg == "ge":
         return v >= crit["umbral"], f"{v:g} >= {crit['umbral']:g} {crit['unidad']}"
     if reg == "le":

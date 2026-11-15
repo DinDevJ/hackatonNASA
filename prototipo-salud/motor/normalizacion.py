@@ -7,6 +7,7 @@ ALGORITMOS c.2 da un rango; todo lo demas usa z personal. Nada es un diagnostico
 from __future__ import annotations
 
 import math
+import re
 import statistics
 from datetime import date, timedelta
 
@@ -107,9 +108,41 @@ def _moda(serie):
     return statistics.mode(s) if s else None
 
 
+def _modelo_de(notas, metric) -> str:
+    """Modelo de eco de una obs: `modelo=<x>` en notas (lo escribe la puerta y `desde_eco`); si no, la metrica."""
+    m = re.search(r"modelo=([A-Za-z0-9_\-]+)", str(notas))
+    return m.group(1) if m else f"desconocido({metric})"
+
+
+def _tolerancia_feve() -> float:
+    from . import parametros          # import tardio: evita ciclos
+    return float(parametros.valor("tolerancia_feve_modelos"))
+
+
+def _puerta_modelos_feve(g: pd.DataFrame):
+    """a.5.4 para 01:V18: una mediana por modelo; D = max - min. Devuelve (D, modelos, discordante)."""
+    por_modelo = {}
+    for (n, mt), v in zip(zip(g["notas"], g["metric"]), g["valor"]):
+        por_modelo.setdefault(_modelo_de(n, mt), []).append(float(v))
+    med = {k: float(np.median(v)) for k, v in por_modelo.items()}
+    d = max(med.values()) - min(med.values())
+    return d, med, d > _tolerancia_feve()
+
+
 def _agregar_grupo(sid, vid, fecha, g: pd.DataFrame, presencia_vars) -> dict:
     """Agrega las filas de un (persona, variable, dia) con varias filas (semantica de D1)."""
     validas = g[g["valor"].notna() & g["sin_dato"].isna()]
+    extra_etq, val_modelos = "", None
+    if vid == "01:V18" and not validas.empty:                       # a.5.4: puerta de discordancia entre modelos [P·S16]
+        d, med, disc = _puerta_modelos_feve(validas)
+        lista = ", ".join(f"{k} {v:g} %" for k, v in sorted(med.items()))
+        if len(med) > 1 and disc:
+            motivo = (f"sin_dato: discordante entre modelos (D = {d:g} pp > {_tolerancia_feve():g}, a.5.4, provisional) [{lista}]")
+            return {"subject_id": sid, "variable_id": vid, "fecha": fecha, "valor": float("nan"), "sin_dato": motivo,
+                    "nivel": None, "clase": None, "unidad": g["unidad"].iloc[0], "n_filas": len(g)}
+        val_modelos = float(np.median(list(med.values())))
+        extra_etq = (f"{len(med)} modelos (D = {d:g} pp): {lista}; mediana entre modelos [P·S16]" if len(med) > 1
+                     else f"modelo único ({lista})")
     if validas.empty:
         motivo = next((m for m in g["sin_dato"] if isinstance(m, str) and m), "sin_dato: valor ausente")
         return {"subject_id": sid, "variable_id": vid, "fecha": fecha, "valor": float("nan"), "sin_dato": motivo,
@@ -121,7 +154,11 @@ def _agregar_grupo(sid, vid, fecha, g: pd.DataFrame, presencia_vars) -> dict:
     niveles = list(sub["nivel"])
     nivel = "N3a" if "N3a" in niveles else niveles[0]
     val = float(sub["valor"].max()) if vid in presencia_vars else float(sub["valor"].median())
+    if val_modelos is not None:
+        val = val_modelos                                           # mediana de las medianas por modelo (a.5.3)
     etiq = "; ".join(dict.fromkeys(t.strip() for e in sub["etiquetas"] for t in str(e).split(";") if t.strip()))
+    if extra_etq:
+        etiq = "; ".join(x for x in (etiq, extra_etq) if x)
     return {"subject_id": sid, "variable_id": vid, "fecha": fecha, "valor": val, "sin_dato": None, "nivel": nivel,
             "clase": ult["clase_dispositivo"], "unidad": ult["unidad"], "contexto": _moda(sub["contexto"]),
             "metodo": _moda(sub["metodo"]), "calidad_buena": bool(sub["calidad_buena"].all()),
@@ -139,6 +176,8 @@ def _fila_unica(r: dict, sid, vid, fecha) -> dict:
         return {"subject_id": sid, "variable_id": vid, "fecha": fecha, "valor": float("nan"), "sin_dato": motivo,
                 "nivel": None, "clase": None, "unidad": r["unidad"], "n_filas": 1}
     etiq = "; ".join(dict.fromkeys(t.strip() for t in str(r["etiquetas"]).split(";") if t.strip()))
+    if vid == "01:V18":
+        etiq = "; ".join(x for x in (etiq, f"modelo único ({_modelo_de(r['notas'], '')})") if x)
     vig = r["vigencia_h"]
     cx, mt = r["contexto"], r["metodo"]
     return {"subject_id": sid, "variable_id": vid, "fecha": fecha, "valor": float(v), "sin_dato": None, "nivel": r["nivel"],

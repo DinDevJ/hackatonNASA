@@ -101,3 +101,12 @@ test("bug 7: en fase lútea tu normal de pulso y HRV se ensancha y no hay falsa 
   assert.equal(M.estadoIndicador(ana, "fc", 112).ajusteCiclo, false);
   assert.equal(M.fatiga(ana, 112).estado, "abierto", "sin fase lútea el escenario no cambia");
 });
+
+test("bug 9: la dosis es personal y el evento solar suma según cuánto tardó cada quien en refugiarse", () => {
+  const dosis = M.PERSONAS.map((p) => M.dosisPersonal(p.id, 112).mision);
+  assert.ok(new Set(dosis).size > 1, "no es la misma cifra para los cuatro");
+  assert.equal(M.dosisPersonal("MS-2", 114).evento, 0);
+  const mei = M.dosisPersonal("MS-3", 115).evento, ana = M.dosisPersonal("MS-2", 115).evento;
+  assert.ok(mei > ana, "Mei tardó más en llegar al refugio");
+  assert.ok(mei < 250, "bajo el límite por evento");
+});

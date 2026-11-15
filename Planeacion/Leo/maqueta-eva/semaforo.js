@@ -9,6 +9,8 @@
  *   PUT  /api/padecimientos/pesos                             cambia un peso (0 a 3)
  *   POST /api/padecimientos/pesos/restaurar                   vuelve al peso de la fuente
  *   POST /api/padecimientos/evaluar                           corre el motor ({simulado})
+ *   GET  /api/modelos/disponibles · POST /api/modelos/analizar (202) · GET /api/modelos/trabajos/:id
+ *                                                             tarjeta «Analizar con modelos» (eco / ECG): trabajo en cola, polling
  *
  * No inventa nada: sin backend o sin evaluaciones lo dice, y todo en GRIS. No es un diagnóstico; los umbrales
  * son provisionales. Distinto del «índice por padecimiento» del panel clínico (11 malestares, pesos de Leo).
@@ -21,6 +23,7 @@
   const { $, $$, esc, ic, pastilla, sem, forma } = K;
 
   const API = "/api/padecimientos";
+  const MOD = "/api/modelos";
   const NIV = { VERDE: 0, AMARILLO: 1, ROJO: 2, GRIS: null };
   const TXT = { VERDE: "Verde", AMARILLO: "Amarillo", ROJO: "Rojo", GRIS: "Gris" };
   const ORDEN = { ROJO: 0, AMARILLO: 1, VERDE: 2, GRIS: 3 };
@@ -52,7 +55,8 @@
     K.marcarPestana("semaforo");
     const [aTrip, aPad] = (arg || "").split("~");
     const E = { datos: null, trip: aTrip || null, pad: aPad || null, gen: 0, genDet: 0, msgEval: "" };
-    const vivo = () => p.isConnected && p.querySelector("#sm-raiz") != null;
+    let raizEl = null;
+    const vivo = () => p.isConnected && raizEl != null && raizEl.isConnected;
 
     p.innerHTML = `<div id="sm-raiz">
       <div class="cn-encabezado"><div><h1>Semáforo de padecimientos</h1><p class="sub">Motor de 20 padecimientos (prototipo-salud) · última evaluación guardada en la computadora central</p></div>
@@ -62,10 +66,12 @@
         <p class="cn-nota">Distinto del índice por padecimiento del panel clínico (11 malestares, pesos de Leo): este semáforo lo calcula el motor Python con 20 padecimientos y sus vínculos con fuente.</p></section>
       <div id="sm-estado" aria-live="polite"></div>
       <div id="sm-sel" class="cn-sem-sel"></div>
+      <section class="tarjeta cn-sem-mod" id="sm-mod" aria-labelledby="sm-t-mod" hidden></section>
       <div class="cn-rejilla cn-2b" style="margin-top:16px">
         <section class="tarjeta" aria-labelledby="sm-t-lista"><h2 id="sm-t-lista">${pastilla("lista", "#5B8DFF", "#1F4FD8")} Padecimientos (20)</h2><div id="sm-lista"></div></section>
         <div style="display:grid;gap:16px;align-content:start"><section class="tarjeta" id="sm-detalle" aria-live="polite"></section><section class="tarjeta" id="sm-pesos" aria-labelledby="sm-t-pesos"></section></div>
       </div></div>`;
+    raizEl = p.querySelector("#sm-raiz");
     $("#sm-act", p).addEventListener("click", () => cargar());
 
     const hash = () => {
@@ -100,6 +106,7 @@
       hash();
       pintarEstado(); pintarSel(); pintarLista();
       cargarDetalle();
+      modelos.actualizar();
     }
     function sinBackend(msg) {
       E.datos = null;
@@ -272,6 +279,175 @@
         await evaluar(t ? !!t.simulado : true, $("[data-re]", el));
       });
     }
+
+    // ------------------------------------------------------------ analizar con modelos (eco / ECG)
+    const modelos = (function () {
+      const M = { disp: null, tipo: "eco", trabajo: null, gen: 0, timer: null, error: "" };
+      const raiz = () => $("#sm-mod", p);
+      const parar = () => { if (M.timer) { clearTimeout(M.timer); M.timer = null; } M.gen++; };
+      const ETAPA = { en_cola: "En cola", modelo: "Corriendo el modelo", puente: "Guardando en la base", reevaluando: "Reevaluando el semáforo", fin: "Terminado" };
+      const mm = (x) => (x == null || x === "" ? "–" : String(x));
+      const modelosDe = (tipo) => ((M.disp && M.disp.modelos) || []).filter((m) => m.analizable && m.tipo === tipo);
+      const muestrasDe = (tipo) => ((M.disp && M.disp.muestras) || []).filter((m) => m.tipo === tipo);
+      const kb = (b) => (b >= 1048576 ? (b / 1048576).toFixed(1).replace(".", ",") + " MB" : Math.max(1, Math.round(b / 1024)) + " KB");
+      const segs = (t) => {
+        const a = Date.parse(t.iniciado || t.creado), b = t.terminado ? Date.parse(t.terminado) : Date.now();
+        return Number.isFinite(a) && Number.isFinite(b) ? Math.max(0, Math.round((b - a) / 1000)) : 0;
+      };
+
+      /** Carga la lista de modelos y muestras (una vez) y pinta la tarjeta; después solo actualiza los tripulantes. */
+      async function actualizar() {
+        const el = raiz();
+        if (!el || !E.datos) return;
+        if (M.disp) { opcionesTrip(); return; }
+        const g = ++M.gen;
+        let r;
+        try { r = await api(MOD + "/disponibles"); } catch { r = null; }
+        if (g !== M.gen || !vivo()) return;
+        if (!r || !r.ok || !r.j || !Array.isArray(r.j.modelos)) {
+          el.hidden = false;
+          el.innerHTML = `<h2 id="sm-t-mod">${pastilla("info", "#5B8DFF", "#1F4FD8")} Analizar con modelos</h2>
+            <p class="cn-nota">No se pudo leer la lista de modelos${r && r.j && r.j.error ? ": " + esc(r.j.error) : " (este backend no la ofrece o no hay conexión)"}.</p>`;
+          return;
+        }
+        M.disp = r.j;
+        pintar();
+      }
+      function pintar() {
+        const el = raiz(), d = M.disp;
+        el.hidden = false;
+        el.innerHTML = `<h2 id="sm-t-mod">${pastilla("tendencia", "#33C3B3", "#0E8F86")} Analizar con modelos</h2>
+          <p class="cn-nota">Corre un modelo de eco o de ECG sobre una muestra de la carpeta <code>${esc(d.muestras_dir || "samples")}</code> y guarda lo que el motor sabe usar. Son modelos de investigación: <b>No es diagnóstico.</b></p>
+          <div class="cn-sem-acciones" role="group" aria-label="Tipo de análisis" style="margin:8px 0">
+            <button type="button" class="cn-boton" data-mt="eco" aria-pressed="${M.tipo === "eco"}">${ic("play", "ic-sm")}Analizar eco</button>
+            <button type="button" class="cn-boton" data-mt="ecg" aria-pressed="${M.tipo === "ecg"}">${ic("play", "ic-sm")}Analizar ECG</button></div>
+          <div class="cn-form cn-sem-mform" id="sm-mf"></div>
+          <div id="sm-mprog" aria-live="polite"></div><div id="sm-mres"></div>`;
+        $$("[data-mt]", el).forEach((b) => b.addEventListener("click", () => { M.tipo = b.dataset.mt; $$("[data-mt]", el).forEach((x) => x.setAttribute("aria-pressed", x === b)); formulario(); }));
+        formulario();
+        if (M.trabajo) pintarTrabajo(M.trabajo);
+      }
+      function opcionesTrip() {
+        const s = $("#sm-m-trip", p);
+        if (!s) return;
+        const previo = s.value, ts = E.datos.tripulantes;
+        s.innerHTML = ts.map((t) => `<option value="${esc(t.id)}">${esc(t.nombre || t.id)}</option>`).join("");
+        s.value = ts.find((t) => t.id === previo) ? previo : (E.trip || (ts[0] && ts[0].id) || "");
+      }
+      function formulario() {
+        const f = $("#sm-mf", p);
+        if (!f) return;
+        const ms = modelosDe(M.tipo), us = muestrasDe(M.tipo);
+        const previoSim = $("#sm-m-sim", p), sim = previoSim ? previoSim.checked : true;
+        f.innerHTML = `<div><label for="sm-m-trip">Tripulante</label><select id="sm-m-trip" class="cn-select"></select></div>
+          <div><label for="sm-m-mod">Modelo (${M.tipo === "eco" ? "eco" : "ECG"})</label>
+            <select id="sm-m-mod" class="cn-select">${ms.map((m) => `<option value="${esc(m.key)}">${esc(m.nombre)}${m.entorno_instalado ? "" : " (entorno no instalado)"}</option>`).join("")}</select></div>
+          <div><label for="sm-m-arch">Muestra disponible</label>
+            <select id="sm-m-arch" class="cn-select">${us.map((u) => `<option value="${esc(u.archivo)}">${esc(u.archivo)} · ${esc(kb(u.bytes))}</option>`).join("")}</select></div>
+          <div id="sm-m-vistaw"><label for="sm-m-vista">Vista</label><select id="sm-m-vista" class="cn-select"></select></div>
+          <label class="cn-nivel"><input type="checkbox" id="sm-m-sim" ${sim ? "checked" : ""} /> <b>SIMULADO</b> — la muestra no es del tripulante</label>
+          <p class="cn-nota cn-sem-alerta" id="sm-m-simaviso" hidden><b>Atención:</b> sin la marca SIMULADO, el resultado se guardará como dato real del tripulante y puede mover su semáforo. Úsalo solo si la muestra es de esa persona.</p>
+          <label class="cn-nivel"><input type="checkbox" id="sm-m-carga" /> Prueba de carga (sin pesos)</label>
+          <div class="cn-sem-acciones"><button type="button" class="cn-boton" id="sm-m-go">${ic("play", "ic-sm")}Analizar</button></div>
+          ${!ms.length ? `<p class="cn-nota">No hay modelos de ${M.tipo === "eco" ? "eco" : "ECG"} analizables en el backend.</p>` : ""}
+          ${!us.length ? `<p class="cn-nota">No hay muestras de ${M.tipo === "eco" ? "eco (video)" : "ECG (.hea)"} en la carpeta de muestras.</p>` : ""}`;
+        opcionesTrip();
+        const vistas = () => {
+          const m = ms.find((x) => x.key === $("#sm-m-mod", p).value), w = $("#sm-m-vistaw", p), s = $("#sm-m-vista", p);
+          const exige = !!m && !(m.vistas_admitidas || []).some((v) => String(v).toLowerCase() === "cualquiera");
+          w.hidden = !exige;
+          s.innerHTML = exige ? m.vistas_admitidas.map((v) => `<option value="${esc(v)}">${esc(v)}</option>`).join("") : "";
+        };
+        $("#sm-m-mod", p).addEventListener("change", vistas);
+        vistas();
+        const aviso = () => { $("#sm-m-simaviso", p).hidden = $("#sm-m-sim", p).checked; };
+        $("#sm-m-sim", p).addEventListener("change", aviso);
+        aviso();
+        $("#sm-m-go", p).addEventListener("click", lanzar);
+        $("#sm-m-go", p).disabled = !ms.length || !us.length || !!(M.trabajo && (M.trabajo.estado === "en_cola" || M.trabajo.estado === "corriendo"));
+      }
+      async function lanzar() {
+        const cuerpo = { tripulante: $("#sm-m-trip", p).value, modelo: $("#sm-m-mod", p).value, archivo: $("#sm-m-arch", p).value,
+          simulado: $("#sm-m-sim", p).checked, prueba_carga: $("#sm-m-carga", p).checked };
+        if (!$("#sm-m-vistaw", p).hidden) cuerpo.vista = $("#sm-m-vista", p).value;
+        const prog = $("#sm-mprog", p), go = $("#sm-m-go", p);
+        go.disabled = true; $("#sm-mres", p).innerHTML = "";
+        prog.innerHTML = `<p class="cn-nota">Enviando…</p>`;
+        let r;
+        try { r = await enviar("POST", MOD + "/analizar", cuerpo); }
+        catch { if (vivo()) { prog.innerHTML = `<p class="cn-nota">No se pudo analizar: sin conexión con el backend.</p>`; go.disabled = false; } return; }
+        if (!vivo()) return;
+        if (!r.ok) { prog.innerHTML = `<p class="cn-nota">No se pudo analizar (HTTP ${esc(r.status)}): ${esc(r.j.error || "error desconocido")}</p>`; go.disabled = false; return; }
+        M.trabajo = r.j;
+        sondear(r.j.id);
+      }
+      /** Polling cada ~1,5 s; se detiene al salir de la vista (p ya no está conectado). */
+      function sondear(id) {
+        const g = ++M.gen;
+        const paso = async () => {
+          if (g !== M.gen || !vivo()) return;
+          let r;
+          try { r = await api(MOD + "/trabajos/" + encodeURIComponent(id)); } catch { r = null; }
+          if (g !== M.gen || !vivo()) return;
+          if (r && r.ok && r.j && r.j.id) {
+            M.trabajo = r.j;
+            pintarTrabajo(r.j);
+            if (r.j.estado === "ok" || r.j.estado === "error") { if ($("#sm-m-go", p)) $("#sm-m-go", p).disabled = false; if (r.j.estado === "ok") cargar(); return; }
+          } else $("#sm-mprog", p).innerHTML = `<p class="cn-nota">Sin respuesta del backend; reintentando…</p>`;
+          M.timer = setTimeout(paso, 1500);
+        };
+        paso();
+      }
+      function pintarTrabajo(t) {
+        const prog = $("#sm-mprog", p), res = $("#sm-mres", p);
+        if (!prog) return;
+        const etiquetas = `${t.simulado ? chipSim() : ""}${t.prueba_carga ? ` <span class="cn-chip c-2">PRUEBA DE CARGA — no es resultado</span>` : ""}`;
+        if (t.estado === "en_cola" || t.estado === "corriendo") {
+          prog.innerHTML = `<p><b>${esc(t.modelo)}</b> · ${esc(t.archivo)} ${etiquetas}</p>
+            <p class="cn-nota">${esc(ETAPA[t.fase] || t.fase)} · ${esc(t.estado === "en_cola" ? "esperando turno" : segs(t) + " s")}${t.timeout_s ? ` · tiempo máximo ${esc(t.timeout_s)} s` : ""}</p>`;
+          res.innerHTML = "";
+          return;
+        }
+        if (t.estado === "error") {
+          prog.innerHTML = `<p><b>${esc(t.modelo)}</b> · ${esc(t.archivo)} ${etiquetas}</p>`;
+          res.innerHTML = `<p class="cn-sem-err"><b>El análisis no terminó.</b> ${esc(t.error || "error desconocido")}</p>
+            ${t.salida && t.salida.stderr_cola ? `<details class="cn-detalles"><summary>Detalle técnico</summary><pre class="cn-nota" style="white-space:pre-wrap">${esc(t.salida.stderr_cola)}</pre></details>` : ""}
+            <p class="cn-nota">No es diagnóstico. No se guardó nada en la base.</p>`;
+          return;
+        }
+        prog.innerHTML = `<p><b>${esc(t.modelo)}</b> · ${esc(t.archivo)} ${etiquetas} <span class="cn-nota">terminado en ${segs(t)} s</span></p>`;
+        res.innerHTML = resultado(t);
+      }
+      function resultado(t) {
+        const r = t.resultado || {}, s = t.salida || {}, ck = (r.checkpoint || s.checkpoint) || null;
+        const vs = r.valores || [];
+        const ckPath = ck && ck.path ? String(ck.path) : "";
+        const ckTxt = ckPath
+          ? `checkpoint <code>${esc(ckPath.split(/[\\/]/).filter(Boolean).pop() || ckPath)}</code>${ck.sha256 ? ` · sha256 <code>${esc(String(ck.sha256).slice(0, 12))}…</code>` : ` · sha256 no registrado`}${t.prueba_carga ? ` (no cargado: prueba de carga)` : ``}`
+          : esc(t.tipo === "ecg" ? "sin checkpoint (algoritmo de señal NeuroKit2)" : "checkpoint no declarado");
+        const fila = (v) => `<tr><th scope="row">${esc(v.metrica)}${v.experimental ? ` <span class="cn-chip c-1">EXPERIMENTAL</span>` : ""}</th>
+          <td>${v.valor == null ? `<span class="tenue">sin dato</span>` : `<b class="num">${esc(num(v.valor))}</b>${v.unidad ? ` <small class="tenue">${esc(v.unidad)}</small>` : ""}`}</td>
+          <td>${esc(mm(v.variable_id))}</td><td>${esc(mm(v.nivel))}</td>
+          <td>${v.guardada ? "Guardada" : `<span class="tenue">${esc(v.existente ? "ya existía" : v.motivo || "no guardada")}</span>`}</td></tr>`;
+        let h = `<div class="cn-chips" style="margin:6px 0"><span class="cn-chip c-nd">No es diagnóstico</span>${t.simulado ? chipSim() : ""}${t.prueba_carga ? `<span class="cn-chip c-2">PRUEBA DE CARGA — no es resultado</span>` : ""}
+          ${s.inferencia_real === false && !t.prueba_carga ? `<span class="cn-chip c-1">Sin inferencia real</span>` : ""}</div>
+          <p class="cn-nota">Modelo <b>${esc(t.modelo)}</b>${s.device ? ` · ${esc(s.device)}` : ""} · ${ckTxt} · ${esc(r.guardadas == null ? 0 : r.guardadas)} valores guardados</p>
+          ${vs.length ? `<div class="cn-tabla-caja"><table><thead><tr><th>Métrica</th><th>Valor</th><th>Variable</th><th>Nivel</th><th>Guardada</th></tr></thead><tbody>${vs.map(fila).join("")}</tbody></table></div>` : `<p class="cn-nota">El puente no devolvió valores.</p>`}`;
+        if (t.prueba_carga) h += `<p class="cn-nota"><b>Prueba de carga:</b> datos de relleno y sin pesos; no significa nada clínicamente y no se guarda.</p>`;
+        const sm = t.semaforo;
+        if (sm) {
+          h += `<h3 class="cn-sem-sub">Cambios del semáforo</h3>`;
+          if (!sm.reevaluado) h += `<p class="cn-nota">No se reevaluó el semáforo${sm.motivo ? ": " + esc(sm.motivo) : ""}.</p>`;
+          else if (!(sm.cambios || []).length) h += `<p class="cn-nota">Sin cambios en el semáforo.</p>`;
+          else h += `<ul class="cn-sem-cmd">${sm.cambios.map((c) => `<li>${esc(c.nombre)}: ${semC(c.antes)} → ${semC(c.despues)}</li>`).join("")}</ul>`;
+          if (t.simulado) h += `<p class="cn-nota">Dato SIMULADO: el canal real ignora datos simulados (G1), por eso no mueve el semáforo real.</p>`;
+        }
+        const av = (r.avisos || []).slice(0, 3);
+        if (av.length) h += `<p class="cn-nota">Avisos: ${av.map(esc).join("; ")}</p>`;
+        return h + `<p class="cn-nota">${esc(t.aviso || "No es un diagnóstico. Se recomienda revisión por el cirujano de vuelo.")}</p>`;
+      }
+      return { actualizar, parar };
+    })();
 
     cargar();
   }

@@ -17,6 +17,7 @@ import { encolarAvisoNave, escribirEnlace, iniciarEnlace, leerEnlace, redactarAv
 import { estadoNave, estadoTierra } from './enlace-https.ts';
 import { idEmisor } from './sincro.ts';
 import { migrarSalud, sembrarSalud } from './salud.ts';
+import { crearModelos, ErrorModelos, type OpcionesModelos } from './modelos.ts';
 import { correrMotor, detalleSemaforo, ErrorSemaforo, guardarPeso, leerPesos, restaurarPesos, rutaBd, semaforo } from './semaforo.ts';
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { reiniciarEstados } from './ingesta.ts';
@@ -45,6 +46,12 @@ const PUERTO = Number(process.env.PUERTO ?? 8787);
 const RUTA_MEDIBLES = resolve(process.env.MEDIBLES ?? join(AQUI, '..', 'semillas', 'medibles.json'));
 /** Sube al cambiar algo que la pasarela o el simulador necesiten. */
 export const VERSION_BACKEND = '0.7.0';
+
+/** Respuesta con estado distinto de 200 (p. ej. 202). */
+class Respuesta {
+  estado: number; cuerpo: unknown;
+  constructor(estado: number, cuerpo: unknown) { this.estado = estado; this.cuerpo = cuerpo; }
+}
 
 class ErrorHttp extends Error {
   estado: number;
@@ -169,6 +176,8 @@ export interface OpcionesServidor {
   rol?: 'nave' | 'tierra';
   /** Rutas /enlace/* (solo Tierra). Devuelve true si atendió la petición. */
   enlace?: (req: IncomingMessage, res: ServerResponse) => Promise<boolean>;
+  /** Configuración de los modelos de prototipo-salud (tests); por defecto, variables de entorno. */
+  modelos?: OpcionesModelos;
 }
 
 /** Antigüedad en segundos de un evento (ahora − t_evento); null si la fecha no es válida. */
@@ -480,6 +489,19 @@ export function manejador(db: BD, opciones: OpcionesServidor = {}) {
     } catch (e) { if (e instanceof ErrorSemaforo) throw new ErrorHttp(e.estado, e.message); throw e; }
   });
 
+  // ── Modelos de eco/ECG (prototipo-salud) con puente a eva.db ──
+  const modelos = crearModelos(db, opciones.modelos, anotar);
+  const mod = <T>(f: () => T): T => {
+    try { return f(); } catch (e) { if (e instanceof ErrorModelos) throw new ErrorHttp(e.estado, e.message); throw e; }
+  };
+  ruta('GET', '/api/modelos/disponibles', () => modelos.disponibles());
+  ruta('POST', '/api/modelos/analizar', async (req) => {
+    const c = await cuerpoJson<unknown>(req);
+    return new Respuesta(202, mod(() => modelos.analizar(c)));
+  });
+  ruta('GET', '/api/modelos/trabajos', () => modelos.trabajos());
+  ruta('GET', '/api/modelos/trabajos/:id', (_r, p) => mod(() => modelos.trabajo(p.id!)));
+
   // ── Sólo para la demo: deja la misión en blanco, conserva la configuración ──
   ruta('POST', '/api/demo/reiniciar', () => {
     db.exec(`DELETE FROM muestras; DELETE FROM alertas; DELETE FROM asignaciones; DELETE FROM fases;
@@ -564,7 +586,8 @@ export function manejador(db: BD, opciones: OpcionesServidor = {}) {
       try {
         const p = Object.fromEntries(r.claves.map((k, i) => [k, decodeURIComponent(m[i + 1]!)]));
         const out = await r.h(req, p, url.searchParams);
-        res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' }).end(JSON.stringify(out));
+        res.writeHead(out instanceof Respuesta ? out.estado : 200, { 'content-type': 'application/json; charset=utf-8' })
+          .end(JSON.stringify(out instanceof Respuesta ? out.cuerpo : out));
       } catch (e) {
         const estado = e instanceof ErrorHttp ? e.estado : 500;
         res.writeHead(estado, { 'content-type': 'application/json; charset=utf-8' })

@@ -29,12 +29,8 @@ NIVELES_COBERTURA = ("N1", "N2", "N3", "N3a", "N3b")
 # c.2 FC en reposo: percentiles 5/50/95 NHANES (Ostchega 2011) por sexo y decada [terrestre]
 FC_PERCENTILES = {("M", 20): (52, 69, 89), ("F", 20): (57, 74, 95), ("M", 40): (52, 68, 90), ("F", 40): (56, 71, 92)}
 Z90 = 1.645
-<<<<<<< HEAD
-TEMP_MEDIA, TEMP_DE = 36.6, (37.3 - 35.7) / (2 * 1.96)   # Obermeyer 2017
-=======
 TEMP_RANGO = (35.7, 37.3)  # Obermeyer 2017
 TEMP_MEDIA, TEMP_DE = 36.6, (TEMP_RANGO[1] - TEMP_RANGO[0]) / (2 * 1.96)   # Obermeyer 2017
->>>>>>> 6ec76403a8d197667ae003cc72dccb525361203c
 HRV_LN_RMSSD = (3.68, 0.35)                              # Nunan 2010, lognormal [P·S14]
 
 

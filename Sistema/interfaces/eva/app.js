@@ -475,7 +475,9 @@
       const o = $(`[data-region="${r}"]`, svgEl);
       const pt0 = puntoFinal(svgEl, o, C.VISTA, tel);
       montar();
-      if (navigator.vibrate) try { navigator.vibrate(12); } catch (e) { /* sin vibración: no pasa nada */ }
+      // Solo si una persona ya tocó la pantalla: en la demo automática el navegador la bloquea y lo marca como error.
+      const tocado = !navigator.userActivation || navigator.userActivation.hasBeenActive;
+      if (navigator.vibrate && tocado) try { navigator.vibrate(12); } catch (e) { /* sin vibración: no pasa nada */ }
       pulso(tel, pt0, ev.regiones[r]);
       barrido(svgEl.parentElement, ev.regiones[r]);
       // Un cuadro después del toque (ya con el panel dibujado y los demás órganos atenuados) empieza el acercamiento.
@@ -608,6 +610,7 @@
           <p>${h.frase}</p>
           <ul>${h.evidencia.map((x) => `<li>${x}</li>`).join("")}</ul>
           <div class="hacer">${ic("check", "ic-sm")}<span>${h.hacer}</span></div>
+          ${h.referencia ? `<div class="pie ref-alerta"><b>Referencia:</b> ${h.referencia}</div>` : ""}
           <div class="pie">Umbral: ${h.umbral}${h.simulado ? " · dato simulado" : ""}</div>
         </article>`).join("");
       const velo = document.createElement("div");
@@ -830,6 +833,7 @@
       ${k === "presion" ? `<div class="pa-leyenda"><span><i class="pa-sis"></i>Sistólica (arriba)</span><span><i class="pa-dia-i"></i>Diastólica (abajo)</span><span>mmHg · manguito</span></div>` : ""}
       ${grafNormal(pid, k, estado.dia)}
       <div class="tenue-12">${e.normal ? `Últimos 14 días · la franja es tu normal (${M.texto(k, e.normal.banda[0])} a ${M.texto(k, e.normal.banda[1])})` : ind.abs ? `Sin tu normal: se compara con el umbral (${ind.abs.texto})` : ""}</div>
+      ${ind.varId ? `<div class="tenue-12 ref-motor" data-var="${ind.varId}"></div>` : ""}
     </div>`;
   }
 
@@ -1146,6 +1150,7 @@
         const v = Number(input.value);
         if (!v || v < 20 || v > 600) { luna.poner("pensando"); globo.innerHTML = "Ese número no parece una glucosa. Revísalo, por fa."; return; }
         estado.glucometro.push(v);
+        { const d = new Date(); M.registrar(estado.persona, estado.dia, "glucosa", v, `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`); }
         $("#glu-lista", p).innerHTML = "Registradas: " + estado.glucometro.map((n) => `<b>${n}</b>`).join(" · ") + " mg/dL";
         if (v < 70) { luna.poner("alerta"); globo.innerHTML = "Está <b>baja</b>. Avisa a la CMO."; }
         else if (v > 180) { luna.poner("preocupada"); globo.innerHTML = "Está <b>alta</b> para el rango de la Tierra. Lo anoto."; }
@@ -1304,6 +1309,9 @@
         // Lo registrado hoy reemplaza el valor simulado del día y se recalcula todo (bug 4).
         const d = new Date(), hora = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
         M.registrar(estado.persona, estado.dia, "animo", estado.estres, hora);
+        // Dolor de espalda y de cabeza (0–10) también quedan registrados: telefono-vivo.js los manda a la central.
+        M.registrar(estado.persona, estado.dia, "dolor_espalda", estado.dolor, hora);
+        M.registrar(estado.persona, estado.dia, "cefalea", estado.cefalea ? (estado.intensidadCefalea || 5) : 0, hora);
         estado.tocado.sintomas = true;
         const cara = { feliz: "Genial", tranquila: "Bien", preocupada: "Regular", empatica: "Mal" }[estado.animo];
         estado.registros.unshift({ t: "Check-in", v: `${cara ? cara + " · " : ""}estrés ${estado.estres} · espalda ${estado.dolor}/10${estado.cefalea ? " · cefalea" : ""}`, hora, ic: "chispa" });

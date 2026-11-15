@@ -13,10 +13,7 @@
       las de valor NULL también se omiten (no hay sin_dato honesto).
     * context = '' (el `entorno` de la BD no es reposo/sueño/actividad; la FC sin contexto de reposo pasa a 04:A4, G6).
     * method = `metodo` solo si está en el vocabulario del motor; si no, vacío.
-<<<<<<< HEAD
     * simulated = false: la BD no distingue el simulador de hardware (`npm run generador` en Simulacion/). Si los datos vienen de él,
-=======
-    * simulated = false: la BD no distingue el simulador de hardware (`npm run sim`). Si los datos vienen de él,
       también son SIMULADOS aunque aquí figuren como reales (el operador puede declararlo con `origen_simulador=True` /
       `--origen-simulador`: se evalúa igual pero se guarda con canal SIMULADO). notes = 'origen=eva.db; ...'.
     * EXCEPCION: una muestra con procedencia 'modelo_eco' cuyo JSON de calidad trae clase == 'modelo_eco' (la escribe
@@ -25,11 +22,8 @@
 - Basales (`basales`): se leen y se exponen en el resultado (`basales`), pero NO se pasan al motor: el motor construye la
   base personal desde los puntos prevuelo (autocalibración) y no tiene un punto de entrada para una media impuesta; forzarla
   cambiaría la semántica.
-<<<<<<< HEAD
-=======
 - `detalle.ligas` (en `evaluaciones`) lleva el desglose por variable (campos de `CAMPOS_LIGA`; aporte = peso × activación).
 - `detalle.referencias` lleva el valor normal (referencia) por variable: poblacional si existe, si no base personal prevuelo (`motor.referencias`).
->>>>>>> 6ec76403a8d197667ae003cc72dccb525361203c
 - `mision`: fecha de lanzamiento = inicio de la primera fase no-'tierra' de `fases`, solo si antes hay una fase 'tierra'.
 """
 from __future__ import annotations
@@ -93,11 +87,7 @@ def faltan(con, necesarias) -> list[str]:
 
 
 def aviso_faltan(f: list[str]) -> str:
-<<<<<<< HEAD
     return (f"la BD no tiene las tablas {', '.join(f)}: ejecute `npm run migrar` en Sistema/backend "
-=======
-    return (f"la BD no tiene las tablas {', '.join(f)}: ejecute `npm run migrar` en Planeacion/Julio/backend "
->>>>>>> 6ec76403a8d197667ae003cc72dccb525361203c
             "(Python no crea el esquema); se trata como «no hay BD» para eso.")
 
 
@@ -179,8 +169,6 @@ def leer_muestras(con, avisos: list | None = None) -> pd.DataFrame:
             sim = "true" if q.get("simulado") is True else "false"
             notas += (f"; modelo={q.get('modelo')}; checkpoint={q.get('checkpoint')}; archivo={q.get('archivo_origen')}"
                       f"; modelo de investigacion, no diagnostico")
-<<<<<<< HEAD
-=======
         elif isinstance(q, dict) and q.get("clase") == "ecg_adaptador" and r["procedencia"] == "modelo_ecg":
             clase, calidad = "ecg_adaptador", str(q.get("quality") or "")
             sim = "true" if q.get("simulado") is True else "false"
@@ -188,7 +176,6 @@ def leer_muestras(con, avisos: list | None = None) -> pd.DataFrame:
                 notas += f"; ventana={float(q['ventana_s']):g} s"
             notas += (f"; modelo={q.get('modelo')}; run={q.get('run_id')}; archivo={q.get('archivo_origen')}"
                       f"; algoritmo de senal experimental, no diagnostico")
->>>>>>> 6ec76403a8d197667ae003cc72dccb525361203c
         out.append({
             "subject_id": r["tripulante"], "timestamp": r["t_scet"], "variable_id": r["variable"], "value": r["valor"],
             "unit": r["unidad"] or "", "device_class": clase, "quality": calidad, "context": "",
@@ -245,8 +232,6 @@ def guardar_muestra_eco(feve, *, subject_id, timestamp, modelo, simulado, qualit
         con.close()
 
 
-<<<<<<< HEAD
-=======
 def guardar_muestras_ecg(filas, *, subject_id, timestamp, simulado, archivo_origen=None, run_id=None, ruta=None) -> dict:
     """Guarda en `muestras` (procedencia 'modelo_ecg') las métricas ECG ya pasadas por la puerta de calidad. `filas`: lista
     de dicts {variable_id, valor, unidad, metrica, quality, nivel, experimental, con_liga, ventana_s}. Una transacción;
@@ -297,7 +282,6 @@ def guardar_muestras_ecg(filas, *, subject_id, timestamp, simulado, archivo_orig
         con.close()
 
 
->>>>>>> 6ec76403a8d197667ae003cc72dccb525361203c
 def leer_mision(con) -> dict:
     """{sid: {"lanzamiento": 'YYYY-MM-DD'}} si `fases` tiene una fase 'tierra' y luego una no-'tierra'; si no, {}."""
     if faltan(con, ("fases", "tripulantes")):
@@ -381,12 +365,6 @@ def vaciar_pesos_usuario(con) -> bool:
 
 
 # ------------------------------------------------------------------------------------------- evaluación
-<<<<<<< HEAD
-def _detalle(item: dict, pers: dict, canal: str) -> dict:
-    d = {k: item.get(k) for k in ("padecimiento", "motivo", "T", "T_de", "T_inf", "T_max", "cobertura", "etiquetas", "condiciones")}
-    d.update({"fase": pers.get("fase"), "fecha_evaluacion": pers.get("fecha_evaluacion"), "provisional": True,
-              "simulated": canal == "SIMULADO", "aviso": parametros.AVISO})
-=======
 CAMPOS_LIGA = ("variable_id", "variable", "valor", "unidad", "fecha_dato", "peso", "modificado_por_usuario",
                "nivel_evidencia", "fuente", "activacion", "aporte", "cuenta_en_T", "ausencia", "motivo_ausencia")
 
@@ -398,7 +376,6 @@ def _detalle(item: dict, pers: dict, canal: str) -> dict:
               "simulated": canal == "SIMULADO", "aviso": parametros.AVISO})
     from . import referencias
     d["referencias"] = referencias.referencias_detalle(item, pers, canal)
->>>>>>> 6ec76403a8d197667ae003cc72dccb525361203c
     return d
 
 

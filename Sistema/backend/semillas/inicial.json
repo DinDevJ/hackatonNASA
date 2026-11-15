@@ -52,6 +52,55 @@
       "tipo_umbral": "T",
       "procedencia": "derived",
       "descripcion": "Calculada en la central: (sis + 2·dia) / 3."
+    },
+    {
+      "id": "X:GLU",
+      "nombre": "Glucosa en ayunas (glucómetro)",
+      "unidad": "mg/dL",
+      "tipo_umbral": "T",
+      "procedencia": "manual"
+    },
+    {
+      "id": "X:ANIMO",
+      "nombre": "Estrés del check-in",
+      "unidad": "/100",
+      "tipo_umbral": null,
+      "procedencia": "manual"
+    },
+    {
+      "id": "X:PVT",
+      "nombre": "Lapsos de reflejos (PVT-B)",
+      "unidad": "lapsos",
+      "tipo_umbral": null,
+      "procedencia": "manual"
+    },
+    {
+      "id": "X:MASA",
+      "nombre": "Masa corporal",
+      "unidad": "kg",
+      "tipo_umbral": "A",
+      "procedencia": "manual"
+    },
+    {
+      "id": "X:AGUA",
+      "nombre": "Agua bebida hoy",
+      "unidad": "L",
+      "tipo_umbral": "A",
+      "procedencia": "manual"
+    },
+    {
+      "id": "X:DOLOR",
+      "nombre": "Dolor de espalda (check-in)",
+      "unidad": "/10",
+      "tipo_umbral": null,
+      "procedencia": "manual"
+    },
+    {
+      "id": "X:CEFALEA",
+      "nombre": "Dolor de cabeza (check-in)",
+      "unidad": "/10",
+      "tipo_umbral": null,
+      "procedencia": "manual"
     }
   ],
   "esquemas": [
@@ -184,6 +233,34 @@
       "tipo": "chest",
       "perfil": "eva",
       "esquema_id": 5
+    },
+    {
+      "id": 501,
+      "clave": "telefono-ana",
+      "nombre": "Teléfono de Ana (lo que anota a mano)",
+      "tipo": "phone",
+      "perfil": "json"
+    },
+    {
+      "id": 502,
+      "clave": "telefono-luis",
+      "nombre": "Teléfono de Luis (lo que anota a mano)",
+      "tipo": "phone",
+      "perfil": "json"
+    },
+    {
+      "id": 503,
+      "clave": "telefono-mei",
+      "nombre": "Teléfono de Mei (lo que anota a mano)",
+      "tipo": "phone",
+      "perfil": "json"
+    },
+    {
+      "id": 504,
+      "clave": "telefono-tomas",
+      "nombre": "Teléfono de Tomás (lo que anota a mano)",
+      "tipo": "phone",
+      "perfil": "json"
     }
   ],
   "tripulantes": [

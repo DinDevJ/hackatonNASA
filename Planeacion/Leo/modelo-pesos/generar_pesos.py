@@ -1,10 +1,6 @@
 """Genera la tabla de pesos fisiológicos (malestar × variable) con su referencia y su prior bayesiano.
 Uso: python generar_pesos.py   →   pesos.csv y pesos.json en esta carpeta, y una copia ligera
-<<<<<<< HEAD
      (Sistema/interfaces/eva/pesos.js) para las consolas de la app LUNNA (computadora central y base en Tierra).
-=======
-     (../maqueta-eva/pesos.js) para las consolas de la app LUNNA (computadora central y base en Tierra).
->>>>>>> 6ec76403a8d197667ae003cc72dccb525361203c
 
 Niveles de evidencia → incertidumbre del prior (desviación estándar sobre el peso):
   A = relación medida con número (fuente verificada)        → sd 0.5
@@ -154,11 +150,7 @@ with open(aqui / "pesos.csv", "w", encoding="utf-8-sig", newline="") as f:
 # Copia ligera para las consolas de la app LUNNA: solo las celdas con peso, en un .js que se carga sin servidor.
 CORTO = {1: "Arritmia", 2: "Ortostática", 3: "Hipoxia", 4: "Infección", 5: "Sueño", 6: "Fatiga", 7: "CO₂ / cefalea",
          8: "Radiación", 9: "Estrés", 10: "Descompresión", 11: "Trombosis / SANS"}
-<<<<<<< HEAD
 maqueta = aqui.parent.parent.parent / "Sistema" / "interfaces" / "eva"
-=======
-maqueta = aqui.parent / "maqueta-eva"
->>>>>>> 6ec76403a8d197667ae003cc72dccb525361203c
 if maqueta.is_dir():
     ligera = {
         "fuente": "Planeacion/Leo/modelo-pesos/pesos.json",

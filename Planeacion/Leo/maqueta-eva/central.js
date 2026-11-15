@@ -80,7 +80,7 @@
     for (const n of K.notasTierra()) t.push(`<a class="aviso-card ac-info" href="#tierra">${ic("tierra", "ac-ic")}<span><b>Nota de Tierra sobre ${esc(nombreDe(n.pid))}</b><small>Sobre datos del ${esc(n.sobre)} · ${esc(n.llego)}</small></span>${ic("chevron", "ac-flecha")}</a>`);
     for (const m of K.llegados("subida").slice(-3).reverse()) t.push(`<a class="aviso-card ac-info" href="#tierra">${ic("tierra", "ac-ic")}<span><b>${esc(K.NIVEL_MSJ[m.nivel] ? K.NIVEL_MSJ[m.nivel].txt : "Aviso")} de Tierra · ${esc(nombreDe(m.pid))}</b><small>${esc(m.texto)}</small></span>${ic("chevron", "ac-flecha")}</a>`);
     return `<section class="tarjeta" aria-labelledby="t-avisos"><h2 id="t-avisos">${pastilla("alerta", "#FFC23D", "#E08A00")} Avisos de hoy</h2>
-      ${t.length ? t.join("") : `<div class="cn-vacio">Sin avisos: todo en su normal.</div>`}</section>`;
+      ${t.length ? t.join("") : K.positivo("check", "Todo en orden", "Ningún aviso hoy: toda la tripulación está en su normal.")}</section>`;
   }
 
   function tarjetaAmbiente() {
@@ -91,7 +91,7 @@
     const cab = M.cabina(K.dia);
     return `<section class="tarjeta" aria-labelledby="t-clima"><h2 id="t-clima">${pastilla("sol", "#FF8A65", "#E5484D")} Clima espacial</h2>
       ${cab.solar ? `<div class="aviso-card ac-rojo">${sem(2, false)}<span><b>Evento de partículas solares activo</b><small>Tasa ${cab.tasa.toLocaleString("es-ES")} µSv/h · refugio blindado · aviso de DONKI con ${M.DONKI.latenciaMin} min de latencia</small></span></div>`
-        : `<div class="cn-fila">${sem(0, false)}<span><b>Sin eventos solares hoy</b><small>Tasa de dosis ${cab.tasa} µSv/h (diseño &lt; 54) · dosis de la misión ${cab.dosisMision} mSv</small></span><span></span></div>`}
+        : K.positivo("sol", "Clima espacial en calma", `Sin riesgo por radiación: ${cab.tasa} µSv/h, dentro del diseño (&lt; 54) · dosis de la misión ${cab.dosisMision} mSv`)}
       <p class="cn-nota">El evento del día 115 está modelado sobre el evento real <b>${M.DONKI.id}</b> de NASA DONKI (${esc(M.DONKI.instrumento)}). <a class="enlace" href="${M.DONKI.url}" target="_blank" rel="noopener">Ver en DONKI</a></p></section>`;
   }
   function tarjetaEnlaceMini() {
@@ -117,6 +117,11 @@
       else if (m.sentido === "bajada") out.push({ n: nv.n, chip: chip(nv.n, "Consulta a Tierra", "tierra"), meta: `Hoy ${m.hora} · sobre ${esc(nombreDe(m.pid))}`, texto: esc(m.texto), id: m.id });
       else if (m.sentido === "subida" && m.t_llegada <= Date.now()) out.push({ n: nv.n, chip: chip(nv.n, `${nv.txt} de Tierra`, "tierra"), meta: `Llegó hoy ${K.horaReal(m.t_llegada)} · ${esc(m.de || "Cirujano de vuelo")} · para ${esc(nombreDe(m.pid))}`, texto: esc(m.texto), id: m.id });
     }
+    for (const e of emergenciasReales) {
+      const pid = K.DESDE_BACKEND[e.tripulante];
+      if (!deEl(pid)) continue;
+      out[e.resultado ? "push" : "unshift"]({ n: e.resultado ? 1 : 2, chip: chip(e.resultado ? 1 : 2, `Emergencia · ${e.modo}`), meta: `En vivo · ${K.horaReal(e.t_registro)} · ${esc(nombreDe(pid))}`, texto: `<b>Causa:</b> ${esc(e.causa || "sin causa registrada")}`, det: `<b>Resultado:</b> ${esc(e.resultado || "en curso")}`, id: `em-${e.id}` });
+    }
     if (d >= 115) out.push({ n: 2, chip: chip(2, "Emergencia · automática"), meta: "Día 115 · 11:04 · toda la tripulación", texto: "<b>Causa:</b> evento de partículas solares; la tasa de dosis superó el umbral de refugio (≥ 3000 µSv/h).", det: "<b>Resultado:</b> tripulación al refugio blindado con buddy check; cronología sellada y enviada a Tierra con prioridad 0." });
     if (deEl("MS-2") && d >= 114) out.push({ n: 0, chip: chip(0, "Nota de Tierra", "tierra"), meta: "Día 114 · llegó con 41 min de antigüedad · para Ana", texto: "«Recomiendo priorizar el sueño de Ana y revalorar antes de la caminata espacial.»", det: "Escrita sobre datos del SCET D112 07:46; es anterior al cierre de FATIGA-03." });
     if (deEl("MS-2") && d >= 112 && M.fatiga("MS-2", 112)) {
@@ -128,9 +133,10 @@
   function listaHistorial(pid) {
     const es = entradasHistorial(pid);
     return es.length ? `<ol class="cn-hist">${es.map((e) => `<li class="es-${e.n}${e.id && nuevos.has(e.id) ? " nuevo" : ""}"><div class="meta">${e.chip}<span>${e.meta}</span></div><p>${e.texto}</p>${e.det ? `<p class="det">${e.det}</p>` : ""}</li>`).join("")}</ol>`
-      : `<div class="cn-vacio">Sin advertencias ni emergencias registradas${pid ? ` para ${esc(nombreDe(pid))}` : ""}.</div>`;
+      : K.positivo("escudo", "Todo en calma", `Ninguna advertencia ni emergencia${pid ? ` para ${esc(nombreDe(pid))}` : ""} en esta misión.`);
   }
   const nuevos = new Set();
+  let emergenciasReales = [];   // del backend (teléfono → central), si corre
 
   // ================================================================ vista: Hoy
   function vistaHoy(p) {
@@ -171,7 +177,7 @@
   function tarjetaIndice(pid, d) {
     const top = K.indices(pid, d);
     const s = sel.ind[pid] || top[0].mid;
-    return `<section class="tarjeta" aria-labelledby="t-ind"><h2 id="t-ind">${pastilla("tendencia", "#A97BFF", "#6B3FD8")} Índice por padecimiento <span class="cn-empuja tenue">pesos fisiológicos de Leo · ilustrativo</span></h2>
+    return `<section class="tarjeta" aria-labelledby="t-ind"><h2 id="t-ind">${pastilla("tendencia", "#A97BFF", "#6B3FD8")} Índice por padecimiento <span class="cn-empuja tenue">pesos fisiológicos · ilustrativo</span></h2>
       <div id="ind-barras">${K.barrasIndice(pid, d, { sel: s })}</div>
       <div id="ind-detalle" style="margin-top:12px">${K.detalleIndice(pid, s, d)}</div>
       <p class="cn-nota">Ordena qué mirar primero; no es una probabilidad ni un diagnóstico. ▲ = una variable de peso 3 llegó a 3 puntos (regla tipo NEWS).</p></section>`;
@@ -219,7 +225,8 @@
       if (!texto) { est.textContent = "Escribe un mensaje antes de enviar."; est.classList.add("error"); area.focus(); return; }
       est.classList.remove("error");
       const resumen = destino === "bajada" ? ` [Estado ${K.ESTADO_TXT[K.ev(pid, d).general]} · ${K.ev(pid, d).alertas.map((a) => a.id).join(", ") || "sin alertas"} · día ${d}]` : "";
-      const m = K.enviarEnlace({ sentido: destino, tipo: destino === "bajada" ? "consulta" : "aviso", nivel, pid, de: AUTOR, texto: texto + resumen });
+      const m = K.enviarEnlace({ sentido: destino, tipo: destino === "bajada" ? "consulta" : "aviso", nivel, pid, de: AUTOR, texto: texto + resumen, backend: !!K.backend });
+      if (K.backend) (destino === "bajada" ? K.consultaBk(m) : K.avisoAbordoBk(m));   // por la central real
       nuevos.add(m.id);
       area.value = "";
       est.textContent = destino === "bajada"
@@ -322,7 +329,7 @@
           <div class="cn-leyenda">${sem(0, "En su normal")}${sem(1, "Atención")}${sem(2, "Actúa ahora")}<span>· Luis sigue en ■ por su presión (130–139, umbral AHA [T])</span></div></section>
         <section class="tarjeta" aria-labelledby="t-veces"><h2 id="t-veces">${pastilla("grafica", "#33C3B3", "#0E8F86")} Lo que más pidió atención</h2>
           ${veces.length ? `<div class="cn-indices">${veces.map(([n, max, v]) => `<div class="cn-ind" style="cursor:default"><span>${forma(max, 11)}<em>${esc(n)}</em></span><span class="cn-pista"><i style="--v:${(v / vmax).toFixed(3)}"></i></span><span class="num">${v}</span></div>`).join("")}</div>
-            <p class="cn-nota" style="margin-top:8px">Tripulante-días con el indicador en atención o más, del día ${K.DIA_MIN} al ${K.dia}.</p>` : `<div class="cn-vacio">Sin indicadores fuera de su normal.</div>`}</section>
+            <p class="cn-nota" style="margin-top:8px">Tripulante-días con el indicador en atención o más, del día ${K.DIA_MIN} al ${K.dia}.</p>` : K.positivo("check", "Todo en su normal", "Ningún indicador pidió atención en estos días.")}</section>
       </div>
       <section class="tarjeta" style="margin-top:16px" aria-labelledby="t-comp"><h2 id="t-comp">${pastilla("grafica", "#FFC23D", "#E08A00")} Avisos por misión</h2>
         <div class="cn-leyenda" style="margin:-4px 0 10px"><span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--ambar);vertical-align:-1px"></i> Atención ■</span><span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--rojo);vertical-align:-1px"></i> Actúa ahora ▲</span><span>${forma(2, 11)} = misión con al menos un evento crítico</span></div>
@@ -347,7 +354,7 @@
         <div><h1>${esc(m.nombre)}</h1><p class="sub">Resumen clínico · ${esc(m.destino)} · datos simulados</p></div><span class="cn-chip cn-empuja ${m.enCurso ? "" : "c-nd"}">${m.enCurso ? "En curso" : "Finalizada"}</span></div>
       <section class="tarjeta"><p>${esc(m.resumen)}</p><div class="cn-cifras" style="margin-top:12px"><div><b>${m.dias}</b><span>${m.enCurso ? "días hasta hoy" : "días de duración"}</span></div><div><b>${m.am}</b><span>avisos en atención ■</span></div><div><b>${m.ro}</b><span>avisos actúa ahora ▲</span></div></div></section>
       <div class="cn-rejilla cn-2b" style="margin-top:16px">
-        <section class="tarjeta"><h2>${pastilla("alerta", "#FF6B6B", "#D92D2D")} Eventos</h2>${m.eventos.length ? `<ol class="cn-hist">${m.eventos.map(([d, t, x]) => `<li class="es-${/atención/.test(t) ? 1 : 2}"><div class="meta">${chip(/atención/.test(t) ? 1 : 2, `Día ${d}`)}</div><p><b>${esc(t)}</b></p><p class="det">${esc(x)}</p></li>`).join("")}</ol>` : `<div class="cn-vacio">Sin eventos críticos registrados.</div>`}</section>
+        <section class="tarjeta"><h2>${pastilla("alerta", "#FF6B6B", "#D92D2D")} Eventos</h2>${m.eventos.length ? `<ol class="cn-hist">${m.eventos.map(([d, t, x]) => `<li class="es-${/atención/.test(t) ? 1 : 2}"><div class="meta">${chip(/atención/.test(t) ? 1 : 2, `Día ${d}`)}</div><p><b>${esc(t)}</b></p><p class="det">${esc(x)}</p></li>`).join("")}</ol>` : K.positivo("escudo", "Misión sin eventos críticos", "Nada que lamentar: la tripulación terminó sin episodios graves.")}</section>
         <section class="tarjeta"><h2>${pastilla("equipo", "#5B8DFF", "#1F4FD8")} Tripulantes</h2><div class="cn-chips">${m.tripulantes.map((t) => `<span class="cn-chip c-nd">${esc(t)}</span>`).join("")}</div></section>
         <section class="tarjeta"><h2>${pastilla("grafica", "#33C3B3", "#0E8F86")} Variables que dispararon avisos</h2><div class="cn-tabla-caja"><table class="cn-tabla"><thead><tr><th>Variable</th><th>Nivel máximo</th><th>Veces</th></tr></thead>
           <tbody>${m.variables.map(([n, max, v]) => `<tr><th scope="row">${esc(n)}</th><td>${sem(max)}</td><td class="num">${v}</td></tr>`).join("")}</tbody></table></div></section>
@@ -417,7 +424,8 @@
       if (!texto) { est.textContent = "Escribe un mensaje antes de encolar."; est.classList.add("error"); area.focus(); return; }
       est.classList.remove("error");
       const pid = $("#t-pid", p).value || null, nivel = new FormData(e.target).get("nivel");
-      const m = K.enviarEnlace({ sentido: "bajada", tipo: "consulta", nivel, pid, de: AUTOR, texto });
+      const m = K.enviarEnlace({ sentido: "bajada", tipo: "consulta", nivel, pid, de: AUTOR, texto, backend: !!K.backend });
+      if (K.backend) K.consultaBk(m);
       nuevos.add(m.id); area.value = "";
       est.textContent = `Encolado: llega a Tierra en ${K.segTxt(m.t_llegada - m.t_envio)} (${K.OWLT_ESCENARIO_MIN} min del escenario).`;
       $("#bajadas", p).insertAdjacentHTML("afterbegin", msjEnlace(m));
@@ -476,5 +484,16 @@
   function pintarCuenta() { K.cuenta("tierra", location.hash === "#tierra" ? 0 : K.llegados("subida").filter((m) => nuevos.has(m.id)).length); }
   K.alTicEnlace(refrescarEstados);
   window.addEventListener("hashchange", () => { if (location.hash === "#tierra") { nuevos.clear(); pintarCuenta(); } });
-  K.detectarBackend().then((hay) => { if (hay && location.hash === "#tierra") ir(); });
+  K.alEventoBk("emergencia", (e) => {
+    emergenciasReales = [e, ...emergenciasReales.filter((x) => x.id !== e.id)];
+    const pid = K.DESDE_BACKEND[e.tripulante];
+    if (!e.resultado) K.toast({ titulo: `Emergencia de ${nombreDe(pid)} · ${e.modo}`, texto: e.causa || "", icono: "alerta", c1: "#FF6B6B", c2: "#D92D2D", alerta: true, ms: 15000, alClic: () => { location.hash = `#tripulante/${pid}`; } });
+    const hist = $("#historial");
+    if (hist) hist.innerHTML = listaHistorial(location.hash.startsWith("#tripulante/") ? location.hash.split("/")[1] : null);
+  });
+  K.detectarBackend().then(async (hay) => {
+    if (!hay) return;
+    emergenciasReales = (await K.emergenciasBk()) || [];
+    if (!document.querySelector("textarea:focus")) ir();
+  });
 })();

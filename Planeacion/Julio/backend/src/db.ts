@@ -122,7 +122,7 @@ CREATE TABLE IF NOT EXISTS enlace (
 -- Nave → Tierra. Se encola al crearse; sale cuando hay ventana; llega OWLT después.
 CREATE TABLE IF NOT EXISTS bajada (
   id INTEGER PRIMARY KEY,
-  tipo TEXT NOT NULL,              -- 'alerta' · 'resumen' · 'crudos' · 'acuse'
+  tipo TEXT NOT NULL,              -- 'alerta' · 'resumen' · 'crudos' · 'acuse' · 'consulta' · 'emergencia'
   datos TEXT NOT NULL,             -- JSON
   prioridad INTEGER NOT NULL,      -- 0 rojo · 1 ámbar · 2 resto
   t_scet TEXT NOT NULL,            -- cuándo ocurrió a bordo
@@ -141,6 +141,23 @@ CREATE TABLE IF NOT EXISTS subida (
   t_envio TEXT,
   t_llegada TEXT,
   entregado INTEGER NOT NULL DEFAULT 0
+);
+
+-- A bordo: avisos de la CMO a un tripulante (sin retraso; ver abordo.ts).
+CREATE TABLE IF NOT EXISTS abordo (
+  id INTEGER PRIMARY KEY,
+  de TEXT NOT NULL, para TEXT NOT NULL, texto TEXT NOT NULL,
+  nivel TEXT,                          -- NULL aviso · 'ambar' · 'rojo'
+  t TEXT NOT NULL
+);
+
+-- Emergencias que activa el teléfono (SOS manual o automático).
+CREATE TABLE IF NOT EXISTS emergencias (
+  id INTEGER PRIMARY KEY,
+  tripulante TEXT NOT NULL, modo TEXT NOT NULL, causa TEXT,
+  disparadores TEXT NOT NULL DEFAULT '[]',   -- JSON: [{ variable, valor }]
+  t_scet TEXT NOT NULL, t_registro TEXT NOT NULL,
+  resultado TEXT, t_cierre TEXT
 );
 `;
 

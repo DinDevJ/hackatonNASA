@@ -1154,3 +1154,55 @@ body { font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) {
   .marcas .guia, .globo.habla, .globo.habla::after, .luna-aqui.habla { animation: none; }
 }
+
+/* Tarjetas de aviso del inicio (fatiga, evento solar, nota de Tierra): el semáforo y el ícono ocupan
+   el mismo hueco de 22 px que el ícono del check-in, así los textos quedan alineados; y recuperan su
+   tinte de color, que el vidrio de arriba tapaba. */
+.aviso-card { gap: 12px; }
+.aviso-card > .sem, .aviso-card > .ac-ic { width: 22px; height: 22px; flex: none; display: grid; place-items: center; }
+.aviso-card > .sem svg { width: 14px; height: 14px; }
+.aviso-card.ac-ambar { background: linear-gradient(135deg, rgba(229, 161, 0, .16), rgba(229, 161, 0, .03)), var(--brillo), linear-gradient(var(--vidrio), var(--vidrio)); border-color: rgba(229, 161, 0, .32); }
+.aviso-card.ac-rojo { background: linear-gradient(135deg, rgba(229, 72, 77, .20), rgba(229, 72, 77, .05)), var(--brillo), linear-gradient(var(--vidrio), var(--vidrio)); border-color: rgba(229, 72, 77, .40); }
+.aviso-card.ac-verde { background: linear-gradient(135deg, rgba(43, 163, 107, .15), rgba(43, 163, 107, .03)), var(--brillo), linear-gradient(var(--vidrio), var(--vidrio)); border-color: rgba(43, 163, 107, .30); }
+.aviso-card.ac-info { background: linear-gradient(135deg, rgba(17, 163, 200, .15), rgba(17, 163, 200, .03)), var(--brillo), linear-gradient(var(--vidrio), var(--vidrio)); border-color: rgba(17, 163, 200, .30); }
+
+/* Cuadro fantasma: los orbes de fondo del teléfono eran capas con filter: blur(30px) detrás del vidrio
+   (backdrop-filter). En algunas tarjetas gráficas Chrome dibuja ahí una costura recta, como un recuadro
+   encimado que cruza las tarjetas (se veía sobre "Fatiga acumulada" y en Ajustes). Se dibujan igual de
+   suaves con degradados, sin filtro; y el avatar ya no lleva un segundo vidrio dentro de la tarjeta. */
+.telefono::before, .telefono::after { filter: none; }
+.telefono::before { width: 380px; height: 380px; left: -150px; top: 150px; background: radial-gradient(circle, rgba(59, 130, 246, .26) 0%, rgba(59, 130, 246, .12) 32%, rgba(59, 130, 246, 0) 68%); }
+.telefono::after { width: 360px; height: 360px; right: -140px; top: 460px; background: radial-gradient(circle, rgba(34, 211, 238, .20) 0%, rgba(34, 211, 238, .09) 32%, rgba(34, 211, 238, 0) 68%); }
+.tarjeta .avatar, .perfil .avatar { backdrop-filter: none; -webkit-backdrop-filter: none; }
+
+/* El teléfono completo cabe en la ventana (también en pantalla completa en laptops de 768 px): el alto
+   se ajusta a la ventana, sin pasar de 900 px; el ancho no cambia y lo que no quepa se desplaza dentro. */
+body { padding: 12px 0; }
+.telefono { height: clamp(560px, calc(100dvh - 24px), 900px); }
+@media (max-width: 599px) { body { padding: 0; } .telefono { height: 100dvh; } }
+/* El marco recorta (overflow: clip) en vez de esconder: con hidden, al enfocar algo el navegador podía
+   desplazarlo de lado y la pantalla quedaba corrida (se veía en el modo emergencia). */
+.telefono { overflow: clip; }
+
+/* Pelo de ella en azul marino: era azul muy oscuro sobre el escáner oscuro y desaparecía. */
+:root[data-tema="oscuro"] .escaner .pelo { fill: #6E93F2; fill-opacity: .92; stroke: #9FDBFF; stroke-width: 1.2; stroke-opacity: .85; opacity: 1; filter: drop-shadow(0 0 3px rgba(88, 200, 255, .55)); }
+
+/* Avisos cortos de la app ("Registrado", "Tema: claro"…): vidrio que sigue al tema. Antes eran fondo
+   var(--azul) con letra blanca y en azul marino quedaban blanco sobre blanco. */
+.aviso {
+  background: var(--brillo), linear-gradient(var(--vidrio-2), var(--vidrio-2)); color: var(--texto);
+  backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--vidrio-borde); box-shadow: 0 10px 28px rgba(6, 16, 60, .22);
+}
+:root[data-tema="claro"] .aviso { background: var(--brillo), linear-gradient(rgba(255, 255, 255, .85), rgba(255, 255, 255, .85)); }
+:root[data-tema="oscuro"] .aviso { background: linear-gradient(rgba(22, 32, 82, .92), rgba(22, 32, 82, .92)); }
+
+/* Notificaciones de Tierra y de la CMO: del ancho del teléfono y con el vidrio de cada tema. */
+.noti-pila { width: min(376px, calc(100vw - 16px)); }
+:root[data-tema="claro"] .noti-pila .noti { background: rgba(255, 255, 255, .92); color: var(--texto); border: 1px solid var(--vidrio-borde); box-shadow: 0 12px 32px rgba(14, 34, 104, .20); }
+:root[data-tema="oscuro"] .noti-pila .noti { background: rgba(14, 24, 70, .95); color: var(--texto); border: 1px solid var(--vidrio-borde); box-shadow: 0 14px 36px rgba(0, 0, 0, .5); }
+
+/* Recuadro fantasma al desplazarse (también en el teléfono): el contenido que corre por debajo de la
+   barra flotante tenía su propio vidrio (backdrop-filter) y Chrome dejaba una costura recta al hacer
+   scroll. Dentro de la pantalla el desenfoque se quita; lo conservan la barra, las hojas y los avisos. */
+.pantalla, .pantalla * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }

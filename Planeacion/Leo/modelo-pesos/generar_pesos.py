@@ -32,17 +32,17 @@ REF = {
 SD = {"A": 0.5, "B": 1.0, "C": 1.5}
 
 MALESTARES = [
-    (1, "Arritmia / fibrilación auricular", "Riesgo cardiovascular (HRP)"),
-    (2, "Desacondicionamiento e intolerancia ortostática", "Riesgo cardiovascular / sensoriomotor (HRP)"),
-    (3, "Hipoxia / problema respiratorio", "Risk of Hypoxia (HRP)"),
-    (4, "Infección, fiebre o desregulación inmune", "Risk of Adverse Health Event Due to Altered Immune Response (HRP)"),
-    (5, "Pérdida de sueño y desalineación circadiana", "Risk of Sleep Loss and Circadian Desynchronization (HRP)"),
-    (6, "Fatiga y deterioro cognitivo", "Risk of Cognitive or Behavioral Conditions (HRP)"),
-    (7, "Exposición a CO₂ / dolor de cabeza", "Riesgo de ambiente de cabina (HRP)"),
-    (8, "Radiación aguda por evento solar", "Risk of Radiation (HRP)"),
-    (9, "Estrés / salud conductual", "Risk of Adverse Cognitive or Behavioral Conditions (HRP)"),
-    (10, "Enfermedad por descompresión tras EVA", "Risk of Decompression Sickness (HRP)"),
-    (11, "Trombosis yugular y SANS", "Risk of SANS / venous thrombosis (HRP)"),
+    (1, "Arritmia / fibrilación auricular", "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)"),
+    (2, "Desacondicionamiento e intolerancia ortostática", "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)"),
+    (3, "Hipoxia / problema respiratorio", "Risk of Reduced Crew Health and Performance Due to Hypoxia (HRR)"),
+    (4, "Infección, fiebre o desregulación inmune", "Risk of In Mission Impacts, Adverse Health Events or Long-Term Health Impacts due to Altered Immune Response (HRR)"),
+    (5, "Pérdida de sueño y desalineación circadiana", "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR)"),
+    (6, "Fatiga y deterioro cognitivo", "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR); Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)"),
+    (7, "Exposición a CO₂ / dolor de cabeza", "Sin riesgo HRR propio; peligro HRP Hostile/Closed Environments (igual que Iker)"),
+    (8, "Radiación aguda por evento solar", "Risk of Acute Radiation Syndromes Due to Solar Particle Events (Evidence Report, NTRS 20160003870)"),
+    (9, "Estrés / salud conductual", "Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)"),
+    (10, "Enfermedad por descompresión tras EVA", "Risk of Mission Impacts and Long-Term Health Issues due to Decompression Sickness (HRR)"),
+    (11, "Trombosis yugular y SANS", "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (trombosis, HRR); Risk of Spaceflight Associated Neuro-ocular Syndrome (SANS) (HRR)"),
 ]
 VARIABLES = ["fc_reposo", "spo2", "respiracion", "temperatura", "presion_arterial", "sueno", "pvt_lapsos", "co2_cabina", "sintomas"]
 # ID de catálogo de cada variable (para unir con LUNNA de Julio y la tabla de Iker). Dueño entre paréntesis.

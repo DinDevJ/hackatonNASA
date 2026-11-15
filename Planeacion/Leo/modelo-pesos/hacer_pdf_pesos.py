@@ -184,14 +184,14 @@ H += [PageBreak(), P("Cómo se usan los pesos", "h1"),
              ["<b>LUNNA</b> (backend)", "Julio", "Predice cuánto cambia cada signo vital al cambiar de entorno y da el z de cada persona (bayesiano por variable)",
               "<b>Entrada directa</b>: su z alimenta los puntos de esta tabla. Comparte 5 variables (pulso, SpO₂, respiración, temperatura, presión) y espera priors de Leo e Iker"],
              ["Tabla de variables", "Iker", "Liga cada variable a un riesgo oficial del HRP (sin pesos)",
-              "<b>Coherente</b>: PVT → pérdida de sueño/desempeño, ECG → cardiovascular, 4 variables → descompresión. Sus nombres oficiales sirven para corregir la columna de riesgo"],
+              "<b>Coherente</b>: PVT → pérdida de sueño/desempeño, ECG → cardiovascular, 4 variables → descompresión. Ya usamos sus mismos nombres oficiales de riesgo"],
              ["Matriz clínica", "Fani", "Reglas fijas WARNING/CRITICAL para 11 padecimientos (6 distintos a estos)",
               "<b>Complementaria</b>: sus reglas = alarma dura; estos pesos = índice gradual que aprende. Coinciden en radiación, infección, trombosis y fatiga"]],
             [3 * cm, 1.6 * cm, 5.5 * cm, W - 10.1 * cm]),
       P("Limitaciones", "h2"),
       P("• Ningún peso está validado en astronautas, salvo CO₂ → cefalea (nivel A).<br/>"
         "• Más de la mitad de los pesos son juicio fisiológico (C): conviene revisarlos con un médico.<br/>"
-        "• Los nombres de riesgo de NASA en la tabla son aproximados; hay que cotejarlos con la tabla de Iker.<br/>"
+        "• Los nombres de riesgo usan los títulos oficiales del HRR, alineados con la tabla de Iker; el CO₂ no tiene riesgo HRR propio.<br/>"
         "• La HRV no está porque el reloj del equipo no envía intervalos RR.", "pc")]
 
 # ---------- 5. Referencias ----------

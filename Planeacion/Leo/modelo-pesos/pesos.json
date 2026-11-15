@@ -118,7 +118,7 @@
   {
    "malestar_id": 1,
    "malestar": "Arritmia / fibrilación auricular",
-   "riesgo_nasa": "Riesgo cardiovascular (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)",
    "variable": "fc_reposo",
    "id_catalogo": "04:A4 / 01:V3 (Julio)",
    "peso_fisiologico": 3,
@@ -134,7 +134,7 @@
   {
    "malestar_id": 1,
    "malestar": "Arritmia / fibrilación auricular",
-   "riesgo_nasa": "Riesgo cardiovascular (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)",
    "variable": "spo2",
    "id_catalogo": "04:A3 (Julio)",
    "peso_fisiologico": 1,
@@ -150,7 +150,7 @@
   {
    "malestar_id": 1,
    "malestar": "Arritmia / fibrilación auricular",
-   "riesgo_nasa": "Riesgo cardiovascular (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)",
    "variable": "respiracion",
    "id_catalogo": "04:A2 (Julio)",
    "peso_fisiologico": 0,
@@ -166,7 +166,7 @@
   {
    "malestar_id": 1,
    "malestar": "Arritmia / fibrilación auricular",
-   "riesgo_nasa": "Riesgo cardiovascular (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)",
    "variable": "temperatura",
    "id_catalogo": "04:A1 (Julio)",
    "peso_fisiologico": 0,
@@ -182,7 +182,7 @@
   {
    "malestar_id": 1,
    "malestar": "Arritmia / fibrilación auricular",
-   "riesgo_nasa": "Riesgo cardiovascular (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)",
    "variable": "presion_arterial",
    "id_catalogo": "01:V1 (Julio)",
    "peso_fisiologico": 1,
@@ -198,7 +198,7 @@
   {
    "malestar_id": 1,
    "malestar": "Arritmia / fibrilación auricular",
-   "riesgo_nasa": "Riesgo cardiovascular (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)",
    "variable": "sueno",
    "id_catalogo": "03:V30 (Leo)",
    "peso_fisiologico": 0,
@@ -214,7 +214,7 @@
   {
    "malestar_id": 1,
    "malestar": "Arritmia / fibrilación auricular",
-   "riesgo_nasa": "Riesgo cardiovascular (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)",
    "variable": "pvt_lapsos",
    "id_catalogo": "03:V66 (Iker)",
    "peso_fisiologico": 0,
@@ -230,7 +230,7 @@
   {
    "malestar_id": 1,
    "malestar": "Arritmia / fibrilación auricular",
-   "riesgo_nasa": "Riesgo cardiovascular (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)",
    "variable": "co2_cabina",
    "id_catalogo": "04:A23 (Julio)",
    "peso_fisiologico": 0,
@@ -246,7 +246,7 @@
   {
    "malestar_id": 1,
    "malestar": "Arritmia / fibrilación auricular",
-   "riesgo_nasa": "Riesgo cardiovascular (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)",
    "variable": "sintomas",
    "id_catalogo": "02:V67a, 03:V82, 04:A40–A50 (Leo, Persona 5)",
    "peso_fisiologico": 2,
@@ -262,7 +262,7 @@
   {
    "malestar_id": 2,
    "malestar": "Desacondicionamiento e intolerancia ortostática",
-   "riesgo_nasa": "Riesgo cardiovascular / sensoriomotor (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)",
    "variable": "fc_reposo",
    "id_catalogo": "04:A4 / 01:V3 (Julio)",
    "peso_fisiologico": 2,
@@ -278,7 +278,7 @@
   {
    "malestar_id": 2,
    "malestar": "Desacondicionamiento e intolerancia ortostática",
-   "riesgo_nasa": "Riesgo cardiovascular / sensoriomotor (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)",
    "variable": "spo2",
    "id_catalogo": "04:A3 (Julio)",
    "peso_fisiologico": 0,
@@ -294,7 +294,7 @@
   {
    "malestar_id": 2,
    "malestar": "Desacondicionamiento e intolerancia ortostática",
-   "riesgo_nasa": "Riesgo cardiovascular / sensoriomotor (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)",
    "variable": "respiracion",
    "id_catalogo": "04:A2 (Julio)",
    "peso_fisiologico": 0,
@@ -310,7 +310,7 @@
   {
    "malestar_id": 2,
    "malestar": "Desacondicionamiento e intolerancia ortostática",
-   "riesgo_nasa": "Riesgo cardiovascular / sensoriomotor (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)",
    "variable": "temperatura",
    "id_catalogo": "04:A1 (Julio)",
    "peso_fisiologico": 0,
@@ -326,7 +326,7 @@
   {
    "malestar_id": 2,
    "malestar": "Desacondicionamiento e intolerancia ortostática",
-   "riesgo_nasa": "Riesgo cardiovascular / sensoriomotor (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)",
    "variable": "presion_arterial",
    "id_catalogo": "01:V1 (Julio)",
    "peso_fisiologico": 3,
@@ -342,7 +342,7 @@
   {
    "malestar_id": 2,
    "malestar": "Desacondicionamiento e intolerancia ortostática",
-   "riesgo_nasa": "Riesgo cardiovascular / sensoriomotor (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)",
    "variable": "sueno",
    "id_catalogo": "03:V30 (Leo)",
    "peso_fisiologico": 0,
@@ -358,7 +358,7 @@
   {
    "malestar_id": 2,
    "malestar": "Desacondicionamiento e intolerancia ortostática",
-   "riesgo_nasa": "Riesgo cardiovascular / sensoriomotor (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)",
    "variable": "pvt_lapsos",
    "id_catalogo": "03:V66 (Iker)",
    "peso_fisiologico": 0,
@@ -374,7 +374,7 @@
   {
    "malestar_id": 2,
    "malestar": "Desacondicionamiento e intolerancia ortostática",
-   "riesgo_nasa": "Riesgo cardiovascular / sensoriomotor (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)",
    "variable": "co2_cabina",
    "id_catalogo": "04:A23 (Julio)",
    "peso_fisiologico": 0,
@@ -390,7 +390,7 @@
   {
    "malestar_id": 2,
    "malestar": "Desacondicionamiento e intolerancia ortostática",
-   "riesgo_nasa": "Riesgo cardiovascular / sensoriomotor (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)",
    "variable": "sintomas",
    "id_catalogo": "02:V67a, 03:V82, 04:A40–A50 (Leo, Persona 5)",
    "peso_fisiologico": 2,
@@ -406,7 +406,7 @@
   {
    "malestar_id": 3,
    "malestar": "Hipoxia / problema respiratorio",
-   "riesgo_nasa": "Risk of Hypoxia (HRP)",
+   "riesgo_nasa": "Risk of Reduced Crew Health and Performance Due to Hypoxia (HRR)",
    "variable": "fc_reposo",
    "id_catalogo": "04:A4 / 01:V3 (Julio)",
    "peso_fisiologico": 2,
@@ -422,7 +422,7 @@
   {
    "malestar_id": 3,
    "malestar": "Hipoxia / problema respiratorio",
-   "riesgo_nasa": "Risk of Hypoxia (HRP)",
+   "riesgo_nasa": "Risk of Reduced Crew Health and Performance Due to Hypoxia (HRR)",
    "variable": "spo2",
    "id_catalogo": "04:A3 (Julio)",
    "peso_fisiologico": 3,
@@ -438,7 +438,7 @@
   {
    "malestar_id": 3,
    "malestar": "Hipoxia / problema respiratorio",
-   "riesgo_nasa": "Risk of Hypoxia (HRP)",
+   "riesgo_nasa": "Risk of Reduced Crew Health and Performance Due to Hypoxia (HRR)",
    "variable": "respiracion",
    "id_catalogo": "04:A2 (Julio)",
    "peso_fisiologico": 3,
@@ -454,7 +454,7 @@
   {
    "malestar_id": 3,
    "malestar": "Hipoxia / problema respiratorio",
-   "riesgo_nasa": "Risk of Hypoxia (HRP)",
+   "riesgo_nasa": "Risk of Reduced Crew Health and Performance Due to Hypoxia (HRR)",
    "variable": "temperatura",
    "id_catalogo": "04:A1 (Julio)",
    "peso_fisiologico": 0,
@@ -470,7 +470,7 @@
   {
    "malestar_id": 3,
    "malestar": "Hipoxia / problema respiratorio",
-   "riesgo_nasa": "Risk of Hypoxia (HRP)",
+   "riesgo_nasa": "Risk of Reduced Crew Health and Performance Due to Hypoxia (HRR)",
    "variable": "presion_arterial",
    "id_catalogo": "01:V1 (Julio)",
    "peso_fisiologico": 1,
@@ -486,7 +486,7 @@
   {
    "malestar_id": 3,
    "malestar": "Hipoxia / problema respiratorio",
-   "riesgo_nasa": "Risk of Hypoxia (HRP)",
+   "riesgo_nasa": "Risk of Reduced Crew Health and Performance Due to Hypoxia (HRR)",
    "variable": "sueno",
    "id_catalogo": "03:V30 (Leo)",
    "peso_fisiologico": 0,
@@ -502,7 +502,7 @@
   {
    "malestar_id": 3,
    "malestar": "Hipoxia / problema respiratorio",
-   "riesgo_nasa": "Risk of Hypoxia (HRP)",
+   "riesgo_nasa": "Risk of Reduced Crew Health and Performance Due to Hypoxia (HRR)",
    "variable": "pvt_lapsos",
    "id_catalogo": "03:V66 (Iker)",
    "peso_fisiologico": 1,
@@ -518,7 +518,7 @@
   {
    "malestar_id": 3,
    "malestar": "Hipoxia / problema respiratorio",
-   "riesgo_nasa": "Risk of Hypoxia (HRP)",
+   "riesgo_nasa": "Risk of Reduced Crew Health and Performance Due to Hypoxia (HRR)",
    "variable": "co2_cabina",
    "id_catalogo": "04:A23 (Julio)",
    "peso_fisiologico": 2,
@@ -534,7 +534,7 @@
   {
    "malestar_id": 3,
    "malestar": "Hipoxia / problema respiratorio",
-   "riesgo_nasa": "Risk of Hypoxia (HRP)",
+   "riesgo_nasa": "Risk of Reduced Crew Health and Performance Due to Hypoxia (HRR)",
    "variable": "sintomas",
    "id_catalogo": "02:V67a, 03:V82, 04:A40–A50 (Leo, Persona 5)",
    "peso_fisiologico": 2,
@@ -550,7 +550,7 @@
   {
    "malestar_id": 4,
    "malestar": "Infección, fiebre o desregulación inmune",
-   "riesgo_nasa": "Risk of Adverse Health Event Due to Altered Immune Response (HRP)",
+   "riesgo_nasa": "Risk of In Mission Impacts, Adverse Health Events or Long-Term Health Impacts due to Altered Immune Response (HRR)",
    "variable": "fc_reposo",
    "id_catalogo": "04:A4 / 01:V3 (Julio)",
    "peso_fisiologico": 2,
@@ -566,7 +566,7 @@
   {
    "malestar_id": 4,
    "malestar": "Infección, fiebre o desregulación inmune",
-   "riesgo_nasa": "Risk of Adverse Health Event Due to Altered Immune Response (HRP)",
+   "riesgo_nasa": "Risk of In Mission Impacts, Adverse Health Events or Long-Term Health Impacts due to Altered Immune Response (HRR)",
    "variable": "spo2",
    "id_catalogo": "04:A3 (Julio)",
    "peso_fisiologico": 1,
@@ -582,7 +582,7 @@
   {
    "malestar_id": 4,
    "malestar": "Infección, fiebre o desregulación inmune",
-   "riesgo_nasa": "Risk of Adverse Health Event Due to Altered Immune Response (HRP)",
+   "riesgo_nasa": "Risk of In Mission Impacts, Adverse Health Events or Long-Term Health Impacts due to Altered Immune Response (HRR)",
    "variable": "respiracion",
    "id_catalogo": "04:A2 (Julio)",
    "peso_fisiologico": 1,
@@ -598,7 +598,7 @@
   {
    "malestar_id": 4,
    "malestar": "Infección, fiebre o desregulación inmune",
-   "riesgo_nasa": "Risk of Adverse Health Event Due to Altered Immune Response (HRP)",
+   "riesgo_nasa": "Risk of In Mission Impacts, Adverse Health Events or Long-Term Health Impacts due to Altered Immune Response (HRR)",
    "variable": "temperatura",
    "id_catalogo": "04:A1 (Julio)",
    "peso_fisiologico": 3,
@@ -614,7 +614,7 @@
   {
    "malestar_id": 4,
    "malestar": "Infección, fiebre o desregulación inmune",
-   "riesgo_nasa": "Risk of Adverse Health Event Due to Altered Immune Response (HRP)",
+   "riesgo_nasa": "Risk of In Mission Impacts, Adverse Health Events or Long-Term Health Impacts due to Altered Immune Response (HRR)",
    "variable": "presion_arterial",
    "id_catalogo": "01:V1 (Julio)",
    "peso_fisiologico": 1,
@@ -630,7 +630,7 @@
   {
    "malestar_id": 4,
    "malestar": "Infección, fiebre o desregulación inmune",
-   "riesgo_nasa": "Risk of Adverse Health Event Due to Altered Immune Response (HRP)",
+   "riesgo_nasa": "Risk of In Mission Impacts, Adverse Health Events or Long-Term Health Impacts due to Altered Immune Response (HRR)",
    "variable": "sueno",
    "id_catalogo": "03:V30 (Leo)",
    "peso_fisiologico": 1,
@@ -646,7 +646,7 @@
   {
    "malestar_id": 4,
    "malestar": "Infección, fiebre o desregulación inmune",
-   "riesgo_nasa": "Risk of Adverse Health Event Due to Altered Immune Response (HRP)",
+   "riesgo_nasa": "Risk of In Mission Impacts, Adverse Health Events or Long-Term Health Impacts due to Altered Immune Response (HRR)",
    "variable": "pvt_lapsos",
    "id_catalogo": "03:V66 (Iker)",
    "peso_fisiologico": 0,
@@ -662,7 +662,7 @@
   {
    "malestar_id": 4,
    "malestar": "Infección, fiebre o desregulación inmune",
-   "riesgo_nasa": "Risk of Adverse Health Event Due to Altered Immune Response (HRP)",
+   "riesgo_nasa": "Risk of In Mission Impacts, Adverse Health Events or Long-Term Health Impacts due to Altered Immune Response (HRR)",
    "variable": "co2_cabina",
    "id_catalogo": "04:A23 (Julio)",
    "peso_fisiologico": 0,
@@ -678,7 +678,7 @@
   {
    "malestar_id": 4,
    "malestar": "Infección, fiebre o desregulación inmune",
-   "riesgo_nasa": "Risk of Adverse Health Event Due to Altered Immune Response (HRP)",
+   "riesgo_nasa": "Risk of In Mission Impacts, Adverse Health Events or Long-Term Health Impacts due to Altered Immune Response (HRR)",
    "variable": "sintomas",
    "id_catalogo": "02:V67a, 03:V82, 04:A40–A50 (Leo, Persona 5)",
    "peso_fisiologico": 2,
@@ -694,7 +694,7 @@
   {
    "malestar_id": 5,
    "malestar": "Pérdida de sueño y desalineación circadiana",
-   "riesgo_nasa": "Risk of Sleep Loss and Circadian Desynchronization (HRP)",
+   "riesgo_nasa": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR)",
    "variable": "fc_reposo",
    "id_catalogo": "04:A4 / 01:V3 (Julio)",
    "peso_fisiologico": 1,
@@ -710,7 +710,7 @@
   {
    "malestar_id": 5,
    "malestar": "Pérdida de sueño y desalineación circadiana",
-   "riesgo_nasa": "Risk of Sleep Loss and Circadian Desynchronization (HRP)",
+   "riesgo_nasa": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR)",
    "variable": "spo2",
    "id_catalogo": "04:A3 (Julio)",
    "peso_fisiologico": 0,
@@ -726,7 +726,7 @@
   {
    "malestar_id": 5,
    "malestar": "Pérdida de sueño y desalineación circadiana",
-   "riesgo_nasa": "Risk of Sleep Loss and Circadian Desynchronization (HRP)",
+   "riesgo_nasa": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR)",
    "variable": "respiracion",
    "id_catalogo": "04:A2 (Julio)",
    "peso_fisiologico": 0,
@@ -742,7 +742,7 @@
   {
    "malestar_id": 5,
    "malestar": "Pérdida de sueño y desalineación circadiana",
-   "riesgo_nasa": "Risk of Sleep Loss and Circadian Desynchronization (HRP)",
+   "riesgo_nasa": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR)",
    "variable": "temperatura",
    "id_catalogo": "04:A1 (Julio)",
    "peso_fisiologico": 1,
@@ -758,7 +758,7 @@
   {
    "malestar_id": 5,
    "malestar": "Pérdida de sueño y desalineación circadiana",
-   "riesgo_nasa": "Risk of Sleep Loss and Circadian Desynchronization (HRP)",
+   "riesgo_nasa": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR)",
    "variable": "presion_arterial",
    "id_catalogo": "01:V1 (Julio)",
    "peso_fisiologico": 0,
@@ -774,7 +774,7 @@
   {
    "malestar_id": 5,
    "malestar": "Pérdida de sueño y desalineación circadiana",
-   "riesgo_nasa": "Risk of Sleep Loss and Circadian Desynchronization (HRP)",
+   "riesgo_nasa": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR)",
    "variable": "sueno",
    "id_catalogo": "03:V30 (Leo)",
    "peso_fisiologico": 3,
@@ -790,7 +790,7 @@
   {
    "malestar_id": 5,
    "malestar": "Pérdida de sueño y desalineación circadiana",
-   "riesgo_nasa": "Risk of Sleep Loss and Circadian Desynchronization (HRP)",
+   "riesgo_nasa": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR)",
    "variable": "pvt_lapsos",
    "id_catalogo": "03:V66 (Iker)",
    "peso_fisiologico": 2,
@@ -806,7 +806,7 @@
   {
    "malestar_id": 5,
    "malestar": "Pérdida de sueño y desalineación circadiana",
-   "riesgo_nasa": "Risk of Sleep Loss and Circadian Desynchronization (HRP)",
+   "riesgo_nasa": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR)",
    "variable": "co2_cabina",
    "id_catalogo": "04:A23 (Julio)",
    "peso_fisiologico": 1,
@@ -822,7 +822,7 @@
   {
    "malestar_id": 5,
    "malestar": "Pérdida de sueño y desalineación circadiana",
-   "riesgo_nasa": "Risk of Sleep Loss and Circadian Desynchronization (HRP)",
+   "riesgo_nasa": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR)",
    "variable": "sintomas",
    "id_catalogo": "02:V67a, 03:V82, 04:A40–A50 (Leo, Persona 5)",
    "peso_fisiologico": 1,
@@ -838,7 +838,7 @@
   {
    "malestar_id": 6,
    "malestar": "Fatiga y deterioro cognitivo",
-   "riesgo_nasa": "Risk of Cognitive or Behavioral Conditions (HRP)",
+   "riesgo_nasa": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR); Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)",
    "variable": "fc_reposo",
    "id_catalogo": "04:A4 / 01:V3 (Julio)",
    "peso_fisiologico": 1,
@@ -854,7 +854,7 @@
   {
    "malestar_id": 6,
    "malestar": "Fatiga y deterioro cognitivo",
-   "riesgo_nasa": "Risk of Cognitive or Behavioral Conditions (HRP)",
+   "riesgo_nasa": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR); Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)",
    "variable": "spo2",
    "id_catalogo": "04:A3 (Julio)",
    "peso_fisiologico": 0,
@@ -870,7 +870,7 @@
   {
    "malestar_id": 6,
    "malestar": "Fatiga y deterioro cognitivo",
-   "riesgo_nasa": "Risk of Cognitive or Behavioral Conditions (HRP)",
+   "riesgo_nasa": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR); Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)",
    "variable": "respiracion",
    "id_catalogo": "04:A2 (Julio)",
    "peso_fisiologico": 0,
@@ -886,7 +886,7 @@
   {
    "malestar_id": 6,
    "malestar": "Fatiga y deterioro cognitivo",
-   "riesgo_nasa": "Risk of Cognitive or Behavioral Conditions (HRP)",
+   "riesgo_nasa": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR); Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)",
    "variable": "temperatura",
    "id_catalogo": "04:A1 (Julio)",
    "peso_fisiologico": 0,
@@ -902,7 +902,7 @@
   {
    "malestar_id": 6,
    "malestar": "Fatiga y deterioro cognitivo",
-   "riesgo_nasa": "Risk of Cognitive or Behavioral Conditions (HRP)",
+   "riesgo_nasa": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR); Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)",
    "variable": "presion_arterial",
    "id_catalogo": "01:V1 (Julio)",
    "peso_fisiologico": 0,
@@ -918,7 +918,7 @@
   {
    "malestar_id": 6,
    "malestar": "Fatiga y deterioro cognitivo",
-   "riesgo_nasa": "Risk of Cognitive or Behavioral Conditions (HRP)",
+   "riesgo_nasa": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR); Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)",
    "variable": "sueno",
    "id_catalogo": "03:V30 (Leo)",
    "peso_fisiologico": 2,
@@ -934,7 +934,7 @@
   {
    "malestar_id": 6,
    "malestar": "Fatiga y deterioro cognitivo",
-   "riesgo_nasa": "Risk of Cognitive or Behavioral Conditions (HRP)",
+   "riesgo_nasa": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR); Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)",
    "variable": "pvt_lapsos",
    "id_catalogo": "03:V66 (Iker)",
    "peso_fisiologico": 3,
@@ -950,7 +950,7 @@
   {
    "malestar_id": 6,
    "malestar": "Fatiga y deterioro cognitivo",
-   "riesgo_nasa": "Risk of Cognitive or Behavioral Conditions (HRP)",
+   "riesgo_nasa": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR); Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)",
    "variable": "co2_cabina",
    "id_catalogo": "04:A23 (Julio)",
    "peso_fisiologico": 1,
@@ -966,7 +966,7 @@
   {
    "malestar_id": 6,
    "malestar": "Fatiga y deterioro cognitivo",
-   "riesgo_nasa": "Risk of Cognitive or Behavioral Conditions (HRP)",
+   "riesgo_nasa": "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR); Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)",
    "variable": "sintomas",
    "id_catalogo": "02:V67a, 03:V82, 04:A40–A50 (Leo, Persona 5)",
    "peso_fisiologico": 1,
@@ -982,7 +982,7 @@
   {
    "malestar_id": 7,
    "malestar": "Exposición a CO₂ / dolor de cabeza",
-   "riesgo_nasa": "Riesgo de ambiente de cabina (HRP)",
+   "riesgo_nasa": "Sin riesgo HRR propio; peligro HRP Hostile/Closed Environments (igual que Iker)",
    "variable": "fc_reposo",
    "id_catalogo": "04:A4 / 01:V3 (Julio)",
    "peso_fisiologico": 1,
@@ -998,7 +998,7 @@
   {
    "malestar_id": 7,
    "malestar": "Exposición a CO₂ / dolor de cabeza",
-   "riesgo_nasa": "Riesgo de ambiente de cabina (HRP)",
+   "riesgo_nasa": "Sin riesgo HRR propio; peligro HRP Hostile/Closed Environments (igual que Iker)",
    "variable": "spo2",
    "id_catalogo": "04:A3 (Julio)",
    "peso_fisiologico": 0,
@@ -1014,7 +1014,7 @@
   {
    "malestar_id": 7,
    "malestar": "Exposición a CO₂ / dolor de cabeza",
-   "riesgo_nasa": "Riesgo de ambiente de cabina (HRP)",
+   "riesgo_nasa": "Sin riesgo HRR propio; peligro HRP Hostile/Closed Environments (igual que Iker)",
    "variable": "respiracion",
    "id_catalogo": "04:A2 (Julio)",
    "peso_fisiologico": 2,
@@ -1030,7 +1030,7 @@
   {
    "malestar_id": 7,
    "malestar": "Exposición a CO₂ / dolor de cabeza",
-   "riesgo_nasa": "Riesgo de ambiente de cabina (HRP)",
+   "riesgo_nasa": "Sin riesgo HRR propio; peligro HRP Hostile/Closed Environments (igual que Iker)",
    "variable": "temperatura",
    "id_catalogo": "04:A1 (Julio)",
    "peso_fisiologico": 0,
@@ -1046,7 +1046,7 @@
   {
    "malestar_id": 7,
    "malestar": "Exposición a CO₂ / dolor de cabeza",
-   "riesgo_nasa": "Riesgo de ambiente de cabina (HRP)",
+   "riesgo_nasa": "Sin riesgo HRR propio; peligro HRP Hostile/Closed Environments (igual que Iker)",
    "variable": "presion_arterial",
    "id_catalogo": "01:V1 (Julio)",
    "peso_fisiologico": 0,
@@ -1062,7 +1062,7 @@
   {
    "malestar_id": 7,
    "malestar": "Exposición a CO₂ / dolor de cabeza",
-   "riesgo_nasa": "Riesgo de ambiente de cabina (HRP)",
+   "riesgo_nasa": "Sin riesgo HRR propio; peligro HRP Hostile/Closed Environments (igual que Iker)",
    "variable": "sueno",
    "id_catalogo": "03:V30 (Leo)",
    "peso_fisiologico": 0,
@@ -1078,7 +1078,7 @@
   {
    "malestar_id": 7,
    "malestar": "Exposición a CO₂ / dolor de cabeza",
-   "riesgo_nasa": "Riesgo de ambiente de cabina (HRP)",
+   "riesgo_nasa": "Sin riesgo HRR propio; peligro HRP Hostile/Closed Environments (igual que Iker)",
    "variable": "pvt_lapsos",
    "id_catalogo": "03:V66 (Iker)",
    "peso_fisiologico": 1,
@@ -1094,7 +1094,7 @@
   {
    "malestar_id": 7,
    "malestar": "Exposición a CO₂ / dolor de cabeza",
-   "riesgo_nasa": "Riesgo de ambiente de cabina (HRP)",
+   "riesgo_nasa": "Sin riesgo HRR propio; peligro HRP Hostile/Closed Environments (igual que Iker)",
    "variable": "co2_cabina",
    "id_catalogo": "04:A23 (Julio)",
    "peso_fisiologico": 3,
@@ -1110,7 +1110,7 @@
   {
    "malestar_id": 7,
    "malestar": "Exposición a CO₂ / dolor de cabeza",
-   "riesgo_nasa": "Riesgo de ambiente de cabina (HRP)",
+   "riesgo_nasa": "Sin riesgo HRR propio; peligro HRP Hostile/Closed Environments (igual que Iker)",
    "variable": "sintomas",
    "id_catalogo": "02:V67a, 03:V82, 04:A40–A50 (Leo, Persona 5)",
    "peso_fisiologico": 3,
@@ -1126,7 +1126,7 @@
   {
    "malestar_id": 8,
    "malestar": "Radiación aguda por evento solar",
-   "riesgo_nasa": "Risk of Radiation (HRP)",
+   "riesgo_nasa": "Risk of Acute Radiation Syndromes Due to Solar Particle Events (Evidence Report, NTRS 20160003870)",
    "variable": "fc_reposo",
    "id_catalogo": "04:A4 / 01:V3 (Julio)",
    "peso_fisiologico": 1,
@@ -1142,7 +1142,7 @@
   {
    "malestar_id": 8,
    "malestar": "Radiación aguda por evento solar",
-   "riesgo_nasa": "Risk of Radiation (HRP)",
+   "riesgo_nasa": "Risk of Acute Radiation Syndromes Due to Solar Particle Events (Evidence Report, NTRS 20160003870)",
    "variable": "spo2",
    "id_catalogo": "04:A3 (Julio)",
    "peso_fisiologico": 0,
@@ -1158,7 +1158,7 @@
   {
    "malestar_id": 8,
    "malestar": "Radiación aguda por evento solar",
-   "riesgo_nasa": "Risk of Radiation (HRP)",
+   "riesgo_nasa": "Risk of Acute Radiation Syndromes Due to Solar Particle Events (Evidence Report, NTRS 20160003870)",
    "variable": "respiracion",
    "id_catalogo": "04:A2 (Julio)",
    "peso_fisiologico": 0,
@@ -1174,7 +1174,7 @@
   {
    "malestar_id": 8,
    "malestar": "Radiación aguda por evento solar",
-   "riesgo_nasa": "Risk of Radiation (HRP)",
+   "riesgo_nasa": "Risk of Acute Radiation Syndromes Due to Solar Particle Events (Evidence Report, NTRS 20160003870)",
    "variable": "temperatura",
    "id_catalogo": "04:A1 (Julio)",
    "peso_fisiologico": 1,
@@ -1190,7 +1190,7 @@
   {
    "malestar_id": 8,
    "malestar": "Radiación aguda por evento solar",
-   "riesgo_nasa": "Risk of Radiation (HRP)",
+   "riesgo_nasa": "Risk of Acute Radiation Syndromes Due to Solar Particle Events (Evidence Report, NTRS 20160003870)",
    "variable": "presion_arterial",
    "id_catalogo": "01:V1 (Julio)",
    "peso_fisiologico": 0,
@@ -1206,7 +1206,7 @@
   {
    "malestar_id": 8,
    "malestar": "Radiación aguda por evento solar",
-   "riesgo_nasa": "Risk of Radiation (HRP)",
+   "riesgo_nasa": "Risk of Acute Radiation Syndromes Due to Solar Particle Events (Evidence Report, NTRS 20160003870)",
    "variable": "sueno",
    "id_catalogo": "03:V30 (Leo)",
    "peso_fisiologico": 0,
@@ -1222,7 +1222,7 @@
   {
    "malestar_id": 8,
    "malestar": "Radiación aguda por evento solar",
-   "riesgo_nasa": "Risk of Radiation (HRP)",
+   "riesgo_nasa": "Risk of Acute Radiation Syndromes Due to Solar Particle Events (Evidence Report, NTRS 20160003870)",
    "variable": "pvt_lapsos",
    "id_catalogo": "03:V66 (Iker)",
    "peso_fisiologico": 1,
@@ -1238,7 +1238,7 @@
   {
    "malestar_id": 8,
    "malestar": "Radiación aguda por evento solar",
-   "riesgo_nasa": "Risk of Radiation (HRP)",
+   "riesgo_nasa": "Risk of Acute Radiation Syndromes Due to Solar Particle Events (Evidence Report, NTRS 20160003870)",
    "variable": "co2_cabina",
    "id_catalogo": "04:A23 (Julio)",
    "peso_fisiologico": 0,
@@ -1254,7 +1254,7 @@
   {
    "malestar_id": 8,
    "malestar": "Radiación aguda por evento solar",
-   "riesgo_nasa": "Risk of Radiation (HRP)",
+   "riesgo_nasa": "Risk of Acute Radiation Syndromes Due to Solar Particle Events (Evidence Report, NTRS 20160003870)",
    "variable": "sintomas",
    "id_catalogo": "02:V67a, 03:V82, 04:A40–A50 (Leo, Persona 5)",
    "peso_fisiologico": 2,
@@ -1270,7 +1270,7 @@
   {
    "malestar_id": 9,
    "malestar": "Estrés / salud conductual",
-   "riesgo_nasa": "Risk of Adverse Cognitive or Behavioral Conditions (HRP)",
+   "riesgo_nasa": "Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)",
    "variable": "fc_reposo",
    "id_catalogo": "04:A4 / 01:V3 (Julio)",
    "peso_fisiologico": 1,
@@ -1286,7 +1286,7 @@
   {
    "malestar_id": 9,
    "malestar": "Estrés / salud conductual",
-   "riesgo_nasa": "Risk of Adverse Cognitive or Behavioral Conditions (HRP)",
+   "riesgo_nasa": "Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)",
    "variable": "spo2",
    "id_catalogo": "04:A3 (Julio)",
    "peso_fisiologico": 0,
@@ -1302,7 +1302,7 @@
   {
    "malestar_id": 9,
    "malestar": "Estrés / salud conductual",
-   "riesgo_nasa": "Risk of Adverse Cognitive or Behavioral Conditions (HRP)",
+   "riesgo_nasa": "Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)",
    "variable": "respiracion",
    "id_catalogo": "04:A2 (Julio)",
    "peso_fisiologico": 1,
@@ -1318,7 +1318,7 @@
   {
    "malestar_id": 9,
    "malestar": "Estrés / salud conductual",
-   "riesgo_nasa": "Risk of Adverse Cognitive or Behavioral Conditions (HRP)",
+   "riesgo_nasa": "Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)",
    "variable": "temperatura",
    "id_catalogo": "04:A1 (Julio)",
    "peso_fisiologico": 0,
@@ -1334,7 +1334,7 @@
   {
    "malestar_id": 9,
    "malestar": "Estrés / salud conductual",
-   "riesgo_nasa": "Risk of Adverse Cognitive or Behavioral Conditions (HRP)",
+   "riesgo_nasa": "Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)",
    "variable": "presion_arterial",
    "id_catalogo": "01:V1 (Julio)",
    "peso_fisiologico": 1,
@@ -1350,7 +1350,7 @@
   {
    "malestar_id": 9,
    "malestar": "Estrés / salud conductual",
-   "riesgo_nasa": "Risk of Adverse Cognitive or Behavioral Conditions (HRP)",
+   "riesgo_nasa": "Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)",
    "variable": "sueno",
    "id_catalogo": "03:V30 (Leo)",
    "peso_fisiologico": 2,
@@ -1366,7 +1366,7 @@
   {
    "malestar_id": 9,
    "malestar": "Estrés / salud conductual",
-   "riesgo_nasa": "Risk of Adverse Cognitive or Behavioral Conditions (HRP)",
+   "riesgo_nasa": "Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)",
    "variable": "pvt_lapsos",
    "id_catalogo": "03:V66 (Iker)",
    "peso_fisiologico": 1,
@@ -1382,7 +1382,7 @@
   {
    "malestar_id": 9,
    "malestar": "Estrés / salud conductual",
-   "riesgo_nasa": "Risk of Adverse Cognitive or Behavioral Conditions (HRP)",
+   "riesgo_nasa": "Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)",
    "variable": "co2_cabina",
    "id_catalogo": "04:A23 (Julio)",
    "peso_fisiologico": 0,
@@ -1398,7 +1398,7 @@
   {
    "malestar_id": 9,
    "malestar": "Estrés / salud conductual",
-   "riesgo_nasa": "Risk of Adverse Cognitive or Behavioral Conditions (HRP)",
+   "riesgo_nasa": "Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)",
    "variable": "sintomas",
    "id_catalogo": "02:V67a, 03:V82, 04:A40–A50 (Leo, Persona 5)",
    "peso_fisiologico": 3,
@@ -1414,7 +1414,7 @@
   {
    "malestar_id": 10,
    "malestar": "Enfermedad por descompresión tras EVA",
-   "riesgo_nasa": "Risk of Decompression Sickness (HRP)",
+   "riesgo_nasa": "Risk of Mission Impacts and Long-Term Health Issues due to Decompression Sickness (HRR)",
    "variable": "fc_reposo",
    "id_catalogo": "04:A4 / 01:V3 (Julio)",
    "peso_fisiologico": 1,
@@ -1430,7 +1430,7 @@
   {
    "malestar_id": 10,
    "malestar": "Enfermedad por descompresión tras EVA",
-   "riesgo_nasa": "Risk of Decompression Sickness (HRP)",
+   "riesgo_nasa": "Risk of Mission Impacts and Long-Term Health Issues due to Decompression Sickness (HRR)",
    "variable": "spo2",
    "id_catalogo": "04:A3 (Julio)",
    "peso_fisiologico": 1,
@@ -1446,7 +1446,7 @@
   {
    "malestar_id": 10,
    "malestar": "Enfermedad por descompresión tras EVA",
-   "riesgo_nasa": "Risk of Decompression Sickness (HRP)",
+   "riesgo_nasa": "Risk of Mission Impacts and Long-Term Health Issues due to Decompression Sickness (HRR)",
    "variable": "respiracion",
    "id_catalogo": "04:A2 (Julio)",
    "peso_fisiologico": 1,
@@ -1462,7 +1462,7 @@
   {
    "malestar_id": 10,
    "malestar": "Enfermedad por descompresión tras EVA",
-   "riesgo_nasa": "Risk of Decompression Sickness (HRP)",
+   "riesgo_nasa": "Risk of Mission Impacts and Long-Term Health Issues due to Decompression Sickness (HRR)",
    "variable": "temperatura",
    "id_catalogo": "04:A1 (Julio)",
    "peso_fisiologico": 0,
@@ -1478,7 +1478,7 @@
   {
    "malestar_id": 10,
    "malestar": "Enfermedad por descompresión tras EVA",
-   "riesgo_nasa": "Risk of Decompression Sickness (HRP)",
+   "riesgo_nasa": "Risk of Mission Impacts and Long-Term Health Issues due to Decompression Sickness (HRR)",
    "variable": "presion_arterial",
    "id_catalogo": "01:V1 (Julio)",
    "peso_fisiologico": 1,
@@ -1494,7 +1494,7 @@
   {
    "malestar_id": 10,
    "malestar": "Enfermedad por descompresión tras EVA",
-   "riesgo_nasa": "Risk of Decompression Sickness (HRP)",
+   "riesgo_nasa": "Risk of Mission Impacts and Long-Term Health Issues due to Decompression Sickness (HRR)",
    "variable": "sueno",
    "id_catalogo": "03:V30 (Leo)",
    "peso_fisiologico": 0,
@@ -1510,7 +1510,7 @@
   {
    "malestar_id": 10,
    "malestar": "Enfermedad por descompresión tras EVA",
-   "riesgo_nasa": "Risk of Decompression Sickness (HRP)",
+   "riesgo_nasa": "Risk of Mission Impacts and Long-Term Health Issues due to Decompression Sickness (HRR)",
    "variable": "pvt_lapsos",
    "id_catalogo": "03:V66 (Iker)",
    "peso_fisiologico": 0,
@@ -1526,7 +1526,7 @@
   {
    "malestar_id": 10,
    "malestar": "Enfermedad por descompresión tras EVA",
-   "riesgo_nasa": "Risk of Decompression Sickness (HRP)",
+   "riesgo_nasa": "Risk of Mission Impacts and Long-Term Health Issues due to Decompression Sickness (HRR)",
    "variable": "co2_cabina",
    "id_catalogo": "04:A23 (Julio)",
    "peso_fisiologico": 0,
@@ -1542,7 +1542,7 @@
   {
    "malestar_id": 10,
    "malestar": "Enfermedad por descompresión tras EVA",
-   "riesgo_nasa": "Risk of Decompression Sickness (HRP)",
+   "riesgo_nasa": "Risk of Mission Impacts and Long-Term Health Issues due to Decompression Sickness (HRR)",
    "variable": "sintomas",
    "id_catalogo": "02:V67a, 03:V82, 04:A40–A50 (Leo, Persona 5)",
    "peso_fisiologico": 3,
@@ -1558,7 +1558,7 @@
   {
    "malestar_id": 11,
    "malestar": "Trombosis yugular y SANS",
-   "riesgo_nasa": "Risk of SANS / venous thrombosis (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (trombosis, HRR); Risk of Spaceflight Associated Neuro-ocular Syndrome (SANS) (HRR)",
    "variable": "fc_reposo",
    "id_catalogo": "04:A4 / 01:V3 (Julio)",
    "peso_fisiologico": 0,
@@ -1574,7 +1574,7 @@
   {
    "malestar_id": 11,
    "malestar": "Trombosis yugular y SANS",
-   "riesgo_nasa": "Risk of SANS / venous thrombosis (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (trombosis, HRR); Risk of Spaceflight Associated Neuro-ocular Syndrome (SANS) (HRR)",
    "variable": "spo2",
    "id_catalogo": "04:A3 (Julio)",
    "peso_fisiologico": 0,
@@ -1590,7 +1590,7 @@
   {
    "malestar_id": 11,
    "malestar": "Trombosis yugular y SANS",
-   "riesgo_nasa": "Risk of SANS / venous thrombosis (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (trombosis, HRR); Risk of Spaceflight Associated Neuro-ocular Syndrome (SANS) (HRR)",
    "variable": "respiracion",
    "id_catalogo": "04:A2 (Julio)",
    "peso_fisiologico": 0,
@@ -1606,7 +1606,7 @@
   {
    "malestar_id": 11,
    "malestar": "Trombosis yugular y SANS",
-   "riesgo_nasa": "Risk of SANS / venous thrombosis (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (trombosis, HRR); Risk of Spaceflight Associated Neuro-ocular Syndrome (SANS) (HRR)",
    "variable": "temperatura",
    "id_catalogo": "04:A1 (Julio)",
    "peso_fisiologico": 0,
@@ -1622,7 +1622,7 @@
   {
    "malestar_id": 11,
    "malestar": "Trombosis yugular y SANS",
-   "riesgo_nasa": "Risk of SANS / venous thrombosis (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (trombosis, HRR); Risk of Spaceflight Associated Neuro-ocular Syndrome (SANS) (HRR)",
    "variable": "presion_arterial",
    "id_catalogo": "01:V1 (Julio)",
    "peso_fisiologico": 0,
@@ -1638,7 +1638,7 @@
   {
    "malestar_id": 11,
    "malestar": "Trombosis yugular y SANS",
-   "riesgo_nasa": "Risk of SANS / venous thrombosis (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (trombosis, HRR); Risk of Spaceflight Associated Neuro-ocular Syndrome (SANS) (HRR)",
    "variable": "sueno",
    "id_catalogo": "03:V30 (Leo)",
    "peso_fisiologico": 0,
@@ -1654,7 +1654,7 @@
   {
    "malestar_id": 11,
    "malestar": "Trombosis yugular y SANS",
-   "riesgo_nasa": "Risk of SANS / venous thrombosis (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (trombosis, HRR); Risk of Spaceflight Associated Neuro-ocular Syndrome (SANS) (HRR)",
    "variable": "pvt_lapsos",
    "id_catalogo": "03:V66 (Iker)",
    "peso_fisiologico": 0,
@@ -1670,7 +1670,7 @@
   {
    "malestar_id": 11,
    "malestar": "Trombosis yugular y SANS",
-   "riesgo_nasa": "Risk of SANS / venous thrombosis (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (trombosis, HRR); Risk of Spaceflight Associated Neuro-ocular Syndrome (SANS) (HRR)",
    "variable": "co2_cabina",
    "id_catalogo": "04:A23 (Julio)",
    "peso_fisiologico": 1,
@@ -1686,7 +1686,7 @@
   {
    "malestar_id": 11,
    "malestar": "Trombosis yugular y SANS",
-   "riesgo_nasa": "Risk of SANS / venous thrombosis (HRP)",
+   "riesgo_nasa": "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (trombosis, HRR); Risk of Spaceflight Associated Neuro-ocular Syndrome (SANS) (HRR)",
    "variable": "sintomas",
    "id_catalogo": "02:V67a, 03:V82, 04:A40–A50 (Leo, Persona 5)",
    "peso_fisiologico": 3,

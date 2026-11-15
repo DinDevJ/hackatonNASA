@@ -85,7 +85,7 @@ llega a 0). Con menos datos, el prior fisiológico domina; con más, mandan los 
 
 ## Limitaciones
 
-- Los nombres de la columna `riesgo_nasa` son **aproximados**; hay que cotejarlos con la lista oficial de riesgos del HRP.
+- La columna `riesgo_nasa` usa los **nombres oficiales del HRR**, los mismos de la tabla de Iker (`Planeacion/Iker/iker_variables.csv`). Hipoxia, inmune y radiación aguda (que Iker no cubre) se tomaron de las páginas de riesgo de NASA y del Evidence Report NTRS 20160003870. El CO₂ no tiene riesgo HRR propio: se marca como peligro *Hostile/Closed Environments*, igual que Iker.
 - Ningún peso está validado en astronautas, salvo CO₂ → cefalea (nivel A, Law et al. 2014).
 - La HRV no está porque el reloj del equipo no envía intervalos RR.
 

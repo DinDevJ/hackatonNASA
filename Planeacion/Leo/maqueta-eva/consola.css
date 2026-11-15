@@ -206,6 +206,20 @@ a.aviso-card { text-decoration: none; color: inherit; }
 .cn-region { border-radius: 20px; padding: 14px; background: var(--brillo), linear-gradient(var(--vidrio-2), var(--vidrio-2)); border: 1px solid var(--vidrio-borde); box-shadow: var(--vidrio-sombra); }
 .cn-region h3 { display: flex; align-items: center; gap: 8px; font-size: 15px; margin-bottom: 4px; }
 .cn-region .normal-graf { height: 120px; margin-top: 6px; }
+/* La zona elegida vive en la columna derecha (central): el cuerpo queda solo y fijo al centro. */
+.cn-zona { display: grid; gap: 6px; }
+.cn-zona-etq { display: flex; align-items: center; gap: 6px; margin: 0 2px; }
+#region-dest .cn-region { animation: entrar 260ms var(--ease-out) both; }
+#region-dest .cn-region .normal-graf { height: 96px; }
+#region-dest .cn-vital { padding: 9px 0; }
+.cn-bloque { margin-top: 16px; }
+/* Bloque en vivo: la tabla a la izquierda, alertas y avisos a su lado */
+.cn-vivo-cuerpo { display: grid; grid-template-columns: minmax(0, 2.3fr) minmax(250px, 1fr); gap: 16px; align-items: start; }
+.cn-vivo-lado { display: grid; gap: 12px; align-content: start; }
+.cn-vivo-lado .cn-vivo-sub { margin-top: 0; }
+.cn-vivo-tabla th, .cn-vivo-tabla td { padding: 7px 6px; }
+@media (max-width: 1180px) { .cn-vivo-cuerpo { grid-template-columns: minmax(0, 1fr); } .cn-vivo-lado { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .cn-vivo-lado { grid-template-columns: minmax(0, 1fr); } }
 .cn-anillos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; text-align: center; }
 .cn-anillo { display: grid; justify-items: center; gap: 4px; font-size: 11.5px; color: var(--texto-2); }
 .cn-anillo svg { width: 76px; height: 76px; transform: rotate(-90deg); }

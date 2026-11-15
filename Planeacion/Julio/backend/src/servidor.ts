@@ -20,7 +20,7 @@ import { reiniciarEstados } from './ingesta.ts';
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const PUERTO = Number(process.env.PUERTO ?? 8787);
 /** Sube al cambiar algo que la pasarela o el simulador necesiten. */
-export const VERSION_BACKEND = '0.4.0';
+export const VERSION_BACKEND = '0.5.0';
 
 class ErrorHttp extends Error {
   estado: number;
@@ -82,7 +82,7 @@ function estadoTexto(db: BD): string {
     'actividad reciente',
     ...(recientes.length ? recientes.map((r) => '  ' + r) : ['  (nada todavía)']),
     '',
-    'simulador visual: /simulador',
+    'simulador visual: /simulador · control de misión (Tierra): /tierra',
     'API: /api/salud · /api/estado · /api/alertas · /api/stream · ver backend/README.md',
   ].join('\n');
 }
@@ -288,9 +288,13 @@ export function construir(db: BD) {
     try { return escribirEnlace(db, await cuerpoJson<{ owlt_s?: number; abierto?: boolean }>(req)); }
     catch (e) { throw new ErrorHttp(400, (e as Error).message); }
   });
-  ruta('GET', '/api/tierra/bandeja', () => {
+  ruta('GET', '/api/tierra/bandeja', (_r, _p, q) => {
     const t = ahora();
-    return (todos(`SELECT * FROM bajada WHERE t_ert IS NOT NULL AND t_ert <= ? ORDER BY id DESC LIMIT 100`, t) as Array<Record<string, unknown>>)
+    const tipo = q.get('tipo');
+    const filas = (tipo
+      ? todos(`SELECT * FROM bajada WHERE t_ert IS NOT NULL AND t_ert <= ? AND tipo = ? ORDER BY id DESC LIMIT 100`, t, tipo)
+      : todos(`SELECT * FROM bajada WHERE t_ert IS NOT NULL AND t_ert <= ? ORDER BY id DESC LIMIT 100`, t)) as Array<Record<string, unknown>>;
+    return filas
       .map((b) => ({ ...b, datos: JSON.parse(String(b.datos)),
         antiguedad_al_llegar_s: Math.round((Date.parse(String(b.t_ert)) - Date.parse(String(b.t_scet))) / 1000) }));
   });
@@ -328,6 +332,12 @@ export function construir(db: BD) {
       res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', refresh: '2' }).end(estadoTexto(db));
       return;
     }
+    // Consola de control de misión (Tierra).
+    if (req.method === 'GET' && url.pathname === '/tierra') {
+      const html = join(AQUI, '..', 'web', 'tierra.html');
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }).end(readFileSync(html));
+      return;
+    }
     // Simulador visual: queda aparcado en /simulador, fuera de la ruta principal.
     if (req.method === 'GET' && url.pathname === '/simulador') {
       const html = join(AQUI, '..', 'web', 'simulador.html');
@@ -342,7 +352,7 @@ export function construir(db: BD) {
       res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
       res.write(': conectado\n\n');
       const enviar = (tipo: string) => (d: unknown) => res.write(`event: ${tipo}\ndata: ${JSON.stringify(d)}\n\n`);
-      const tipos = ['muestra', 'alerta', 'rechazo', 'tierra', 'aviso', 'enlace'];
+      const tipos = ['muestra', 'alerta', 'rechazo', 'tierra', 'aviso', 'enlace'];   // 'trama' no: Tierra recibe las crudas por el enlace
       const oyentes = tipos.map((tp) => [tp, enviar(tp)] as const);
       for (const [tp, f] of oyentes) bus.on(tp, f);
       const latido = setInterval(() => res.write(': latido\n\n'), 15000);

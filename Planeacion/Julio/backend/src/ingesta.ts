@@ -130,6 +130,11 @@ export function ingerirBinaria(db: BD, buf: Uint8Array): Resultado {
         metodo: c.formula,
       }, res);
     }
+    if (res.aceptadas) bus.emit('trama', {
+      perfil: 'eva', dispositivo: cab.idDisp, tripulante, seq: cab.seq, t_scet: t, esquema: esquema.id,
+      hex: Buffer.from(buf).toString('hex'),
+      valores: Object.fromEntries(esquema.campos.map((c) => [c.clave, Number.isFinite(valores[c.clave]) ? Number(valores[c.clave]!.toFixed(2)) : null])),
+    });
   } catch (e) {
     res.rechazos.push((e as Error).message);
   }
@@ -169,6 +174,7 @@ export function ingerirJson(db: BD, tr: TramaJson): Resultado {
         calidad: s.quality, metodo: s.method,
       }, res);
     }
+    if (res.aceptadas) bus.emit('trama', { perfil: 'json', dispositivo: disp.id, tripulante, seq: tr.seq, t_scet: t, json: JSON.stringify(tr) });
   } catch (e) {
     res.rechazos.push((e as Error).message);
   }

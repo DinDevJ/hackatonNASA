@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS enlace (
 -- Nave → Tierra. Se encola al crearse; sale cuando hay ventana; llega OWLT después.
 CREATE TABLE IF NOT EXISTS bajada (
   id INTEGER PRIMARY KEY,
-  tipo TEXT NOT NULL,              -- 'alerta' · 'resumen'
+  tipo TEXT NOT NULL,              -- 'alerta' · 'resumen' · 'crudos' · 'acuse'
   datos TEXT NOT NULL,             -- JSON
   prioridad INTEGER NOT NULL,      -- 0 rojo · 1 ámbar · 2 resto
   t_scet TEXT NOT NULL,            -- cuándo ocurrió a bordo
@@ -125,6 +125,8 @@ CREATE TABLE IF NOT EXISTS bajada (
 CREATE TABLE IF NOT EXISTS subida (
   id INTEGER PRIMARY KEY,
   de TEXT NOT NULL, para TEXT NOT NULL, texto TEXT NOT NULL, prioridad TEXT NOT NULL,
+  tipo TEXT NOT NULL DEFAULT 'aviso',  -- 'aviso' · 'alerta' (anomalía detectada a mano en Tierra)
+  datos TEXT,                          -- JSON: { nivel, variable } en las alertas
   t_redactado TEXT NOT NULL,
   t_envio TEXT,
   t_llegada TEXT,
@@ -136,6 +138,10 @@ export function abrir(ruta = 'eva.db'): BD {
   const db = new DatabaseSync(ruta);
   db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
   db.exec(ESQUEMA_SQL);
+  // Bases creadas antes de las alertas manuales: añadir las columnas que faltan.
+  const cols = (db.prepare(`PRAGMA table_info(subida)`).all() as Array<{ name: string }>).map((c) => c.name);
+  if (!cols.includes('tipo')) db.exec(`ALTER TABLE subida ADD COLUMN tipo TEXT NOT NULL DEFAULT 'aviso'`);
+  if (!cols.includes('datos')) db.exec(`ALTER TABLE subida ADD COLUMN datos TEXT`);
   return db;
 }
 

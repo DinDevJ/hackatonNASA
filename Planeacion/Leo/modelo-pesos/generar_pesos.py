@@ -1,5 +1,6 @@
 """Genera la tabla de pesos fisiológicos (malestar × variable) con su referencia y su prior bayesiano.
-Uso: python generar_pesos.py   →   pesos.csv y pesos.json en esta carpeta.
+Uso: python generar_pesos.py   →   pesos.csv y pesos.json en esta carpeta, y una copia ligera
+     (../maqueta-eva/pesos.js) para las consolas de la app LUNNA (computadora central y base en Tierra).
 
 Niveles de evidencia → incertidumbre del prior (desviación estándar sobre el peso):
   A = relación medida con número (fuente verificada)        → sd 0.5
@@ -145,6 +146,22 @@ with open(aqui / "pesos.csv", "w", encoding="utf-8-sig", newline="") as f:
     "variables": VARIABLES, "id_catalogo": ID_CATALOGO, "niveles": {"A": "relación medida", "B": "mecanismo documentado", "C": "juicio fisiológico"},
     "referencias": {k: {"cita": t, "doi": d, "url": f"https://doi.org/{d}"} for k, (t, d) in REF.items()},
     "pesos": filas}, ensure_ascii=False, indent=1), encoding="utf-8")
+
+# Copia ligera para las consolas de la app LUNNA: solo las celdas con peso, en un .js que se carga sin servidor.
+CORTO = {1: "Arritmia", 2: "Ortostática", 3: "Hipoxia", 4: "Infección", 5: "Sueño", 6: "Fatiga", 7: "CO₂ / cefalea",
+         8: "Radiación", 9: "Estrés", 10: "Descompresión", 11: "Trombosis / SANS"}
+maqueta = aqui.parent / "maqueta-eva"
+if maqueta.is_dir():
+    ligera = {
+        "fuente": "Planeacion/Leo/modelo-pesos/pesos.json",
+        "malestares": [{"id": mid, "nombre": mal, "corto": CORTO[mid], "riesgo": riesgo} for mid, mal, riesgo in MALESTARES],
+        "celdas": [{"m": r["malestar_id"], "v": r["variable"], "peso": r["peso_fisiologico"], "ev": r["nivel_evidencia"],
+                    "dir": r["direccion"], "mecanismo": r["mecanismo"], "ref": r["referencia"], "doi": r["doi"]}
+                   for r in filas if r["peso_fisiologico"] > 0],
+    }
+    (maqueta / "pesos.js").write_text(
+        "/* Generado por ../modelo-pesos/generar_pesos.py a partir de pesos.json: no se edita a mano. */\n"
+        "window.PESOS = " + json.dumps(ligera, ensure_ascii=False) + ";\n", encoding="utf-8")
 
 from collections import Counter
 c = Counter((r["nivel_evidencia"], r["peso_fisiologico"] > 0) for r in filas)

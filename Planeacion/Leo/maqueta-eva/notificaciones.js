@@ -4,7 +4,8 @@
  * las alertas que el cirujano de vuelo manda desde Tierra y que ya llegaron a bordo
  * (evento "aviso" de /api/stream), y los muestra como notificación del teléfono.
  *
- * Abierta sola (python -m http.server) no hay backend: este archivo no hace nada.
+ * Abierta sola (python -m http.server) no hay backend: escucha el enlace simulado que comparten la
+ * computadora central (central.html) y la base en Tierra (base.html) en este mismo navegador.
  *
  * Quién la ve: la persona activa en la app si el aviso es para ella o para toda la tripulación;
  * la CMO (Mei) ve también los de los demás. Tocarla abre la pantalla de Tierra.
@@ -59,6 +60,7 @@
   let pila = null;
   const ICONO_TIERRA = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3.5 9h17M3.5 15h17M12 3c2.6 2.6 2.6 15.4 0 18M12 3c-2.6 2.6-2.6 15.4 0 18"/></svg>';
   const ICONO_ALERTA = '<svg viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>';
+  const ICONO_CMO = '<svg viewBox="0 0 24 24"><path d="M12 3l7 3v5.5c0 4.4-3 8-7 9.5-4-1.5-7-5.1-7-9.5V6z"/><path d="M9 12l2 2 4-4"/></svg>';
 
   function cerrar(n) { n.classList.add("sale"); setTimeout(() => n.remove(), 300); }
 
@@ -70,9 +72,10 @@
     const n = document.createElement("div");
     n.className = "noti" + (alerta ? " " + nivel : "");
     n.setAttribute("role", alerta ? "alert" : "status");
-    n.innerHTML = `<div class="noti-ic">${alerta ? ICONO_ALERTA : ICONO_TIERRA}</div>
-      <div><div class="noti-app">Lunna · Tierra · ahora</div>
-        <div class="noti-tit">${alerta ? `Alerta ${nivel === "rojo" ? "ROJA" : "ámbar"} de Tierra` : esc(a.de || "Mensaje de Tierra")}${para ? ` <span style="font-weight:400;opacity:.7">· ${esc(para)}</span>` : ""}</div>
+    const abordo = a.origen === "abordo";   // aviso de la CMO desde la computadora central (sin retraso)
+    n.innerHTML = `<div class="noti-ic">${alerta ? ICONO_ALERTA : abordo ? ICONO_CMO : ICONO_TIERRA}</div>
+      <div><div class="noti-app">Lunna · ${abordo ? "a bordo" : "Tierra"} · ahora</div>
+        <div class="noti-tit">${alerta ? `Alerta ${nivel === "rojo" ? "ROJA" : "ámbar"} ${abordo ? "de la CMO" : "de Tierra"}` : esc(a.de || "Mensaje de Tierra")}${para ? ` <span style="font-weight:400;opacity:.7">· ${esc(para)}</span>` : ""}</div>
         <div class="noti-txt">${esc(a.texto)}</div>
         <div class="noti-pie">${esc(a.de || "Cirujano de vuelo")} · redactado ${hora(a.t_redactado)} · llegó ${hora(a.t_llegada || new Date().toISOString())}</div></div>
       <button class="noti-x" type="button" aria-label="Descartar notificación">×</button>`;
@@ -82,6 +85,7 @@
     n.addEventListener("click", () => {
       if (!n.classList.contains("abierta")) { n.classList.add("abierta"); return; }   // 1.er toque: lee completo
       cerrar(n);
+      if (abordo) return;
       try { if (window.APP && window.APP.ir) window.APP.ir("tierra"); } catch { /* sin pantalla de Tierra */ }
     });
     // Las rojas se quedan hasta que alguien las descarte; el resto se va solo.
@@ -94,11 +98,37 @@
     if (e.origin === location.origin && e.data && e.data.eva === "energia") encendido = !!e.data.encendido;
   });
 
+  // ---------- Sin backend: el enlace simulado de las consolas, en este mismo navegador ----------
+  // La base en Tierra (base.html) y la computadora central (central.html) dejan sus mensajes en
+  // localStorage ("lunna:enlace") con la hora en que llegan a bordo: los de Tierra con el retraso de la
+  // luz y los de la CMO al instante. Aquí se muestran cuando llegan, con la misma notificación.
+  const ID_BACKEND = { "MS-1": "tomas", "MS-2": "ana", "MS-3": "mei", "MS-4": "luis" };
+  const NIVEL_LOCAL = { atencion: "ambar", urgente: "rojo" };
+  function escucharEnlaceLocal() {
+    const CLAVE = "lunna:enlace";
+    const leer = () => { try { const x = JSON.parse(localStorage.getItem(CLAVE) || "[]"); return Array.isArray(x) ? x : []; } catch { return []; } };
+    const vistos = new Set(leer().filter((m) => m.t_llegada <= Date.now()).map((m) => m.id)); // lo anterior no se repite
+    const revisar = () => {
+      const ahora = Date.now();
+      for (const m of leer()) {
+        if (vistos.has(m.id) || m.t_llegada > ahora || (m.sentido !== "subida" && m.sentido !== "abordo")) continue;
+        vistos.add(m.id);
+        const nivel = NIVEL_LOCAL[m.nivel];
+        mostrar({ tipo: nivel ? "alerta" : "aviso", datos: nivel ? { nivel } : null, para: m.pid ? ID_BACKEND[m.pid] : "todos",
+          de: m.de, texto: m.texto, t_redactado: new Date(m.t_envio).toISOString(), t_llegada: new Date(m.t_llegada).toISOString(),
+          origen: m.sentido === "abordo" ? "abordo" : "tierra" });
+      }
+    };
+    setInterval(revisar, 1000);
+    window.addEventListener("storage", (e) => { if (e.key === CLAVE) revisar(); });
+    window.NOTIFICACIONES = { mostrar, conectado: false, enlaceLocal: true };
+  }
+
   // ---------- Conexión con el backend ----------
   fetch("/api/salud").then((r) => (r.ok ? r.json() : null)).then((s) => {
-    if (!s || !s.version) return;                        // abierta sin backend: nada que escuchar
+    if (!s || !s.version) { escucharEnlaceLocal(); return; }   // abierta sin backend: enlace simulado
     const es = new EventSource("/api/stream");
     es.addEventListener("aviso", (e) => { try { mostrar(JSON.parse(e.data)); } catch { /* evento mal formado */ } });
     window.NOTIFICACIONES = { mostrar, conectado: true };
-  }).catch(() => { /* sin backend */ });
+  }).catch(() => escucharEnlaceLocal());
 })();

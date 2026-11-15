@@ -1,21 +1,36 @@
-# 🌒 LUNNA Landing Page
+# Landing de Lunna
 
-Página de aterrizaje y presentación oficial para el proyecto **LUNNA** en el **NASA Space Apps Challenge 2026**.
+Página de presentación: muestra **cada dispositivo como se ve de verdad** (celular, reloj, computadora central y
+base en Tierra, cada uno con su interfaz real funcionando dentro de su marco) y después la entrada a la
+simulación de la nave.
 
-## 🚀 Cómo previsualizar la landing
+Las interfaces se cargan desde el backend de Lunna, así que tiene que estar corriendo.
 
-Puedes abrir `index.html` directamente en tu navegador o correr un servidor local estático:
+## Verla en local
 
 ```bash
-# Con Python (desde la raíz o dentro de landing/)
-cd landing
-python -m http.server 3000
+# 1. El backend en modo simulación (sirve /app/, /reloj/, /simulador…)
+cd Simulacion
+npm start
 ```
 
-Luego abre tu navegador en `http://localhost:3000`.
+```bash
+# 2. La landing, servida desde la raíz del repositorio (así encuentra ../video/)
+python3 -m http.server 3000
+```
 
-## 📁 Archivos
+Abre http://localhost:3000/landing/. En local la landing busca el backend en `http://localhost:8787`. Otro se
+indica con `?backend=http://host:puerto`.
 
-- `index.html`: Estructura semántica, propuesta de valor para el pitch y desglose técnico.
-- `styles.css`: Estética aeroespacial futurista (diseño oscuro, acentos cian/morado, responsive design).
-- `main.js`: Lógica de desplazamiento suave y animación en vivo de telemetría de muestra.
+## En el VPS
+
+La sirve nginx en `/` y el resto va al backend en el mismo dominio: ver [`../despliegue/`](../despliegue/README.md).
+Al compartir dominio, el celular abre directo en su pantalla principal, sin el tutorial de bienvenida.
+
+## Archivos
+
+| Archivo | Qué es |
+|---|---|
+| `index.html` | Portada, dispositivos, simulación, cómo funciona, respaldo, video y equipo |
+| `styles.css` | Estilos (marcos de teléfono, reloj y monitor; diseño adaptable) |
+| `main.js` | Escala cada interfaz a su marco, la carga al acercarse y la activa con «Toca para usar» |

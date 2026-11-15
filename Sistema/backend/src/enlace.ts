@@ -154,16 +154,22 @@ export function iniciarEnlace(db: BD, opciones: { simularLlegadas?: boolean } = 
   const alRecibir = (tr: unknown) => { crudas.push(tr); };
   bus.on('trama', alRecibir);
   // Con enlace real (simularLlegadas=false) el reloj `pulso` no corre: lo sustituye sincro.
-  const reloj = opciones.simularLlegadas === false ? null : setInterval(() => pulso(db), 1000);
+  // Un fallo puntual (p. ej. la base ocupada) se reintenta en el siguiente ciclo: nunca tumba el servidor.
+  const avisarFallo = (que: string, e: unknown) => console.error(`enlace: ${que} falló y se reintenta (${(e as Error).message})`);
+  const reloj = opciones.simularLlegadas === false ? null
+    : setInterval(() => { try { pulso(db); } catch (e) { avisarFallo('el pulso', e); } }, 1000);
   const evals = setInterval(() => { try { encolarEvaluaciones(db); } catch { /* BD cerrada o a medias */ } }, 2000);
   const res = setInterval(() => {
-    const r = resumen(db);
-    if (r.length) encolarBajada(db, 'resumen', r, ahora(), 2);
-    for (let i = 0; i < crudas.length; i += CRUDOS_POR_PAQUETE) {
-      const lote = crudas.slice(i, i + CRUDOS_POR_PAQUETE) as Array<{ t_scet: string }>;
-      encolarBajada(db, 'crudos', lote, lote[lote.length - 1]!.t_scet, 3);
-    }
-    crudas = [];
+    try {
+      const r = resumen(db);
+      if (r.length) encolarBajada(db, 'resumen', r, ahora(), 2);
+      // Las tramas crudas sólo salen de la cola cuando ya quedaron encoladas: si algo falla, van en el siguiente.
+      while (crudas.length) {
+        const lote = crudas.slice(0, CRUDOS_POR_PAQUETE) as Array<{ t_scet: string }>;
+        encolarBajada(db, 'crudos', lote, lote[lote.length - 1]!.t_scet, 3);
+        crudas = crudas.slice(lote.length);
+      }
+    } catch (e) { avisarFallo('el paquete para Tierra', e); }
   }, RESUMEN_CADA_MS);
   return () => { bus.off('alerta', alAlertar); bus.off('trama', alRecibir); if (reloj) clearInterval(reloj); clearInterval(evals); clearInterval(res); };
 }

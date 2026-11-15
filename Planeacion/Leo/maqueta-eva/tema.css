@@ -1015,3 +1015,11 @@ body { padding: 2dvh 0; }
 .luna-boton.replegada.a-la-izq { transform: translateX(-62%); opacity: .6; }
 .luna-boton.replegada.a-la-der { transform: translateX(62%); opacity: .6; }
 @media (prefers-reduced-motion: reduce) { .luna-boton.replegada { transform: none; opacity: .35; } }
+
+/* ---------------- Tipografía unificada (bug 19) ----------------
+ * Una sola sans; los números no bailan gracias a tabular-nums. Las etiquetas van en letra normal,
+ * sin mayúsculas monoespaciadas. */
+:root { --mono: var(--letra); }
+body { font-variant-numeric: tabular-nums; }
+.esc-titulo, .esc-pie, .hud-ruta, .hud-peligro, .hud-dato .ver, .luna-panel-cab .t, .lp h4, .globo::before,
+.cambiar-trip span, .aj-etq, .aj-sec, .no-diag { text-transform: none; letter-spacing: .01em; }

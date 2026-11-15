@@ -3,7 +3,7 @@
  * Es la lógica del módulo 1 de app/ (React) traída al formato de la maqueta: JavaScript sin
  * dependencias. Todo es SIMULADO. Funciona en el navegador (window.MOTOR) y en Node (pruebas).
  *
- * Reglas (ERS-LUNNA):
+ * Reglas (ERS de Lunna):
  *  - Tu normal = 14 días anteriores, mínimo 7 con dato. z robusto = 0,6745 · (x − mediana) / MAD.
  *  - MAD nunca menor que la variación mínima creíble del indicador (si no, falsas alarmas).
  *  - Una señal sola contra tu normal pide atención con |z| ≥ 3. FATIGA-03 junta tres señales con
@@ -127,7 +127,7 @@
   const PERSONAS = [
     { id: "MS-2", nombre: "Ana", sexo: "M", rol: "Especialista de misión", pareja: "Luis", masaKg: 62, color: "#E0457B" },
     { id: "MS-4", nombre: "Luis", sexo: "H", rol: "Ingeniero de vuelo", pareja: "Ana", masaKg: 84, color: "#FF8A3D" },
-    { id: "MS-3", nombre: "Mei", sexo: "M", rol: "Oficial médica (CMO)", pareja: "Tomás", masaKg: 58, color: "#2BA36B" },
+    { id: "MS-3", nombre: "Mei", sexo: "M", rol: "CMO (médica de a bordo)", pareja: "Tomás", masaKg: 58, color: "#2BA36B" },
     { id: "MS-1", nombre: "Tomás", sexo: "H", rol: "Comandante", pareja: "Mei", masaKg: 78, color: "#4FD2E9" },
   ];
 

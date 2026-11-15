@@ -1,4 +1,4 @@
-/* App LUNNA con su asistente Lunna · maqueta interactiva. Todo es SIMULADO: no recibe datos reales todavía. */
+/* App Lunna con su asistente Lunna · maqueta interactiva. Todo es SIMULADO: no recibe datos reales todavía. */
 (function () {
   "use strict";
   const D = window.DATOS;
@@ -63,7 +63,7 @@
     bienvenida: [
       { cara: "feliz", acc: "estrella", t: "¡Hola! Soy Lunna", x: "Te acompaño en la misión para cuidar tu salud. Casi todo lo leo de tus sensores; tú solo me cuentas lo que yo no puedo ver." },
       { cara: "pensando", acc: null, t: "Así leo tus datos", x: "Comparo cada número con <b>tu propio normal</b>, no con el de otra persona. Verde es tu normal; ámbar, que vale la pena mirar." },
-      { cara: "tranquila", acc: "corazon", t: "Unos 8 minutos al día", x: "Registrar te da estrellas, no tener números perfectos. Y no diagnostico: si algo preocupa, te sugiero hablar con el médico de a bordo." },
+      { cara: "tranquila", acc: "corazon", t: "Unos 8 minutos al día", x: "Registrar te da estrellas, no tener números perfectos. Y no diagnostico: si algo preocupa, te sugiero hablar con la CMO." },
     ],
     corazon: [
       { cara: "amor", acc: "corazon", t: "Tu corazón, en vivo", x: "Tus sensores me mandan la frecuencia cardiaca cada segundo por Bluetooth. Si pierden contacto con la piel, descarto esa lectura." },
@@ -80,11 +80,11 @@
     ],
     glucosa: [
       { cara: "tranquila", acc: "gota", t: "Glucosa continua", x: "Un parche en el brazo mide la glucosa cada pocos minutos. Los sensores de piel no pueden medirla." },
-      { cara: "pensando", acc: "gota", t: "Glucómetro de dedo", x: "Si el médico de a bordo te mide con glucómetro, escribe aquí el número. El rango que uso es de la Tierra y lo marco así." },
+      { cara: "pensando", acc: "gota", t: "Glucómetro de dedo", x: "Si la CMO te mide con glucómetro, escribe aquí el número. El rango que uso es de la Tierra y lo marco así." },
     ],
     sintomas: [
       { cara: "empatica", acc: "curita", t: "Cuéntame cómo te sientes", x: "Dolor de espalda, dolor de cabeza y mareo son muy comunes en el espacio. Toca y desliza: es rápido." },
-      { cara: "tranquila", acc: "curita", t: "No diagnostico", x: "Si algo es fuerte o no mejora, te sugiero avisar al médico de a bordo. Esa decisión es de él." },
+      { cara: "tranquila", acc: "curita", t: "No diagnostico", x: "Si algo es fuerte o no mejora, te sugiero avisar a la CMO (médica de a bordo). Esa decisión es de él." },
     ],
     radiacion: [
       { cara: "radiacion", acc: "sol", t: "Clima espacial", x: "Mi pantalla cambia a un <b>sol</b> cuando hay una tormenta solar. Las partículas del Sol pueden subir tu dosis de radiación." },
@@ -336,7 +336,7 @@
       <h2>${nombre}</h2>
       <div class="hud-etqs"><span class="hud-peligro">Peligro HRP · ${def.peligro}</span>${def.privada ? `<span class="hud-peligro">Privado · solo tú</span>` : sem(ev.regiones[r])}</div>
       ${tarjetas}${extra}
-      <p class="no-diag">LUNNA AVISA, NO DIAGNOSTICA · DATOS SIMULADOS</p>`;
+      <p class="no-diag">Lunna avisa, no diagnostica · datos simulados</p>`;
 
     // 2. El panel nace en el punto del órgano.
     const origen = () => {
@@ -482,7 +482,7 @@
       const SECCIONES = [["hoy", "Hoy"], ["monitoreo", "Cómo te monitorea"], ["clima", "Clima espacial"], ["procesa", "Qué procesa"], ["biblioteca", "Biblioteca"], ["hablar", "Hablar"]];
       const seccionHoy = `${hall}
         ${L.bien.length ? `<p class="bien">${hall ? "Lo demás va bien: " : "Con tus datos de hoy: "}${L.bien.join("; ")}.</p>` : ""}
-        <p class="no-diag">LUNNA AVISA, NO DIAGNOSTICA · CUENTA LO QUE MIDEN TUS SENSORES CONTRA TU NORMAL</p>`;
+        <p class="no-diag">Lunna avisa, no diagnostica: cuenta lo que miden tus sensores contra tu normal</p>`;
       panel.innerHTML = `
         <div class="luna-panel-cab"><span class="luna-grande"></span><div><div class="t">Lunna · día ${estado.dia}</div><div class="resumen">${L.resumen}</div></div>
           <span class="espacio"></span><button class="hud-x" data-cerrar aria-label="Cerrar">${ic("cerrar")}</button></div>
@@ -683,14 +683,14 @@
         <div class="mosaico">${tiles.join("")}</div>
         ${window.APP.tripulacionInicio ? window.APP.tripulacionInicio(P, ev) : ""}
         <div class="parche-fila" style="margin-top:14px">
-          <svg class="parche" viewBox="0 0 64 64" role="img" aria-label="Parche de misión LUNNA, Equipo Monarcas">
+          <svg class="parche" viewBox="0 0 64 64" role="img" aria-label="Parche de misión Lunna, Equipo Monarcas">
             <defs><linearGradient id="g-parche" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#192584"/><stop offset="1" stop-color="#2F6FD6"/></linearGradient></defs>
             <circle cx="32" cy="32" r="30" fill="url(#g-parche)" stroke="#4FD2E9" stroke-width="3"/>
             <path d="M37 14a17 17 0 1 0 12 29a14 14 0 0 1-12-29z" fill="#FBF6FF"/>
             <path d="M24 33c-4-6-11-6-11-1 0 4 5 6 11 3m0-2c4-6 11-6 11-1 0 4-5 6-11 3m0-1v8" fill="#FFB547" stroke="#192584" stroke-width="1.2" stroke-linejoin="round"/>
             <path d="M48 18l1 2.4 2.4 1-2.4 1-1 2.4-1-2.4-2.4-1 2.4-1z" fill="#FFD66B"/>
           </svg>
-          <div class="parche-txt"><b>LUNNA</b><span>Equipo Monarcas · NASA Space Apps Challenge 2026 · datos simulados, salvo los eventos solares de NASA DONKI</span></div>
+          <div class="parche-txt"><b>Lunna</b><span>Equipo Monarcas · NASA Space Apps Challenge 2026 · datos simulados, salvo los eventos solares de NASA DONKI</span></div>
         </div>`;
       $("[data-ir-checkin]", p).addEventListener("click", () => ir("checkin"));
       $("#cambiar-yo", p).addEventListener("click", () => window.APP.abrirCambio && window.APP.abrirCambio());
@@ -781,7 +781,7 @@
           e.currentTarget.classList.remove("btn-suave");
           luna.poner("celebra");
           globo.innerHTML = "¡Sesión guardada! Ganaste una <b>estrella</b>.";
-          aviso("Sesión guardada (simulada)");
+          aviso("Sesión guardada · datos simulados");
         }
       });
       limpiar = () => clearInterval(tick);
@@ -819,7 +819,7 @@
         estado.calidadSueno = v;
         $("#cal-txt", p).textContent = v;
         luna.poner(v >= 70 ? "feliz" : v >= 40 ? "tranquila" : "empatica");
-        globo.innerHTML = v >= 70 ? "¡Qué bien! Despertaste con <b>energía</b>." : v >= 40 ? "Un descanso regular. Lo anoto." : "Lo siento. Si sigue así, lo hablamos con el médico de a bordo.";
+        globo.innerHTML = v >= 70 ? "¡Qué bien! Despertaste con <b>energía</b>." : v >= 40 ? "Un descanso regular. Lo anoto." : "Lo siento. Si sigue así, lo hablamos con la CMO.";
       });
       tutorialPrimeraVez("sueno");
     },
@@ -854,7 +854,7 @@
         <div class="tarjeta"><h3>${ic("mas")} Agregar comida</h3>
           <div class="comida-grid">${D.alimentos.map((a) => `<button data-comida="${a.id}" aria-label="Agregar ${a.nombre}">${ic(a.icono)}${a.nombre}</button>`).join("")}</div>
           <div class="tenue" style="margin-top:10px">Hoy: <span id="lista-hoy"></span></div>
-          <div class="tenue" style="margin-top:4px;font-size:11.5px">Valores por porción aproximados para la maqueta.</div></div>
+          <div class="tenue" style="margin-top:4px;font-size:11.5px">Valores por porción aproximados · datos simulados.</div></div>
         <div class="tarjeta"><h3>${ic("manzana")} ¿Cuánta hambre tienes?</h3>
           <input class="deslizador" id="apetito" type="range" min="0" max="10" value="${estado.apetito}" aria-label="Apetito de 0 a 10"/>
           <div class="escala-etq"><span>Nada</span><span>Mucha</span></div></div>`;
@@ -918,7 +918,7 @@
         if (!v || v < 20 || v > 600) { luna.poner("pensando"); globo.innerHTML = "Ese número no parece una glucosa. Revísalo, por fa."; return; }
         estado.glucometro.push(v);
         $("#glu-lista", p).innerHTML = "Registradas: " + estado.glucometro.map((n) => `<b>${n}</b>`).join(" · ") + " mg/dL";
-        if (v < 70) { luna.poner("alerta"); globo.innerHTML = "Está <b>baja</b>. Avisa al médico de a bordo."; }
+        if (v < 70) { luna.poner("alerta"); globo.innerHTML = "Está <b>baja</b>. Avisa a la CMO."; }
         else if (v > 180) { luna.poner("preocupada"); globo.innerHTML = "Está <b>alta</b> para el rango de la Tierra. Lo anoto."; }
         else { luna.poner("feliz"); globo.innerHTML = "¡En rango! Guardado."; }
         input.value = "";
@@ -943,14 +943,14 @@
             <div class="escala-etq"><span>Leve</span><span>Insoportable</span></div></div></div>
         <div class="tarjeta"><h3>${ic("ola")} Mareo espacial</h3>
           <div class="chips">${mareos.map(([k, n]) => `<button class="chip" data-mareo="${k}" aria-pressed="${estado.mareo.includes(k)}">${n}</button>`).join("")}</div></div>
-        <div id="nota" class="nota-medico" hidden>${ic("info")}<span>Esto parece fuerte. <b>Te sugiero avisar al médico de a bordo.</b> Yo no diagnostico.</span></div>`;
+        <div id="nota" class="nota-medico" hidden>${ic("info")}<span>Esto parece fuerte. <b>Te sugiero avisar a la CMO.</b> Yo no diagnostico.</span></div>`;
       const luna = LUNA.crear($(".luna-aqui", p), { cara: "tranquila", accesorio: "curita", tam: 88 });
       const globo = $(".globo", p);
       const reaccionar = () => {
         const fuerte = estado.dolor >= 7 || (estado.cefalea && estado.intensidadCefalea >= 7) || estado.mareo.includes("vomito");
         $("#nota", p).hidden = !fuerte;
         const nivel = Math.max(estado.dolor, estado.cefalea ? estado.intensidadCefalea : 0);
-        if (fuerte) { luna.poner("empatica"); globo.innerHTML = "Lo siento mucho. Avisemos al <b>médico de a bordo</b>."; }
+        if (fuerte) { luna.poner("empatica"); globo.innerHTML = "Lo siento mucho. Avisemos a la <b>CMO</b>."; }
         else if (nivel >= 4) { luna.poner("preocupada"); globo.innerHTML = "Te duele un poco. Lo anoto para ver si mejora."; }
         else if (estado.mareo.length && !estado.mareo.includes("ninguno")) { luna.poner("empatica"); globo.innerHTML = "El mareo es muy común los primeros días. Aquí estoy."; }
         else { luna.poner("feliz"); globo.innerHTML = "¡Qué bueno! Te sientes bien."; }
@@ -1037,7 +1037,7 @@
         estado.animo = b.dataset.animo;
         $$("[data-animo]", p).forEach((c) => c.setAttribute("aria-pressed", String(c === b)));
         luna.poner(estado.animo);
-        globo.innerHTML = { feliz: "¡Me encanta! A darle con todo.", tranquila: "Bien. Un día tranquilo también cuenta.", preocupada: "Te entiendo. Vamos paso a paso.", empatica: "Lo siento. ¿Quieres que lo veamos con el médico de a bordo?" }[estado.animo];
+        globo.innerHTML = { feliz: "¡Me encanta! A darle con todo.", tranquila: "Bien. Un día tranquilo también cuenta.", preocupada: "Te entiendo. Vamos paso a paso.", empatica: "Lo siento. ¿Quieres que lo veamos con la CMO?" }[estado.animo];
       }));
       $("#ck-estres-in", p).addEventListener("input", (e) => { estado.estres = Number(e.target.value); $("#ck-estres", p).textContent = estado.estres; });
       $("#ck-dolor-in", p).addEventListener("input", (e) => {
@@ -1211,11 +1211,11 @@
         registrar(`<b>Activación automática</b>: SpO₂ ${sat.crisis} % · pulso ${fc.crisis} lpm`);
         // Escalamiento (ERS §4.3): nunca se avisa a la misma persona que es paciente.
         if (esCMO) {
-          registrar(`<b>Nivel 1 sin cubrir</b>: la paciente es la CMO (médica de a bordo)`);
+          registrar(`<b>Nivel 1 sin cubrir</b>: la paciente es la CMO`);
           registrar(`Aviso enviado a <b>${COM.nombre}</b>, comandante`);
           registrar(`Escalado a nivel 2: paquete prioritario al cirujano de vuelo en Tierra (≈ ${T.retrasoTierraMin} min de retraso)`);
         } else {
-          registrar(`Aviso enviado a <b>${CMO.nombre}</b>, CMO (médica de a bordo)`);
+          registrar(`Aviso enviado a <b>${CMO.nombre}</b>, la CMO`);
           registrar(`Paquete prioritario a Tierra en cola (≈ ${T.retrasoTierraMin} min de retraso)`);
         }
         luna.poner("empatica");
@@ -1269,7 +1269,7 @@
         <div class="tarjeta"><h3>${ic("info")} Qué significan las etiquetas</h3>
           <div class="chips"><span class="ref ref-A">${ic("escudo", "ic-sm")}NASA</span><span class="tenue">umbral oficial de NASA</span></div>
           <div class="chips" style="margin-top:6px"><span class="ref ref-T">${ic("info", "ic-sm")}Tierra</span><span class="tenue">umbral clínico de la Tierra, no validado en el espacio</span></div>
-          <div class="chips" style="margin-top:6px"><span class="ref ref-sim">${ic("planeta", "ic-sm")}Simulado</span><span class="tenue">esta maqueta aún no recibe datos reales</span></div></div>
+          <div class="chips" style="margin-top:6px"><span class="ref ref-sim">${ic("planeta", "ic-sm")}Simulado</span><span class="tenue">datos simulados: aún no llegan datos reales del reloj ni de la nave</span></div></div>
         <a class="btn btn-ancho" href="?demo" style="text-decoration:none;margin-bottom:10px">${ic("play")} Ver demo automática</a>
         <button class="btn btn-suave btn-ancho" id="reiniciar">${ic("chispa")} Volver a ver todos los tutoriales</button>`;
       LUNA.crear($(".luna-aqui", p), { cara: "pensando", accesorio: "estrella", tam: 88 });

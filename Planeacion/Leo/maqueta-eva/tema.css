@@ -1096,3 +1096,61 @@ body { font-variant-numeric: tabular-nums; }
   .lc-slide { transform: none; filter: none; }
   .lc-titulo.entra-der, .lc-titulo.entra-izq, .lc-slide.barre .lc-barrido { animation: none; }
 }
+
+/* ================= Ajustes (14 nov, 2) ================= */
+/* Volver al órgano: el panel aparece ya abierto */
+.hud.sin-trans, .hud.sin-trans > * { transition: none !important; }
+
+/* Líneas punteadas de cada marca a su órgano */
+.marcas .guia { stroke: var(--hud-cian); stroke-width: 1.1; stroke-dasharray: 2 2.4; stroke-linecap: round; opacity: .75; }
+.marcas .guia-punto { fill: var(--hud-cian); opacity: .95; r: 1.9px; }
+.marcas .guia.est-ok, .marcas .guia-punto.est-ok { stroke: var(--hud-ok); fill: var(--hud-ok); }
+.marcas .guia.est-ojo, .marcas .guia-punto.est-ojo { stroke: var(--hud-ojo); fill: var(--hud-ojo); opacity: .95; }
+.marcas .guia.est-alto, .marcas .guia-punto.est-alto { stroke: var(--hud-alto); fill: var(--hud-alto); opacity: 1; }
+.marcas .guia.est-nd, .marcas .guia-punto.est-nd { stroke: var(--hud-nd); fill: var(--hud-nd); }
+.marcas .guia { animation: guia-fluye 2.4s linear infinite; }
+@keyframes guia-fluye { to { stroke-dashoffset: -15; } }
+
+/* Lunna habla: el globo se anima cada vez que cambia lo que dice */
+.globo.habla { animation: globo-pop 520ms cubic-bezier(.34, 1.56, .64, 1); }
+.globo.habla > * , .globo.habla { --rev: 0; }
+.globo.habla::after { content: ""; position: absolute; inset: -2px; border-radius: inherit; pointer-events: none;
+  box-shadow: 0 0 0 0 rgba(79, 210, 233, .55); animation: globo-onda 900ms ease-out; }
+.luna-aqui.habla { animation: luna-salta 520ms cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes globo-pop { 0% { transform: scale(.94) translateY(4px); opacity: .4; clip-path: inset(0 100% 0 0 round 18px); }
+  45% { opacity: 1; } 70% { clip-path: inset(0 0 0 0 round 18px); } 100% { transform: none; clip-path: inset(0 0 0 0 round 18px); } }
+@keyframes globo-onda { 0% { box-shadow: 0 0 0 0 rgba(79, 210, 233, .6); } 100% { box-shadow: 0 0 0 12px rgba(79, 210, 233, 0); } }
+@keyframes luna-salta { 0%, 100% { transform: none; } 35% { transform: translateY(-6px) rotate(-6deg); } 65% { transform: translateY(1px) rotate(3deg); } }
+
+/* Presión como se mide: barra diastólica-sistólica por día */
+.graf-presion .pa-dia line { stroke: #6D7FC4; stroke-width: 2.2; stroke-linecap: round; }
+.graf-presion .pa-hoy line { stroke: var(--c); stroke-width: 3; }
+.graf-presion.mini .pa-dia line { stroke-width: 1.6; }
+:root[data-tema="oscuro"] .graf-presion .pa-dia line, .oscuro .graf-presion .pa-dia line { stroke: #9CB6F0; }
+:root[data-tema="oscuro"] .graf-presion .pa-hoy line, .oscuro .graf-presion .pa-hoy line { stroke: var(--c); }
+.pa-leyenda { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11.5px; color: var(--texto-2); margin: 4px 0 2px; }
+.pa-leyenda i { display: inline-block; width: 10px; height: 2px; border-radius: 2px; background: #6D7FC4; margin-right: 5px; vertical-align: middle; }
+.pa-leyenda .pa-dia-i { height: 2px; opacity: .55; }
+
+/* Tensiómetro */
+.tensiometro { display: grid; gap: 8px; margin: 10px 0 14px; padding: 12px; border-radius: 18px; background: var(--vidrio-2); border: 1px solid var(--vidrio-borde); }
+.tm-fila { display: grid; grid-template-columns: 82px 1fr auto; align-items: center; gap: 10px; }
+.tm-etq { display: grid; font-size: 11px; color: var(--texto-2); line-height: 1.2; }
+.tm-etq b { font-size: 15px; color: var(--texto); letter-spacing: .04em; }
+.tm-fila input { font: 650 30px/1 var(--letra); font-variant-numeric: tabular-nums; text-align: right; width: 100%; min-width: 0; padding: 6px 10px; border-radius: 12px;
+  border: 1px solid var(--vidrio-borde); background: var(--vidrio); color: var(--texto); }
+.tm-pul input { font-size: 22px; }
+.tm-u { font-size: 12px; color: var(--texto-2); width: 40px; }
+.tm-fila + .tm-fila { border-top: 1px solid var(--separador); padding-top: 8px; }
+
+/* Dolor de espalda por zona */
+.zonas-dolor { display: grid; gap: 10px; margin-top: 10px; }
+.zona-dolor { padding: 10px 12px; border-radius: 14px; background: var(--vidrio-2); border: 1px solid var(--vidrio-borde); animation: entrar 220ms var(--ease-out) both; }
+.zona-dolor[hidden] { display: none; }
+.zona-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13.5px; font-weight: 600; margin-bottom: 6px; }
+.zona-cab b { font-size: 20px; font-variant-numeric: tabular-nums; }
+.zona-cab small { font-size: 12px; color: var(--texto-2); margin-left: 1px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .marcas .guia, .globo.habla, .globo.habla::after, .luna-aqui.habla { animation: none; }
+}

@@ -22,6 +22,7 @@
   base personal desde los puntos prevuelo (autocalibración) y no tiene un punto de entrada para una media impuesta; forzarla
   cambiaría la semántica.
 - `detalle.ligas` (en `evaluaciones`) lleva el desglose por variable (campos de `CAMPOS_LIGA`; aporte = peso × activación).
+- `detalle.referencias` lleva el valor normal (referencia) por variable: poblacional si existe, si no base personal prevuelo (`motor.referencias`).
 - `mision`: fecha de lanzamiento = inicio de la primera fase no-'tierra' de `fases`, solo si antes hay una fase 'tierra'.
 """
 from __future__ import annotations
@@ -372,6 +373,8 @@ def _detalle(item: dict, pers: dict, canal: str) -> dict:
     d["ligas"] = [{k: lg.get(k) for k in CAMPOS_LIGA} for lg in (item.get("ligas") or [])]
     d.update({"fase": pers.get("fase"), "fecha_evaluacion": pers.get("fecha_evaluacion"), "provisional": True,
               "simulated": canal == "SIMULADO", "aviso": parametros.AVISO})
+    from . import referencias
+    d["referencias"] = referencias.referencias_detalle(item, pers, canal)
     return d
 
 

@@ -219,3 +219,9 @@ Abiertas desde `http://localhost:8787/app/…`, las tres pantallas usan la centr
 | Teléfono (`telefono-vivo.js`) | Tarjeta **En vivo** en Hoy con sus signos reales (`GET /api/app/:tripulante`, se actualiza con `muestra` y `alerta`). El SOS o la emergencia automática se registran (`POST /api/emergencias`) y se cierran al salir (`PUT`). Los avisos de Tierra y de la CMO le llegan por `/api/stream` |
 | Central | «Enviar a …» va por `POST /api/abordo/avisos` y «Consultar a Tierra» por `POST /api/central/consultas`. Las emergencias del teléfono salen en el historial con aviso flotante (evento `emergencia`) |
 | Base en Tierra | La bandeja muestra lo que de verdad bajó por el enlace (`GET /api/tierra/bandeja` y evento `tierra`): alertas de LUNNA, consultas de la CMO, emergencias, el último resumen y las tramas crudas. Sus mensajes van por `POST /api/tierra/avisos` y marcan el **acuse** real cuando vuelve |
+
+### Valor normal del motor (informativo)
+
+- Las alertas de la app usan sus propios umbrales de `motor.js`: «tu normal» (mediana ± MAD de 14 días, z robusto, |z| ≥ 3; FATIGA-03 desde z ≥ 2) y los umbrales absolutos `[A]/[T]` de `IND[k].abs`. No cambian.
+- `referencias.js` añade «Normal: …» (rango y fuente) tomado de `GET /api/padecimientos/referencias`; es solo informativo, no cambia colores ni alertas. También se ve en la pestaña Semáforo de la central (detalle y pesos).
+- Sin backend no se muestra nada. Con `?motor=SIM-T01` la app muestra la referencia de ese tripulante, marcada SIMULADO.

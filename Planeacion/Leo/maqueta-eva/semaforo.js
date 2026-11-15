@@ -199,13 +199,14 @@
       if (g !== E.genDet || !vivo()) return;
       if (!r.ok) { el.innerHTML = `<p class="cn-nota">${esc(r.j.error || "No se pudo leer el detalle.")}</p>`; return; }
       el.innerHTML = detalle(r.j);
+      if (window.REFERENCIAS) window.REFERENCIAS.decorarDetalle(el, E.trip);
     }
     const sinEval = (f) => `<h2>${esc(f ? f.nombre : E.pad)}</h2><p>${sem(null, "Gris")} <span class="tenue">Sin evaluación</span></p>
       <p class="cn-nota">El motor todavía no ha evaluado este padecimiento.</p>`;
     function filaVar(v) {
       const val = v.valor == null ? `<span class="tenue">${esc(v.motivo_ausencia || "sin dato")}</span>` : `<b class="num">${esc(num(v.valor))}</b>${v.unidad ? ` <small class="tenue">${esc(v.unidad)}</small>` : ""}`;
       const peso = v.peso_evaluado != null ? v.peso_evaluado : v.peso_efectivo;
-      return `<tr><th scope="row">${esc(v.variable || v.variable_id)}<br><small class="tenue">${esc(v.direccion || "")}</small></th><td>${val}</td><td class="num">${esc(num(peso))}</td>
+      return `<tr data-var="${esc(v.variable_id)}"><th scope="row">${esc(v.variable || v.variable_id)}<br><small class="tenue">${esc(v.direccion || "")}</small></th><td>${val}</td><td class="num">${esc(num(peso))}</td>
         <td>${v.nivel_evidencia ? `<span class="cn-ev ${esc(v.nivel_evidencia)}" title="${esc(EVID[v.nivel_evidencia] || "")}">${esc(v.nivel_evidencia)}</span>` : "–"}</td>
         <td class="num">${v.contribucion == null ? "–" : esc(num(v.contribucion))}</td></tr>`;
     }
@@ -252,6 +253,7 @@
         <div class="cn-sem-acciones"><button type="button" class="cn-boton" data-re>${ic("play", "ic-sm")}Reevaluar ahora</button></div>
         ${(d.umbrales || []).length ? `<h3 class="cn-sem-sub">Umbrales (solo lectura)</h3><div class="cn-tabla-caja"><table class="cn-detalle-ind"><thead><tr><th>Umbral</th><th>Valor</th></tr></thead><tbody>${d.umbrales.map((u) => `<tr><th scope="row">${esc(u.nombre)}</th><td class="num">${esc(num(u.valor))}${u.modificado ? ` <span class="cn-chip c-1">Modificado por usuario</span>` : ""}</td></tr>`).join("")}</tbody></table></div>` : ""}
         ${d.nota ? `<p class="cn-nota">${esc(d.nota)}</p>` : ""}`;
+      if (window.REFERENCIAS && E.trip) window.REFERENCIAS.decorarPesos(el, E.trip);
       const aviso = (t) => { const m = $("#sm-p-msg", el); if (m) m.textContent = t; };
       const accion = async (f, ok) => {
         try {

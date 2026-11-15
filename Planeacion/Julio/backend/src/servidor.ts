@@ -22,6 +22,7 @@ import { correrMotor, detalleSemaforo, ErrorSemaforo, guardarPeso, leerPesos, re
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { reiniciarEstados } from './ingesta.ts';
 import { cargarReferencias, referencias, type CargaReferencias } from './referencias.ts';
+import { referenciasMotor } from './referencias-motor.ts';
 import { estadoApp } from './app.ts';
 import { avisoAbordo, cerrarEmergencia, consultaATierra, leerEmergencias, registrarEmergencia } from './abordo.ts';
 
@@ -473,6 +474,7 @@ export function manejador(db: BD, opciones: OpcionesServidor = {}) {
   };
   ruta('GET', '/api/padecimientos/semaforo', (_r, _p, q) => sem(() => semaforo(db, q.get('tripulante') ?? undefined)));
   ruta('GET', '/api/padecimientos/semaforo/:tripulante/:padecimiento', (_r, p) => sem(() => detalleSemaforo(db, p.tripulante!, p.padecimiento!)));
+  ruta('GET', '/api/padecimientos/referencias', (_r, _p, q) => sem(() => referenciasMotor(db, q.get('tripulante'), q.get('variable'))));
   ruta('GET', '/api/padecimientos/pesos', (_r, _p, q) => sem(() => leerPesos(db, q.get('padecimiento') ?? undefined)));
   ruta('PUT', '/api/padecimientos/pesos', async (req) => { const c = await cuerpoJson<unknown>(req); return sem(() => guardarPeso(db, c)); });
   ruta('POST', '/api/padecimientos/pesos/restaurar', async (req) => { const c = await cuerpoOpcional(req); return sem(() => restaurarPesos(db, c)); });

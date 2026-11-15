@@ -117,6 +117,11 @@
       else if (m.sentido === "bajada") out.push({ n: nv.n, chip: chip(nv.n, "Consulta a Tierra", "tierra"), meta: `Hoy ${m.hora} · sobre ${esc(nombreDe(m.pid))}`, texto: esc(m.texto), id: m.id });
       else if (m.sentido === "subida" && m.t_llegada <= Date.now()) out.push({ n: nv.n, chip: chip(nv.n, `${nv.txt} de Tierra`, "tierra"), meta: `Llegó hoy ${K.horaReal(m.t_llegada)} · ${esc(m.de || "Cirujano de vuelo")} · para ${esc(nombreDe(m.pid))}`, texto: esc(m.texto), id: m.id });
     }
+    for (const e of emergenciasReales) {
+      const pid = K.DESDE_BACKEND[e.tripulante];
+      if (!deEl(pid)) continue;
+      out[e.resultado ? "push" : "unshift"]({ n: e.resultado ? 1 : 2, chip: chip(e.resultado ? 1 : 2, `Emergencia · ${e.modo}`), meta: `En vivo · ${K.horaReal(e.t_registro)} · ${esc(nombreDe(pid))}`, texto: `<b>Causa:</b> ${esc(e.causa || "sin causa registrada")}`, det: `<b>Resultado:</b> ${esc(e.resultado || "en curso")}`, id: `em-${e.id}` });
+    }
     if (d >= 115) out.push({ n: 2, chip: chip(2, "Emergencia · automática"), meta: "Día 115 · 11:04 · toda la tripulación", texto: "<b>Causa:</b> evento de partículas solares; la tasa de dosis superó el umbral de refugio (≥ 3000 µSv/h).", det: "<b>Resultado:</b> tripulación al refugio blindado con buddy check; cronología sellada y enviada a Tierra con prioridad 0." });
     if (deEl("MS-2") && d >= 114) out.push({ n: 0, chip: chip(0, "Nota de Tierra", "tierra"), meta: "Día 114 · llegó con 41 min de antigüedad · para Ana", texto: "«Recomiendo priorizar el sueño de Ana y revalorar antes de la caminata espacial.»", det: "Escrita sobre datos del SCET D112 07:46; es anterior al cierre de FATIGA-03." });
     if (deEl("MS-2") && d >= 112 && M.fatiga("MS-2", 112)) {
@@ -131,6 +136,7 @@
       : K.positivo("escudo", "Todo en calma", `Ninguna advertencia ni emergencia${pid ? ` para ${esc(nombreDe(pid))}` : ""} en esta misión.`);
   }
   const nuevos = new Set();
+  let emergenciasReales = [];   // del backend (teléfono → central), si corre
 
   // ================================================================ vista: Hoy
   function vistaHoy(p) {
@@ -219,7 +225,8 @@
       if (!texto) { est.textContent = "Escribe un mensaje antes de enviar."; est.classList.add("error"); area.focus(); return; }
       est.classList.remove("error");
       const resumen = destino === "bajada" ? ` [Estado ${K.ESTADO_TXT[K.ev(pid, d).general]} · ${K.ev(pid, d).alertas.map((a) => a.id).join(", ") || "sin alertas"} · día ${d}]` : "";
-      const m = K.enviarEnlace({ sentido: destino, tipo: destino === "bajada" ? "consulta" : "aviso", nivel, pid, de: AUTOR, texto: texto + resumen });
+      const m = K.enviarEnlace({ sentido: destino, tipo: destino === "bajada" ? "consulta" : "aviso", nivel, pid, de: AUTOR, texto: texto + resumen, backend: !!K.backend });
+      if (K.backend) (destino === "bajada" ? K.consultaBk(m) : K.avisoAbordoBk(m));   // por la central real
       nuevos.add(m.id);
       area.value = "";
       est.textContent = destino === "bajada"
@@ -417,7 +424,8 @@
       if (!texto) { est.textContent = "Escribe un mensaje antes de encolar."; est.classList.add("error"); area.focus(); return; }
       est.classList.remove("error");
       const pid = $("#t-pid", p).value || null, nivel = new FormData(e.target).get("nivel");
-      const m = K.enviarEnlace({ sentido: "bajada", tipo: "consulta", nivel, pid, de: AUTOR, texto });
+      const m = K.enviarEnlace({ sentido: "bajada", tipo: "consulta", nivel, pid, de: AUTOR, texto, backend: !!K.backend });
+      if (K.backend) K.consultaBk(m);
       nuevos.add(m.id); area.value = "";
       est.textContent = `Encolado: llega a Tierra en ${K.segTxt(m.t_llegada - m.t_envio)} (${K.OWLT_ESCENARIO_MIN} min del escenario).`;
       $("#bajadas", p).insertAdjacentHTML("afterbegin", msjEnlace(m));
@@ -476,5 +484,16 @@
   function pintarCuenta() { K.cuenta("tierra", location.hash === "#tierra" ? 0 : K.llegados("subida").filter((m) => nuevos.has(m.id)).length); }
   K.alTicEnlace(refrescarEstados);
   window.addEventListener("hashchange", () => { if (location.hash === "#tierra") { nuevos.clear(); pintarCuenta(); } });
-  K.detectarBackend().then((hay) => { if (hay && location.hash === "#tierra") ir(); });
+  K.alEventoBk("emergencia", (e) => {
+    emergenciasReales = [e, ...emergenciasReales.filter((x) => x.id !== e.id)];
+    const pid = K.DESDE_BACKEND[e.tripulante];
+    if (!e.resultado) K.toast({ titulo: `Emergencia de ${nombreDe(pid)} · ${e.modo}`, texto: e.causa || "", icono: "alerta", c1: "#FF6B6B", c2: "#D92D2D", alerta: true, ms: 15000, alClic: () => { location.hash = `#tripulante/${pid}`; } });
+    const hist = $("#historial");
+    if (hist) hist.innerHTML = listaHistorial(location.hash.startsWith("#tripulante/") ? location.hash.split("/")[1] : null);
+  });
+  K.detectarBackend().then(async (hay) => {
+    if (!hay) return;
+    emergenciasReales = (await K.emergenciasBk()) || [];
+    if (!document.querySelector("textarea:focus")) ir();
+  });
 })();

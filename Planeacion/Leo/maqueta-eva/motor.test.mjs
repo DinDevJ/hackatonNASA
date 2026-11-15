@@ -74,3 +74,18 @@ test('lo que Luna dice: cuenta las señales con números y no diagnostica', () =
 test('la silueta depende del sexo de cada tripulante', () => {
   assert.deepEqual(M.PERSONAS.map((p) => [p.nombre, p.sexo]), [['Ana', 'M'], ['Luis', 'H'], ['Mei', 'M'], ['Tomás', 'H']]);
 });
+
+test("bug 4: lo registrado hoy reemplaza el valor simulado y se recalcula; se puede limpiar", () => {
+  const antes = M.estadoIndicador(ana, "animo", 112);
+  M.registrar(ana, 112, "animo", 95, "08:10");
+  const e = M.estadoIndicador(ana, "animo", 112);
+  assert.equal(e.valor, 95);
+  assert.deepEqual(e.registrado, { valor: 95, hora: "08:10" });
+  assert.equal(e.nivel, 1, "un estrés muy por encima de tu normal pide atención");
+  assert.equal(M.SERIES[ana].animo[M.idx(112)], antes.valor, "la serie simulada no se toca");
+  M.registrar(ana, 112, "presion", 150, "08:12");
+  assert.equal(M.estadoIndicador(ana, "presion", 112).nivel, 2);
+  M.limpiarRegistros();
+  assert.equal(M.estadoIndicador(ana, "animo", 112).valor, antes.valor);
+  assert.equal(M.estadoIndicador(ana, "animo", 112).registrado, null);
+});

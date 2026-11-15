@@ -1000,3 +1000,8 @@ body { padding: 2dvh 0; }
 .emerg-confirma span { flex: 1 1 100%; }
 .emerg-confirma .btn { flex: 1; }
 .emerg-confirma[hidden] { display: none; }
+
+/* ---------------- Registros del día (bug 4) ---------------- */
+.etq-reg { background: rgba(43, 163, 107, .14); color: var(--verde); font-weight: 700; }
+.mosaico .etq-reg { align-self: flex-start; font-size: 10.5px; margin-top: -2px; }
+:root[data-tema="oscuro"] .etq-reg { color: #6EE7B7; }

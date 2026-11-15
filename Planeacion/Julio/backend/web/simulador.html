@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Maqueta de aeronave interactiva para simular sistema LUNNA</title>
+<title>Lunna · Simulación de la nave</title>
 <style>
 :root{
   --bg:#070b14; --line:#22304a; --fg:#e7eef9; --dim:#8a9bb8;
@@ -614,7 +614,7 @@ function trTrama(nodo, u8, ahora) {
 // Monitor serie: los mismos mensajes que imprime esp32/playera_eva/playera_eva.ino.
 const serie = (txt) => tr('esp32', esc(txt));
 function esp32Conecta() { serie('PC central conectada'); serie(`hora recibida: ${Math.floor(Date.now() / 1000)} (UTC)`); }
-function esp32Arranca() { serie('Playera EVA lista como "EVA-PLAYERA-01". Esperando a la PC central…'); if (S.bleConectado) esp32Conecta(); }
+function esp32Arranca() { serie('Playera Lunna lista como "EVA-PLAYERA-01". Esperando a la PC central…'); if (S.bleConectado) esp32Conecta(); }
 
 let zTop = 10, abiertas = 0;
 // ── Interfaces integradas ──

@@ -9,7 +9,7 @@ modelo que define "lo esperado".
 ```bash
 npm start      # servidor en http://localhost:8787
 npm run sim    # simulador de hardware: 119 días de misión y luego en vivo
-npm test       # 17 pruebas
+npm test       # 18 pruebas
 ```
 
 Requiere **Node 22.6+** y nada más: SQLite y TypeScript vienen integrados en Node.

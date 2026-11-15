@@ -469,7 +469,9 @@
       const o = $(`[data-region="${r}"]`, svgEl);
       const pt0 = puntoFinal(svgEl, o, C.VISTA, tel);
       montar();
-      if (navigator.vibrate) try { navigator.vibrate(12); } catch (e) { /* sin vibración: no pasa nada */ }
+      // Solo si una persona ya tocó la pantalla: en la demo automática el navegador la bloquea y lo marca como error.
+      const tocado = !navigator.userActivation || navigator.userActivation.hasBeenActive;
+      if (navigator.vibrate && tocado) try { navigator.vibrate(12); } catch (e) { /* sin vibración: no pasa nada */ }
       pulso(tel, pt0, ev.regiones[r]);
       barrido(svgEl.parentElement, ev.regiones[r]);
       // Un cuadro después del toque (ya con el panel dibujado y los demás órganos atenuados) empieza el acercamiento.

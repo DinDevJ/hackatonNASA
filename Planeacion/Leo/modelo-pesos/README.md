@@ -13,9 +13,10 @@ Fundamentos y contexto: [../modelo-predictivo-fundamentos.md](../modelo-predicti
 | [pesos.json](pesos.json) | Lo mismo en JSON, más la lista de referencias |
 | [generar_pesos.py](generar_pesos.py) | **Fuente de verdad**: aquí se editan los pesos y se regeneran el CSV y el JSON |
 | [actualizacion_bayesiana.py](actualizacion_bayesiana.py) | Implementación de referencia en Python puro (sin dependencias) con una demostración |
+| [../maqueta-eva/pesos.js](../maqueta-eva/pesos.js) | Copia ligera (solo celdas con peso) que usan la computadora central y la base en Tierra para el índice por padecimiento. La genera `generar_pesos.py` |
 
 ```bash
-python generar_pesos.py            # regenera pesos.csv y pesos.json
+python generar_pesos.py            # regenera pesos.csv, pesos.json y ../maqueta-eva/pesos.js
 python actualizacion_bayesiana.py  # demostración con datos simulados
 ```
 
@@ -85,7 +86,7 @@ llega a 0). Con menos datos, el prior fisiológico domina; con más, mandan los 
 
 ## Limitaciones
 
-- Los nombres de la columna `riesgo_nasa` son **aproximados**; hay que cotejarlos con la lista oficial de riesgos del HRP.
+- La columna `riesgo_nasa` usa los **nombres oficiales del HRR**, los mismos de la tabla de Iker (`Planeacion/Iker/iker_variables.csv`). Hipoxia, inmune y radiación aguda (que Iker no cubre) se tomaron de las páginas de riesgo de NASA y del Evidence Report NTRS 20160003870. El CO₂ no tiene riesgo HRR propio: se marca como peligro *Hostile/Closed Environments*, igual que Iker.
 - Ningún peso está validado en astronautas, salvo CO₂ → cefalea (nivel A, Law et al. 2014).
 - La HRV no está porque el reloj del equipo no envía intervalos RR.
 

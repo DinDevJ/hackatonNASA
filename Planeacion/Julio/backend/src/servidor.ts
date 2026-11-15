@@ -7,17 +7,24 @@
  */
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, extname, join, resolve, sep } from 'node:path';
 import { abrir, ahora, deJson, json, type BD } from './db.ts';
 import { validarEsquema, type Esquema } from './esquema.ts';
 import { bus, entornoEn, ingerirBinaria, ingerirJson, prediccionPara, type TramaJson } from './ingesta.ts';
 import { ENTORNOS, type Entorno, type Prior } from './lunna.ts';
 import { cargarInicial, importarSemillas, type SalidaTipo } from './semillas.ts';
 import { escribirEnlace, iniciarEnlace, leerEnlace, redactarAviso } from './enlace.ts';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, statSync } from 'node:fs';
 import { reiniciarEstados } from './ingesta.ts';
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
+/** App móvil del equipo (Diana, Katy): se sirve tal cual en /app/. Se puede cambiar con APP_MOVIL. */
+const RAIZ_APP = resolve(process.env.APP_MOVIL ?? join(AQUI, '..', '..', '..', 'Leo', 'maqueta-eva'));
+const TIPOS: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png',
+  '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.ico': 'image/x-icon', '.wav': 'audio/wav', '.mp3': 'audio/mpeg',
+};
 const PUERTO = Number(process.env.PUERTO ?? 8787);
 /** Sube al cambiar algo que la pasarela o el simulador necesiten. */
 export const VERSION_BACKEND = '0.5.0';
@@ -82,7 +89,7 @@ function estadoTexto(db: BD): string {
     'actividad reciente',
     ...(recientes.length ? recientes.map((r) => '  ' + r) : ['  (nada todavía)']),
     '',
-    'simulador visual: /simulador · control de misión (Tierra): /tierra',
+    'simulador visual: /simulador · control de misión (Tierra): /tierra · app móvil: /app/',
     'API: /api/salud · /api/estado · /api/alertas · /api/stream · ver backend/README.md',
   ].join('\n');
 }
@@ -330,6 +337,20 @@ export function construir(db: BD) {
     // Página de estado: al abrir http://localhost:8787 se ve que el backend corre.
     if (req.method === 'GET' && url.pathname === '/') {
       res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', refresh: '2' }).end(estadoTexto(db));
+      return;
+    }
+    // App móvil: archivos estáticos, sin salir de su carpeta.
+    if (req.method === 'GET' && url.pathname === '/app') { res.writeHead(301, { location: '/app/' }).end(); return; }
+    if (req.method === 'GET' && url.pathname.startsWith('/app/')) {
+      let rel = '';
+      try { rel = decodeURIComponent(url.pathname.slice(5)); } catch { /* ruta mal formada: 404 */ rel = '\0'; }
+      const archivo = resolve(RAIZ_APP, rel || 'index.html');
+      const dentro = archivo.startsWith(RAIZ_APP + sep) && !rel.includes('\0');
+      if (!dentro || !existsSync(archivo) || !statSync(archivo).isFile()) {
+        res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end('no encontrado'); return;
+      }
+      res.writeHead(200, { 'content-type': TIPOS[extname(archivo).toLowerCase()] ?? 'application/octet-stream', 'cache-control': 'no-cache' })
+        .end(readFileSync(archivo));
       return;
     }
     // Consola de control de misión (Tierra).

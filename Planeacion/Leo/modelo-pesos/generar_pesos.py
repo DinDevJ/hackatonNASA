@@ -1,5 +1,6 @@
 """Genera la tabla de pesos fisiológicos (malestar × variable) con su referencia y su prior bayesiano.
-Uso: python generar_pesos.py   →   pesos.csv y pesos.json en esta carpeta.
+Uso: python generar_pesos.py   →   pesos.csv y pesos.json en esta carpeta, y una copia ligera
+     (../maqueta-eva/pesos.js) para las consolas de la app LUNNA (computadora central y base en Tierra).
 
 Niveles de evidencia → incertidumbre del prior (desviación estándar sobre el peso):
   A = relación medida con número (fuente verificada)        → sd 0.5
@@ -32,19 +33,26 @@ REF = {
 SD = {"A": 0.5, "B": 1.0, "C": 1.5}
 
 MALESTARES = [
-    (1, "Arritmia / fibrilación auricular", "Riesgo cardiovascular (HRP)"),
-    (2, "Desacondicionamiento e intolerancia ortostática", "Riesgo cardiovascular / sensoriomotor (HRP)"),
-    (3, "Hipoxia / problema respiratorio", "Risk of Hypoxia (HRP)"),
-    (4, "Infección, fiebre o desregulación inmune", "Risk of Adverse Health Event Due to Altered Immune Response (HRP)"),
-    (5, "Pérdida de sueño y desalineación circadiana", "Risk of Sleep Loss and Circadian Desynchronization (HRP)"),
-    (6, "Fatiga y deterioro cognitivo", "Risk of Cognitive or Behavioral Conditions (HRP)"),
-    (7, "Exposición a CO₂ / dolor de cabeza", "Riesgo de ambiente de cabina (HRP)"),
-    (8, "Radiación aguda por evento solar", "Risk of Radiation (HRP)"),
-    (9, "Estrés / salud conductual", "Risk of Adverse Cognitive or Behavioral Conditions (HRP)"),
-    (10, "Enfermedad por descompresión tras EVA", "Risk of Decompression Sickness (HRP)"),
-    (11, "Trombosis yugular y SANS", "Risk of SANS / venous thrombosis (HRP)"),
+    (1, "Arritmia / fibrilación auricular", "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)"),
+    (2, "Desacondicionamiento e intolerancia ortostática", "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (HRR)"),
+    (3, "Hipoxia / problema respiratorio", "Risk of Reduced Crew Health and Performance Due to Hypoxia (HRR)"),
+    (4, "Infección, fiebre o desregulación inmune", "Risk of In Mission Impacts, Adverse Health Events or Long-Term Health Impacts due to Altered Immune Response (HRR)"),
+    (5, "Pérdida de sueño y desalineación circadiana", "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR)"),
+    (6, "Fatiga y deterioro cognitivo", "Risk of Performance Decrements and Adverse Health Outcomes Resulting from Sleep Loss, Circadian Desynchronization, and Work Overload (HRR); Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)"),
+    (7, "Exposición a CO₂ / dolor de cabeza", "Sin riesgo HRR propio; peligro HRP Hostile/Closed Environments (igual que Iker)"),
+    (8, "Radiación aguda por evento solar", "Risk of Acute Radiation Syndromes Due to Solar Particle Events (Evidence Report, NTRS 20160003870)"),
+    (9, "Estrés / salud conductual", "Risk of Adverse Cognitive or Behavioral Changes and Psychiatric Disorders Leading to In-mission Health and Performance and Long-term Health Effects (HRR)"),
+    (10, "Enfermedad por descompresión tras EVA", "Risk of Mission Impacts and Long-Term Health Issues due to Decompression Sickness (HRR)"),
+    (11, "Trombosis yugular y SANS", "Risk of Cardiovascular Adaptations Contributing to Adverse Mission Performance and Health Outcomes (trombosis, HRR); Risk of Spaceflight Associated Neuro-ocular Syndrome (SANS) (HRR)"),
 ]
 VARIABLES = ["fc_reposo", "spo2", "respiracion", "temperatura", "presion_arterial", "sueno", "pvt_lapsos", "co2_cabina", "sintomas"]
+# ID de catálogo de cada variable (para unir con LUNNA de Julio y la tabla de Iker). Dueño entre paréntesis.
+ID_CATALOGO = {
+    "fc_reposo": "04:A4 / 01:V3 (Julio)", "spo2": "04:A3 (Julio)", "respiracion": "04:A2 (Julio)",
+    "temperatura": "04:A1 (Julio)", "presion_arterial": "01:V1 (Julio)", "sueno": "03:V30 (Leo)",
+    "pvt_lapsos": "03:V66 (Iker)", "co2_cabina": "04:A23 (Julio)",
+    "sintomas": "02:V67a, 03:V82, 04:A40–A50 (Leo, Persona 5)",
+}
 
 # (malestar, variable): (peso 0–3, dirección, nivel A/B/C, referencia o None, mecanismo)
 P = {
@@ -123,7 +131,7 @@ for mid, mal, riesgo in MALESTARES:
         sd = 0.5 if peso == 0 else SD[nivel]
         texto, doi = REF[ref] if ref else ("Juicio fisiológico del equipo (sin fuente directa)", "")
         filas.append({
-            "malestar_id": mid, "malestar": mal, "riesgo_nasa": riesgo, "variable": v,
+            "malestar_id": mid, "malestar": mal, "riesgo_nasa": riesgo, "variable": v, "id_catalogo": ID_CATALOGO[v],
             "peso_fisiologico": peso, "direccion": dirc, "nivel_evidencia": nivel,
             "mecanismo": mec, "referencia": texto, "doi": doi, "url": f"https://doi.org/{doi}" if doi else "",
             "prior_media": float(peso), "prior_de": sd,
@@ -135,9 +143,25 @@ with open(aqui / "pesos.csv", "w", encoding="utf-8-sig", newline="") as f:
     w.writeheader(); w.writerows(filas)
 (aqui / "pesos.json").write_text(json.dumps({
     "descripcion": "Pesos fisiológicos (0–3) por malestar × variable, con prior Normal(prior_media, prior_de) para actualización bayesiana.",
-    "variables": VARIABLES, "niveles": {"A": "relación medida", "B": "mecanismo documentado", "C": "juicio fisiológico"},
+    "variables": VARIABLES, "id_catalogo": ID_CATALOGO, "niveles": {"A": "relación medida", "B": "mecanismo documentado", "C": "juicio fisiológico"},
     "referencias": {k: {"cita": t, "doi": d, "url": f"https://doi.org/{d}"} for k, (t, d) in REF.items()},
     "pesos": filas}, ensure_ascii=False, indent=1), encoding="utf-8")
+
+# Copia ligera para las consolas de la app LUNNA: solo las celdas con peso, en un .js que se carga sin servidor.
+CORTO = {1: "Arritmia", 2: "Ortostática", 3: "Hipoxia", 4: "Infección", 5: "Sueño", 6: "Fatiga", 7: "CO₂ / cefalea",
+         8: "Radiación", 9: "Estrés", 10: "Descompresión", 11: "Trombosis / SANS"}
+maqueta = aqui.parent / "maqueta-eva"
+if maqueta.is_dir():
+    ligera = {
+        "fuente": "Planeacion/Leo/modelo-pesos/pesos.json",
+        "malestares": [{"id": mid, "nombre": mal, "corto": CORTO[mid], "riesgo": riesgo} for mid, mal, riesgo in MALESTARES],
+        "celdas": [{"m": r["malestar_id"], "v": r["variable"], "peso": r["peso_fisiologico"], "ev": r["nivel_evidencia"],
+                    "dir": r["direccion"], "mecanismo": r["mecanismo"], "ref": r["referencia"], "doi": r["doi"]}
+                   for r in filas if r["peso_fisiologico"] > 0],
+    }
+    (maqueta / "pesos.js").write_text(
+        "/* Generado por ../modelo-pesos/generar_pesos.py a partir de pesos.json: no se edita a mano. */\n"
+        "window.PESOS = " + json.dumps(ligera, ensure_ascii=False) + ";\n", encoding="utf-8")
 
 from collections import Counter
 c = Counter((r["nivel_evidencia"], r["peso_fisiologico"] > 0) for r in filas)

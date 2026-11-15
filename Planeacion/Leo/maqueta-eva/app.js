@@ -1,4 +1,4 @@
-/* App LUNA con su asistente Luna · maqueta interactiva. Todo es SIMULADO: no recibe datos reales todavía. */
+/* App Lunna con su asistente Lunna · maqueta interactiva. Todo es SIMULADO: no recibe datos reales todavía. */
 (function () {
   "use strict";
   const D = window.DATOS;
@@ -27,10 +27,26 @@
     glucometro: [],
     checkins: mem.leer("checkins", 3),
     persona: mem.leer("persona", "MS-2"), // quién se ve en Hoy (simulación)
-    dia: 112,
+    dia: mem.leer("dia", 112), // se guarda junto con la persona (bug 11)
+    // Katy: estado de los módulos de Registrar, Reportes, Ciclo y Configuración
+    tema: mem.leer("tema", "auto"), humor: mem.leer("humor", 2), voz: mem.leer("voz", true),
+    registros: [], agua: 0, estres: 35, phq: null, crisis: false, diario: "",
+    protocolo: {}, aceptado: false, solar: null, permisos: {}, accesos: [], colaExtra: [], evaluaciones: [], pvtHoy: null,
+    // Ejemplo: el día 112 (18 de marzo) cae en fase folicular, así el ajuste lútea no tapa la fatiga del escenario.
+    ciclo: mem.leer("ciclo", { ultima: "2027-03-10", duracion: 28, sangrado: 5, registro: {} }),
   };
   const M = window.MOTOR, C = window.CUERPO;
   const persona = () => M.PERSONAS.find((x) => x.id === estado.persona) || M.PERSONAS[0];
+  // Comida, Síntomas, Fuerza y check-in son de cada persona (bug 6). Ana trae los datos de ejemplo
+  // de Leo; los demás empiezan "Sin registro hoy" hasta que anoten algo.
+  const DATOS_PERSONA = {};
+  const inicialPersona = (pid) => (pid === "MS-2"
+    ? { comidas: D.comidasHoy.slice(), apetito: 6, calidadSueno: 62, dolor: 2, zonaDolor: ["lumbar"], dolorZonas: { cuello: 0, dorsal: 0, lumbar: 2 }, cefalea: false, intensidadCefalea: 0, mareo: [], animo: null, glucometro: [], tocado: { comida: true, sintomas: true, fuerza: true, cgm: true } }
+    : { comidas: [], apetito: 6, calidadSueno: 62, dolor: 0, zonaDolor: [], dolorZonas: { cuello: 0, dorsal: 0, lumbar: 0 }, cefalea: false, intensidadCefalea: 0, mareo: [], animo: null, glucometro: [], tocado: {} });
+  const datosDe = (pid) => DATOS_PERSONA[pid] || (DATOS_PERSONA[pid] = inicialPersona(pid));
+  for (const k of ["comidas", "apetito", "calidadSueno", "dolor", "zonaDolor", "dolorZonas", "cefalea", "intensidadCefalea", "mareo", "animo", "glucometro", "tocado"]) {
+    Object.defineProperty(estado, k, { get: () => datosDe(estado.persona)[k], set: (v) => { datosDe(estado.persona)[k] = v; }, enumerable: true, configurable: true });
+  }
 
   // ---------- Avisos ----------
   let avisoT = 0;
@@ -45,30 +61,30 @@
   // ---------- Tutoriales ----------
   const TUTORIALES = {
     bienvenida: [
-      { cara: "feliz", acc: "estrella", t: "¡Hola! Soy Luna", x: "Te acompaño en la misión para cuidar tu salud. Casi todo lo mido sola con tu reloj; tú solo me cuentas lo que yo no puedo ver." },
+      { cara: "feliz", acc: "estrella", t: "¡Hola! Soy Lunna", x: "Te acompaño en la misión para cuidar tu salud. Casi todo lo leo de tus sensores; tú solo me cuentas lo que yo no puedo ver." },
       { cara: "pensando", acc: null, t: "Así leo tus datos", x: "Comparo cada número con <b>tu propio normal</b>, no con el de otra persona. Verde es tu normal; ámbar, que vale la pena mirar." },
-      { cara: "tranquila", acc: "corazon", t: "Unos 8 minutos al día", x: "Registrar te da estrellas, no tener números perfectos. Y no diagnostico: si algo preocupa, te sugiero hablar con el médico de a bordo." },
+      { cara: "tranquila", acc: "corazon", t: "Unos 8 minutos al día", x: "Registrar te da estrellas, no tener números perfectos. Y no diagnostico: si algo preocupa, te sugiero hablar con la CMO." },
     ],
     corazon: [
-      { cara: "amor", acc: "corazon", t: "Tu corazón, en vivo", x: "Tu reloj me manda la frecuencia cardiaca cada segundo por Bluetooth. Si la correa queda floja, descarto esa lectura." },
+      { cara: "amor", acc: "corazon", t: "Tu corazón, en vivo", x: "Tus sensores me mandan la frecuencia cardiaca cada segundo por Bluetooth. Si pierden contacto con la piel, descarto esa lectura." },
       { cara: "energia", acc: "corazon", t: "Sesiones de ejercicio", x: "Pulsa <b>Iniciar sesión</b> al subir al CEVIS o a la cinta. Te digo cuánto tiempo pasaste en zona moderada e intensa." },
     ],
     sueno: [
-      { cara: "dormida", acc: "luna", t: "Tu sueño, sin hacer nada", x: "El reloj registra cuánto dormiste, cuánto tardaste en dormirte y cuántas veces despertaste." },
+      { cara: "dormida", acc: "luna", t: "Tu sueño, sin hacer nada", x: "Los sensores registran cuánto dormiste, cuánto tardaste en dormirte y cuántas veces despertaste." },
       { cara: "pensando", acc: "luna", t: "Deuda de sueño", x: "Si duermes menos que tu normal varias noches, se acumula. En la ISS la media fue de unas 6 horas." },
-      { cara: "tranquila", acc: "luna", t: "Un toque al despertar", x: "Mueve el deslizador para decirme cómo te sentiste. Eso no lo puede medir el reloj." },
+      { cara: "tranquila", acc: "luna", t: "Un toque al despertar", x: "Mueve el deslizador para decirme cómo te sentiste. Eso no lo puede medir ningún sensor." },
     ],
     comida: [
       { cara: "rica", acc: "manzana", t: "Registra tu comida", x: "Toca el icono de lo que comiste. Yo sumo calorías, proteína, sodio y calcio." },
       { cara: "pensando", acc: "manzana", t: "Comer de menos es lo más común", x: "En el espacio el apetito baja. Te muestro cuánto te falta para la meta del día." },
     ],
     glucosa: [
-      { cara: "tranquila", acc: "gota", t: "Glucosa continua", x: "Un parche en el brazo mide la glucosa cada pocos minutos. El reloj no puede medirla." },
-      { cara: "pensando", acc: "gota", t: "Glucómetro de dedo", x: "Si el médico de a bordo te mide con glucómetro, escribe aquí el número. El rango que uso es de la Tierra y lo marco así." },
+      { cara: "tranquila", acc: "gota", t: "Glucosa continua", x: "Un parche en el brazo mide la glucosa cada pocos minutos. Los sensores de piel no pueden medirla." },
+      { cara: "pensando", acc: "gota", t: "Glucómetro de dedo", x: "Si la CMO te mide con glucómetro, escribe aquí el número. El rango que uso es de la Tierra y lo marco así." },
     ],
     sintomas: [
       { cara: "empatica", acc: "curita", t: "Cuéntame cómo te sientes", x: "Dolor de espalda, dolor de cabeza y mareo son muy comunes en el espacio. Toca y desliza: es rápido." },
-      { cara: "tranquila", acc: "curita", t: "No diagnostico", x: "Si algo es fuerte o no mejora, te sugiero avisar al médico de a bordo. Esa decisión es de él." },
+      { cara: "tranquila", acc: "curita", t: "No diagnostico", x: "Si algo es fuerte o no mejora, te sugiero avisar a la CMO (médica de a bordo). Esa decisión es de él." },
     ],
     radiacion: [
       { cara: "radiacion", acc: "sol", t: "Clima espacial", x: "Mi pantalla cambia a un <b>sol</b> cuando hay una tormenta solar. Las partículas del Sol pueden subir tu dosis de radiación." },
@@ -113,7 +129,7 @@
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#tutorial").hidden) cerrarTutorial(); });
 
   function tutorialPrimeraVez(clave) {
-    if (DEMO) return;
+    if (DEMO || clave !== "bienvenida") return;
     const vistos = mem.leer("tutoriales", {});
     if (vistos[clave]) return;
     vistos[clave] = true;
@@ -121,37 +137,84 @@
     setTimeout(() => abrirTutorial(clave), 320);
   }
 
-  // ---------- Navegación ----------
-  let limpiar = null;
-  function ir(destino) {
+  // ---------- Navegación: barra flotante con 4 módulos (+ Ciclo para ellas) ----------
+  // Inicio · Registrar · Ciclo · Reportes · Configuración. Lunna (IA) vive en el botón flotante.
+  const TABS = [
+    { id: "hoy", t: "Inicio", ic: "casa" },
+    { id: "registrar", t: "Registrar", ic: "mas" },
+    { id: "ciclo", t: "Ciclo", ic: "flor", soloElla: true },
+    { id: "reportes", t: "Reportes", ic: "grafica" },
+    { id: "ajustes", t: "Ajustes", ic: "engrane" },
+  ];
+  // A qué pestaña pertenece cada pantalla (para marcarla y para el botón Volver).
+  const RAIZ = {
+    hoy: "hoy", equipo: "hoy", pared: "hoy", checkin: "hoy", ficha: "hoy", solar: "hoy",
+    registrar: "registrar", comida: "registrar", glucosa: "registrar", sintomas: "registrar", sueno: "registrar", corazon: "registrar",
+    fuerza: "registrar", mente: "registrar", form: "registrar",
+    ciclo: "ciclo",
+    reportes: "reportes", alertas: "reportes", pvt: "reportes", tierra: "reportes", signos: "reportes", radiacion: "reportes", cmo: "reportes", logros: "reportes",
+    ajustes: "ajustes", privacidad: "ajustes", lunaconf: "ajustes", ayuda: "ajustes", acerca: "ajustes",
+  };
+  let limpiar = null, actual = "hoy";
+  const raizDe = (d) => RAIZ[d.split(/[:-]/)[0]] || "hoy";
+  // Pila de navegación (bug 3): "Volver" regresa a la pantalla anterior y la pestaña marcada es
+  // la de origen. Tocar una pestaña reinicia la pila.
+  const ES_TAB = new Set(TABS.map((t) => t.id));
+  let pila = [], tabActiva = "hoy";
+  function pintarMenu() {
+    const ella = persona().sexo === "M", raiz = tabActiva;
+    $("#menu").innerHTML = TABS.filter((t) => !t.soloElla || ella).map((t) => `<button data-tab="${t.id}" class="${t.id === raiz ? "activo" : ""}" aria-current="${t.id === raiz ? "page" : "false"}">${ic(t.ic)}<span>${t.t}</span></button>`).join("");
+  }
+  function ir(destino, opc) {
+    opc = opc || {};
+    destino = destino || "hoy";
+    if (destino === "ciclo" && persona().sexo !== "M") destino = "hoy";
     if (limpiar) { limpiar(); limpiar = null; }
+    if (ES_TAB.has(destino)) { pila = []; tabActiva = destino; }
+    else if (!opc.volver && !opc.reemplazar && actual && actual !== destino) pila.push(actual);
+    if (!pila.length && !ES_TAB.has(destino)) tabActiva = raizDe(destino);
+    actual = destino;
+    if (estado.dia < 106 || estado.dia > M.ULTIMO_DIA) estado.dia = 112;
+    mem.guardar("persona", estado.persona);
+    mem.guardar("dia", estado.dia);
     if (destino !== "emergencia") actualizarFase();
     const p = $("#pantalla");
     p.innerHTML = "";
+    p.dataset.pantalla = destino.split(/[:-]/)[0];
+    const [nombre, arg] = destino.split(":");
     if (destino.startsWith("ficha-")) PANTALLAS.ficha(p, destino.slice(6));
-    else (PANTALLAS[destino] || PANTALLAS.hoy)(p);
+    else (PANTALLAS[nombre] || PANTALLAS.hoy)(p, arg);
     p.scrollTop = 0;
-    const raiz = ["hoy", "checkin", "logros", "ayuda"].includes(destino) ? destino : "hoy";
-    $$(".menu button").forEach((b) => b.classList.toggle("activo", b.dataset.ir === raiz));
+    if (lunaF) lunaF.actualizar(destino);
+    pintarMenu();
+    if (window.APP && window.APP.alIr) window.APP.alIr(destino);
     p.focus({ preventScroll: true });
   }
-  $$(".menu button").forEach((b) => b.addEventListener("click", () => ir(b.dataset.ir)));
+  $("#menu").addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (b) ir(b.dataset.tab); });
   $("#sos").addEventListener("click", () => ir("emergencia"));
   document.addEventListener("click", (e) => {
     const r = e.target.closest("[data-ref]");
-    if (r) aviso(D.REF[r.dataset.ref].texto);
+    if (r) return aviso(D.REF[r.dataset.ref].texto);
     const s = e.target.closest("[data-seccion]");
-    if (s) ir(s.dataset.seccion);
+    if (s) return ir(s.dataset.seccion);
+    const a = e.target.closest("[data-ir]");
+    if (a) return ir(a.dataset.ir);
     const v = e.target.closest("[data-volver]");
-    if (v) ir("hoy");
+    if (v) return volver(v.dataset.volver);
     const t = e.target.closest("[data-tutorial]");
     if (t) abrirTutorial(t.dataset.tutorial);
   });
 
+  /** Regresa a la pantalla anterior; si no hay, al destino indicado o a la pestaña de origen. */
+  function volver(porDefecto) {
+    const prev = pila.pop();
+    ir(prev || porDefecto || tabActiva, { volver: true });
+  }
+
   function cabecera(titulo, sub, clave, color, icono) {
     return `<div class="cabecera">
-      <button class="icono-btn" data-volver aria-label="Volver a Hoy">${ic("atras")}</button>
-      <div class="pastilla-ic" style="background:${color.fondo};color:${color.tinta}">${ic(icono)}</div>
+      <button class="icono-btn" data-volver aria-label="Volver">${ic("atras")}</button>
+      <div class="pastilla-ic" style="--ic1:${color.fondo};--ic2:${color.tinta}">${ic(icono)}</div>
       <div><h1>${titulo}</h1><div class="sub">${sub}</div></div>
       <span class="espacio"></span>
       <button class="icono-btn" data-tutorial="${clave}" aria-label="Ver tutorial">${ic("ayuda")}</button>
@@ -161,18 +224,18 @@
     return `<div class="luna-fila"><div class="luna-aqui"></div><div class="globo" aria-live="polite">${texto}</div></div>`;
   }
   const COLOR = {
-    corazon: { fondo: "#FFE6F0", tinta: "#D03C7C" },
-    sueno: { fondo: "#EEE6FF", tinta: "#6B3FD0" },
-    comida: { fondo: "#E3F6EC", tinta: "#17704A" },
-    glucosa: { fondo: "#E2F8FC", tinta: "#11638A" },
-    sintomas: { fondo: "#FFF3DA", tinta: "#8A5600" },
-    fuerza: { fondo: "#F3E6FE", tinta: "#8A2BD0" },
+    corazon: { fondo: "#FF6B8B", tinta: "#E0245E" },
+    sueno: { fondo: "#6C7CFF", tinta: "#3446D4" },
+    comida: { fondo: "#3DD68C", tinta: "#119B5A" },
+    glucosa: { fondo: "#38D1F0", tinta: "#0B8DB8" },
+    sintomas: { fondo: "#FFC23D", tinta: "#E08A00" },
+    fuerza: { fondo: "#5B8DFF", tinta: "#1F4FD8" },
   };
 
   function anillo(frac, centro) {
     const r = 54, c = 2 * Math.PI * r, f = Math.max(0, Math.min(1, frac));
     return `<div class="anillo"><svg viewBox="0 0 132 132" aria-hidden="true">
-      <defs><linearGradient id="grad-anillo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4FD2E9"/><stop offset="1" stop-color="#B541FA"/></linearGradient></defs>
+      <defs><linearGradient id="grad-anillo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4FD2E9"/><stop offset="1" stop-color="#1E3A8A"/></linearGradient></defs>
       <circle class="pista" cx="66" cy="66" r="${r}"/>
       <circle class="progreso" cx="66" cy="66" r="${r}" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - f)}"/>
     </svg><div class="centro">${centro}</div></div>`;
@@ -197,16 +260,16 @@
     const sec = [
       { id: "corazon", nombre: "Corazón", icono: "corazon", valor: "68", u: "lpm", ok: true, txt: "En tu normal" },
       { id: "sueno", nombre: "Sueño", icono: "luna", valor: fmt(s.horas), u: "h", ok: s.horas >= 6, txt: s.horas >= 6 ? "Bien" : "Poco" },
-      { id: "comida", nombre: "Comida", icono: "manzana", valor: Math.round((c.kcal / D.REF.kcal.meta) * 100), u: "%", ok: c.kcal >= 0.8 * D.REF.kcal.meta, txt: "de la meta" },
-      { id: "glucosa", nombre: "Glucosa", icono: "gota", valor: tir, u: "% rango", ok: tir >= 70, txt: "En rango" },
-      { id: "sintomas", nombre: "Síntomas", icono: "curita", valor: estado.dolor, u: "/10", ok: estado.dolor < 4, txt: "Dolor de espalda" },
-      { id: "fuerza", nombre: "Fuerza", icono: "pesa", valor: fmt(xRM), u: "× peso", ok: xRM >= D.REF.fuerza.min * 0.9, txt: "Estimada" },
+      { id: "comida", nombre: "Comida", icono: "manzana", valor: Math.round((c.kcal / D.REF.kcal.meta) * 100), u: "%", ok: c.kcal >= 0.8 * D.REF.kcal.meta, txt: "de la meta", sinRegistro: !estado.tocado.comida },
+      { id: "glucosa", nombre: "Tiempo en rango", icono: "gota", valor: tir, u: "% rango", ok: tir >= 70, txt: "En rango", sinRegistro: !estado.tocado.cgm },
+      { id: "sintomas", nombre: "Síntomas", icono: "curita", valor: estado.dolor, u: "/10", ok: estado.dolor < 4, txt: "Dolor de espalda", sinRegistro: !estado.tocado.sintomas },
+      { id: "fuerza", nombre: "Fuerza", icono: "pesa", valor: fmt(xRM), u: "× peso", ok: xRM >= D.REF.fuerza.min * 0.9, txt: "Estimada", sinRegistro: !estado.tocado.fuerza },
     ];
-    return sec;
+    return sec.map((x) => (x.sinRegistro ? { ...x, ok: true } : x));
   }
-  /** Fase de Luna según los signos: llena si todo está en su normal; mengua con cada alerta. */
+  /** Fase de Lunna según los signos: llena si todo está en su normal; mengua con cada alerta. */
   function actualizarFase() {
-    // El motor decide el estado; Luna solo lo refleja: llena en verde, menguante en ámbar, casi nueva en rojo.
+    // El motor decide el estado; Lunna solo lo refleja: llena en verde, menguante en ámbar, casi nueva en rojo.
     const n = M.evaluar(estado.persona, estado.dia).general;
     const alertas = resumen().filter((x) => !x.ok).length;
     LUNA.ponerFase(n === 2 ? 0.12 : n === 1 ? 0.55 : Math.max(0.75, 1 - 0.08 * alertas));
@@ -215,52 +278,342 @@
   }
 
 
-  /** Hoja con una región del cuerpo: sus indicadores, su peligro del HRP y por qué se mide. */
-  function abrirRegion(r) {
+  // ---------- Zoom al órgano y panel tecnológico ----------
+  const facil = (t) => 1 - Math.pow(1 - t, 3); // ease-out
+  /** Anima el viewBox de la figura hacia `destino` ([x, y, w, h]). */
+  // Curva suave al empezar y al terminar: el acercamiento no arranca ni frena de golpe.
+  const suave = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  const reducirMov = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function animarVista(svgEl, destino, ms, listo) {
+    cancelAnimationFrame(svgEl._anim || 0); // si había otra animación, esta sigue desde donde iba
+    const desde = svgEl.getAttribute("viewBox").split(/\s+/).map(Number);
+    if (reducirMov()) { svgEl.setAttribute("viewBox", destino.join(" ")); return listo && listo(); }
+    const t0 = performance.now();
+    (function paso(t) {
+      const k = suave(Math.min(1, (t - t0) / ms));
+      svgEl.setAttribute("viewBox", desde.map((a, i) => (a + (destino[i] - a) * k).toFixed(2)).join(" "));
+      if (k < 1) svgEl._anim = requestAnimationFrame(paso); else if (listo) listo();
+    })(t0);
+  }
+  /** Dónde quedará el centro de un órgano en pantalla cuando termine el acercamiento a `vista`. */
+  function puntoFinal(svgEl, el, vista, tel) {
+    const t = tel.getBoundingClientRect();
+    if (!svgEl || !el) return { x: t.width / 2, y: t.height / 2 };
+    const bb = el.getBBox(), r = svgEl.getBoundingClientRect();
+    const [vx, vy, vw, vh] = vista, esc = Math.min(r.width / vw, r.height / vh);
+    const x = r.left + (r.width - vw * esc) / 2 + (bb.x + bb.width / 2 - vx) * esc;
+    const y = r.top + (r.height - vh * esc) / 2 + (bb.y + bb.height / 2 - vy) * esc;
+    return { x: x - t.left, y: y - t.top };
+  }
+
+  /** Toca un órgano: la figura se acerca a él y la información sale de ahí hasta cubrir la pantalla. */
+  function abrirRegion(r, opc) {
+    opc = opc || {};
     const P = persona(), def = M.REGIONES[r], ev = M.evaluar(P.id, estado.dia);
+    const tel = $(".telefono");
+    const svgEl = $(".esc-lienzo .cuerpo-svg");
     const previo = document.activeElement;
+    const zoom = C.ZOOM[r] || C.VISTA;
+
+    // 1. Foco y acercamiento en la figura de Hoy.
+    if (svgEl) {
+      svgEl.classList.add("con-foco");
+      $$(".org, .halo", svgEl).forEach((el) => el.classList.toggle("activa", el.dataset.region === r));
+    }
+    const nombre = r === "radiacion" ? "Radiación · todo el cuerpo" : def.nombre;
     const tarjetas = def.ind.map((k) => {
       const e = ev.ind[k], v = valorDe(P.id, k, e), n = ev.nivelDe(k), ind = M.IND[k];
-      return `<button class="reg-ind" data-ficha="${ind.seccion && P.id === "MS-2" ? ind.seccion : "ficha-" + k}">
+      return `<button class="hud-dato" data-ficha="${ind.seccion && P.id === "MS-2" ? ind.seccion : "ficha-" + k}">
         <span class="fila-sup"><b>${ind.nombre}</b>${sem(n)}</span>
         <span class="v">${v.v}<small>${v.u}</small></span>
         ${etiquetas(k, e)}
         ${grafNormal(P.id, k, estado.dia, true)}
-        <span class="ver">¿Por qué se mide esto? →</span>
+        <span class="ver">Ficha completa · por qué se mide →</span>
       </button>`;
     }).join("");
     let extra = "";
-    if (def.cabina === "co2") extra += `<div class="reg-meta">${sem(ev.cabina.co2 > 3 ? 1 : 0, false)} CO₂ que respiras (cabina): <b>${fmt(ev.cabina.co2)} mmHg</b> · [A] ≤ 3 promedio de 1 h</div>`;
-    if (def.cabina === "radiacion") extra += `<div class="reg-meta">${sem(ev.regiones.radiacion, false)} Tasa de dosis: <b>${ev.cabina.tasa.toLocaleString("es-ES")} µSv/h</b> · [A] diseño &lt; 54<br>Dosis de la misión: <b>${ev.cabina.dosisMision} de 600 mSv</b> [A] · dato simulado</div>`;
-    if (def.metas && def.metas.includes("agua")) { const a = M.SERIES[P.id].agua[M.idx(estado.dia)]; extra += `<div class="reg-meta">Agua de hoy: <b>${fmt(a)} L</b> de ${fmt((32 * P.masaKg / 1000).toFixed(1))} L · meta [A] 32 mL/kg</div>`; }
-    if (def.metas && def.metas.includes("ejercicio")) { const m = M.SERIES[P.id].ejercicio[M.idx(estado.dia)]; extra += `<div class="reg-meta">Ejercicio de hoy: <b>${m} min</b> de 90 · meta [A] ISS 1,5 h/día (ARED, CEVIS, T2)</div>`; }
-    if (def.nota) extra += `<p class="reg-meta">${def.nota}</p>`;
-    const nombre = r === "radiacion" ? "Radiación (todo el cuerpo)" : def.nombre;
-    const hoja = document.createElement("div");
-    hoja.className = "hoja reg-hoja";
-    hoja.setAttribute("role", "dialog");
-    hoja.setAttribute("aria-modal", "true");
-    hoja.setAttribute("aria-label", nombre);
-    hoja.innerHTML = `<div class="hoja-fondo" data-cerrar></div>
-      <div class="hoja-panel">
-        <button class="icono-btn hoja-x" data-cerrar aria-label="Cerrar">${ic("cerrar")}</button>
-        <h2>${nombre}</h2>
-        <span class="peligro">Peligro del HRP: ${def.peligro}</span>
-        ${def.privada ? "" : sem(ev.regiones[r])}
-        ${tarjetas}${extra}
-        <p class="no-diag">Luna avisa, no diagnostica. Datos simulados.</p>
-      </div>`;
-    document.body.append(hoja);
-    const cerrar = () => { hoja.remove(); document.removeEventListener("keydown", tecla); if (previo && previo.isConnected) previo.focus(); };
+    if (def.cabina === "co2") extra += `<div class="hud-meta">${sem(ev.cabina.co2 > 3 ? 1 : 0, false)} CO₂ que respiras (cabina): <b>${fmt(ev.cabina.co2)} mmHg</b> · [A] ≤ 3 promedio de 1 h</div>`;
+    if (def.cabina === "radiacion") extra += `<div class="hud-meta">${sem(ev.regiones.radiacion, false)} Tasa de dosis: <b>${ev.cabina.tasa.toLocaleString("es-ES")} µSv/h</b> · [A] diseño &lt; 54<br>Tu dosis de la misión: <b>${fmt(M.dosisPersonal(P.id, estado.dia).mision)} de 600 mSv</b>${estado.dia >= 115 ? ` · del evento: <b>${fmt(M.dosisPersonal(P.id, estado.dia).evento)} de 250 mSv</b>` : ""} [A] · dato simulado</div>`;
+    if (def.metas && def.metas.includes("agua")) { const a = M.SERIES[P.id].agua[M.idx(estado.dia)]; extra += `<div class="hud-meta">Agua de hoy: <b>${fmt(a)} L</b> de ${fmt((32 * P.masaKg / 1000).toFixed(1))} L · meta [A] 32 mL/kg</div>`; }
+    if (def.metas && def.metas.includes("ejercicio")) { const m = M.SERIES[P.id].ejercicio[M.idx(estado.dia)]; extra += `<div class="hud-meta">Ejercicio de hoy: <b>${m} min</b> de 90 · meta [A] ISS 1,5 h/día (ARED, CEVIS, T2)</div>`; }
+    if (def.nota) extra += `<div class="hud-meta">${def.nota}</div>`;
+
+    const hud = document.createElement("section");
+    hud.className = "hud oscuro";
+    hud.setAttribute("role", "dialog");
+    hud.setAttribute("aria-modal", "true");
+    hud.setAttribute("aria-label", nombre);
+    hud.innerHTML = `
+      <div class="hud-cab"><span class="hud-ruta">Escaneo · ${P.nombre} · día ${estado.dia}</span><span class="espacio"></span>
+        <button class="hud-x" data-cerrar aria-label="Cerrar y volver al cuerpo">${ic("cerrar")}</button></div>
+      <div class="hud-visor">${C.svg({ sexo: P.sexo, regiones: ev.regiones, activa: r, vista: zoom, marcas: false })}<span class="anillo-hud"></span><span class="esquinas"></span></div>
+      <h2>${nombre}</h2>
+      <div class="hud-etqs"><span class="hud-peligro">Peligro HRP · ${def.peligro}</span>${def.privada ? `<span class="hud-peligro">Privado · solo tú</span>` : sem(ev.regiones[r])}</div>
+      ${tarjetas}${extra}
+      <p class="no-diag">Lunna avisa, no diagnostica · datos simulados</p>`;
+
+    // 2. El panel nace en el punto del órgano.
+    // El panel nace donde quedará el órgano al terminar el acercamiento, y empieza a crecer a mitad
+    // del zoom: las dos animaciones se encadenan sin pausa.
+    const origen = () => {
+      const o = svgEl && $(`[data-region="${r}"]`, svgEl);
+      const pt = puntoFinal(svgEl, o, zoom, tel);
+      hud.style.setProperty("--ox", `${pt.x}px`);
+      hud.style.setProperty("--oy", `${pt.y}px`);
+    };
+    const ZOOM_MS = 620;
+    const abrir = () => {
+      origen();
+      tel.append(hud);
+      requestAnimationFrame(() => requestAnimationFrame(() => hud.classList.add("abierto")));
+      $(".hud-x", hud).focus({ preventScroll: true });
+    };
+    if (opc.directo) {
+      // Al volver de una ficha: el órgano ya está acercado y su panel abierto, sin animación de entrada.
+      if (svgEl) svgEl.setAttribute("viewBox", zoom.join(" "));
+      hud.classList.add("sin-trans");
+      abrir();
+      hud.classList.add("abierto");
+      requestAnimationFrame(() => requestAnimationFrame(() => hud.classList.remove("sin-trans")));
+    } else if (svgEl && !reducirMov()) { animarVista(svgEl, zoom, ZOOM_MS); setTimeout(abrir, ZOOM_MS * 0.45); }
+    else { if (svgEl) animarVista(svgEl, zoom, 0); abrir(); }
+
+    const cerrar = (luego) => {
+      document.removeEventListener("keydown", tecla);
+      origen();
+      hud.classList.remove("abierto");
+      // El alejamiento empieza mientras el panel se recoge hacia el órgano: sin corte entre los dos.
+      const alejar = () => {
+        if (!svgEl || !svgEl.isConnected) return;
+        animarVista(svgEl, C.VISTA, ZOOM_MS, () => {
+          svgEl.classList.remove("con-foco");
+          $$(".org, .halo", svgEl).forEach((el) => el.classList.remove("activa"));
+        });
+      };
+      const fin = () => {
+        hud.remove();
+        if (!luego && actual.startsWith("hoy:")) actual = "hoy"; // cerrado a mano: Inicio vuelve a ser el cuerpo entero
+        if (luego) luego(); else if (previo && previo.isConnected) previo.focus({ preventScroll: true });
+      };
+      if (reducirMov()) { alejar(); fin(); return; }
+      if (!luego) setTimeout(alejar, 200);
+      setTimeout(fin, 520);
+    };
     const tecla = (e) => { if (e.key === "Escape") cerrar(); };
     document.addEventListener("keydown", tecla);
-    hoja.addEventListener("click", (e) => {
+    hud.addEventListener("click", (e) => {
       if (e.target.closest("[data-cerrar]")) return cerrar();
       const f = e.target.closest("[data-ficha]");
-      if (f) { cerrar(); ir(f.dataset.ficha); }
+      // Se apila "hoy:<órgano>": al volver de la ficha se reabre este órgano, no el cuerpo entero.
+      if (f) cerrar(() => { actual = "hoy:" + r; ir(f.dataset.ficha); });
     });
-    $(".hoja-x", hoja).focus();
   }
+
+  // ---------- Lunna flotante (como AssistiveTouch) ----------
+  /** Burbuja que se arrastra, se pega al borde y, al tocarla, cuenta lo que Lunna ve hoy. */
+  function crearLunaFlotante() {
+    const tel = $(".telefono");
+    const boton = document.createElement("button");
+    boton.className = "luna-boton";
+    boton.setAttribute("aria-label", "Lunna: lo que ve hoy");
+    boton.innerHTML = `<span class="luna-mini"></span><span class="insignia" hidden></span>`;
+    tel.append(boton);
+    const avatar = LUNA.crear($(".luna-mini", boton), { cara: "tranquila", tam: 46 });
+
+    const MARGEN = 8;
+    const limites = () => {
+      const t = tel.getBoundingClientRect();
+      const arriba = ($(".barra-estado", tel)?.offsetHeight || 40) + 4;
+      const abajo = t.height - ($(".menu", tel)?.offsetHeight || 70) - boton.offsetHeight - 26; // la barra flota a 14 px del borde
+      return { w: t.width, arriba, abajo };
+    };
+    let pos = mem.leer("luna-pos3", { lado: "izq", y: 1 });
+    const colocar = (animar) => {
+      const L = limites();
+      const x = pos.lado === "izq" ? MARGEN : L.w - boton.offsetWidth - MARGEN;
+      const y = L.arriba + (L.abajo - L.arriba) * Math.min(1, Math.max(0, pos.y));
+      boton.style.transition = animar ? "" : "none";
+      boton.style.left = `${x}px`;
+      boton.style.top = `${y}px`;
+      if (!animar) requestAnimationFrame(() => (boton.style.transition = ""));
+    };
+    requestAnimationFrame(() => colocar(false));
+    window.addEventListener("resize", () => colocar(false));
+
+    // Se atenúa cuando nadie la usa, como AssistiveTouch.
+    let tQuieta = 0;
+    const despertar = () => { boton.classList.remove("quieta"); clearTimeout(tQuieta); tQuieta = setTimeout(() => boton.classList.add("quieta"), 3000); };
+    despertar();
+
+    // Mientras haces scroll se repliega medio oculta contra su borde y vuelve al soltar (bug 12).
+    let tScroll = 0;
+    $("#pantalla").addEventListener("scroll", () => {
+      boton.classList.add("replegada", pos.lado === "izq" ? "a-la-izq" : "a-la-der");
+      boton.classList.remove(pos.lado === "izq" ? "a-la-der" : "a-la-izq");
+      clearTimeout(tScroll);
+      tScroll = setTimeout(() => boton.classList.remove("replegada"), 700);
+    }, { passive: true });
+
+    // Arrastrar.
+    let arr = null;
+    boton.addEventListener("pointerdown", (e) => {
+      despertar();
+      const b = boton.getBoundingClientRect();
+      arr = { id: e.pointerId, dx: e.clientX - b.left, dy: e.clientY - b.top, x0: e.clientX, y0: e.clientY, movio: false };
+      boton.setPointerCapture(e.pointerId);
+    });
+    boton.addEventListener("pointermove", (e) => {
+      if (!arr || e.pointerId !== arr.id) return;
+      if (!arr.movio && Math.hypot(e.clientX - arr.x0, e.clientY - arr.y0) < 6) return;
+      arr.movio = true;
+      boton.classList.add("arrastrando");
+      const t = tel.getBoundingClientRect();
+      boton.style.left = `${e.clientX - t.left - arr.dx}px`;
+      boton.style.top = `${e.clientY - t.top - arr.dy}px`;
+    });
+    const soltar = (e) => {
+      if (!arr || e.pointerId !== arr.id) return;
+      const movio = arr.movio;
+      arr = null;
+      boton.classList.remove("arrastrando");
+      if (!movio) return;
+      const L = limites();
+      const b = boton.getBoundingClientRect(), t = tel.getBoundingClientRect();
+      const cx = b.left + b.width / 2 - t.left, y = b.top - t.top;
+      pos = { lado: cx < L.w / 2 ? "izq" : "der", y: (Math.min(L.abajo, Math.max(L.arriba, y)) - L.arriba) / Math.max(1, L.abajo - L.arriba) };
+      mem.guardar("luna-pos3", pos);
+      colocar(true);
+      boton.dataset.arrastrada = "1";
+      setTimeout(() => delete boton.dataset.arrastrada, 50);
+    };
+    boton.addEventListener("pointerup", soltar);
+    boton.addEventListener("pointercancel", soltar);
+
+    // Panel con lo que Lunna ve.
+    let panel = null;
+    const abrirPanel = () => {
+      const P = persona(), L = M.lunaDice(P.id, estado.dia);
+      const hall = L.hallazgos.map((h) => `
+        <article class="hallazgo n${h.nivel}">
+          <div class="hallazgo-cab">${sem(h.nivel, false)}<b>${h.titulo}</b><code>${h.id}</code></div>
+          <p>${h.frase}</p>
+          <ul>${h.evidencia.map((x) => `<li>${x}</li>`).join("")}</ul>
+          <div class="hacer">${ic("check", "ic-sm")}<span>${h.hacer}</span></div>
+          <div class="pie">Umbral: ${h.umbral}${h.simulado ? " · dato simulado" : ""}</div>
+        </article>`).join("");
+      const velo = document.createElement("div");
+      velo.className = "luna-velo";
+      panel = document.createElement("section");
+      panel.className = "luna-panel oscuro";
+      panel.setAttribute("role", "dialog");
+      panel.setAttribute("aria-modal", "true");
+      panel.setAttribute("aria-label", "Lo que Lunna ve hoy");
+      // Todo lo de IA vive aquí: lo que ve hoy, cómo monitorea, clima espacial, qué procesa, biblioteca y hablar.
+      const SECCIONES = [["hoy", "Hoy"], ["monitoreo", "Cómo te monitorea"], ["clima", "Clima espacial"], ["procesa", "Qué procesa"], ["biblioteca", "Biblioteca"], ["hablar", "Hablar"]];
+      const seccionHoy = `${hall}
+        ${L.bien.length ? `<p class="bien">${hall ? "Lo demás va bien: " : "Con tus datos de hoy: "}${L.bien.join("; ")}.</p>` : ""}
+        <p class="no-diag">Lunna avisa, no diagnostica: cuenta lo que miden tus sensores contra tu normal</p>`;
+      // Secciones deslizables: en celular o iPad se cambia con el dedo; en escritorio, con las flechas,
+      // arrastrando o con ← →. Los segmentos de abajo marcan dónde estás.
+      const N = SECCIONES.length, dos = (i) => String(i + 1).padStart(2, "0");
+      panel.innerHTML = `
+        <div class="luna-panel-cab"><span class="luna-grande"></span><div><div class="t">Lunna · día ${estado.dia}</div><div class="resumen">${L.resumen}</div></div>
+          <span class="espacio"></span><button class="hud-x" data-cerrar aria-label="Cerrar">${ic("cerrar")}</button></div>
+        <div class="lc-nav">
+          <button class="lc-flecha" data-lc="-1" aria-label="Sección anterior">${ic("atras")}</button>
+          <div class="lc-titulo" aria-live="polite"><span class="lc-num">${dos(0)} / ${dos(N - 1)}</span><b class="lc-nombre">${SECCIONES[0][1]}</b></div>
+          <button class="lc-flecha" data-lc="1" aria-label="Sección siguiente">${ic("atras", "voltear")}</button>
+        </div>
+        <div class="lc-segmentos" role="tablist" aria-label="Secciones de Lunna">${SECCIONES.map(([k, t], i) => `<button role="tab" data-sec="${k}" aria-label="${t}" aria-selected="${i === 0}"><i></i></button>`).join("")}</div>
+        <div class="lc-pista" tabindex="0">${SECCIONES.map(([k, t]) => `<section class="lc-slide" data-slide="${k}" role="tabpanel" aria-label="${t}"><span class="lc-barrido" aria-hidden="true"></span><div class="lc-cont"></div></section>`).join("")}</div>
+        <p class="lc-ayuda">${ic("atras", "ic-sm")} Desliza para cambiar de sección ${ic("atras", "ic-sm voltear")}</p>`;
+      const pista = $(".lc-pista", panel), slides = $$(".lc-slide", panel);
+      slides.forEach((sl, i) => {
+        const cont = $(".lc-cont", sl), k = SECCIONES[i][0];
+        if (k === "hoy") cont.innerHTML = seccionHoy;
+        else if (window.APP.panelLuna && window.APP.panelLuna[k]) window.APP.panelLuna[k](cont);
+      });
+      let activo = 0;
+      const irA = (i) => {
+        i = Math.max(0, Math.min(N - 1, i));
+        pista.scrollTo({ left: i * pista.clientWidth, behavior: reducirMov() ? "auto" : "smooth" });
+      };
+      const marcar = (i) => {
+        if (i === activo) return;
+        const dir = i > activo ? "der" : "izq";
+        activo = i;
+        const tit = $(".lc-titulo", panel);
+        $(".lc-num", tit).textContent = `${dos(i)} / ${dos(N - 1)}`;
+        $(".lc-nombre", tit).textContent = SECCIONES[i][1];
+        tit.classList.remove("entra-der", "entra-izq"); void tit.offsetWidth; tit.classList.add("entra-" + dir);
+        $$("[data-sec]", panel).forEach((x, k) => x.setAttribute("aria-selected", String(k === i)));
+        slides[i].classList.remove("barre"); void slides[i].offsetWidth; slides[i].classList.add("barre");
+        $(".lc-flecha[data-lc='-1']", panel).disabled = i === 0;
+        $(".lc-flecha[data-lc='1']", panel).disabled = i === N - 1;
+      };
+      // Profundidad: las secciones que se alejan del centro se encogen, se atenúan y se desenfocan.
+      let rafP = 0;
+      pista.addEventListener("scroll", () => {
+        cancelAnimationFrame(rafP);
+        rafP = requestAnimationFrame(() => {
+          const x = pista.scrollLeft / Math.max(1, pista.clientWidth);
+          slides.forEach((sl, k) => sl.style.setProperty("--d", Math.min(1, Math.abs(k - x)).toFixed(3)));
+          marcar(Math.round(x));
+        });
+      }, { passive: true });
+      // Arrastrar con el ratón (en táctil ya desliza solo).
+      let arr = null;
+      pista.addEventListener("pointerdown", (e) => { if (e.pointerType !== "mouse" || e.target.closest("button, input, textarea, a, summary")) return; arr = { x: e.clientX, s: pista.scrollLeft }; pista.classList.add("arrastrando"); });
+      window.addEventListener("pointermove", (e) => { if (arr) pista.scrollLeft = arr.s - (e.clientX - arr.x); });
+      window.addEventListener("pointerup", () => { if (!arr) return; arr = null; pista.classList.remove("arrastrando"); irA(Math.round(pista.scrollLeft / pista.clientWidth)); });
+      panel.addEventListener("keydown", (e) => { if (e.target.closest("input, textarea")) return; if (e.key === "ArrowRight") irA(activo + 1); if (e.key === "ArrowLeft") irA(activo - 1); });
+      panel.addEventListener("click", (e) => {
+        const f = e.target.closest("[data-lc]"); if (f) return irA(activo + Number(f.dataset.lc));
+        const b = e.target.closest("[data-sec]"); if (b) irA(SECCIONES.findIndex(([k]) => k === b.dataset.sec));
+      });
+      requestAnimationFrame(() => { $(".lc-flecha[data-lc='-1']", panel).disabled = true; slides.forEach((sl, k) => sl.style.setProperty("--d", k ? 1 : 0)); });
+      if (window.APP.alAbrirLuna) setTimeout(() => window.APP.alAbrirLuna(panel), 0);
+      const t = tel.getBoundingClientRect(), b = boton.getBoundingClientRect();
+      panel.style.setProperty("--ox", `${b.left + b.width / 2 - t.left - 14}px`);
+      panel.style.setProperty("--oy", `${b.top + b.height / 2 - t.top - 64}px`);
+      tel.append(velo, panel);
+      LUNA.crear($(".luna-grande", panel), { cara: L.cara, tam: 54 });
+      requestAnimationFrame(() => requestAnimationFrame(() => { velo.classList.add("abierto"); panel.classList.add("abierto"); }));
+      boton.hidden = true;
+      const cerrar = () => {
+        document.removeEventListener("keydown", tecla);
+        velo.classList.remove("abierto");
+        panel.classList.remove("abierto");
+        setTimeout(() => { velo.remove(); panel && panel.remove(); panel = null; boton.hidden = false; boton.focus({ preventScroll: true }); despertar(); }, 260);
+      };
+      const tecla = (e) => { if (e.key === "Escape") cerrar(); };
+      document.addEventListener("keydown", tecla);
+      velo.addEventListener("click", cerrar);
+      panel.addEventListener("click", (e) => {
+        if (e.target.closest("[data-cerrar]")) return cerrar();
+        const irA = e.target.closest("[data-ir]"); if (irA) { e.stopPropagation(); cerrar(); ir(irA.dataset.ir); }
+      });
+      $(".hud-x", panel).focus({ preventScroll: true });
+    };
+    boton.addEventListener("click", () => { if (!boton.dataset.arrastrada) abrirPanel(); });
+
+    return {
+      /** Se llama en cada cambio de pantalla: cara, insignia y visibilidad. */
+      actualizar(destino) {
+        boton.hidden = destino === "emergencia" || !!panel;
+        const L = M.lunaDice(estado.persona, estado.dia);
+        const n = L.hallazgos.filter((h) => h.nivel > 0);
+        const ins = $(".insignia", boton);
+        ins.hidden = !n.length;
+        ins.textContent = n.length;
+        ins.classList.toggle("n2", n.some((h) => h.nivel === 2));
+        avatar.poner(L.cara);
+        boton.setAttribute("aria-label", `Lunna: ${n.length ? `${n.length} cosa${n.length > 1 ? "s" : ""} que mirar hoy` : "todo en tu normal"}. Toca para ver lo que ve.`);
+        requestAnimationFrame(() => colocar(false));
+      },
+    };
+  }
+  let lunaF = null;
 
   // ---------- Integración del módulo 1: semáforo con forma, tu normal y fichas ----------
   const ESTADO_TXT = { 0: "En tu normal", 1: "Atención", 2: "Actúa ahora", nd: "Sin dato" };
@@ -274,6 +627,8 @@
   function etiquetas(k, e) {
     const ind = M.IND[k];
     const t = [];
+    if (e && e.ajusteCiclo) t.push(`<span class="etq etq-prop">ajustado por fase lútea</span>`);
+    if (e && e.registrado) t.push(`<span class="etq etq-reg">registrado${e.registrado.hora ? " " + e.registrado.hora : ""}</span>`);
     if (!ind.sinNormal) t.push(`<span class="etq etq-normal">tu normal</span>`);
     if (ind.abs) t.push(`<span class="ref ref-${ind.abs.tipo}" title="${ind.abs.texto}">${ic(ind.abs.tipo === "A" ? "escudo" : "info", "ic-sm")}${ind.abs.tipo === "A" ? "NASA" : "Tierra"}</span>`);
     if (ind.abs && ind.abs.propuesta) t.push(`<span class="etq etq-prop">propuesta</span>`);
@@ -286,13 +641,41 @@
     const ind = M.IND[k];
     const u = e.valor != null ? e.valor : e.ultimo ? e.ultimo.valor : null;
     if (u == null) return { v: "–", u: ind.unidad };
-    if (k === "presion") return { v: `${u}/${M.SERIES[pid].diastolica[M.idx(e.ultimo.dia)]}`, u: "mmHg" };
+    if (k === "presion") return { v: `${u}/${M.serieCon(pid, "diastolica")[M.idx(e.ultimo.dia)]}`, u: "mmHg" };
     if (k === "sueno") return { v: fmt(u.toFixed(1)), u: "h" };
     if (ind.ic) return { v: `≈${u}`, u: `${ind.unidad} (${u - ind.ic}–${u + ind.ic})` };
     return { v: fmt(ind.dec ? u.toFixed(ind.dec) : u), u: ind.unidad };
   }
   /** Serie de 14 días contra la franja de tu normal (RF-01-03). */
+  /** Presión como se mide: una barra por día de la diastólica a la sistólica, con los cortes 130/80 (AHA). */
+  function grafPresion(pid, dia, mini) {
+    const e = M.estadoIndicador(pid, "presion", dia);
+    const i0 = M.idx(dia) - (e.historia.length - 1);
+    const dias = M.serieCon(pid, "diastolica").slice(i0, i0 + e.historia.length);
+    const pares = e.historia.map((s, i) => (s != null && dias[i] != null ? [s, dias[i]] : null));
+    const v = pares.filter(Boolean);
+    if (v.length < 2) return `<div class="tenue-12">Aún no hay suficientes días.</div>`;
+    const W = 320, H = mini ? 44 : 140, mi = mini ? 2 : 30, md = 8, ma = 8, mb = mini ? 4 : 18;
+    const ext = [...v.flat(), ...(mini ? [] : [130, 80])];
+    let lo = Math.min(...ext) - 4, hi = Math.max(...ext) + 4;
+    const x = (i) => mi + 6 + (i / Math.max(1, pares.length - 1)) * (W - mi - md - 12);
+    const y = (n) => ma + (1 - (n - lo) / (hi - lo)) * (H - ma - mb);
+    const ult = pares.length - 1, nivel = M.evaluar(pid, dia).nivelDe("presion");
+    const colorHoy = ["var(--verde)", "var(--ambar)", "var(--rojo)"][nivel || 0];
+    const ancho = mini ? 4 : 7;
+    return `<svg class="normal-graf graf-presion ${mini ? "mini" : ""}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Presión arterial, sistólica y diastólica de los últimos ${pares.length} días">
+      ${mini ? "" : `<line class="umbral" x1="${mi}" x2="${W - md}" y1="${y(130)}" y2="${y(130)}"/><text x="${W - md}" y="${y(130) - 3}" text-anchor="end">130</text>
+        <line class="umbral" x1="${mi}" x2="${W - md}" y1="${y(80)}" y2="${y(80)}"/><text x="${W - md}" y="${y(80) - 3}" text-anchor="end">80</text>`}
+      ${pares.map((pp, i) => (pp ? `<g class="pa-dia${i === ult ? " pa-hoy" : ""}"${i === ult ? ` style="--c:${colorHoy}"` : ""}>
+        <line x1="${x(i)}" x2="${x(i)}" y1="${y(pp[0])}" y2="${y(pp[1])}" vector-effect="non-scaling-stroke"/>
+        <line x1="${x(i) - ancho / 2}" x2="${x(i) + ancho / 2}" y1="${y(pp[0])}" y2="${y(pp[0])}" vector-effect="non-scaling-stroke"/>
+        <line x1="${x(i) - ancho / 2}" x2="${x(i) + ancho / 2}" y1="${y(pp[1])}" y2="${y(pp[1])}" vector-effect="non-scaling-stroke"/></g>` : "")).join("")}
+      ${mini ? "" : `<text x="${mi - 4}" y="${y(hi - 4) + 3}" text-anchor="end">${Math.round(hi - 4)}</text><text x="${mi - 4}" y="${y(lo + 4) + 3}" text-anchor="end">${Math.round(lo + 4)}</text>
+        <text x="${x(0)}" y="${H - 4}">Día ${dia - ult}</text><text x="${x(ult)}" y="${H - 4}" text-anchor="end">Hoy</text>`}
+    </svg>`;
+  }
   function grafNormal(pid, k, dia, mini) {
+    if (k === "presion") return grafPresion(pid, dia, mini);
     const e = M.estadoIndicador(pid, k, dia);
     const ind = M.IND[k];
     const h = e.historia;
@@ -335,19 +718,32 @@
       <h3>${ic(ind.icono || "info")} ${ind.nombre} · ${persona().nombre}</h3>
       <div class="valor-grande"><b>${v.v}</b><span class="u">${v.u}</span>${sem(nivel)}</div>
       ${etiquetas(k, e)}
+      ${k === "presion" ? `<div class="pa-leyenda"><span><i class="pa-sis"></i>Sistólica (arriba)</span><span><i class="pa-dia-i"></i>Diastólica (abajo)</span><span>mmHg · manguito</span></div>` : ""}
       ${grafNormal(pid, k, estado.dia)}
       <div class="tenue-12">${e.normal ? `Últimos 14 días · la franja es tu normal (${M.texto(k, e.normal.banda[0])} a ${M.texto(k, e.normal.banda[1])})` : ind.abs ? `Sin tu normal: se compara con el umbral (${ind.abs.texto})` : ""}</div>
     </div>`;
   }
 
+  // Duración del tránsito a Marte en el escenario: el día 112 faltan 98 días (Ciclo, anticonceptivos).
+  const MISION = { nombre: "Tránsito a Marte", dias: 210 };
+  /** Progreso de la misión: día actual contra la duración total. */
+  function barraMision() {
+    const pct = Math.max(0, Math.min(100, (estado.dia / MISION.dias) * 100));
+    const faltan = Math.max(0, MISION.dias - estado.dia);
+    return `<div class="mision" role="progressbar" aria-valuemin="0" aria-valuemax="${MISION.dias}" aria-valuenow="${estado.dia}" aria-label="${MISION.nombre}: día ${estado.dia} de ${MISION.dias}">
+      <div class="mision-txt"><span>${MISION.nombre}</span><span><b>Día ${estado.dia}</b> de ${MISION.dias}</span></div>
+      <div class="mision-barra"><i style="width:${pct.toFixed(1)}%"></i><span class="mision-nave" style="left:${pct.toFixed(1)}%">${ic("cohete", "ic-sm")}</span></div>
+      <div class="mision-pie"><span>Tierra</span><span>${Math.round(pct)} % · faltan ${faltan} días</span><span>Marte</span></div>
+    </div>`;
+  }
+
   // ---------- Pantallas ----------
   const PANTALLAS = {
-    hoy(p) {
+    hoy(p, arg) {
+      delete p.dataset.reabierto; // permite reabrir el órgano al volver de una ficha
       const sec = resumen();
       const P = persona();
       const ev = M.evaluar(P.id, estado.dia);
-      const L = M.lunaDice(P.id, estado.dia);
-      const esAna = P.id === "MS-2"; // las secciones detalladas de la maqueta (comida, síntomas, fuerza) son de Ana
       // Mosaico (RF-01-02): los seis del reto siempre visibles, más las secciones de Leo.
       const tile = (id, nombre, icono, color, k, leo) => {
         let valor, u, n, txt;
@@ -356,93 +752,70 @@
           valor = vv.v; u = vv.u; n = ev.nivelDe(k);
           txt = ESTADO_TXT[n == null ? "nd" : n];
         } else {
-          valor = leo.valor; u = leo.u; n = esAna ? (leo.ok ? 0 : 1) : null; txt = esAna ? leo.txt : "Ver detalle";
+          valor = leo.sinRegistro ? "–" : leo.valor; u = leo.sinRegistro ? "" : leo.u; n = leo.sinRegistro ? null : (leo.ok ? 0 : 1); txt = leo.sinRegistro ? "Sin registro hoy" : leo.txt;
         }
-        const destino = k && !(M.IND[k].seccion && esAna) ? `ficha-${k}` : id;
-        return `<button data-seccion="${destino}" aria-label="${nombre}: ${valor} ${u}, ${ESTADO_TXT[n == null ? "nd" : n]}">
-          <div class="fila" style="gap:8px"><div class="pastilla-ic" style="width:32px;height:32px;border-radius:11px;background:${color.fondo};color:${color.tinta}">${ic(icono)}</div><span class="nombre">${nombre}</span></div>
+        const destino = k && !M.IND[k].seccion ? `ficha-${k}` : id;
+        const reg = k && ev.ind[k].registrado;
+        return `<button class="tile" data-seccion="${destino}" title="${txt}${reg ? ` · registrado ${reg.hora || ""}` : ""}" aria-label="${nombre}: ${valor} ${u}, ${txt}">
+          <span class="tile-punto tp-${claseN(n)}" aria-hidden="true"><svg viewBox="-8 -8 16 16">${C.forma(n, 0, 0, 6)}</svg></span>
+          <div class="fila" style="gap:8px"><div class="pastilla-ic" style="--ic1:${color.fondo};--ic2:${color.tinta}">${ic(icono)}</div><span class="nombre">${nombre}</span></div>
           <div class="valor">${valor}<small>${u}</small></div>
-          <span class="estado estado-${claseN(n)}">${sem(n, txt)}</span>
         </button>`;
       };
       const S = Object.fromEntries(sec.map((x) => [x.id, x]));
       const tiles = [
         tile("corazon", "Corazón", "corazon", COLOR.corazon, "fc"),
         tile("sueno", "Sueño", "luna", COLOR.sueno, "sueno"),
-        tile("presion", "Presión", "gota", { fondo: "#FFE6F0", tinta: "#B0306A" }, "presion"),
-        tile("temperatura", "Temperatura", "fuego", { fondo: "#FFF3DA", tinta: "#8A5600" }, "temperatura"),
-        tile("animo", "Ánimo", "chispa", { fondo: "#EEE6FF", tinta: "#6B3FD0" }, "animo"),
-        tile("glucosa", "Glucosa", "gota", COLOR.glucosa, "glucosa"),
+        tile("presion", "Presión", "gota", { fondo: "#FF7A9A", tinta: "#D9365F" }, "presion"),
+        tile("temperatura", "Temperatura", "fuego", { fondo: "#FF9F45", tinta: "#E8620C" }, "temperatura"),
+        tile("animo", "Ánimo", "chispa", { fondo: "#33C3B3", tinta: "#0E8F86" }, "animo"),
+        tile("glucosa", "Glucosa en ayunas", "gota", COLOR.glucosa, "glucosa"),
         tile("comida", "Comida", "manzana", COLOR.comida, null, S.comida),
         tile("sintomas", "Síntomas", "curita", COLOR.sintomas, null, S.sintomas),
         tile("fuerza", "Fuerza", "pesa", COLOR.fuerza, null, S.fuerza),
       ];
-      // Lista de regiones: alternativa a la figura, navegable con teclado y lector de pantalla.
-      const regs = ["cabeza", "ojos", "corazon", "pulmones", "abdomen", "rinones", "musculos", "piel", "radiacion"];
+      // Zonas en fila: la misma información que la figura, navegable con teclado.
+      const regs = ["cabeza", "corazon", "pulmones", "abdomen", "rinones", "musculos", "piel", "ojos", "radiacion"];
       if (P.sexo === "M") regs.push("femenina"); // solo a ella y con candado
-      const lista = regs.map((r) => {
+      const chips = regs.map((r) => {
         const def = M.REGIONES[r], n = def.privada ? null : ev.regiones[r];
         const nombre = r === "radiacion" ? "Radiación" : def.nombre;
-        const extra = def.privada ? `<span class="candado" title="Privado: solo tú lo ves">${ic("escudo", "ic-sm")}</span>` : "";
-        return `<li><button data-region="${r}" aria-label="${nombre}: ${def.privada ? "privado" : ESTADO_TXT[n == null ? "nd" : n]}"><svg viewBox="-8 -8 16 16" aria-hidden="true">${C.forma(n, 0, 0, 7)}</svg><span class="reg-nombre">${nombre}</span>${extra}</button></li>`;
+        return `<li><button data-region="${r}" aria-label="${nombre}: ${def.privada ? "privado" : ESTADO_TXT[n == null ? "nd" : n]}"><svg viewBox="-8 -8 16 16" aria-hidden="true">${C.forma(n, 0, 0, 7)}</svg>${nombre}${def.privada ? ic("escudo", "ic-sm") : ""}</button></li>`;
       }).join("");
-      const hall = L.hallazgos.map((h) => `
-        <article class="hallazgo n${h.nivel}">
-          <div class="hallazgo-cab">${sem(h.nivel, false)}<b>${h.titulo}</b><code>${h.id}</code></div>
-          <p>${h.frase}</p>
-          <ul>${h.evidencia.map((x) => `<li>${x}</li>`).join("")}</ul>
-          <div class="hacer">${ic("check", "ic-sm")}<span>${h.hacer}</span></div>
-          <div class="pie">Umbral: ${h.umbral}${h.simulado ? " · dato simulado" : ""}</div>
-        </article>`).join("");
+      const atencion = Object.values(ev.regiones).filter((n) => n === 1).length;
+      const rojas = Object.values(ev.regiones).filter((n) => n === 2).length;
       const cab = ev.cabina;
+      const nEstado = rojas ? 2 : atencion ? 1 : 0;
       p.innerHTML = `
-        <div class="parche-fila">
-          <svg class="parche" viewBox="0 0 64 64" role="img" aria-label="Parche de misión LUNA, Equipo Monarcas">
-            <defs><linearGradient id="g-parche" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#192584"/><stop offset="1" stop-color="#8A2BD0"/></linearGradient></defs>
+        <header class="inicio-cab">
+          <div class="inicio-txt"><h1>Hola, ${P.nombre}</h1>${barraMision()}</div>
+          <button class="yo-btn" id="cambiar-yo" aria-label="Cambiar tripulante o día (ahora: ${P.nombre}, día ${estado.dia})"><span class="avatar" style="--c:${P.color}">${P.nombre[0]}</span></button>
+        </header>
+        ${window.APP.alertasInicio ? window.APP.alertasInicio(P, ev) : ""}
+        <button class="checkin-card" data-ir-checkin><span class="ci-ic">${ic("check")}</span><span class="ci-txt"><b>Check-in de hoy</b><small>20 segundos · ánimo, dolor y cabeza</small></span>${ic("chevron", "ci-flecha")}</button>
+        <section class="escaner oscuro" aria-label="Tu cuerpo">
+          <div class="esc-cab"><span class="esc-titulo">Tu cuerpo hoy</span><span class="esc-estado">${sem(nEstado, rojas ? `${rojas} actúa ahora` : atencion ? `${atencion} en atención` : "Todo en tu normal")}</span></div>
+          <div class="esc-lienzo">${C.svg({ sexo: P.sexo, regiones: ev.regiones })}</div>
+          <ul class="esc-regiones" aria-label="Zonas del cuerpo">${chips}</ul>
+        </section>
+        <div class="seccion-cab"><h2>Datos de tu cuerpo</h2><div class="racha" title="Días seguidos registrando">${ic("estrella", "ic-relleno")}<b>${estado.checkins}</b></div></div>
+        <div class="mosaico">${tiles.join("")}</div>
+        ${window.APP.tripulacionInicio ? window.APP.tripulacionInicio(P, ev) : ""}
+        <div class="parche-fila" style="margin-top:14px">
+          <svg class="parche" viewBox="0 0 64 64" role="img" aria-label="Parche de misión Lunna, Equipo Monarcas">
+            <defs><linearGradient id="g-parche" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#192584"/><stop offset="1" stop-color="#2F6FD6"/></linearGradient></defs>
             <circle cx="32" cy="32" r="30" fill="url(#g-parche)" stroke="#4FD2E9" stroke-width="3"/>
             <path d="M37 14a17 17 0 1 0 12 29a14 14 0 0 1-12-29z" fill="#FBF6FF"/>
             <path d="M24 33c-4-6-11-6-11-1 0 4 5 6 11 3m0-2c4-6 11-6 11-1 0 4-5 6-11 3m0-1v8" fill="#FFB547" stroke="#192584" stroke-width="1.2" stroke-linejoin="round"/>
             <path d="M48 18l1 2.4 2.4 1-2.4 1-1 2.4-1-2.4-2.4-1 2.4-1z" fill="#FFD66B"/>
           </svg>
-          <div class="parche-txt"><b>LUNA</b><span>Equipo Monarcas · proyecto para NASA Space Apps Challenge 2026</span></div>
-        </div>
-        <div class="simula" aria-label="Simulación">
-          <span class="ref ref-sim">${ic("planeta", "ic-sm")} Simulación</span>
-          <select id="sim-persona" aria-label="Ver como">${M.PERSONAS.map((x) => `<option value="${x.id}" ${x.id === P.id ? "selected" : ""}>${x.nombre} · ${x.sexo === "M" ? "mujer" : "hombre"}</option>`).join("")}</select>
-          <span class="paso-dia"><button id="dia-menos" aria-label="Día anterior" ${estado.dia <= 106 ? "disabled" : ""}>‹</button><b>Día ${estado.dia}</b><button id="dia-mas" aria-label="Día siguiente" ${estado.dia >= M.ULTIMO_DIA ? "disabled" : ""}>›</button></span>
-        </div>
-        <div class="cabecera"><div><div class="sub">Buenos días,</div><h1>${P.nombre} ${ic("chispa", "ic-sm")}</h1><div class="sub">${P.rol} · ${P.id}</div></div><span class="espacio"></span>
-          <div class="racha" title="Días seguidos registrando">${ic("estrella", "ic-relleno")}<b>${estado.checkins}</b></div></div>
-        ${lunaGlobo(L.resumen)}
-        <section class="tarjeta luna-ve" aria-label="Lo que Luna ve hoy">
-          <h3>${ic("chispa")} Lo que Luna ve hoy</h3>
-          ${hall}
-          ${L.bien.length ? `<p class="bien">${hall ? "Lo demás va bien: " : "Con tus datos de hoy: "}${L.bien.join("; ")}.</p>` : ""}
-          <p class="no-diag">Luna avisa, no diagnostica: cuenta lo que miden tus sensores contra tu normal y qué regla se cumplió.</p>
-        </section>
-        <button class="clima" data-tutorial="radiacion" aria-label="Clima espacial. Ver qué hacer">
-          <div class="luna-clima"></div>
-          <div><b>${ic("rayo", "ic-sm")} Clima espacial</b>
-            <span>${cab.solar ? `Evento de partículas solares <em>simulado</em>: ${cab.tasa.toLocaleString("es-ES")} µSv/h. Ve al refugio.` : `Sin evento activo · ${cab.tasa} µSv/h · misión ${cab.dosisMision} de 600 mSv.`}
-            Modelo: evento real de DONKI del ${M.DONKI.id.slice(0, 10)} (aviso ${M.DONKI.latenciaMin} min después).</span></div>
-          ${ic("atras", "ic-sm voltear")}
-        </button>
-        <section class="tarjeta cuerpo-tarjeta" aria-label="Cuerpo LUNA">
-          <h3>${ic("usuario")} Cuerpo LUNA <span class="espacio"></span><span class="tenue-12">Toca una zona</span></h3>
-          <div class="cuerpo-lienzo">${C.svg({ sexo: P.sexo, regiones: ev.regiones })}</div>
-          <ul class="regiones">${lista}</ul>
-        </section>
-        <div class="mosaico">${tiles.join("")}</div>
-        ${esAna ? "" : `<p class="tenue-12" style="margin:-4px 0 12px">Comida, Síntomas y Fuerza de esta maqueta son datos de ejemplo de Ana.</p>`}
-        <button class="btn btn-ancho" data-ir-checkin>${ic("chispa")} Check-in de 1 minuto</button>`;
-      LUNA.crear($(".luna-aqui", p), { cara: L.cara, accesorio: L.nivel ? null : "estrella", tam: 88 });
-      LUNA.crear($(".luna-clima", p), { cara: "radiacion", tam: 46 });
+          <div class="parche-txt"><b>Lunna</b><span>Equipo Monarcas · NASA Space Apps Challenge 2026 · datos simulados, salvo los eventos solares de NASA DONKI</span></div>
+        </div>`;
       $("[data-ir-checkin]", p).addEventListener("click", () => ir("checkin"));
-      $("#sim-persona", p).addEventListener("change", (e) => { estado.persona = e.target.value; mem.guardar("persona", estado.persona); ir("hoy"); });
-      $("#dia-menos", p).addEventListener("click", () => { estado.dia--; ir("hoy"); });
-      $("#dia-mas", p).addEventListener("click", () => { estado.dia++; ir("hoy"); });
+      $("#cambiar-yo", p).addEventListener("click", () => window.APP.abrirCambio && window.APP.abrirCambio());
       $$("[data-region]", p).forEach((el) => {
         el.addEventListener("click", () => abrirRegion(el.dataset.region));
+        if (arg && el.dataset.region === arg && !p.dataset.reabierto) { p.dataset.reabierto = "1"; requestAnimationFrame(() => abrirRegion(arg, { directo: true })); }
         if (el.tagName !== "BUTTON") el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirRegion(el.dataset.region); } });
       });
     },
@@ -453,15 +826,16 @@
       if (!ind) return PANTALLAS.hoy(p);
       const P = persona(), e = M.estadoIndicador(P.id, k, estado.dia);
       const n = M.evaluar(P.id, estado.dia).nivelDe(k);
-      const color = { fondo: "#EEE6FF", tinta: "#6B3FD0" };
+      const color = { fondo: "#5B8DFF", tinta: "#1F4FD8" };
       const frase = n == null ? "Hoy no tengo este dato."
         : n === 0 ? (e.normal ? `Estás dentro de tu normal: lo habitual para ti es ${M.texto(k, e.normal.med)}.` : "Estás dentro del rango de referencia.")
         : e.motivo === "T" ? "Estás en la zona de atención de un umbral clínico de Tierra, no validado en el espacio."
-        : "Esta señal se alejó de tu normal. En Hoy, «Lo que Luna ve» te explica con qué otras señales coincide.";
+        : "Esta señal se alejó de tu normal. En Hoy, «Lo que Lunna ve» te explica con qué otras señales coincide.";
       p.innerHTML = `${cabecera(ind.corto || ind.nombre, `${PROC[ind.proc][0].toUpperCase() + PROC[ind.proc].slice(1)} · ${ind.varId}`, "bienvenida", color, ind.icono || "info")}
         ${lunaGlobo(frase)}
         ${ind.aviso ? `<div class="aviso-fijo">${ic("info", "ic-sm")}<span>${ind.aviso}</span></div>` : ""}
         ${tarjetaNormal(k)}
+        ${k === "temperatura" && M.registro(P.id, estado.dia, "temp_central") ? `<div class="tarjeta"><h3>${ic("fuego")} Termómetro de hoy</h3><div class="valor-grande"><b>${fmt(M.registro(P.id, estado.dia, "temp_central").valor.toFixed(1))}</b><span class="u">°C</span></div><div class="etiquetas"><span class="etq etq-reg">registrado ${M.registro(P.id, estado.dia, "temp_central").hora || ""}</span><span class="etq etq-proc">temperatura central</span></div><p class="tenue-12">Es la temperatura central, distinta de la de piel de la muñeca: no se mezclan. Fiebre ≥ 39,4 °C sostenida para contactar a la CMO (umbral propuesto, no oficial).</p></div>` : ""}
         <div class="tarjeta"><dl class="explica">
           <dt>¿Por qué se mide en el espacio?</dt><dd>${ind.porQue}</dd>
           <dt>Cómo se mide</dt><dd>${ind.como}</dd>
@@ -473,7 +847,7 @@
     },
 
     corazon(p) {
-      p.innerHTML = `${cabecera("Corazón", "Reloj · en vivo", "corazon", COLOR.corazon, "corazon")}
+      p.innerHTML = `${cabecera("Corazón", "Sensores · en vivo", "corazon", COLOR.corazon, "corazon")}
         ${lunaGlobo("Tu corazón late tranquilo. ¿Vamos a entrenar?")}
         ${tarjetaNormal("fc")}
         <div class="tarjeta" style="text-align:center">
@@ -487,18 +861,19 @@
           <div class="barra" style="margin:10px 0"><i id="sesion-barra" style="width:0%"></i></div>
           <button class="btn btn-ancho" id="sesion-btn">${ic("play")} Iniciar sesión</button>
         </div>
-        <div class="tarjeta"><h3>${ic("info")} Lo que no veo</h3><div class="tenue">Tu reloj no me manda la variabilidad del corazón (HRV), solo el pulso. No es un error: así funciona este modelo.</div></div>`;
+        <div class="tarjeta"><h3>${ic("info")} Pulso en vivo y en reposo</h3><div class="tenue">El número grande es tu pulso de este momento. El de reposo, el que compara con tu normal, sale de la noche: la mediana de los 30 minutos más bajos durante el sueño.</div></div>`;
       const luna = LUNA.crear($(".luna-aqui", p), { cara: "latido", accesorio: "corazon", tam: 88 });
       const globo = $(".globo", p);
-      let bpm = 68, sesion = null, t = 0;
+      const fcBase = M.estadoIndicador(estado.persona, "fc", estado.dia).valor || 62;
+      let bpm = fcBase + 6, sesion = null, t = 0;
       const tick = setInterval(() => {
         t++;
         // Sesión simulada: calentamiento → zona moderada → un tramo intenso (FCmáx Tanaka ≈ 183 a los 35 años).
-        const objetivo = sesion ? (sesion.t < 15 ? 140 : sesion.t < 30 ? 152 : 172) : 68;
+        const objetivo = sesion ? (sesion.t < 15 ? 140 : sesion.t < 30 ? 152 : 172) : fcBase + 6;
         bpm = Math.round(bpm + (objetivo - bpm) * 0.12 + (Math.random() - 0.5) * 3);
         const suelto = t % 29 === 0;
         $("#bpm", p).textContent = suelto ? "—" : bpm;
-        $("#contacto", p).innerHTML = suelto ? `${ic("reloj", "ic-sm")} Correa floja: descarto esta lectura` : `${ic("reloj", "ic-sm")} Sensor en contacto con la piel`;
+        $("#contacto", p).innerHTML = suelto ? `${ic("reloj", "ic-sm")} Sensor sin contacto: descarto esta lectura` : `${ic("reloj", "ic-sm")} Sensor en contacto con la piel`;
         $("#latido", p).style.setProperty("--ritmo", (60 / bpm).toFixed(2) + "s");
         const z = bpm > 0.9 * D.FC_MAX ? 2 : bpm > 0.7 * D.FC_MAX ? 1 : 0;
         [0, 1, 2].forEach((k) => $("#z" + k, p).classList.toggle("on", k === z));
@@ -526,7 +901,7 @@
           e.currentTarget.classList.remove("btn-suave");
           luna.poner("celebra");
           globo.innerHTML = "¡Sesión guardada! Ganaste una <b>estrella</b>.";
-          aviso("Sesión guardada (simulada)");
+          aviso("Sesión guardada · datos simulados");
         }
       });
       limpiar = () => clearInterval(tick);
@@ -534,11 +909,13 @@
     },
 
     sueno(p) {
-      const s = D.sueno.anoche;
-      const d = deuda();
+      const eS = M.estadoIndicador(estado.persona, "sueno", estado.dia), serieS = M.SERIES[estado.persona].sueno, iS = M.idx(estado.dia);
+      const s = Object.assign({}, D.sueno.anoche, { horas: eS.valor != null ? eS.valor : D.sueno.anoche.horas });
+      const semanaS = serieS.slice(iS - 6, iS + 1);
+      const d = eS.normal ? Math.round((eS.normal.med - semanaS.reduce((x, y) => x + y, 0) / semanaS.length) * 10) / 10 : deuda();
       const cara = s.horas < 6 ? "preocupada" : "dormida";
-      p.innerHTML = `${cabecera("Sueño", "Reloj · anoche", "sueno", COLOR.sueno, "luna")}
-        ${lunaGlobo(s.horas < 6 ? "Dormiste poquito. ¿Pruebo a recordarte la luz tenue más temprano?" : `Dormiste <b>${fmt(s.horas)} h</b>. Un poco menos que tu normal.`)}
+      p.innerHTML = `${cabecera("Sueño", "Sensores · anoche", "sueno", COLOR.sueno, "luna")}
+        ${lunaGlobo(s.horas < 6 ? "Dormiste poquito. ¿Pruebo a recordarte la luz tenue más temprano?" : (eS.normal && s.horas < eS.normal.med ? `Dormiste <b>${fmt(s.horas)} h</b>, menos que tu normal (${fmt(eS.normal.med.toFixed(1))} h).` : `Dormiste <b>${fmt(s.horas)} h</b>, dentro de tu normal.`))}
         ${tarjetaNormal("sueno")}
         <div class="tarjeta"><div class="fila">
           ${anillo(s.horas / 8.5, `<div class="grande">${fmt(s.horas)}<small style="font-size:14px"> h</small></div><div class="tenue">de 8,5 h</div>`)}
@@ -549,8 +926,8 @@
             <div class="dato">${ic("luna")} Despertares <b>${s.despertares}</b></div>
           </div></div></div>
         <div class="tarjeta"><h3>${ic("estrella")} Tu semana <span class="espacio"></span>${ref("sueno")}</h3>
-          <div class="barras-semana">${D.sueno.noches.map((n) => `<div><i class="${n.horas < 6 ? "bajo" : ""}" style="height:${(n.horas / 9) * 100}%" title="${fmt(n.horas)} h"></i>${n.dia}</div>`).join("")}</div>
-          <div class="tenue" style="margin-top:8px">Deuda de sueño: <b>${d > 0 ? fmt(d) + " h por noche" : "ninguna"}</b> frente a tu normal (${fmt(D.sueno.lineaBase)} h).</div></div>
+          <div class="barras-semana">${semanaS.map((h, k) => `<div><i class="${h < 6 ? "bajo" : ""}" style="height:${(h / 9) * 100}%" title="${fmt(h)} h"></i>${estado.dia - 6 + k}</div>`).join("")}</div>
+          <div class="tenue" style="margin-top:8px">Deuda de sueño: <b>${d > 0 ? fmt(d) + " h por noche" : "ninguna"}</b> frente a tu normal (${eS.normal ? fmt(eS.normal.med.toFixed(1)) : fmt(D.sueno.lineaBase)} h).</div></div>
         <div class="tarjeta"><h3>${ic("chispa")} ¿Cómo te sentiste al despertar?</h3>
           <div class="valor-grande" id="cal-txt">${estado.calidadSueno}</div>
           <input class="deslizador" id="cal" type="range" min="0" max="100" value="${estado.calidadSueno}" aria-label="Calidad del sueño de 0 a 100"/>
@@ -562,7 +939,7 @@
         estado.calidadSueno = v;
         $("#cal-txt", p).textContent = v;
         luna.poner(v >= 70 ? "feliz" : v >= 40 ? "tranquila" : "empatica");
-        globo.innerHTML = v >= 70 ? "¡Qué bien! Despertaste con <b>energía</b>." : v >= 40 ? "Un descanso regular. Lo anoto." : "Lo siento. Si sigue así, lo hablamos con el médico de a bordo.";
+        globo.innerHTML = v >= 70 ? "¡Qué bien! Despertaste con <b>energía</b>." : v >= 40 ? "Un descanso regular. Lo anoto." : "Lo siento. Si sigue así, lo hablamos con la CMO.";
       });
       tutorialPrimeraVez("sueno");
     },
@@ -597,7 +974,7 @@
         <div class="tarjeta"><h3>${ic("mas")} Agregar comida</h3>
           <div class="comida-grid">${D.alimentos.map((a) => `<button data-comida="${a.id}" aria-label="Agregar ${a.nombre}">${ic(a.icono)}${a.nombre}</button>`).join("")}</div>
           <div class="tenue" style="margin-top:10px">Hoy: <span id="lista-hoy"></span></div>
-          <div class="tenue" style="margin-top:4px;font-size:11.5px">Valores por porción aproximados para la maqueta.</div></div>
+          <div class="tenue" style="margin-top:4px;font-size:11.5px">Valores por porción aproximados · datos simulados.</div></div>
         <div class="tarjeta"><h3>${ic("manzana")} ¿Cuánta hambre tienes?</h3>
           <input class="deslizador" id="apetito" type="range" min="0" max="10" value="${estado.apetito}" aria-label="Apetito de 0 a 10"/>
           <div class="escala-etq"><span>Nada</span><span>Mucha</span></div></div>`;
@@ -606,6 +983,7 @@
       pintar();
       $$("[data-comida]", p).forEach((b) => b.addEventListener("click", () => {
         estado.comidas.push(b.dataset.comida);
+        estado.tocado.comida = true;
         const c = pintar();
         if (c.sodio > D.REF.sodio.max) { luna.poner("preocupada"); globo.innerHTML = "¡Ups! El <b>sodio</b> ya pasó la meta de hoy."; }
         else if (c.kcal >= D.REF.kcal.meta) { luna.poner("celebra"); globo.innerHTML = "¡Meta de energía <b>cumplida</b>!"; }
@@ -614,6 +992,7 @@
       }));
       $("#apetito", p).addEventListener("input", (e) => {
         estado.apetito = Number(e.target.value);
+        estado.tocado.comida = true;
         luna.poner(estado.apetito <= 3 ? "empatica" : "rica");
         globo.innerHTML = estado.apetito <= 3 ? "Poco apetito es muy común aquí arriba. Probemos algo que te guste." : "¡Buen apetito!";
       });
@@ -628,17 +1007,22 @@
       const ruta = g.map((pt, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(pt.mg).toFixed(1)}`).join(" ");
       const tir = tiempoEnRango();
       const media = Math.round(g.reduce((s, v) => s + v.mg, 0) / g.length);
-      p.innerHTML = `${cabecera("Glucosa", "Parche CGM · 24 h", "glucosa", COLOR.glucosa, "gota")}
-        ${lunaGlobo(`Estuviste en rango el <b>${tir}%</b> del día. ¡Muy estable!`)}
+      const ayunas = M.estadoIndicador(estado.persona, "glucosa", estado.dia);
+      const vAy = ayunas.valor != null ? ayunas.valor : ayunas.ultimo && ayunas.ultimo.valor;
+      const conParche = !!estado.tocado.cgm;
+      p.innerHTML = `${cabecera("Glucosa", "En ayunas y tiempo en rango", "glucosa", COLOR.glucosa, "gota")}
+        ${lunaGlobo(`${vAy != null ? `Glucosa en ayunas: <b>${vAy} mg/dL</b>. ` : ""}${conParche ? `Con el parche estuviste en rango el <b>${tir} %</b> del día.` : "Hoy no llevas parche de glucosa continua."}`)}
         ${tarjetaNormal("glucosa")}
-        <div class="tarjeta"><h3>${ic("gota")} Últimas 24 h <span class="espacio"></span>${ref("glucosa")}</h3>
+        ${conParche ? "" : `<div class="tarjeta"><h3>${ic("gota")} Tiempo en rango</h3><div class="tenue">Sin registro hoy: no llevas el parche de glucosa continua.</div></div>`}
+        <div class="tarjeta" ${conParche ? "" : "hidden"}><h3>${ic("gota")} Tiempo en rango · parche, 24 h <span class="espacio"></span>${ref("glucosa")}</h3>
+          <div class="valor-grande"><b>${tir}</b><span class="u">% del día entre 70 y 180 mg/dL</span></div>
           <svg class="grafica-glucosa" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Glucosa de las últimas 24 horas, media ${media} mg/dL">
             <rect x="0" y="${y(180)}" width="${w}" height="${y(70) - y(180)}" fill="#E3F6EC"/>
-            <path d="${ruta}" fill="none" stroke="#8A2BD0" stroke-width="2.4" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+            <path d="${ruta}" fill="none" stroke="#2F6FD6" stroke-width="2.4" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
           </svg>
           <div class="escala-etq"><span>0 h</span><span>Media <b>${media} mg/dL</b></span><span>24 h</span></div></div>
         <div class="tarjeta"><h3>${ic("mas")} Glucómetro de dedo</h3>
-          <div class="tenue" style="margin-bottom:8px">Lo mide el médico de a bordo. Escribe el número.</div>
+          <div class="tenue" style="margin-bottom:8px">Lo mide la CMO. Escribe el número.</div>
           <div class="campo"><input id="glu" type="number" inputmode="numeric" min="20" max="600" placeholder="mg/dL" aria-label="Glucosa en mg/dL"/><button class="btn" id="glu-btn">Guardar</button></div>
           <div class="tenue" id="glu-lista" style="margin-top:8px"></div></div>`;
       const luna = LUNA.crear($(".luna-aqui", p), { cara: tir >= 70 ? "feliz" : "pensando", accesorio: "gota", tam: 88 });
@@ -654,7 +1038,7 @@
         if (!v || v < 20 || v > 600) { luna.poner("pensando"); globo.innerHTML = "Ese número no parece una glucosa. Revísalo, por fa."; return; }
         estado.glucometro.push(v);
         $("#glu-lista", p).innerHTML = "Registradas: " + estado.glucometro.map((n) => `<b>${n}</b>`).join(" · ") + " mg/dL";
-        if (v < 70) { luna.poner("alerta"); globo.innerHTML = "Está <b>baja</b>. Avisa al médico de a bordo."; }
+        if (v < 70) { luna.poner("alerta"); globo.innerHTML = "Está <b>baja</b>. Avisa a la CMO."; }
         else if (v > 180) { luna.poner("preocupada"); globo.innerHTML = "Está <b>alta</b> para el rango de la Tierra. Lo anoto."; }
         else { luna.poner("feliz"); globo.innerHTML = "¡En rango! Guardado."; }
         input.value = "";
@@ -663,15 +1047,18 @@
     },
 
     sintomas(p) {
-      const zonas = [["cuello", "Cuello"], ["dorsal", "Media"], ["lumbar", "Baja"]];
+      // Cada zona de la espalda tiene su propio dolor: no se asume que duela igual en las tres.
+      const zonas = [["cuello", "Cuello", "el cuello"], ["dorsal", "Espalda media", "la espalda media"], ["lumbar", "Espalda baja", "la espalda baja"]];
       const mareos = [["nausea", "Náusea"], ["vomito", "Vómito"], ["apetito", "Sin apetito"], ["ninguno", "Nada"]];
       p.innerHTML = `${cabecera("Síntomas", "Tú me cuentas", "sintomas", COLOR.sintomas, "curita")}
         ${lunaGlobo("¿Cómo te sientes hoy? Toca y desliza, es rapidito.")}
-        <div class="tarjeta"><h3>${ic("espalda")} Dolor de espalda</h3>
-          <div class="valor-grande" id="dolor-txt">${estado.dolor}<small style="font-size:14px">/10</small></div>
-          <input class="deslizador" id="dolor" type="range" min="0" max="10" value="${estado.dolor}" aria-label="Dolor de espalda de 0 a 10"/>
-          <div class="escala-etq"><span>Nada</span><span>El peor</span></div>
-          <div class="chips" style="margin-top:10px">${zonas.map(([k, n]) => `<button class="chip" data-zona="${k}" aria-pressed="${estado.zonaDolor.includes(k)}">${ic("espalda")}${n}</button>`).join("")}</div></div>
+        <div class="tarjeta"><h3>${ic("espalda")} Dolor de espalda <span class="espacio"></span><span class="tenue-12" id="dolor-max">${estado.dolor ? `más fuerte: ${estado.dolor}/10` : ""}</span></h3>
+          <p class="tenue-12" style="margin:0 0 8px">Toca dónde te duele y marca cuánto en cada zona.</p>
+          <div class="chips">${zonas.map(([k, n]) => `<button class="chip" data-zona="${k}" aria-pressed="${estado.zonaDolor.includes(k)}">${ic("espalda")}${n}</button>`).join("")}</div>
+          <div class="zonas-dolor">${zonas.map(([k, n, art]) => `<div class="zona-dolor" data-zona-panel="${k}" ${estado.zonaDolor.includes(k) ? "" : "hidden"}>
+            <div class="zona-cab"><span>¿Cuánto te duele ${art}?</span><b id="z-${k}">${estado.dolorZonas[k] || 0}<small>/10</small></b></div>
+            <input class="deslizador" data-zona-in="${k}" type="range" min="0" max="10" value="${estado.dolorZonas[k] || 0}" aria-label="Dolor en ${art}, de 0 a 10"/>
+            <div class="escala-etq"><span>Nada</span><span>El peor</span></div></div>`).join("")}</div></div>
         <div class="tarjeta"><h3>${ic("cabeza")} Dolor de cabeza</h3>
           <div class="chips"><button class="chip" id="cef-si" aria-pressed="${estado.cefalea}">${ic("cabeza")}Sí, hoy</button><button class="chip" id="cef-no" aria-pressed="${!estado.cefalea}">${ic("check")}No</button></div>
           <div id="cef-int" ${estado.cefalea ? "" : "hidden"} style="margin-top:10px">
@@ -679,23 +1066,43 @@
             <div class="escala-etq"><span>Leve</span><span>Insoportable</span></div></div></div>
         <div class="tarjeta"><h3>${ic("ola")} Mareo espacial</h3>
           <div class="chips">${mareos.map(([k, n]) => `<button class="chip" data-mareo="${k}" aria-pressed="${estado.mareo.includes(k)}">${n}</button>`).join("")}</div></div>
-        <div id="nota" class="nota-medico" hidden>${ic("info")}<span>Esto parece fuerte. <b>Te sugiero avisar al médico de a bordo.</b> Yo no diagnostico.</span></div>`;
+        <div id="nota" class="nota-medico" hidden>${ic("info")}<span>Esto parece fuerte. <b>Te sugiero avisar a la CMO.</b> Yo no diagnostico.</span></div>`;
       const luna = LUNA.crear($(".luna-aqui", p), { cara: "tranquila", accesorio: "curita", tam: 88 });
       const globo = $(".globo", p);
       const reaccionar = () => {
         const fuerte = estado.dolor >= 7 || (estado.cefalea && estado.intensidadCefalea >= 7) || estado.mareo.includes("vomito");
         $("#nota", p).hidden = !fuerte;
         const nivel = Math.max(estado.dolor, estado.cefalea ? estado.intensidadCefalea : 0);
-        if (fuerte) { luna.poner("empatica"); globo.innerHTML = "Lo siento mucho. Avisemos al <b>médico de a bordo</b>."; }
-        else if (nivel >= 4) { luna.poner("preocupada"); globo.innerHTML = "Te duele un poco. Lo anoto para ver si mejora."; }
+        if (fuerte) { luna.poner("empatica"); globo.innerHTML = "Lo siento mucho. Avisemos a la <b>CMO</b>."; }
+        else if (nivel >= 4) {
+          const peor = zonas.filter(([k]) => estado.zonaDolor.includes(k)).sort((a, b) => (estado.dolorZonas[b[0]] || 0) - (estado.dolorZonas[a[0]] || 0))[0];
+          luna.poner("preocupada");
+          globo.innerHTML = peor && estado.dolorZonas[peor[0]] === estado.dolor && !(estado.cefalea && estado.intensidadCefalea > estado.dolor)
+            ? `Te duele más ${peor[2]} (<b>${estado.dolor}/10</b>). Lo anoto para ver si mejora.` : "Te duele un poco. Lo anoto para ver si mejora.";
+        }
         else if (estado.mareo.length && !estado.mareo.includes("ninguno")) { luna.poner("empatica"); globo.innerHTML = "El mareo es muy común los primeros días. Aquí estoy."; }
         else { luna.poner("feliz"); globo.innerHTML = "¡Qué bueno! Te sientes bien."; }
       };
-      $("#dolor", p).addEventListener("input", (e) => { estado.dolor = Number(e.target.value); $("#dolor-txt", p).innerHTML = `${estado.dolor}<small style="font-size:14px">/10</small>`; reaccionar(); });
+      p.addEventListener("input", () => { estado.tocado.sintomas = true; });
+      p.addEventListener("click", (e) => { if (e.target.closest("[data-zona], [data-mareo], #cef-si, #cef-no")) estado.tocado.sintomas = true; });
+      // El dolor de espalda que cuenta es el de la zona que más duele.
+      const recalcular = () => {
+        estado.dolor = Math.max(0, ...estado.zonaDolor.map((k) => estado.dolorZonas[k] || 0));
+        $("#dolor-max", p).textContent = estado.dolor ? `más fuerte: ${estado.dolor}/10` : "";
+        reaccionar();
+      };
       $$("[data-zona]", p).forEach((b) => b.addEventListener("click", () => {
         const k = b.dataset.zona; const i = estado.zonaDolor.indexOf(k);
         i < 0 ? estado.zonaDolor.push(k) : estado.zonaDolor.splice(i, 1);
         b.setAttribute("aria-pressed", String(i < 0));
+        $(`[data-zona-panel="${k}"]`, p).hidden = i >= 0;
+        recalcular();
+      }));
+      $$("[data-zona-in]", p).forEach((inp) => inp.addEventListener("input", () => {
+        const k = inp.dataset.zonaIn;
+        estado.dolorZonas = { ...estado.dolorZonas, [k]: Number(inp.value) };
+        $(`#z-${k}`, p).innerHTML = `${inp.value}<small>/10</small>`;
+        recalcular();
       }));
       const cef = (si) => {
         estado.cefalea = si;
@@ -719,6 +1126,13 @@
     },
 
     fuerza(p) {
+      if (!estado.tocado.fuerza) {
+        p.innerHTML = `${cabecera("Fuerza", "ARED · peso muerto", "fuerza", COLOR.fuerza, "pesa")}
+          ${lunaGlobo("Aún no hay sesiones de ARED registradas hoy.")}
+          <div class="tarjeta"><h3>${ic("pesa")} Sin registro hoy</h3><div class="tenue">Cuando registres una sesión de peso muerto en el ARED, aquí verás tu fuerza estimada contra la meta de 1,6× tu peso [A].</div></div>`;
+        LUNA.crear($(".luna-aqui", p), { cara: "tranquila", accesorio: "pesa", tam: 88 });
+        return;
+      }
       const rm = unoRM();
       const x = Math.round((rm / D.PERFIL.masaKg) * 100) / 100;
       const ok = x >= D.REF.fuerza.min;
@@ -740,23 +1154,33 @@
 
     checkin(p) {
       const animos = [["feliz", "Genial", "estrella"], ["tranquila", "Bien", "check"], ["preocupada", "Regular", "ola"], ["empatica", "Mal", "curita"]];
-      p.innerHTML = `<div class="cabecera"><div><h1>Check-in</h1><div class="sub">1 minuto · al despertar</div></div><span class="espacio"></span><span class="ref ref-sim">${ic("reloj", "ic-sm")} 1 min</span></div>
+      p.innerHTML = `<div class="ck">
+        <button class="icono-btn ck-volver" data-volver="hoy" aria-label="Volver">${ic("atras")}</button>
+        <header class="ck-cab"><span class="ck-ic">${ic("chispa")}</span><h1>Check-in</h1><p>20 segundos · al despertar</p></header>
         ${lunaGlobo("¡Hola! ¿Cómo amaneciste hoy?")}
-        <div class="tarjeta"><h3>${ic("chispa")} Ánimo</h3>
-          <div class="chips">${animos.map(([c, n, i]) => `<button class="chip" data-animo="${c}" aria-pressed="${estado.animo === c}">${ic(i)}${n}</button>`).join("")}</div></div>
-        <div class="tarjeta"><h3>${ic("espalda")} Dolor de espalda <span class="espacio"></span><b id="ck-dolor">${estado.dolor}</b></h3>
-          <input class="deslizador" id="ck-dolor-in" type="range" min="0" max="10" value="${estado.dolor}" aria-label="Dolor de espalda"/></div>
-        <div class="tarjeta"><h3>${ic("cabeza")} ¿Dolor de cabeza?</h3>
-          <div class="chips"><button class="chip" data-cef="si" aria-pressed="${estado.cefalea}">Sí</button><button class="chip" data-cef="no" aria-pressed="${!estado.cefalea}">No</button></div></div>
-        <button class="btn btn-ancho" id="ck-listo">${ic("check")} Listo</button>`;
+        <section class="tarjeta ck-bloque"><h2>¿Cómo amaneciste?</h2>
+          <div class="ck-animo">${animos.map(([c, n, i], k) => `<button class="ck-op ck-op${k}" data-animo="${c}" aria-pressed="${estado.animo === c}"><span>${ic(i)}</span><small>${n}</small></button>`).join("")}</div></section>
+        <section class="tarjeta ck-bloque"><h2>Estrés ahora</h2>
+          <div class="ck-num"><b id="ck-estres">${estado.estres}</b><small>/100</small></div>
+          <input class="deslizador" id="ck-estres-in" type="range" min="0" max="100" value="${estado.estres}" aria-label="Estrés de 0 a 100"/>
+          <div class="escala-etq"><span>Tranquila/o</span><span>Al límite</span></div>
+          <p class="tenue-12">Es lo que Inicio muestra como Ánimo, contra tu normal.</p></section>
+        <section class="tarjeta ck-bloque"><h2>Dolor de espalda</h2>
+          <div class="ck-num"><b id="ck-dolor">${estado.dolor}</b><small>/10</small></div>
+          <input class="deslizador" id="ck-dolor-in" type="range" min="0" max="10" value="${estado.dolor}" aria-label="Dolor de espalda de 0 a 10"/>
+          <div class="escala-etq"><span>Nada</span><span>El peor</span></div></section>
+        <section class="tarjeta ck-bloque"><h2>¿Dolor de cabeza?</h2>
+          <div class="ck-sino"><button data-cef="si" aria-pressed="${estado.cefalea}">Sí</button><button data-cef="no" aria-pressed="${!estado.cefalea}">No</button></div></section>
+        <button class="btn btn-ancho" id="ck-listo">${ic("check")} Listo</button></div>`;
       const luna = LUNA.crear($(".luna-aqui", p), { cara: "feliz", accesorio: "estrella", tam: 88 });
       const globo = $(".globo", p);
       $$("[data-animo]", p).forEach((b) => b.addEventListener("click", () => {
         estado.animo = b.dataset.animo;
         $$("[data-animo]", p).forEach((c) => c.setAttribute("aria-pressed", String(c === b)));
         luna.poner(estado.animo);
-        globo.innerHTML = { feliz: "¡Me encanta! A darle con todo.", tranquila: "Bien. Un día tranquilo también cuenta.", preocupada: "Te entiendo. Vamos paso a paso.", empatica: "Lo siento. ¿Quieres que lo veamos con el médico de a bordo?" }[estado.animo];
+        globo.innerHTML = { feliz: "¡Me encanta! A darle con todo.", tranquila: "Bien. Un día tranquilo también cuenta.", preocupada: "Te entiendo. Vamos paso a paso.", empatica: "Lo siento. ¿Quieres que lo veamos con la CMO?" }[estado.animo];
       }));
+      $("#ck-estres-in", p).addEventListener("input", (e) => { estado.estres = Number(e.target.value); $("#ck-estres", p).textContent = estado.estres; });
       $("#ck-dolor-in", p).addEventListener("input", (e) => {
         estado.dolor = Number(e.target.value);
         $("#ck-dolor", p).textContent = estado.dolor;
@@ -768,19 +1192,45 @@
         if (estado.cefalea) { luna.poner("empatica"); globo.innerHTML = "Ay. ¿Cuánto? Puedes detallarlo en <b>Síntomas</b>."; }
       }));
       $("#ck-listo", p).addEventListener("click", () => {
+        // Lo registrado hoy reemplaza el valor simulado del día y se recalcula todo (bug 4).
+        const d = new Date(), hora = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+        M.registrar(estado.persona, estado.dia, "animo", estado.estres, hora);
+        estado.tocado.sintomas = true;
+        const cara = { feliz: "Genial", tranquila: "Bien", preocupada: "Regular", empatica: "Mal" }[estado.animo];
+        estado.registros.unshift({ t: "Check-in", v: `${cara ? cara + " · " : ""}estrés ${estado.estres} · espalda ${estado.dolor}/10${estado.cefalea ? " · cefalea" : ""}`, hora, ic: "chispa" });
+        actualizarFase();
+        if (lunaF) lunaF.actualizar("checkin");
         estado.checkins++;
         mem.guardar("checkins", estado.checkins);
         luna.poner("celebra", "estrella");
-        globo.innerHTML = `¡Check-in hecho! Llevas <b>${estado.checkins}</b> días seguidos.`;
+        globo.innerHTML = `¡Check-in hecho! Llevas <b>${estado.checkins}</b> días seguidos. Tu estrés de hoy ya cuenta en Inicio.`;
         aviso("+1 estrella por registrar");
       });
     },
 
-    emergencia(p) {
+    emergencia(p, pid) {
       // Modo emergencia (diseño de Julio, comportamiento-del-software.md §8): un paso por pantalla,
-      // cronómetro T+, valores contra la línea base, registro sellado automático, aviso al CMO.
+      // cronómetro T+, valores contra la línea base, registro sellado automático, aviso a la CMO.
       // SIMULACIÓN: caída de signos vitales por hipoxia. Los pasos clínicos son ILUSTRATIVOS.
-      const V = D.VITALES, T = D.TRIPULACION;
+      // La paciente es quien presiona SOS, salvo que elija a otra persona (ERS RF-03).
+      const P = M.PERSONAS.find((x) => x.id === pid) || persona();
+      const CMO = M.PERSONAS.find((x) => x.id === "MS-3");
+      const COM = M.PERSONAS.find((x) => x.id === "MS-1");
+      const esCMO = P.id === CMO.id;
+      const ella = P.sexo === "M";
+      const la = ella ? "la" : "lo", sola = ella ? "sola" : "solo";
+      // Su normal sale del motor (mediana de 14 días); la crisis es la del escenario de hipoxia.
+      const med = (k, def) => { const n = M.estadoIndicador(P.id, k, estado.dia).normal; return n ? Math.round(n.med) : def; };
+      const serie = (k) => { const s = M.SERIES[P.id][k].slice(0, M.idx(estado.dia)).filter((x) => x != null).slice(-14); return s.length ? Math.round(M.mediana(s)) : null; };
+      const fcB = med("fc", 60), spoB = serie("spo2") || 97, frB = med("fr", 14), pasB = serie("presion") || 116;
+      const V = [
+        { id: "spo2", nombre: "SpO₂", unidad: "%", base: spoB, crisis: 84, icono: "gota", decimales: 0 },
+        { id: "fc", nombre: "Pulso", unidad: "lpm", base: fcB, crisis: Math.round(fcB * 2.06), icono: "corazon", decimales: 0 },
+        { id: "resp", nombre: "Respiración", unidad: "rpm", base: frB, crisis: 26, icono: "ola", decimales: 0 },
+        { id: "pas", nombre: "Presión", unidad: "mmHg", base: pasB, crisis: pasB - 22, icono: "rayo", decimales: 0, extra: (v) => `/${Math.round(v * 0.64)}` },
+        { id: "temp", nombre: "Temperatura", unidad: "°C", base: 36.6, crisis: 36.8, icono: "fuego", decimales: 1 },
+      ];
+      const T = D.TRIPULACION;
       const tel = $(".telefono");
       tel.classList.add("en-emergencia");
       p.innerHTML = `
@@ -788,8 +1238,22 @@
           <span class="emerg-etq">${ic("info", "ic-sm")} EMERGENCIA · SIMULACIÓN</span>
           <span class="emerg-reloj" id="reloj">T+00:00</span>
         </div>
+        <div class="emerg-quien" id="emerg-quien">
+          <span>Paciente: <b>${P.nombre}</b></span>
+          <details class="emerg-otra"><summary>¿Es otra persona?</summary>
+            <div class="emerg-personas">${M.PERSONAS.map((x) => `<button data-paciente="${x.id}" aria-pressed="${x.id === P.id}">${x.nombre}</button>`).join("")}</div>
+          </details>
+        </div>
+        <div class="emerg-error" id="emerg-error">
+          <button class="btn btn-suave btn-ancho" id="fue-error">${ic("cerrar")} Fue un error</button>
+          <div class="emerg-confirma" id="emerg-confirma" hidden>
+            <span>¿Cancelar la emergencia?</span>
+            <button class="btn" id="cancelar-si">Sí, cancelar</button>
+            <button class="btn btn-suave" id="cancelar-no">No</button>
+          </div>
+        </div>
         <div class="emerg-luna"><div class="luna-aqui"></div>
-          <div><b id="emerg-titulo">Signos de ${T.paciente}</b><span id="emerg-sub">Luna vigila los signos en vivo…</span></div></div>
+          <div><b id="emerg-titulo">Signos de ${P.nombre}</b><span id="emerg-sub">Lunna vigila los signos en vivo…</span></div></div>
         <div class="vitales" id="vitales">${V.map((v) => `
           <div class="vital" id="v-${v.id}">
             <span class="vital-nom">${ic(v.icono, "ic-sm")} ${v.nombre}</span>
@@ -825,10 +1289,11 @@
         }
       };
       const relojT = setInterval(() => { $("#reloj", p).textContent = tiempo(); }, 250);
-      let anim = 0;
+      let anim = 0, cancelada = false;
       const animar = (desde, hasta, ms, alPaso) => new Promise((ok) => {
         const ini = performance.now();
         const cuadro = (ahora) => {
+          if (cancelada) return;
           const f = Math.min(1, (ahora - ini) / ms);
           alPaso(desde + (hasta - desde) * f);
           if (f < 1) anim = requestAnimationFrame(cuadro); else ok();
@@ -843,8 +1308,25 @@
         if (k !== ultimaFase) { ultimaFase = k; luna.fase(k); }
       };
 
+      // Otra paciente: se reinicia la emergencia con esa persona.
+      $$("[data-paciente]", p).forEach((b) => b.addEventListener("click", () => {
+        if (b.dataset.paciente !== P.id) ir(`emergencia:${b.dataset.paciente}`, { reemplazar: true });
+      }));
+
+      // Activación accidental: "Fue un error" los primeros 10 s, con confirmación (bug 2).
+      const tError = setTimeout(() => { const e = $("#emerg-error", p); if (e) e.hidden = true; }, 10000);
+      $("#fue-error", p).addEventListener("click", () => { $("#fue-error", p).hidden = true; $("#emerg-confirma", p).hidden = false; $("#cancelar-no", p).focus(); });
+      $("#cancelar-no", p).addEventListener("click", () => { $("#emerg-confirma", p).hidden = true; $("#fue-error", p).hidden = false; });
+      $("#cancelar-si", p).addEventListener("click", () => {
+        cancelada = true;
+        registrar("Emergencia cancelada: activación accidental");
+        estado.registros.unshift({ t: "Emergencia cancelada", v: "activación accidental", hora: new Date().toTimeString().slice(0, 5), ic: "cerrar" });
+        aviso("Emergencia cancelada. Quedó en el registro.");
+        ir("hoy");
+      });
+
       const PASOS = [
-        `Mantén a ${T.paciente} en un lugar seguro y no la dejes sola.`,
+        `Mantén a ${P.nombre} en un lugar seguro y no ${la} dejes ${sola}.`,
         "Revisa el oxígeno y el CO₂ de la cabina en el panel de la nave.",
         "Sigue el procedimiento de oxígeno de la tripulación.",
       ];
@@ -857,17 +1339,26 @@
 
       (async () => {
         conFase(0);
-        registrar(`Monitoreo de ${T.paciente}: signos en su normal`);
+        registrar(`Monitoreo de ${P.nombre}: signos en su normal`);
         await animar(0, 0.55, 3000, conFase);
+        if (cancelada) return;
         luna.poner("alerta");
         $("#emerg-sub", p).textContent = "La saturación de oxígeno está bajando…";
         await animar(0.55, 1, 2600, conFase);
+        if (cancelada) return;
         const fc = V.find((v) => v.id === "fc"), sat = V.find((v) => v.id === "spo2");
-        $("#emerg-titulo", p).textContent = "Luna activó el modo emergencia";
+        $("#emerg-titulo", p).textContent = "Lunna activó el modo emergencia";
         $("#emerg-sub", p).innerHTML = `SpO₂ <b>${sat.crisis} %</b> (su normal ${sat.base} %) · pulso <b>${fmt((fc.crisis / fc.base).toFixed(1))}×</b> su normal`;
         registrar(`<b>Activación automática</b>: SpO₂ ${sat.crisis} % · pulso ${fc.crisis} lpm`);
-        registrar(`Aviso enviado a <b>${T.cmo}</b>, médico de a bordo`);
-        registrar(`Paquete prioritario a Tierra en cola (≈ ${T.retrasoTierraMin} min de retraso)`);
+        // Escalamiento (ERS §4.3): nunca se avisa a la misma persona que es paciente.
+        if (esCMO) {
+          registrar(`<b>Nivel 1 sin cubrir</b>: la paciente es la CMO`);
+          registrar(`Aviso enviado a <b>${COM.nombre}</b>, comandante`);
+          registrar(`Escalado a nivel 2: paquete prioritario al cirujano de vuelo en Tierra (≈ ${T.retrasoTierraMin} min de retraso)`);
+        } else {
+          registrar(`Aviso enviado a <b>${CMO.nombre}</b>, la CMO`);
+          registrar(`Paquete prioritario a Tierra en cola (≈ ${T.retrasoTierraMin} min de retraso)`);
+        }
         luna.poner("empatica");
         mostrarPaso();
       })();
@@ -878,7 +1369,9 @@
         if (paso < PASOS.length) return mostrarPaso();
         $("#paso", p).hidden = true;
         $("#emerg-titulo", p).textContent = "Los signos se están recuperando";
-        $("#emerg-sub", p).textContent = `${T.cmo} ya está con ${T.paciente}. Luna sigue registrando.`;
+        $("#emerg-sub", p).textContent = esCMO
+          ? `${COM.nombre} ya está con ${P.nombre}; Tierra fue avisada. Lunna sigue registrando.`
+          : `${CMO.nombre} ya está con ${P.nombre}. Lunna sigue registrando.`;
         luna.poner("tranquila");
         await animar(1, 0.12, 4200, conFase);
         luna.poner("feliz");
@@ -890,7 +1383,7 @@
         $(".registro", p).before(cerrar);
       });
 
-      limpiar = () => { clearInterval(relojT); cancelAnimationFrame(anim); tel.classList.remove("en-emergencia"); };
+      limpiar = () => { cancelada = true; clearInterval(relojT); clearTimeout(tError); cancelAnimationFrame(anim); tel.classList.remove("en-emergencia"); };
     },
 
     logros(p) {
@@ -898,7 +1391,7 @@
         ["Primer check-in", "chispa", true], ["3 días seguidos", "estrella", estado.checkins >= 3], ["Explorador de menú", "manzana", estado.comidas.length >= 6],
         ["Piloto del sueño", "luna", false], ["Maestro de fuerza", "pesa", false], ["Racha de 7 días", "cohete", estado.checkins >= 7],
       ];
-      p.innerHTML = `<div class="cabecera"><div><h1>Logros</h1><div class="sub">Premio el hábito, no el resultado</div></div></div>
+      p.innerHTML = `<div class="cabecera"><button class="icono-btn" data-volver aria-label="Volver">${ic("atras")}</button><div><h1>Logros</h1><div class="sub">Premio el hábito, no el resultado</div></div></div>
         ${lunaGlobo(`Llevas <b>${estado.checkins}</b> días registrando. ¡La tripulación suma estrellas contigo!`)}
         <div class="tarjeta"><h3>${ic("trofeo")} Parches de misión</h3>
           <div class="insignias">${insignias.map(([n, i, ok]) => `<div class="insignia ${ok ? "" : "bloqueada"}"><div class="medalla">${ic(i)}</div>${n}</div>`).join("")}</div></div>
@@ -910,14 +1403,14 @@
     },
 
     ayuda(p) {
-      const temas = [["bienvenida", "Conoce a Luna", "luna"], ["corazon", "Corazón y ejercicio", "corazon"], ["sueno", "Sueño", "luna"], ["comida", "Comida", "manzana"], ["glucosa", "Glucosa", "gota"], ["sintomas", "Síntomas", "curita"], ["fuerza", "Fuerza", "pesa"], ["radiacion", "Clima espacial", "rayo"]];
-      p.innerHTML = `<div class="cabecera"><div><h1>Ayuda</h1><div class="sub">Tutoriales cortitos</div></div></div>
+      const temas = [["bienvenida", "Conoce a Lunna", "luna"], ["corazon", "Corazón y ejercicio", "corazon"], ["sueno", "Sueño", "luna"], ["comida", "Comida", "manzana"], ["glucosa", "Glucosa", "gota"], ["sintomas", "Síntomas", "curita"], ["fuerza", "Fuerza", "pesa"], ["radiacion", "Clima espacial", "rayo"]];
+      p.innerHTML = `<div class="cabecera"><button class="icono-btn" data-volver aria-label="Volver">${ic("atras")}</button><div><h1>Ayuda</h1><div class="sub">Tutoriales cortitos</div></div></div>
         ${lunaGlobo("¿Qué quieres aprender? Cada tutorial dura menos de un minuto.")}
         <div class="tarjeta"><div class="lista-sesiones">${temas.map(([k, n, i]) => `<div role="button" tabindex="0" data-tutorial="${k}" style="cursor:pointer">${ic(i)} ${n}<b>${ic("play", "ic-sm")}</b></div>`).join("")}</div></div>
         <div class="tarjeta"><h3>${ic("info")} Qué significan las etiquetas</h3>
           <div class="chips"><span class="ref ref-A">${ic("escudo", "ic-sm")}NASA</span><span class="tenue">umbral oficial de NASA</span></div>
           <div class="chips" style="margin-top:6px"><span class="ref ref-T">${ic("info", "ic-sm")}Tierra</span><span class="tenue">umbral clínico de la Tierra, no validado en el espacio</span></div>
-          <div class="chips" style="margin-top:6px"><span class="ref ref-sim">${ic("planeta", "ic-sm")}Simulado</span><span class="tenue">esta maqueta aún no recibe datos reales</span></div></div>
+          <div class="chips" style="margin-top:6px"><span class="ref ref-sim">${ic("planeta", "ic-sm")}Simulado</span><span class="tenue">datos simulados: aún no llegan datos reales del reloj ni de la nave</span></div></div>
         <a class="btn btn-ancho" href="?demo" style="text-decoration:none;margin-bottom:10px">${ic("play")} Ver demo automática</a>
         <button class="btn btn-suave btn-ancho" id="reiniciar">${ic("chispa")} Volver a ver todos los tutoriales</button>`;
       LUNA.crear($(".luna-aqui", p), { cara: "pensando", accesorio: "estrella", tam: 88 });
@@ -927,8 +1420,36 @@
   };
 
   // ---------- Arranque ----------
-  // API mínima para el modo demo (demo.js).
-  window.APP = { ir, abrirTutorial, cerrarTutorial, DEMO };
-  ir("hoy");
-  tutorialPrimeraVez("bienvenida");
+  // API para modulos.js (Registrar, Ciclo, Reportes, Configuración, panel de Lunna) y demo.js.
+  // modulos.js registra sus pantallas y llama a APP.iniciar().
+  window.APP = {
+    ir, abrirTutorial, cerrarTutorial, tutorialPrimeraVez, DEMO, VEL, D, M, C, $, $$, fmt, ic, ref, mem, estado, persona, aviso,
+    cabecera, lunaGlobo, COLOR, anillo, sem, claseN, etiquetas, valorDe, grafNormal, tarjetaNormal, ESTADO_TXT, sumaComida, tiempoEnRango, unoRM,
+    PANTALLAS, pintarMenu, actualizarFase, raizDe, volver,
+    pila: () => pila.slice(),
+    actual: () => actual,
+    setLimpiar(f) { limpiar = f; },
+    reposicionarLuna() { mem.guardar("luna-pos3", { lado: "izq", y: 1 }); location.reload(); },
+    iniciar(destino) {
+      // Cada vez que Lunna dice algo nuevo (al entrar a una sección o al registrar), su globo se anima.
+      const animarGlobo = (g) => {
+        g.classList.remove("habla"); void g.offsetWidth; g.classList.add("habla");
+        const av = g.closest(".luna-fila")?.querySelector(".luna-aqui");
+        if (av) { av.classList.remove("habla"); void av.offsetWidth; av.classList.add("habla"); }
+      };
+      new MutationObserver((ms) => {
+        const vistos = new Set();
+        for (const m of ms) {
+          const t = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+          const g = t && t.closest && t.closest(".globo");
+          if (g) vistos.add(g);
+          for (const n of m.addedNodes) if (n.nodeType === 1) { if (n.matches(".globo")) vistos.add(n); n.querySelectorAll && n.querySelectorAll(".globo").forEach((x) => vistos.add(x)); }
+        }
+        vistos.forEach(animarGlobo);
+      }).observe($("#pantalla"), { childList: true, subtree: true, characterData: true });
+      lunaF = crearLunaFlotante();
+      ir(destino || "hoy");
+      if (!destino) tutorialPrimeraVez("bienvenida");
+    },
+  };
 })();

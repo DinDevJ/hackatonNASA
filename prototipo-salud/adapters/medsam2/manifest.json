@@ -1,0 +1,79 @@
+{
+  "key": "medsam2",
+  "nombre": "MedSAM2 (segmentacion y seguimiento visual guiado)",
+  "repo": "vendor/MedSAM2",
+  "repo_url": "https://github.com/bowang-lab/MedSAM2",
+  "repo_commit": "332f30d420f1d1b08e2a79b3ae6a602458808383",
+  "entrypoint": "adapters/medsam2/infer.py",
+  "env": {
+    "dir": "envs/medsam2",
+    "python": "3.11",
+    "torch": "2.5.1",
+    "torchvision": "0.20.1",
+    "torch_index_url": "https://download.pytorch.org/whl/cu124",
+    "requirements_in": "adapters/medsam2/requirements.in",
+    "lock_windows": "adapters/medsam2/requirements-win.lock.txt",
+    "install_vars": {},
+    "editable": [],
+    "notas": "El paquete sam2 NO se instala (ni pip install -e ni setup.py): infer.py añade vendor/MedSAM2 a sys.path. Asi no se compila la extension CUDA sam2/_C (setup.py:71-72 SAM2_BUILD_CUDA, que en Windows exige MSVC + CUDA toolkit) y se evita setuptools. Sin _C solo se omite el rellenado de huecos (misc.py:312-330 captura el error); ademas apply_postprocessing=false por defecto, igual que medsam2_infer_video.py. Pines de setup.py:24-32 (torch>=2.5.1, torchvision>=0.20.1, numpy>=2.0.1, tqdm, hydra-core>=1.3.2, iopath, pillow) cubiertos por torch 2.5.1/0.20.1 + requirements.in; se añade opencv-python-headless (lectura de video y overlay; no lo pide el repo). vendor/MedSAM2/sam2/_C.so es un binario de Linux presente en el clon: se ignora en Windows. Probado en Linux con torch 2.5.1+cpu y numpy 2.4.6 (carga dummy). decord NO se usa: los frames se extraen a JPEG con OpenCV como pide el script oficial."
+  },
+  "pesos": [
+    {
+      "archivo": "weights/medsam2/MedSAM2_US_Heart.pt",
+      "url": "https://huggingface.co/wanglab/MedSAM2/resolve/main/MedSAM2_US_Heart.pt",
+      "tamano_bytes": 156041079,
+      "tamano_fuente": "HEAD (curl -sIL) 2026-11-14: x-linked-size/content-length 156041079 (no se descargo)",
+      "sha256": "295c0ff8912c99947c364287bbecd1cd36963f0c0ac67a042d292f0dedf8d933",
+      "sha256_fuente": "cabecera x-linked-etag (oid LFS = sha256 del archivo) del HEAD 2026-11-14, revision HF e4a6f35edd7e091619cbc0750f462f1574e23955; infer.py lo verifica tras descargar",
+      "acceso": "publico",
+      "acceso_evidencia": "HEAD sin credenciales: 302 -> 200 (cdn.hf.co, user_id=public); sin 401/403",
+      "licencia": "CC BY-SA 4.0 segun la tarjeta del modelo en Hugging Face (API huggingface.co/api/models/wanglab/MedSAM2, cardData.license=cc-by-sa-4.0, consultada 2026-11-14); el codigo del repo es Apache-2.0",
+      "pasos_manuales": null,
+      "descomprimir_en": null,
+      "descripcion": "Ajuste fino de MedSAM2 para video de ecografia cardiaca (download.sh:17 MODEL2; checkpoints/README.md). Config: configs/sam2.1_hiera_t512.yaml"
+    }
+  ],
+  "muestras": [
+    {
+      "archivo": "samples/echonet_dynamic_Example1.mp4",
+      "fuente": "vendor/dynamic/docs/media/Example1.mp4 (echonet/dynamic, commit e01d029); A4C por inspeccion visual; 582x582, 120 frames. Ver samples/FUENTES.md. La caja inicial la aporta el usuario (p. ej. [150,150,450,450] solo como ejemplo de formato, NO es una segmentacion verificada).",
+      "licencia": "ver samples/FUENTES.md (uso local, no redistribuir)",
+      "modalidad": "video_2d",
+      "vista": "A4C"
+    }
+  ],
+  "modalidades_admitidas": [
+    "video_2d",
+    "imagen_2d"
+  ],
+  "vistas_admitidas": [
+    "cualquiera"
+  ],
+  "entrada": "Video 2D (mp4/avi...) o imagen 2D (png/jpg) en modo B + OBLIGATORIAMENTE una indicacion inicial del usuario: options.caja=[x0,y0,x1,y1] en pixeles del frame original (con options.frame_prompt, def. 0) o options.mascara_inicial (ruta .png/.npy binaria del tamaño del frame). Sin indicacion se rechaza: no hay segmentacion automatica. volumen_3d, doppler_color y doppler_espectral: analisis no implementado. DICOM/carpetas: no soportado por este adaptador.",
+  "salidas": [
+    "masks.npz (masks[T,H,W] bool, areas_px2, tracked) en el run_dir",
+    "overlay.mp4 (video) u overlay.png (imagen) en el run_dir",
+    "area de la mascara por frame en px2 (tipo hallazgo; sin calibracion, nunca mm/ml) + min/max/media",
+    "NO hay probabilidades ni clasificacion; es segmentacion visual generica, no diagnostico"
+  ],
+  "requiere_prompt": true,
+  "opciones": {
+    "device": "auto",
+    "caja": null,
+    "mascara_inicial": null,
+    "frame_prompt": 0,
+    "score_thresh": 0.0,
+    "apply_postprocessing": false,
+    "max_frames": null,
+    "prueba_carga_dummy": false
+  },
+  "vram_estimada": {
+    "gb": 1.5,
+    "base": "ESTIMACION sin medir en GPU. Medido en Linux/CPU: 38.96 M parametros (image_encoder 27.22 M, memory_attention 5.92 M, memory_encoder 1.38 M, mask_decoder 4.22 M) = ~0.16 GB en fp32. Frames de un video de 120 f en GPU: 120x3x512x512x4 B = ~0.38 GB (el adaptador usa offload_video_to_cpu automaticamente si hay >300 frames). Activaciones del encoder Hiera-T a 512 px (bf16) + banco de memoria de 7 frames: orden de ~1 GB (suposicion). Medir con raw_output.vram_pico_mb en la PC.",
+    "cabe_en_6gb": "probable"
+  },
+  "licencia": "Codigo Apache-2.0 (vendor/MedSAM2/LICENSE; el codigo SAM2 incluido es de Meta, Apache-2.0). Pesos MedSAM2 en HF: CC BY-SA 4.0 (cardData.license, consultada 2026-11-14): atribucion y compartir igual.",
+  "estado": "pendiente de probar en PC",
+  "motivo_estado": "Pesos publicos (HEAD verificado) pero no descargados aqui; en Linux solo se probo carga dummy sin pesos, rechazos y error por pesos faltantes. NO se ha corrido inferencia real.",
+  "timeout_s": 1800
+}

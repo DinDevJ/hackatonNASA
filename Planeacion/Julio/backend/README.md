@@ -223,6 +223,29 @@ funciona; no valida el modelo contra personas reales.
 
 ---
 
+## Semáforo de padecimientos (motor de 20)
+
+Lee las evaluaciones que escribe el motor Python de `prototipo-salud/` (20 padecimientos, 350 vínculos) y deja editar sus pesos. Es **distinto** del "índice por padecimiento" de Leo (`pesos.js`, 11 malestares). Provisional: no es un diagnóstico; las filas de la tripulación sintética llevan canal `SIMULADO`.
+
+| Ruta | Qué hace |
+|---|---|
+| `GET /api/padecimientos/semaforo[?tripulante=ID]` | Los 20 colores por tripulante (GRIS si no hay evaluación), con `vacio` y `como_poblar` |
+| `GET /api/padecimientos/semaforo/:tripulante/:padecimiento` | Evaluación y desglose por variable (peso de la fuente, del usuario, efectivo, contribución) |
+| `GET /api/padecimientos/pesos[?padecimiento=P07]` | Pesos por liga, rango [0, 3] y umbrales cambiados |
+| `PUT /api/padecimientos/pesos` | `{padecimiento_id, variable_id, peso?, prior_de?}` o `{umbral, valor}` |
+| `POST /api/padecimientos/pesos/restaurar` | `{}` (todo), `{padecimiento_id[, variable_id]}` o `{umbral}` |
+| `POST /api/padecimientos/evaluar` | `{simulado?: boolean}`: corre el motor (409 si la BD está en memoria o ya corre; 503 sin Python) |
+
+Los pesos cambiados se aplican en la **próxima evaluación**. Para poblar `evaluaciones` (hace falta `eva.db` en archivo y Python 3 con pandas):
+
+```
+npm run evaluar -- --simulado            # o --db ruta; por defecto BD o eva.db
+cd prototipo-salud && EVA_DB=<ruta a eva.db> python3 -m motor.evadb --evaluar [--simulado]
+curl -X POST localhost:8787/api/padecimientos/evaluar -d '{"simulado": true}'
+```
+
+Variables de entorno opcionales: `PYTHON`, `PROTOTIPO_SALUD`.
+
 ## Archivos
 
 ```
@@ -234,6 +257,8 @@ src/ingesta.ts     tubería: asignación, decodificación, guardado y vigilancia
 src/semillas.ts    configuración inicial e importación del contrato de Leo
 src/enlace.ts      enlace con Tierra: retraso de la luz, ventanas y avisos de vuelta
 src/servidor.ts    API REST y eventos en vivo
+src/semaforo.ts    semáforo de padecimientos, pesos del usuario y ejecución del motor Python
+src/evaluar-salud.ts  npm run evaluar
 src/simulador.ts   simulador de terminal: 4 tripulantes, 119 días
 web/simulador.html simulador visual (astronauta, dispositivos, PC central, Tierra) en /simulador
                    el PC abre la computadora central de LUNNA (/app/central.html, de

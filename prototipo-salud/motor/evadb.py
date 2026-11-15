@@ -21,6 +21,7 @@
 - Basales (`basales`): se leen y se exponen en el resultado (`basales`), pero NO se pasan al motor: el motor construye la
   base personal desde los puntos prevuelo (autocalibración) y no tiene un punto de entrada para una media impuesta; forzarla
   cambiaría la semántica.
+- `detalle.ligas` (en `evaluaciones`) lleva el desglose por variable (campos de `CAMPOS_LIGA`; aporte = peso × activación).
 - `mision`: fecha de lanzamiento = inicio de la primera fase no-'tierra' de `fases`, solo si antes hay una fase 'tierra'.
 """
 from __future__ import annotations
@@ -305,8 +306,13 @@ def vaciar_pesos_usuario(con) -> bool:
 
 
 # ------------------------------------------------------------------------------------------- evaluación
+CAMPOS_LIGA = ("variable_id", "variable", "valor", "unidad", "fecha_dato", "peso", "modificado_por_usuario",
+               "nivel_evidencia", "fuente", "activacion", "aporte", "cuenta_en_T", "ausencia", "motivo_ausencia")
+
+
 def _detalle(item: dict, pers: dict, canal: str) -> dict:
     d = {k: item.get(k) for k in ("padecimiento", "motivo", "T", "T_de", "T_inf", "T_max", "cobertura", "etiquetas", "condiciones")}
+    d["ligas"] = [{k: lg.get(k) for k in CAMPOS_LIGA} for lg in (item.get("ligas") or [])]
     d.update({"fase": pers.get("fase"), "fecha_evaluacion": pers.get("fecha_evaluacion"), "provisional": True,
               "simulated": canal == "SIMULADO", "aviso": parametros.AVISO})
     return d

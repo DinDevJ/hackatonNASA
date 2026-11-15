@@ -281,16 +281,29 @@
   // ---------- Zoom al órgano y panel tecnológico ----------
   const facil = (t) => 1 - Math.pow(1 - t, 3); // ease-out
   /** Anima el viewBox de la figura hacia `destino` ([x, y, w, h]). */
+  // Curva suave al empezar y al terminar: el acercamiento no arranca ni frena de golpe.
+  const suave = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  const reducirMov = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   function animarVista(svgEl, destino, ms, listo) {
+    cancelAnimationFrame(svgEl._anim || 0); // si había otra animación, esta sigue desde donde iba
     const desde = svgEl.getAttribute("viewBox").split(/\s+/).map(Number);
-    const reducir = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reducir) { svgEl.setAttribute("viewBox", destino.join(" ")); return listo && listo(); }
+    if (reducirMov()) { svgEl.setAttribute("viewBox", destino.join(" ")); return listo && listo(); }
     const t0 = performance.now();
     (function paso(t) {
-      const k = facil(Math.min(1, (t - t0) / ms));
+      const k = suave(Math.min(1, (t - t0) / ms));
       svgEl.setAttribute("viewBox", desde.map((a, i) => (a + (destino[i] - a) * k).toFixed(2)).join(" "));
-      if (k < 1) requestAnimationFrame(paso); else if (listo) listo();
+      if (k < 1) svgEl._anim = requestAnimationFrame(paso); else if (listo) listo();
     })(t0);
+  }
+  /** Dónde quedará el centro de un órgano en pantalla cuando termine el acercamiento a `vista`. */
+  function puntoFinal(svgEl, el, vista, tel) {
+    const t = tel.getBoundingClientRect();
+    if (!svgEl || !el) return { x: t.width / 2, y: t.height / 2 };
+    const bb = el.getBBox(), r = svgEl.getBoundingClientRect();
+    const [vx, vy, vw, vh] = vista, esc = Math.min(r.width / vw, r.height / vh);
+    const x = r.left + (r.width - vw * esc) / 2 + (bb.x + bb.width / 2 - vx) * esc;
+    const y = r.top + (r.height - vh * esc) / 2 + (bb.y + bb.height / 2 - vy) * esc;
+    return { x: x - t.left, y: y - t.top };
   }
 
   /** Toca un órgano: la figura se acerca a él y la información sale de ahí hasta cubrir la pantalla. */
@@ -339,36 +352,43 @@
       <p class="no-diag">Lunna avisa, no diagnostica · datos simulados</p>`;
 
     // 2. El panel nace en el punto del órgano.
+    // El panel nace donde quedará el órgano al terminar el acercamiento, y empieza a crecer a mitad
+    // del zoom: las dos animaciones se encadenan sin pausa.
     const origen = () => {
-      const t = tel.getBoundingClientRect();
       const o = svgEl && $(`[data-region="${r}"]`, svgEl);
-      const b = o ? o.getBoundingClientRect() : { left: t.left + t.width / 2, top: t.top + t.height / 2, width: 0, height: 0 };
-      hud.style.setProperty("--ox", `${b.left + b.width / 2 - t.left}px`);
-      hud.style.setProperty("--oy", `${b.top + b.height / 2 - t.top}px`);
+      const pt = puntoFinal(svgEl, o, zoom, tel);
+      hud.style.setProperty("--ox", `${pt.x}px`);
+      hud.style.setProperty("--oy", `${pt.y}px`);
     };
+    const ZOOM_MS = 620;
     const abrir = () => {
       origen();
       tel.append(hud);
       requestAnimationFrame(() => requestAnimationFrame(() => hud.classList.add("abierto")));
       $(".hud-x", hud).focus({ preventScroll: true });
     };
-    if (svgEl) animarVista(svgEl, zoom, 420, abrir); else abrir();
+    if (svgEl && !reducirMov()) { animarVista(svgEl, zoom, ZOOM_MS); setTimeout(abrir, ZOOM_MS * 0.45); }
+    else { if (svgEl) animarVista(svgEl, zoom, 0); abrir(); }
 
     const cerrar = (luego) => {
       document.removeEventListener("keydown", tecla);
       origen();
       hud.classList.remove("abierto");
+      // El alejamiento empieza mientras el panel se recoge hacia el órgano: sin corte entre los dos.
+      const alejar = () => {
+        if (!svgEl || !svgEl.isConnected) return;
+        animarVista(svgEl, C.VISTA, ZOOM_MS, () => {
+          svgEl.classList.remove("con-foco");
+          $$(".org, .halo", svgEl).forEach((el) => el.classList.remove("activa"));
+        });
+      };
       const fin = () => {
         hud.remove();
-        if (svgEl && svgEl.isConnected) {
-          animarVista(svgEl, C.VISTA, 360, () => {
-            svgEl.classList.remove("con-foco");
-            $$(".org, .halo", svgEl).forEach((el) => el.classList.remove("activa"));
-          });
-        }
         if (luego) luego(); else if (previo && previo.isConnected) previo.focus({ preventScroll: true });
       };
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) fin(); else setTimeout(fin, 420);
+      if (reducirMov()) { alejar(); fin(); return; }
+      if (!luego) setTimeout(alejar, 200);
+      setTimeout(fin, 520);
     };
     const tecla = (e) => { if (e.key === "Escape") cerrar(); };
     document.addEventListener("keydown", tecla);
@@ -483,19 +503,65 @@
       const seccionHoy = `${hall}
         ${L.bien.length ? `<p class="bien">${hall ? "Lo demás va bien: " : "Con tus datos de hoy: "}${L.bien.join("; ")}.</p>` : ""}
         <p class="no-diag">Lunna avisa, no diagnostica: cuenta lo que miden tus sensores contra tu normal</p>`;
+      // Secciones deslizables: en celular o iPad se cambia con el dedo; en escritorio, con las flechas,
+      // arrastrando o con ← →. Los segmentos de abajo marcan dónde estás.
+      const N = SECCIONES.length, dos = (i) => String(i + 1).padStart(2, "0");
       panel.innerHTML = `
         <div class="luna-panel-cab"><span class="luna-grande"></span><div><div class="t">Lunna · día ${estado.dia}</div><div class="resumen">${L.resumen}</div></div>
           <span class="espacio"></span><button class="hud-x" data-cerrar aria-label="Cerrar">${ic("cerrar")}</button></div>
-        <div class="luna-tabs" role="tablist">${SECCIONES.map(([k, t], i) => `<button role="tab" data-sec="${k}" aria-selected="${i === 0}">${t}</button>`).join("")}</div>
-        <div class="luna-sec" role="tabpanel">${seccionHoy}</div>`;
-      panel.addEventListener("click", (e) => {
-        const b = e.target.closest("[data-sec]"); if (!b) return;
-        $$("[data-sec]", panel).forEach((x) => x.setAttribute("aria-selected", String(x === b)));
-        const cont = $(".luna-sec", panel);
-        if (b.dataset.sec === "hoy") cont.innerHTML = seccionHoy;
-        else if (window.APP.panelLuna && window.APP.panelLuna[b.dataset.sec]) window.APP.panelLuna[b.dataset.sec](cont);
-        cont.scrollTop = 0;
+        <div class="lc-nav">
+          <button class="lc-flecha" data-lc="-1" aria-label="Sección anterior">${ic("atras")}</button>
+          <div class="lc-titulo" aria-live="polite"><span class="lc-num">${dos(0)} / ${dos(N - 1)}</span><b class="lc-nombre">${SECCIONES[0][1]}</b></div>
+          <button class="lc-flecha" data-lc="1" aria-label="Sección siguiente">${ic("atras", "voltear")}</button>
+        </div>
+        <div class="lc-segmentos" role="tablist" aria-label="Secciones de Lunna">${SECCIONES.map(([k, t], i) => `<button role="tab" data-sec="${k}" aria-label="${t}" aria-selected="${i === 0}"><i></i></button>`).join("")}</div>
+        <div class="lc-pista" tabindex="0">${SECCIONES.map(([k, t]) => `<section class="lc-slide" data-slide="${k}" role="tabpanel" aria-label="${t}"><span class="lc-barrido" aria-hidden="true"></span><div class="lc-cont"></div></section>`).join("")}</div>
+        <p class="lc-ayuda">${ic("atras", "ic-sm")} Desliza para cambiar de sección ${ic("atras", "ic-sm voltear")}</p>`;
+      const pista = $(".lc-pista", panel), slides = $$(".lc-slide", panel);
+      slides.forEach((sl, i) => {
+        const cont = $(".lc-cont", sl), k = SECCIONES[i][0];
+        if (k === "hoy") cont.innerHTML = seccionHoy;
+        else if (window.APP.panelLuna && window.APP.panelLuna[k]) window.APP.panelLuna[k](cont);
       });
+      let activo = 0;
+      const irA = (i) => {
+        i = Math.max(0, Math.min(N - 1, i));
+        pista.scrollTo({ left: i * pista.clientWidth, behavior: reducirMov() ? "auto" : "smooth" });
+      };
+      const marcar = (i) => {
+        if (i === activo) return;
+        const dir = i > activo ? "der" : "izq";
+        activo = i;
+        const tit = $(".lc-titulo", panel);
+        $(".lc-num", tit).textContent = `${dos(i)} / ${dos(N - 1)}`;
+        $(".lc-nombre", tit).textContent = SECCIONES[i][1];
+        tit.classList.remove("entra-der", "entra-izq"); void tit.offsetWidth; tit.classList.add("entra-" + dir);
+        $$("[data-sec]", panel).forEach((x, k) => x.setAttribute("aria-selected", String(k === i)));
+        slides[i].classList.remove("barre"); void slides[i].offsetWidth; slides[i].classList.add("barre");
+        $(".lc-flecha[data-lc='-1']", panel).disabled = i === 0;
+        $(".lc-flecha[data-lc='1']", panel).disabled = i === N - 1;
+      };
+      // Profundidad: las secciones que se alejan del centro se encogen, se atenúan y se desenfocan.
+      let rafP = 0;
+      pista.addEventListener("scroll", () => {
+        cancelAnimationFrame(rafP);
+        rafP = requestAnimationFrame(() => {
+          const x = pista.scrollLeft / Math.max(1, pista.clientWidth);
+          slides.forEach((sl, k) => sl.style.setProperty("--d", Math.min(1, Math.abs(k - x)).toFixed(3)));
+          marcar(Math.round(x));
+        });
+      }, { passive: true });
+      // Arrastrar con el ratón (en táctil ya desliza solo).
+      let arr = null;
+      pista.addEventListener("pointerdown", (e) => { if (e.pointerType !== "mouse" || e.target.closest("button, input, textarea, a, summary")) return; arr = { x: e.clientX, s: pista.scrollLeft }; pista.classList.add("arrastrando"); });
+      window.addEventListener("pointermove", (e) => { if (arr) pista.scrollLeft = arr.s - (e.clientX - arr.x); });
+      window.addEventListener("pointerup", () => { if (!arr) return; arr = null; pista.classList.remove("arrastrando"); irA(Math.round(pista.scrollLeft / pista.clientWidth)); });
+      panel.addEventListener("keydown", (e) => { if (e.target.closest("input, textarea")) return; if (e.key === "ArrowRight") irA(activo + 1); if (e.key === "ArrowLeft") irA(activo - 1); });
+      panel.addEventListener("click", (e) => {
+        const f = e.target.closest("[data-lc]"); if (f) return irA(activo + Number(f.dataset.lc));
+        const b = e.target.closest("[data-sec]"); if (b) irA(SECCIONES.findIndex(([k]) => k === b.dataset.sec));
+      });
+      requestAnimationFrame(() => { $(".lc-flecha[data-lc='-1']", panel).disabled = true; slides.forEach((sl, k) => sl.style.setProperty("--d", k ? 1 : 0)); });
       if (window.APP.alAbrirLuna) setTimeout(() => window.APP.alAbrirLuna(panel), 0);
       const t = tel.getBoundingClientRect(), b = boton.getBoundingClientRect();
       panel.style.setProperty("--ox", `${b.left + b.width / 2 - t.left - 14}px`);
@@ -619,6 +685,19 @@
     </div>`;
   }
 
+  // Duración del tránsito a Marte en el escenario: el día 112 faltan 98 días (Ciclo, anticonceptivos).
+  const MISION = { nombre: "Tránsito a Marte", dias: 210 };
+  /** Progreso de la misión: día actual contra la duración total. */
+  function barraMision() {
+    const pct = Math.max(0, Math.min(100, (estado.dia / MISION.dias) * 100));
+    const faltan = Math.max(0, MISION.dias - estado.dia);
+    return `<div class="mision" role="progressbar" aria-valuemin="0" aria-valuemax="${MISION.dias}" aria-valuenow="${estado.dia}" aria-label="${MISION.nombre}: día ${estado.dia} de ${MISION.dias}">
+      <div class="mision-txt"><span>${MISION.nombre}</span><span><b>Día ${estado.dia}</b> de ${MISION.dias}</span></div>
+      <div class="mision-barra"><i style="width:${pct.toFixed(1)}%"></i><span class="mision-nave" style="left:${pct.toFixed(1)}%">${ic("cohete", "ic-sm")}</span></div>
+      <div class="mision-pie"><span>Tierra</span><span>${Math.round(pct)} % · faltan ${faltan} días</span><span>Marte</span></div>
+    </div>`;
+  }
+
   // ---------- Pantallas ----------
   const PANTALLAS = {
     hoy(p) {
@@ -636,11 +715,11 @@
           valor = leo.sinRegistro ? "–" : leo.valor; u = leo.sinRegistro ? "" : leo.u; n = leo.sinRegistro ? null : (leo.ok ? 0 : 1); txt = leo.sinRegistro ? "Sin registro hoy" : leo.txt;
         }
         const destino = k && !M.IND[k].seccion ? `ficha-${k}` : id;
-        return `<button data-seccion="${destino}" aria-label="${nombre}: ${valor} ${u}, ${ESTADO_TXT[n == null ? "nd" : n]}">
+        const reg = k && ev.ind[k].registrado;
+        return `<button class="tile" data-seccion="${destino}" title="${txt}${reg ? ` · registrado ${reg.hora || ""}` : ""}" aria-label="${nombre}: ${valor} ${u}, ${txt}">
+          <span class="tile-punto tp-${claseN(n)}" aria-hidden="true"><svg viewBox="-8 -8 16 16">${C.forma(n, 0, 0, 6)}</svg></span>
           <div class="fila" style="gap:8px"><div class="pastilla-ic" style="--ic1:${color.fondo};--ic2:${color.tinta}">${ic(icono)}</div><span class="nombre">${nombre}</span></div>
           <div class="valor">${valor}<small>${u}</small></div>
-          <span class="estado estado-${claseN(n)}">${sem(n, txt)}</span>
-          ${k && ev.ind[k].registrado ? `<span class="etq etq-reg">registrado${ev.ind[k].registrado.hora ? " " + ev.ind[k].registrado.hora : ""}</span>` : ""}
         </button>`;
       };
       const S = Object.fromEntries(sec.map((x) => [x.id, x]));
@@ -669,7 +748,7 @@
       const nEstado = rojas ? 2 : atencion ? 1 : 0;
       p.innerHTML = `
         <header class="inicio-cab">
-          <div class="inicio-txt"><p>Día ${estado.dia} · Tránsito a Marte</p><h1>Hola, ${P.nombre}</h1></div>
+          <div class="inicio-txt"><h1>Hola, ${P.nombre}</h1>${barraMision()}</div>
           <button class="yo-btn" id="cambiar-yo" aria-label="Cambiar tripulante o día (ahora: ${P.nombre}, día ${estado.dia})"><span class="avatar" style="--c:${P.color}">${P.nombre[0]}</span></button>
         </header>
         ${window.APP.alertasInicio ? window.APP.alertasInicio(P, ev) : ""}

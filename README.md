@@ -18,6 +18,9 @@ conflictos al mezclar ramas.
 
 ## Computadora central
 
+**[Planeacion/Julio/INTEGRACION.md](Planeacion/Julio/INTEGRACION.md)** — **entregable**: firmware del ESP32,
+pasarela Bluetooth, backend y LUNNA, con limitantes y cómo integrarlos.
+
 **[Planeacion/Julio/backend](Planeacion/Julio/backend/README.md)** — backend de EVA y modelo
 **LUNNA**. Contratos para la interfaz, los dispositivos intermedios, las semillas y el hardware.
 

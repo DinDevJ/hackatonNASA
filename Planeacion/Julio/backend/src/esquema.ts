@@ -88,6 +88,16 @@ function leer(dv: DataView, off: number, t: TipoCampo): number {
   }
 }
 
+const RANGO: Record<Exclude<TipoCampo, 'f32'>, [number, number]> = {
+  u8: [0, 255], i8: [-128, 127], u16: [0, 65535], i16: [-32768, 32767],
+  u32: [0, 4294967295], i32: [-2147483648, 2147483647],
+};
+function saturar(x: number, t: TipoCampo): number {
+  if (t === 'f32') return x;
+  const [lo, hi] = RANGO[t];
+  return Math.min(hi, Math.max(lo, x));
+}
+
 function escribir(dv: DataView, off: number, t: TipoCampo, v: number): void {
   switch (t) {
     case 'u8': dv.setUint8(off, v); break;
@@ -150,7 +160,9 @@ export function codificar(cab: Omit<Cabecera, 'ver'>, e: Esquema, crudos: Record
     if (!c.tipo) continue;
     const real = crudos[c.clave] ?? 0;
     const crudo = (real - (c.desplazamiento ?? 0)) / (c.escala ?? 1);
-    escribir(dv, off, c.tipo, c.tipo === 'f32' ? crudo : Math.round(crudo));
+    // Redondeo y saturación idénticos al firmware (trama_eva.h) y a la pasarela:
+    // un pico de 300 lpm en un u8 llega como 255, no como 44.
+    escribir(dv, off, c.tipo, c.tipo === 'f32' ? crudo : saturar(Math.floor(crudo + 0.5), c.tipo));
     off += BYTES[c.tipo];
   }
   return buf;

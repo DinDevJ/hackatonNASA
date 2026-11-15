@@ -21,7 +21,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
 AQUI = pathlib.Path(__file__).resolve().parent
-MAQUETA = (AQUI.parent / 'maqueta-eva').resolve()
+MAQUETA = (AQUI.parent / 'Sistema' / 'interfaces' / 'eva').resolve()
 CACHE = pathlib.Path(tempfile.gettempdir()) / 'lunna-video-cache'
 FPS, DUR = 30, 30.0
 NF = int(DUR * FPS)
@@ -65,14 +65,15 @@ KA = 1.35                                            # escala de Ana (la marione
 CICLO_PASO = 40.0 * KA
 BPM_GYM = 128.0
 T_TORMENTA = (10.8, 12.6)                            # la dosis sube de 23 a 6000 µSv/h
-T_COLAPSO, T_LUNNA, T_RECUPERA = 15.8, 17.0, 18.6
+T_COLAPSO, T_LUNNA, T_RECUPERA = 15.8, 16.6, 20.5
+T_MEI = (17.3, 18.6)                                 # Mei (CMO) llega a ayudar
 T_VIAJE = (25.3, 26.5)                               # Lunna va de la esquina al centro
 T_LETRAS = 26.9                                      # aparece LUNNA
 T_ACORDE = 27.8                                      # acorde final y subtítulos
 T_A, T_B = 0.55, 0.7                                 # paquete: tarjeta → antena → Tierra
 
 
-SB = [5.0, 10.0, 15.0, 20.0]                         # el centro de cada muro pasa por la cámara en estos segundos
+SB = [5.0, 10.0, 15.0]                         # el centro de cada muro pasa por la cámara en estos segundos
 TC = SB
 ANCHO_CUARTO = 474                                   # de mamparo a mamparo
 MURO = 130                                           # grosor del muro entre cuartos (arte)
@@ -86,7 +87,10 @@ FRENO = 0.82                                         # 0 = velocidad pareja · c
 
 def recorrido(t):
     """Posición virtual de la cámara: cruza cada muro a los 5, 10, 15, 20 y 25 s, rápido en los muros y lento en el cuarto."""
-    k, u = divmod(t / 5.0, 1.0)
+    lim = [0.0, 5.0, 10.0, 15.0, 25.0]               # la enfermería dura el doble: ahí pasa la emergencia
+    if t >= 15.0: return PERIODO * 3 + 287 * sale(entre(t, 15.0, 18.0))   # se queda quieta mientras atienden a Ana
+    k = max(j for j in range(4) if t >= lim[j])
+    u = (t - lim[k]) / (lim[k + 1] - lim[k])
     return PERIODO * (k + u + FRENO * math.sin(2 * math.pi * u) / (2 * math.pi))
 
 
@@ -123,16 +127,27 @@ def ana(t):
     elif t < 15.0:
         e.update(x=X[2], modo='mirar')
         if 11.0 <= t < 12.8: e['temblor'] = 1 if int(t * 18) % 2 else -1
-    elif t < 20.0:
-        e.update(x=X[3])
-        if T_COLAPSO <= t < 19.2:
-            k = seno_io(entre(t, T_COLAPSO, T_COLAPSO + 0.5)) * (1 - seno_io(entre(t, T_RECUPERA, 19.2)))
-            e.update(modo='pecho', u=k)
     else:
-        e.update(x=X[4], modo='feliz')
-        if 21.8 <= t < 22.4:
-            u = entre(t, 21.8, 22.4)
-            e.update(modo='saltofeliz', u=u, y=SUELO - 18 * math.sin(math.pi * u))
+        e.update(x=X[3])
+        if T_COLAPSO <= t < T_RECUPERA + 0.6:
+            k = seno_io(entre(t, T_COLAPSO, T_COLAPSO + 0.5)) * (1 - seno_io(entre(t, T_RECUPERA, T_RECUPERA + 0.6)))
+            e.update(modo='pecho', u=k)
+        elif t >= 22.4:
+            e.update(modo='feliz')
+            if 23.0 <= t < 23.6:
+                u = entre(t, 23.0, 23.6)
+                e.update(modo='saltofeliz', u=u, y=SUELO - 18 * math.sin(math.pi * u))
+    return e
+
+
+def mei(t):
+    """Mei, la oficial médica: entra por la puerta cuando Lunna avisa a bordo y ayuda a Ana."""
+    if t < T_MEI[0]: return None
+    x0, x1 = 1890, 1662
+    e = dict(x=x1, y=SUELO, theta=0.0, espejo=True, modo='feliz' if t >= 22.4 else 'ayudar', fase=0.0, u=entre(t, T_MEI[1], T_MEI[1] + 0.4), temblor=0)
+    if t < T_MEI[1]:
+        x = lerp(x0, x1, seno_io(entre(t, *T_MEI)))
+        e.update(x=x, modo='trotar', fase=(x0 - x) / CICLO_PASO)
     return e
 
 
@@ -467,8 +482,8 @@ def esqueleto(e, t):
         bob = 0.7 * math.sin(t * 2 * math.pi * 0.6)
     if m == 'feliz':
         manos = [(-7.0, 12.0), (7.0, 12.0)]
-        if 22.9 <= t < 24.3:                     # saluda
-            w = math.sin((t - 22.9) * 2 * math.pi * 2.5)
+        if 23.8 <= t < 24.9:                     # saluda
+            w = math.sin((t - 23.8) * 2 * math.pi * 2.5)
             manos = [(-7.0, 12.0), (9 + 4 * w, -16.0)]
     if m == 'trotar':
         f = e['fase']
@@ -500,6 +515,9 @@ def esqueleto(e, t):
         pies = [(lerp(-3, -6, u), 0.0), (lerp(3, 7, u), 0.0)]
         manos = [(lerp(-3, -1, u), lerp(16, 15, u)), (lerp(3, 7, u), lerp(16, 6, u))]
         mira = -0.8 * u
+    if m == 'ayudar':   # brazo hacia la espalda de Ana
+        lean = 8 * u
+        manos = [(lerp(-3, 6, u), lerp(16, 10, u)), (lerp(3, 14, u), lerp(16, 4, u))]
     if m == 'mirar':
         mira = 1.0
         if e['temblor']:
@@ -508,15 +526,17 @@ def esqueleto(e, t):
     return dict(lean=lean, caida=caida, bob=bob, pies=pies, manos=manos, mira=mira)
 
 
-def dibujar_astronauta(cv, e, ox, t, color_led):
+def dibujar_astronauta(cv, e, ox, t, color_led, acento=C['rosa'], mochila=MOCHILA):
     """cv: lienzo RGB del arte; ox: x del mundo que cae en la columna 0 del lienzo."""
     k = esqueleto(e, t)
     th = math.radians(e['theta'])
     L = math.radians(k['lean'])
     base_x, base_y = e['x'] - ox + e['temblor'], e['y']
 
-    def G(p):  # local → lienzo
-        q = rot((p[0] * KA, p[1] * KA), th)
+    sx_ = -1 if e.get('espejo') else 1
+
+    def G(p):  # local → lienzo (en espejo si mira a la izquierda)
+        q = rot((p[0] * KA * sx_, p[1] * KA), th)
         return (base_x + q[0], base_y + q[1])
 
     cadera = (0.0, -24.0 + k['caida'] - k['bob'])
@@ -540,7 +560,7 @@ def dibujar_astronauta(cv, e, ox, t, color_led):
         rod, fin = ik(cadera, pie, 12.6, 12.6, -1)
         miembro(cadera, rod, 8, col); miembro(rod, fin, 8, col)
         bx, by = G((fin[0] + 1, fin[1] - 1))
-        d.rectangle((bx - 5, by - 4, bx + 7, by + 1), fill=BOTA, outline=CONT)
+        d.rectangle((bx - (7 if sx_ < 0 else 5), by - 4, bx + (5 if sx_ < 0 else 7), by + 1), fill=BOTA, outline=CONT)
 
     def brazo(mano_rel, col):
         h = mas(hombro, dirt, -2)
@@ -556,9 +576,9 @@ def dibujar_astronauta(cv, e, ox, t, color_led):
 
     brazo(k['manos'][0], TRAJE_D)
     pierna(k['pies'][0], TRAJE_D)
-    poligono(mas(mas(cadera, dirt, 12), frente, -9), 9, 9, 4, MOCHILA)
+    poligono(mas(mas(cadera, dirt, 12), frente, -9), 9, 9, 4, mochila)
     poligono(mas(cadera, dirt, 9), 11, 11, 7.5, TRAJE)
-    poligono(mas(cadera, dirt, 1), 1, 1, 7.5, C['rosa'], borde=False)
+    poligono(mas(cadera, dirt, 1), 1, 1, 7.5, acento, borde=False)
     led = G(mas(mas(cadera, dirt, 13), frente, 3))
     d.rectangle((led[0] - 2, led[1] - 1, led[0] + 2, led[1] + 2), fill=color_led)
     pierna(k['pies'][1], TRAJE)
@@ -566,7 +586,7 @@ def dibujar_astronauta(cv, e, ox, t, color_led):
     d.ellipse((cx - 16, cy - 16, cx + 16, cy + 16), fill=CONT)
     d.ellipse((cx - 15, cy - 15, cx + 15, cy + 15), fill=TRAJE)
     franja = [G(mas(mas(cabeza, frente, 10.4 * math.cos(math.radians(f_))), dirt, 10.4 * math.sin(math.radians(f_)))) for f_ in range(100, 165, 8)]
-    d.line(franja, fill=C['rosa'], width=3)
+    d.line(franja, fill=acento, width=3)
     cuello = G(mas(cadera, dirt, 19.5))
     d.ellipse((cuello[0] - 9, cuello[1] - 4, cuello[0] + 9, cuello[1] + 4), fill=GUANTE, outline=CONT)
     vc = mas(mas(cabeza, frente, 3.2 - 0.6 * abs(k['mira'])), dirt, 2.4 * k['mira'])
@@ -612,15 +632,15 @@ def programar_particulas():
         t0 += r.uniform(0.22, 0.34)
     add('excl', 11.15, 1.5, 0, 0, 0, 0)                         # ¡! en la tormenta
     for i in range(10):                                         # alivio al recuperarse
-        t0 = 18.9; hx, hy = cabeza_mundo(t0); a = i / 10 * 2 * math.pi
+        t0 = T_RECUPERA + 0.3; hx, hy = cabeza_mundo(t0); a = i / 10 * 2 * math.pi
         add('chispa', t0, 0.7, hx, hy, math.cos(a) * 32, math.sin(a) * 32, col=C['verde'])
-    t0 = 22.0
+    t0 = 23.0
     while t0 < 24.9:                                            # corazones
         hx, hy = cabeza_mundo(t0)
         add('corazon', t0, 1.5, hx + r.uniform(-8, 10), hy - 18, r.uniform(-8, 8), -28, fase=r.random() * 6)
         t0 += r.uniform(0.32, 0.5)
     for i in range(10):                                         # chispas del salto
-        t0 = 22.1; hx, hy = cabeza_mundo(t0); a = i / 10 * 2 * math.pi
+        t0 = 23.2; hx, hy = cabeza_mundo(t0); a = i / 10 * 2 * math.pi
         add('chispa', t0, 0.6, hx, hy, math.cos(a) * 40, math.sin(a) * 40, col=C['magenta'])
     return ps
 
@@ -971,24 +991,34 @@ def html_luna(cara, fase, tam, acc=''):
     return f'<div class="luna-aqui" data-cara="{cara}" data-fase="{fase}" data-tam="{tam}" data-acc="{acc}"></div>'
 
 
+def html_paso(n, texto):
+    """Consejo de Lunna, como los pasos del modo emergencia de la app."""
+    return (f'<div class="tarjeta" style="width:340px;display:flex;gap:12px;align-items:center">'
+            f'<div class="luna-aqui" data-cara="empatica" data-fase="0.3" data-tam="56" data-acc=""></div>'
+            f'<div style="display:grid;gap:4px"><span style="font:750 12px var(--letra);letter-spacing:.06em;color:#FCA5A5">LUNNA · STEP {n} OF 3</span>'
+            f'<span style="font:650 16px/1.3 var(--letra)">{texto}</span></div></div>')
+
+
 TARJETAS = [
     dict(t0=0.6, t1=4.2, ancla=(340, 102), esc=0.9, caja=(250, 140), html=html_sueno),
     dict(t0=5.5, t1=9.2, ancla=(560, 100), esc=0.9, caja=(290, 200), html=html_pulso),
     dict(t0=10.4, t1=14.2, ancla=(1010, 100), esc=0.9, caja=(320, 230), html=html_dosis),
-    dict(t0=15.95, t1=19.4, ancla=(1662, 96), esc=0.85, caja=(360, 330), html=html_emerg),
-    dict(t0=21.3, t1=24.4, ancla=(2122, 90), esc=0.8, caja=(580, 210), html=html_normal),
+    dict(t0=15.95, t1=18.0, ancla=(1640, 96), pantalla=(110, 230), esc=0.85, caja=(360, 330), html=html_emerg),
+    dict(t0=18.3, t1=19.4, ancla=(1640, 96), pantalla=(-110, 230), esc=0.85, caja=(380, 120), html=lambda t: html_paso(1, "Stay with Ana. Don't leave her alone."), linea=False),
+    dict(t0=19.7, t1=20.8, ancla=(1640, 96), pantalla=(-110, 230), esc=0.85, caja=(380, 120), html=lambda t: html_paso(2, 'Help her sit and breathe slowly.'), linea=False),
+    dict(t0=21.1, t1=22.1, ancla=(1640, 96), pantalla=(-110, 230), esc=0.85, caja=(380, 120), html=lambda t: html_paso(3, 'Oxygen on. Keep watching her vitals.'), linea=False),
+    dict(t0=22.4, t1=24.6, ancla=(1640, 92), pantalla=(-110, 210), esc=0.8, caja=(580, 210), html=html_normal),
 ]
 PAQUETES = [   # t: sale de la tarjeta · ant: cuarto · pieza del paquete
     dict(t=3.0, tarjeta=0, ant=0, pieza='paq0', color=C['cian'], sos=False),
     dict(t=8.15, tarjeta=1, ant=1, pieza='paq1', color=(255, 111, 168), sos=False),
-    dict(t=13.1, tarjeta=2, ant=2, pieza='paq2', color=C['ambar'], sos=False),
-    dict(t=17.05, tarjeta=3, ant=3, pieza='paq3', color=C['rojo'], sos=True),
-    dict(t=23.7, tarjeta=4, ant=4, pieza='paq4', color=C['verde'], sos=False),
+    dict(t=11.9, tarjeta=2, ant=2, pieza='paq2', color=C['ambar'], sos=False),
+    dict(t=T_LUNNA, tarjeta=3, ant=3, pieza='paq3', color=C['rojo'], sos=True),
 ]
-CHIPS = [(0.6, 4.2, 'chip0'), (5.6, 9.2, 'chip1'), (10.6, 14.2, 'chip2'), (15.6, 19.2, 'chip3'), (20.6, 24.4, 'chip4')]
+CHIPS = [(0.6, 4.2, 'chip0'), (5.6, 9.2, 'chip1'), (10.6, 14.2, 'chip2'), (15.6, 24.4, 'chip3')]
 LUNA_ESTADOS = [(0.0, 'dormida', 0.75, ''), (1.4, 'feliz', 0.75, ''), (5.3, 'energia', 0.85, 'pesa'), (8.8, 'tranquila', 0.75, ''),
                 (10.8, 'radiacion', 0.5, ''), (T_COLAPSO, 'alerta', 0.08, ''), (T_LUNNA, 'escaneo', 0.08, ''), (T_LUNNA + 0.8, 'latido', 0.15, ''),
-                (T_RECUPERA, 'tranquila', 0.5, ''), (21.4, 'feliz', 1.0, ''), (21.8, 'celebra', 1.0, ''), (22.9, 'feliz', 1.0, '')]
+                (18.3, 'empatica', 0.3, ''), (T_RECUPERA, 'tranquila', 0.5, ''), (22.4, 'feliz', 1.0, ''), (23.0, 'celebra', 1.0, ''), (23.8, 'feliz', 1.0, '')]
 
 
 def registrar(html, ancho, alto, clave=None):
@@ -1007,6 +1037,8 @@ def piezas_fijas():
     registrar(html_tierra('18 min one-way · priority queue'), 340, 80, 'tierra_espera')
     registrar(html_tierra('Sending · arrives in 18 min'), 340, 80, 'tierra_envio')
     registrar(html_tierra('Priority 0 · emergency', True), 340, 80, 'tierra_sos')
+    registrar(html_tierra('Connection lost', True), 340, 80, 'tierra_perdida')
+    registrar(html_tierra('Local mode · Lunna on board'), 340, 80, 'tierra_local')
     for i, (icono_, texto, color, lleno) in enumerate((('luna', 'Sleep data', '#4FD2E9', False), ('corazon', 'Heart data', '#FF6FA8', False),
                                                        ('rayo', 'Dose data', '#FBBF24', False), ('alerta', 'SOS · priority 0', '#E5484D', True),
                                                        ('check', 'Daily summary', '#34D399', False))):
@@ -1150,8 +1182,16 @@ def a_salida(xw, yw, izq):
 def rect_tarjeta(tj, t, izq):
     k = registrar(tj['html'](t), *tj['caja'])
     im = pieza(k, tj['esc'])
-    x, y = a_salida(tj['ancla'][0], tj['ancla'][1], izq)
+    x, y = posicion_tarjeta(tj, im.width, izq)
     return x, y, im.width, im.height
+
+
+def posicion_tarjeta(tj, ancho, izq):
+    """En el mundo (flota en el cuarto) o fija en pantalla; x negativa = medida desde la derecha."""
+    if 'pantalla' in tj:
+        x, y = tj['pantalla']
+        return (OW + x - ancho if x < 0 else x), y
+    return a_salida(tj['ancla'][0], tj['ancla'][1], izq)
 
 
 def hud_tierra_pos():
@@ -1180,8 +1220,10 @@ def ruta_paquete(p, t):
 
 
 def estado_tierra(t):
-    for p in PAQUETES:
-        if p['sos'] and p['t'] <= t < 19.6: return 'tierra_sos'
+    """La tormenta corta el enlace: «Connection lost» y después Lunna sigue en modo local (también en la emergencia)."""
+    t_sos = T_LUNNA + T_A + T_B
+    if 13.4 <= t < 14.3 or t_sos <= t < t_sos + 0.9: return 'tierra_perdida'
+    if t >= 14.3: return 'tierra_local'
     for p in PAQUETES:
         if p['t'] <= t < p['t'] + T_A + T_B + 1.6: return 'tierra_envio'
     return 'tierra_espera'
@@ -1219,7 +1261,7 @@ def dibujar_cam(base, t, fin):
         d.line((x, y, x + 60 * sx, y), fill=(230, 240, 255, al), width=3); d.line((x, y, x, y + 60 * sy), fill=(230, 240, 255, al), width=3)
 
 
-COLOR_DATO = [(79, 210, 233), (255, 111, 168), (251, 191, 36), (248, 82, 96), (52, 211, 153)]
+COLOR_DATO = [(79, 210, 233), (255, 111, 168), (251, 191, 36), (248, 82, 96), None, None, None, (52, 211, 153)]
 
 
 def fuente_dato(i, t):
@@ -1265,9 +1307,9 @@ def capa_ui(base, t, izq, con_tarjetas=True):
         alfa = ent * (1 - sal_)
         k = registrar(tj['html'](t), *tj['caja'])
         esc = tj['esc'] * (0.94 + 0.06 * ent)
-        x, y = a_salida(tj['ancla'][0], tj['ancla'][1], izq)
+        x, y = posicion_tarjeta(tj, pieza(k, esc).width, izq)
         y += (1 - ent) * 20 - sal_ * 14
-        linea_dato(base, TARJETAS.index(tj), t, izq, x, y, pieza(k, esc).size, alfa)
+        if tj.get('linea', True): linea_dato(base, TARJETAS.index(tj), t, izq, x, y, pieza(k, esc).size, alfa)
         colocar(base, k, x, y, esc, alfa)
     # hora y lugar
     for t0, t1, k in (CHIPS if con_tarjetas else ()):
@@ -1380,6 +1422,8 @@ def render_escena(i, t, con_fondo=False):
     dibujar_estela(cv, ox, t)
     e = ana(t)
     led = C['rojo'] if T_COLAPSO <= t < T_RECUPERA else C['ambar'] if (10.8 < t < 13.6 or t < 3.4) else C['verde']
+    m_ = mei(t)
+    if m_ and i == 3: dibujar_astronauta(cv, m_, ox, t, C['verde'], (255, 150, 50), (240, 150, 70))
     info = dibujar_astronauta(cv, e, ox, t, led)
     dibujar_frente(cv, ox, t, info)
     dibujar_efectos_ana(cv, ox, t, info)
@@ -1437,7 +1481,7 @@ def cuadro(f):
     PULSO = pulso_ritmo(t)
     L = recorrido(t) - AW / 2
     img = muros(L)
-    for i in range(len(CUARTOS)):
+    for i in range(4):   # dormitorio, gimnasio, mirador y enfermería
         v0 = i * PERIODO + MURO / 2; v1 = v0 + ANCHO_CUARTO
         if v1 + 8 < L or v0 - 8 > L + AW: continue
         arr, m, _, _, _ = render_escena(i, t)
@@ -1621,13 +1665,10 @@ def golpes():
         elif 10.0 <= t < 14.75:
             if n == 0: g.append((t, 'bombo', 0.7))
             if n == 2: g.append((t, 'caja', 1.0))
-        elif 18.6 <= t < 19.75:
-            if n == 0: g.append((t, 'bombo', 0.5))
-            if n == 2: g.append((t, 'caja', 0.7))
-        elif 20.0 <= t < 25.0:
+        elif 22.0 <= t < 25.0:
             if n in (0, 2): g.append((t, 'bombo', 0.6))
             if n in (1, 3): g.append((t, 'caja', 0.9))
-    g += [(tb, 'latido', 0.45) for tb in latidos(15.9, 18.6)]
+    g += [(tb, 'latido', 0.45) for tb in latidos(15.9, T_RECUPERA)]
     g += [(T_COLAPSO, 'impacto', 1.5), (T_ACORDE, 'final', 1.6)]
     return sorted(g)
 
@@ -1668,7 +1709,7 @@ def componer():
         elif tipo == 'final': impacto(tg, 0.35); caja_(tg, 0.25)
     for k in range(int(DUR / (BEAT / 2))):
         t = k * BEAT / 2
-        if 5.0 <= t < 9.75 or 20.0 <= t < 25.0: charles(t, 0.05 if k % 2 else 0.03)
+        if 5.0 <= t < 9.75 or 22.0 <= t < 25.0: charles(t, 0.05 if k % 2 else 0.03)
         elif 10.0 <= t < 14.5 and k % 2: charles(t, 0.025)
     # ---------------- 0–4,4 s · despertar: colchón suave, notas con eco y campanitas
     pad(['C3', 'G3', 'B3', 'D4', 'E4'], 0.0, 4.8, 0.05, fc=900, a=1.2, r=1.0)
@@ -1704,7 +1745,7 @@ def componer():
     campana('E6', 11.6, 0.05); campana('A#5', 11.75, 0.05)
     # ---------------- 14,5–20,5 s · emergencia: golpe, alarma, ostinato tenso y latidos; Lunna lo calma
     pad(['A2', 'E3'], 14.5, 1.3, 0.04, fc=500, a=0.4, r=0.3)
-    alarma(16.0, 1.0, 0.05)
+    alarma(15.95, T_LUNNA - 15.95, 0.05)
     t, i = T_COLAPSO, 0
     while t < T_RECUPERA:
         bajo('E1' if i % 2 == 0 else 'F1', t, 0.08, 0.07 if t < T_LUNNA else 0.04, fc=300)
@@ -1715,19 +1756,18 @@ def componer():
     pad(['A2', 'E3', 'A3', 'C#4', 'E4'], T_RECUPERA, 0.9, 0.05, fc=1400, a=0.2, r=0.4)
     pad(['D3', 'A3', 'D4', 'F#4'], T_RECUPERA + 0.9, 1.5, 0.05, fc=1600, a=0.3, r=0.8)
     for i, n_ in enumerate(['A5', 'C#6', 'E6']): campana(n_, 18.9 + i * 0.07, 0.03)
-    for i, n_ in enumerate(['D5', 'F#5', 'A5', 'D6', 'A5', 'F#5']): pluck(n_, 19.6 + i * 0.25, 0.025, pan=0.3 * math.sin(i), eco=0.35)
+    for i, n_ in enumerate(['D5', 'F#5', 'A5', 'D6', 'A5', 'F#5']): pluck(n_, T_RECUPERA + 1.0 + i * 0.25, 0.025, pan=0.3 * math.sin(i), eco=0.35)
     # ---------------- 20,5–25 s · sala común: mayor y luminoso
-    pad(['F3', 'A3', 'C4', 'E4', 'G4'], 20.0, 2.0, 0.045, fc=1700, a=0.5, r=0.4)
     pad(['C3', 'G3', 'B3', 'E4'], 22.0, 2.0, 0.045, fc=1700, a=0.2, r=0.4)
     pad(['D3', 'F3', 'A3', 'C4', 'E4'], 24.0, 1.3, 0.045, fc=1500, a=0.2, r=0.8)
-    tk = 20.0
+    tk = 22.0
     while tk < 25.0:
         raiz = 'F1' if tk < 22 else 'E1' if tk < 24 else 'D1'
         bajo(raiz if int(tk / 0.25) % 2 == 0 else midi(raiz) + 12, tk, 0.2, 0.07)
         tk += 0.25
     mel = ['A5', 'C6', 'E6', 'D6', 'C6', 'A5', 'G5', 'A5', 'C6', 'D6', 'E6', 'G6', 'E6', 'D6', 'C6', 'A5']
-    for k, n_ in enumerate(mel): pluck(n_, 21.0 + k * 0.25, 0.028, pan=0.3 * math.sin(k), eco=0.3)
-    barrido(21.8, 0.25, 0.04, 300, 900)                                                          # salto
+    for k, n_ in enumerate(mel[:12]): pluck(n_, 22.0 + k * 0.25, 0.028, pan=0.3 * math.sin(k), eco=0.3)
+    barrido(23.0, 0.25, 0.04, 300, 900)                                                          # salto
     for p_ in PARTICULAS:
         if p_['tipo'] == 'corazon': campana(random.Random(int(p_['t0'] * 100)).choice(['C7', 'D7', 'E7', 'G7', 'A7']), p_['t0'], 0.012, 0.3)
     # ---------------- 25–30 s · logo

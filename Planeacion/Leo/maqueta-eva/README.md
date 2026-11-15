@@ -22,6 +22,46 @@ Maqueta interactiva de cómo el astronauta vive sus métricas de salud en la app
 acompañado de su asistente **Lunna**. **Todos los datos son simulados**: todavía no recibe datos reales
 ni del reloj.
 
+## Consolas de escritorio: computadora central y base en Tierra (Leo, 15 nov 2026)
+
+Las tres pantallas de LUNNA son de la misma serie: usan los mismos estilos (`estilos.css`, `cuerpo.css`,
+`tema.css`), los mismos iconos, el mismo **Cuerpo LUNNA**, el mismo motor (`motor.js`), la misma
+tripulación (Ana, Luis, Mei, Tomás) y el mismo escenario (días 106–115). El tema y el día se comparten
+entre las tres (claves `eva:tema` y `eva:dia`).
+
+| Pantalla | Quién la usa | Qué tiene |
+|---|---|---|
+| `index.html` · **teléfono** | Cada astronauta | La app de siempre. Ahora también recibe, como notificación, lo que mandan la central y la base |
+| `central.html` · **computadora central** | La CMO (Mei), a bordo | El diseño del panel médico de Fani en el estilo de LUNNA: **Hoy** (misión, Lunna, tripulación con su cuerpo, avisos, ambiente, clima espacial, historial de advertencias y emergencias), **panel clínico** de cada tripulante (signos contra su normal, Cuerpo LUNNA con sus zonas, sueño y reflejos, metas, dosis, lo que Lunna le dijo, índice por padecimiento, intervención médica), **Estadísticas** (estado por día, lo que más pidió atención, avisos por misión) y **Enlace con Tierra** (cola priorizada, lo recibido y consultas a la base) |
+| `base.html` · **base en Tierra** | El cirujano de vuelo | Casi igual a la central, pero solo con lo que llegó (siempre el pasado, con su SCET y su antigüedad). **Pronósticos**: mapa tripulación × 11 padecimientos con el índice de los pesos de Leo, qué suma cada variable y su tendencia a 3 días. **Mensajes**: avisos y advertencias a la nave con su recorrido (redactado → en camino → a bordo → acuse) |
+
+Abrir (desde esta carpeta, `python -m http.server 8091`):
+
+- Central: **http://localhost:8091/central.html** · panel de Ana: `central.html#tripulante/MS-2`
+- Base: **http://localhost:8091/base.html** · pronósticos: `base.html#pronosticos`
+- Con el backend de Julio corriendo: `http://localhost:8787/app/central.html` y `/app/base.html`
+
+**Enlace con Tierra.** Sin backend, la central y la base se hablan por este mismo navegador
+(`localStorage`, clave `lunna:enlace`) con el retraso de la luz: el escenario usa 18 min por trayecto y
+la demo los recorre en 18 s (se cambia en *Enlace con Tierra*). Lo que manda la base llega a la central
+y, como notificación, al teléfono de quien lo recibe; los avisos de la CMO llegan al teléfono al
+instante. Con el backend, la base además manda el aviso por `POST /api/tierra/avisos` y el teléfono lo
+recibe por `/api/stream`, como en la consola `/tierra` de Julio.
+
+**Privacidad**, la misma matriz del teléfono (ERS §6.5): la CMO ve la tendencia semanal del ánimo; Tierra,
+su puntuación y los signos como resumen diario; el diario y el ciclo solo con permiso.
+
+**Índice por padecimiento** (`../modelo-pesos`): índice = Σ peso × puntos / máximo, con puntos 0–3 por
+|z| contra su normal en la dirección fisiológica. 🔶 Decisiones nuestras: presión, SpO₂ y CO₂ usan los
+umbrales del teléfono (atención → 2, alerta → 3); lo que no se mide a diario (síntomas, pulso irregular,
+ortostatismo, fase circadiana) queda fuera y se muestra la cobertura; si falta la variable de mayor peso,
+el índice sale **incompleto**; la tendencia a 3 días es una extrapolación lineal **ilustrativa**. No es
+una probabilidad ni un diagnóstico.
+
+Archivos: `consola.css` y `consola.js` (piezas comunes), `central.js`, `base.js`, `iconos.js` (los
+iconos del teléfono más los de las consolas) y `pesos.js` (lo genera `../modelo-pesos/generar_pesos.py`;
+no se edita a mano). Las misiones de referencia de Estadísticas son las de Fani, con nombres ficticios.
+
 ## Nuevo en la pantalla Hoy: Cuerpo LUNNA y lo que Lunna ve
 
 Integra en esta maqueta el panel de salud (módulo 1) que se hizo en `app/`.

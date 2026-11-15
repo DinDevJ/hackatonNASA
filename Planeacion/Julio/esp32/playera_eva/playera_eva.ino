@@ -24,6 +24,7 @@
 
 // ─── Configuración ─────────────────────────────────────────────────────────
 #define SIMULAR 1                       // 0 cuando haya sensores reales
+#define DEPURAR 1                       // 1: el monitor serie muestra cada lectura y cada envío
 
 const char*    NOMBRE_BLE  = "EVA-PLAYERA-01";
 const uint32_t ID_DISP     = 401;       // registrado en el backend (playera-01)
@@ -78,12 +79,16 @@ uint32_t horaDe(uint32_t ms) {
 BLECharacteristic* chDatos = nullptr;
 BLE2902*           cccd    = nullptr;
 volatile bool      conectado = false;
+// Los callbacks de BLE sólo levantan banderas; el loop imprime (no se escribe al
+// puerto serie desde la tarea de Bluetooth).
+volatile bool      avisoConexion = false, avisoDesconexion = false, avisoHora = false;
 uint16_t seq = 0;
 
 class CallbacksServidor : public BLEServerCallbacks {
-  void onConnect(BLEServer*) override { conectado = true; }
+  void onConnect(BLEServer*) override { conectado = true; avisoConexion = true; }
   void onDisconnect(BLEServer*) override {
     conectado = false;
+    avisoDesconexion = true;
     BLEDevice::startAdvertising();       // vuelve a anunciarse para que la PC reconecte
   }
 };
@@ -95,6 +100,7 @@ class CallbacksHora : public BLECharacteristicCallbacks {
     epochSync = d[0] | (d[1] << 8) | (d[2] << 16) | ((uint32_t)d[3] << 24);
     msSync = millis();
     sincronizado = true;
+    avisoHora = true;
   }
 };
 
@@ -145,12 +151,23 @@ void setup() {
 }
 
 void loop() {
+  if (avisoConexion)    { avisoConexion = false;    Serial.println("PC central conectada"); }
+  if (avisoDesconexion) { avisoDesconexion = false; Serial.println("PC central desconectada; anunciandose de nuevo"); }
+  if (avisoHora)        { avisoHora = false;        Serial.printf("hora recibida: %lu (UTC)\n", (unsigned long)epochSync); }
+
   static uint32_t ultima = 0;
   if (millis() - ultima >= PERIODO_MS) {
     ultima = millis();
     double fc, fr, temp;
     leerPlayera(fc, fr, temp);
-    if (!isnan(fc) && !isnan(fr) && !isnan(temp)) encolar(fc, fr, temp);
+    if (!isnan(fc) && !isnan(fr) && !isnan(temp)) {
+      encolar(fc, fr, temp);
+#if DEPURAR
+      Serial.printf("lectura fc=%.1f fr=%.1f temp=%.2f -> cola %u\n", fc, fr, temp, (unsigned)pendientes);
+#endif
+    } else {
+      Serial.println("lectura invalida (sensor sin dato): no se encola");
+    }
   }
 
   // Sólo se envía con conexión, notificaciones activadas y hora recibida.
@@ -162,6 +179,9 @@ void loop() {
                                       horaDe(l.ms), CAMPOS, l.v, 3);
       chDatos->setValue(buf, n);
       chDatos->notify();
+#if DEPURAR
+      Serial.printf("enviada trama seq=%u (%u B)\n", (unsigned)(uint16_t)(seq - 1), (unsigned)n);
+#endif
       inicio = (inicio + 1) % CAPACIDAD; pendientes--;
       delay(8);   // las notificaciones no tienen acuse: sin pausa, la pila las tira
     }

@@ -58,7 +58,28 @@ ortostatismo, fase circadiana) queda fuera y se muestra la cobertura; si falta l
 el índice sale **incompleto**; la tendencia a 3 días es una extrapolación lineal **ilustrativa**. No es
 una probabilidad ni un diagnóstico.
 
-Archivos: `consola.css` y `consola.js` (piezas comunes), `central.js`, `base.js`, `iconos.js` (los
+### La central conectada al backend de Julio (y al PC del simulador)
+
+Con el backend corriendo, **el PC de `/simulador` abre esta pantalla** (`/app/central.html`, mismo
+origen) en una ventana como la del smartphone y la de Tierra: *Frontend* es la central y *Backend*, la
+terminal del PC de siempre. `central-vivo.js` lee lo que la computadora central sabe de verdad y lo pinta
+en bloques marcados **«En vivo · backend»**:
+
+| Dónde | Qué muestra | De dónde sale |
+|---|---|---|
+| **Hoy** | Tripulación registrada, último valor de cada variable contra lo esperado, estado y alertas de LUNNA | `GET /api/tripulantes`, `/api/app/:tripulante`, `/api/alertas` |
+| **Panel clínico** | Las variables de esa persona (último, mediana 24 h, esperado y banda, z, estado y motivo, días de misión, dispositivo), sus alertas y los avisos de Tierra que le llegaron | `GET /api/app/:tripulante` |
+| **Enlace con Tierra** | Ventana, retraso, lo que hay en cola o en vuelo y los avisos entregados a bordo | `GET /api/enlace`, `/api/tierra/pendientes`, `/api/avisos` |
+
+Se actualiza sola con los eventos `muestra`, `alerta`, `aviso`, `enlace` y `rechazo` de `/api/stream`
+(como mucho una recarga cada 2 s) y con un sondeo cada 10 s. Si el backend no responde, la barra dice
+**«Sin conexión con el backend»**, cada bloque explica el error y la hora del último dato, y se reintenta
+cada 5 s. No inventa rutas ni datos: lo que el backend aún no ofrece (Cuerpo LUNNA, 14 días contra su
+normal, índices, ambiente, clima espacial, estadísticas y los mensajes de la CMO, que siguen viajando
+por `localStorage`) queda bajo el rótulo **«Escenario simulado · no viene del backend»**.
+Prueba: `cd Planeacion/Julio/backend && npm test` (`test/central.test.ts`).
+
+Archivos: `central-vivo.js` (datos en vivo del backend), `consola.css` y `consola.js` (piezas comunes), `central.js`, `base.js`, `iconos.js` (los
 iconos del teléfono más los de las consolas) y `pesos.js` (lo genera `../modelo-pesos/generar_pesos.py`;
 no se edita a mano). Las misiones de referencia de Estadísticas son las de Fani, con nombres ficticios.
 

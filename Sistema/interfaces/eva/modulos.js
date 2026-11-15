@@ -357,14 +357,18 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
       const fase = (d) => (d <= sang ? "per" : d === ovu ? "ovu" : d >= fertil[0] && d <= fertil[1] ? "fer" : d > dur - 5 ? "pms" : "nor");
       const NOMBRE = { per: "Menstruación", fer: "Ventana fértil", ovu: "Ovulación estimada", pms: "Premenstrual", nor: diaC < ovu ? "Fase folicular" : "Fase lútea" };
       const prox = dur - diaC + 1, aOvu = ovu - diaC;
+      // Lo registrado manda sobre lo predicho (como Clue): un día con sangrado anotado se pinta rojo aunque la
+      // predicción diga otra fase. Manchado = aro rojo; ligero/medio/abundante = rojo sólido, más intenso.
+      const flujo = (isoD) => FLUJO.find((o) => (C.registro[isoD] || []).includes(o)) || null;
+      const claseFlujo = (isoD) => { const f = flujo(isoD); return f ? ` cd-real cd-flujo-${FLUJO.indexOf(f)}` : ""; };
       const R = 104, cx = 130, cy = 130;
       const puntos = Array.from({ length: dur }, (_, i) => {
         const d = i + 1, ang = (-90 + (i * 360) / dur) * Math.PI / 180, x = cx + R * Math.cos(ang), y = cy + R * Math.sin(ang);
         const f = fase(d), hoyD = d === diaC;
         const fechaD = new Date(hoy.getTime() + (d - diaC) * 864e5).toISOString().slice(0, 10);
-        return `<g class="cd cd-${f} ${hoyD ? "cd-hoy" : ""}">${hoyD ? `<circle cx="${x}" cy="${y}" r="15" class="cd-aro"/>` : ""}<circle cx="${x}" cy="${y}" r="${hoyD ? 10 : 7}"/>${C.registro[fechaD] ? `<circle cx="${cx + (R - 19) * Math.cos(ang)}" cy="${cy + (R - 19) * Math.sin(ang)}" r="2.6" class="cd-reg"/>` : ""}</g>`;
+        return `<g class="cd cd-${f} ${hoyD ? "cd-hoy" : ""}${claseFlujo(fechaD)}">${hoyD ? `<circle cx="${x}" cy="${y}" r="15" class="cd-aro"/>` : ""}<circle cx="${x}" cy="${y}" r="${hoyD ? 10 : 7}"/>${C.registro[fechaD] ? `<circle cx="${cx + (R - 19) * Math.cos(ang)}" cy="${cy + (R - 19) * Math.sin(ang)}" r="2.6" class="cd-reg"/>` : ""}</g>`;
       }).join("");
-      const semana = Array.from({ length: 7 }, (_, i) => { const d = ((diaC - 4 + i - 1 + dur) % dur) + 1, f = new Date(hoy.getTime() + (i - 3) * 864e5); return `<div class="sem-dia ${i === 3 ? "hoy" : ""}"><small>${f.toLocaleDateString("es-MX", { weekday: "narrow", timeZone: "UTC" })}</small><span class="cd-${fase(d)}">${f.getUTCDate()}</span>${C.registro[f.toISOString().slice(0, 10)] ? "<i></i>" : ""}</div>`; }).join("");
+      const semana = Array.from({ length: 7 }, (_, i) => { const d = (((diaC - 1 + (i - 3)) % dur) + dur) % dur + 1, f = new Date(hoy.getTime() + (i - 3) * 864e5); return `<div class="sem-dia ${i === 3 ? "hoy" : ""}"><small>${f.toLocaleDateString("es-MX", { weekday: "narrow", timeZone: "UTC" })}</small><span class="cd-${fase(d)}${claseFlujo(f.toISOString().slice(0, 10))}">${f.getUTCDate()}</span>${C.registro[f.toISOString().slice(0, 10)] ? "<i></i>" : ""}</div>`; }).join("");
       p.innerHTML = `${titulo("Ciclo", `<span class="priv-chip">${ic("candado", "ic-sm")} Privado</span>`)}
         ${supr ? `<div class="tarjeta ciclo-supr"><h3>${ic("escudo")} Supresión menstrual activa</h3><p>DIU de levonorgestrel. Lunna no calcula fases; sigue registrando sangrado inesperado y síntomas.</p></div>` : `
         <div class="ciclo-anillo">
@@ -419,6 +423,7 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
         ${f ? `<div class="tarjeta">
           <div class="alerta-cab">${sem(f.estado === "cerrado" ? 0 : 1, f.estado === "abierto" ? "Atención" : f.estado === "mejorando" ? "En seguimiento" : "Cerrada")}<h2>Fatiga acumulada</h2><code>FATIGA-03</code></div>
           <p class="frase-motor">Ninguna señal sola dispararía; <b>las tres juntas, sí</b>.</p>
+          <p class="tenue-12 ref-alerta"><b>Referencia:</b> respecto a tu base (14 días)</p>
           <div class="chips"><span class="chip chip-sm chip-fijo">${ic("escudo", "ic-sm")} Nivel 0 · autocuidado</span><span class="chip chip-sm chip-fijo">${ic("cohete", "ic-sm")} Caminata espacial: ${f.estado === "cerrado" ? "apta" : "se revisa antes"}</span></div>
           ${f.hoy.es.map((x) => `<div class="senal"><div class="senal-cab"><b>${M.IND[x.k].corto || M.IND[x.k].nombre}</b><span>${M.texto(x.k, x.valor)} · tu normal ${M.texto(x.k, x.normal.med)} · z ${x.z >= 0 ? "+" : "−"}${fmt(Math.abs(x.z).toFixed(1))}</span></div>${grafNormal(yo.id, x.k, E.dia, true)}</div>`).join("")}
           <details class="regla"><summary>${ic("libro", "ic-sm")} Ver la regla (auditable)</summary><pre>${REGLA_YAML}</pre></details></div>
@@ -427,7 +432,7 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
         <div class="tarjeta"><h3>${ic("reloj")} Historial</h3><ol class="linea-tiempo">${hist.map((h) => `<li>${sem(h.f && h.f.estado === "cerrado" ? 0 : 1, "Día " + h.d)}<span>${h.d === f.desde ? "Se abre: las tres señales fuera de tu normal" : h.f && h.f.estado === "cerrado" ? "Se cierra: dos días en tu normal" : "Mejora, sigue en seguimiento"}</span></li>`).join("")}</ol>
           <div class="escalera">${["0 · Autocuidado", "1 · CMO", "2 · Cirujano", "3 · Junta"].map((t, i) => `<span class="${i === 0 ? "on" : ""}">${t}</span>`).join("")}</div>
           <p class="tenue-12">Si persiste 48 h o aparece un síntoma físico, pasa al nivel 1.</p></div>` : ""}
-        ${otros.map((h) => `<div class="tarjeta"><div class="alerta-cab">${sem(h.nivel)}<h2>${h.titulo}</h2></div><p>${h.frase}</p><p class="tenue-12">${h.hacer} · Umbral: ${h.umbral}</p></div>`).join("")}`;
+        ${otros.map((h) => `<div class="tarjeta"><div class="alerta-cab">${sem(h.nivel)}<h2>${h.titulo}</h2></div><p>${h.frase}</p>${h.referencia ? `<p class="tenue-12 ref-alerta"><b>Referencia:</b> ${h.referencia}</p>` : ""}<p class="tenue-12">${h.hacer} · Umbral: ${h.umbral}</p></div>`).join("")}`;
       const ac = $("#aceptar", p); if (ac) ac.addEventListener("click", () => { E.aceptado = true; encolar({ prio: 1, pid: yo.id, t: `FATIGA-03 de ${yo.nombre}: protocolo aceptado`, nivel: 1 }); aviso("Protocolo aceptado · reevaluación mañana 07:30"); ir("alertas"); });
       $$("[data-paso]", p).forEach((c) => c.addEventListener("change", () => { E.protocolo[c.dataset.paso] = c.checked; }));
     },
@@ -625,8 +630,8 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
       </div>
       <button class="btn btn-ancho" id="f-ok">Guardar</button>`, (h) => $("#f-ok", h).addEventListener("click", () => { const s = +$("#f-s", h).value, d = +$("#f-d", h).value, pu = +$("#f-p", h).value; if (s < 60 || s > 250 || d < 30 || d > 160 || d >= s) return aviso("Revisa los números: la sistólica va arriba y es mayor"); if (pu && (pu < 30 || pu > 220)) return aviso("Revisa el pulso"); M.registrar(P().id, E.dia, "presion", s, ahora()); M.registrar(P().id, E.dia, "diastolica", d, ahora()); if (pu) M.registrar(P().id, E.dia, "pulso_manguito", pu, ahora()); guardar("Presión", `${s}/${d} mmHg${pu ? ` · pulso ${pu} lpm` : ""}`, s < 70 ? "Sistólica < 70: posible presíncope [A]. Avisa a la CMO." : s >= 140 ? "≥ 140: coméntalo hoy con la CMO [T]" : undefined, "corazon"); })),
     temp: () => abrirHoja(`<h2>Temperatura</h2><div class="campo"><input id="f-t" type="number" step="0.1" inputmode="decimal" placeholder="°C" aria-label="°C"/><button class="btn" id="f-ok">Guardar</button></div>`, (h) => $("#f-ok", h).addEventListener("click", () => { const t = +$("#f-t", h).value; if (t < 34 || t > 43) return aviso("Revisa el número"); M.registrar(P().id, E.dia, "temp_central", t, ahora()); guardar("Temperatura", fmt(t) + " °C", t >= 39.4 ? "≥ 39,4 °C: contacta a la CMO (umbral propuesto)" : undefined, "fuego"); })),
-    agua: () => abrirHoja(`<h2>Agua</h2><p class="tenue-12">Meta: al menos 32 mL por kg al día [A].</p><div class="chips">${[150, 250, 500].map((m) => `<button class="chip" data-ml="${m}">+${m} mL</button>`).join("")}</div>`, (h) => $$("[data-ml]", h).forEach((b) => b.addEventListener("click", () => { E.agua += +b.dataset.ml; guardar("Agua", `+${b.dataset.ml} mL`, `Llevas ${E.agua} mL registrados hoy`, "gota"); }))),
-    masa: () => abrirHoja(`<h2>Masa corporal</h2><p class="tenue-12">Del equipo de masa de la nave. Basal: ${P().masaKg} kg.</p><div class="campo"><input id="f-m" type="number" step="0.1" inputmode="decimal" placeholder="kg" aria-label="kg"/><button class="btn" id="f-ok">Guardar</button></div>`, (h) => $("#f-ok", h).addEventListener("click", () => { const m = +$("#f-m", h).value; if (m < 30 || m > 150) return aviso("Revisa el número"); guardar("Masa corporal", fmt(m) + " kg", (P().masaKg - m) / P().masaKg > 0.033 ? "Bajó más de 3,3 % de tu basal [A]: revisa tu energía con la CMO" : undefined, "pesa"); })),
+    agua: () => abrirHoja(`<h2>Agua</h2><p class="tenue-12">Meta: al menos 32 mL por kg al día [A].</p><div class="chips">${[150, 250, 500].map((m) => `<button class="chip" data-ml="${m}">+${m} mL</button>`).join("")}</div>`, (h) => $$("[data-ml]", h).forEach((b) => b.addEventListener("click", () => { E.agua += +b.dataset.ml; M.registrar(P().id, E.dia, "agua_hoy", E.agua / 1000, ahora()); guardar("Agua", `+${b.dataset.ml} mL`, `Llevas ${E.agua} mL registrados hoy`, "gota"); }))),
+    masa: () => abrirHoja(`<h2>Masa corporal</h2><p class="tenue-12">Del equipo de masa de la nave. Basal: ${P().masaKg} kg.</p><div class="campo"><input id="f-m" type="number" step="0.1" inputmode="decimal" placeholder="kg" aria-label="kg"/><button class="btn" id="f-ok">Guardar</button></div>`, (h) => $("#f-ok", h).addEventListener("click", () => { const m = +$("#f-m", h).value; if (m < 30 || m > 150) return aviso("Revisa el número"); M.registrar(P().id, E.dia, "masa", m, ahora()); guardar("Masa corporal", fmt(m) + " kg", (P().masaKg - m) / P().masaKg > 0.033 ? "Bajó más de 3,3 % de tu basal [A]: revisa tu energía con la CMO" : undefined, "pesa"); })),
     orina: () => abrirHoja(`<h2>Tira de orina</h2><p class="tenue-12">Toma una foto de la tira junto a su tabla de colores.</p>
       <label class="btn btn-ancho btn-suave">${ic("camara")} Abrir cámara o elegir foto<input id="f-foto" type="file" accept="image/*" capture="environment" hidden/></label><div id="f-res"></div>`, (h) => $("#f-foto", h).addEventListener("change", (x) => {
       const f = x.target.files[0]; if (!f) return;
@@ -641,10 +646,11 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
   };
 
   // Registro del día en Ciclo, con categorías como Clue
+  const FLUJO = ["Manchado", "Ligero", "Medio", "Abundante"];
   function registrarCiclo(iso) {
     const C = E.ciclo, hoy = C.registro[iso] || [];
     const CAT = [
-      ["Sangrado", "per", "gota", "#FF5A75", ["Manchado", "Ligero", "Medio", "Abundante"]],
+      ["Sangrado", "per", "gota", "#FF5A75", FLUJO],
       ["Dolor", "pms", "curita", "#9B6BFF", ["Cólicos", "Cabeza", "Ovulación", "Senos sensibles"]],
       ["Emociones", "emo", "chispa", "#F5A524", ["Feliz", "Sensible", "Triste", "Irritable"]],
       ["Energía", "fer", "rayo", "#1AA6D6", ["Con energía", "Cansada", "Agotada"]],
@@ -664,7 +670,14 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
       $("#c-ok", h).addEventListener("click", () => {
         const sel = $$('[data-op][aria-pressed="true"]', h).map((b) => b.dataset.op);
         if (sel.length) C.registro[iso] = sel; else delete C.registro[iso];
-        mem.guardar("ciclo", C); cerrarHoja(); aviso(sel.length ? `Registrado: ${sel.length} cosa${sel.length > 1 ? "s" : ""}` : "Sin registro hoy"); ir("ciclo");
+        // Flujo (no manchado) fuera de los días de sangrado predichos = empezó un periodo nuevo: el ciclo se
+        // recalcula desde hoy, como en Clue. El manchado solo se marca; no mueve la predicción.
+        const conFlujo = sel.some((o) => o !== "Manchado" && FLUJO.includes(o));
+        const dur = Math.max(21, Math.min(40, +C.duracion || 28)), sang = Math.max(2, Math.min(9, +C.sangrado || 5));
+        const diaC = (((Math.floor((new Date(iso + "T00:00:00Z") - new Date(C.ultima + "T00:00:00Z")) / 864e5)) % dur) + dur) % dur + 1;
+        let msg = sel.length ? `Registrado: ${sel.length} cosa${sel.length > 1 ? "s" : ""}` : "Sin registro hoy";
+        if (conFlujo && diaC > sang) { C.ultima = iso; msg = "Empezó tu periodo: ajusté tu ciclo desde hoy"; }
+        mem.guardar("ciclo", C); cerrarHoja(); aviso(msg); ir("ciclo");
       });
     });
   }

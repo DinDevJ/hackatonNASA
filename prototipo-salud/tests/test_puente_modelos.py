@@ -15,7 +15,7 @@ from motor import evadb, puente_modelos as pm
 from motor.entradas import desde_nativo
 
 RAIZ = Path(__file__).resolve().parents[1]
-BACKEND = RAIZ.parent / "Planeacion" / "Julio" / "backend"
+BACKEND = RAIZ.parent / "Sistema" / "backend"
 ENVS = Path("/tmp/nasa-linux-envs")
 
 pytestmark = pytest.mark.skipif(shutil.which("node") is None or not (BACKEND / "src" / "migrar.ts").exists(),

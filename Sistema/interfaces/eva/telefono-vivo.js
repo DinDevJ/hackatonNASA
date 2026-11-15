@@ -38,9 +38,9 @@
     const peor = Math.max(-1, ...conDato.map((v) => N[v.estado] ?? -1));
     const filas = conDato.length ? conDato.map((v) => {
       const n = N[v.estado];
-      const dec = /temp/i.test(v.nombre) ? 1 : 0;
+      const dec = /temp/i.test(v.nombre) || !Number.isInteger(+v.valor) ? 1 : 0;   // 0,5 L no debe verse como 1 L
       return `<div class="tv-fila"><span class="tv-nom">${esc(v.nombre)}</span>
-        <b>${num(v.valor, dec)}<small> ${esc(v.unidad || "")}</small></b>
+        <b>${num(v.valor, dec)}<small>${String(v.unidad || "").startsWith("/") ? "" : " "}${esc(v.unidad || "")}</small></b>
         ${A.sem(n == null ? null : n)}
         <small class="tv-esp">${v.esperado != null ? `esperado ${num(v.esperado, dec)}${v.banda ? ` (${num(v.banda[0], dec)}–${num(v.banda[1], dec)})` : ""}` : v.calibrando ? "LUNNA aún calibra" : ""}${v.t_scet ? ` · ${hora(v.t_scet)}` : ""}</small></div>`;
     }).join("") : `<p class="tenue-12">Todavía no llegan datos de tus sensores. Asigna tu playera o reloj en la central.</p>`;
@@ -75,7 +75,68 @@
     try { await fetch(`/api/emergencias/${e.id}`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ resultado }) }); } catch { /* sin central */ }
   }
 
+  // ---------- Lo que se anota a mano → central ----------
+  // Todo registro manual pasa por M.registrar (presión, temperatura, glucómetro, check-in, reflejos, masa, agua).
+  // Aquí se envuelve para mandarlo también a la central como muestra «manual» (POST /api/tramas, eva.telemetry.v1)
+  // desde el teléfono de esa persona. Si no hay red, se guarda en cola y se reintenta: a bordo nada se pierde.
+  // El ciclo y el diario NO se mandan: son privados (solo ella los ve; la CMO, con su permiso).
+  const VAR = {
+    presion: ["01:V1", "mmHg"], diastolica: ["X:PAD", "mmHg"], pulso_manguito: ["04:A4", "bpm"], temp_central: ["04:A1", "°C"],
+    animo: ["X:ANIMO", "/100"], lapsos: ["X:PVT", "lapsos"], glucosa: ["X:GLU", "mg/dL"], masa: ["X:MASA", "kg"],
+    agua_hoy: ["X:AGUA", "L"], dolor_espalda: ["X:DOLOR", "/10"], cefalea: ["X:CEFALEA", "/10"],
+  };
+  const COLA = "lunna:cola-central";
+  const leerCola = () => { try { return JSON.parse(localStorage.getItem(COLA)) || []; } catch { return []; } };
+  const guardarCola = (c) => { try { localStorage.setItem(COLA, JSON.stringify(c.slice(-200))); } catch { /* sin almacenamiento */ } };
+  let ultimoSeq = 0, pendientes = [], programado = false;
+  function encolar(pid, k, valor) {
+    const v = VAR[k], quienEs = ID[pid];
+    if (!v || !quienEs || valor == null || Number.isNaN(+valor)) return;
+    pendientes.push({ quien: quienEs, muestra: { var: v[0], value: +valor, unit: v[1], origin: "manual" } });
+    // Lo que se anota en el mismo toque (sistólica, diastólica y pulso) viaja en una sola trama.
+    if (!programado) { programado = true; setTimeout(empacar, 0); }
+  }
+  function empacar() {
+    programado = false;
+    const porQuien = {};
+    for (const p of pendientes) (porQuien[p.quien] = porQuien[p.quien] || []).push(p.muestra);
+    pendientes = [];
+    const cola = leerCola();
+    for (const [q, muestras] of Object.entries(porQuien)) {
+      ultimoSeq = Math.max(ultimoSeq + 1, Date.now() % 4e9);
+      cola.push({ frame: "eva.telemetry.v1", source: { id: `telefono-${q}`, kind: "phone" }, subject: q, t_scet: new Date().toISOString(), seq: ultimoSeq, samples: muestras });
+    }
+    guardarCola(cola);
+    vaciarCola();
+  }
+  let enviando = false;
+  async function vaciarCola() {
+    if (enviando) return;
+    const cola = leerCola();
+    if (!cola.length) return;
+    enviando = true;
+    try {
+      const r = await fetch("/api/tramas", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cola) });
+      if (r.ok) {
+        const res = await r.json();
+        const rech = res.flatMap((x) => x.rechazos || []);
+        if (rech.length) console.warn("La central rechazó parte de lo anotado:", rech);
+        guardarCola(leerCola().slice(cola.length));   // solo quita lo que ya se mandó
+        cargar();
+      }
+    } catch { /* sin red: se queda en cola y se reintenta */ }
+    enviando = false;
+  }
+
   function arrancar() {
+    // Envolver el registro del motor (una sola vez) para que lo anotado también llegue a la central.
+    if (A.M && A.M.registrar && !A.M.registrar._central) {
+      const original = A.M.registrar;
+      A.M.registrar = function (pid, dia, k, valor, hora) { original.call(this, pid, dia, k, valor, hora); encolar(pid, k, valor); };
+      A.M.registrar._central = true;
+    }
+    setInterval(vaciarCola, 15000);
+    vaciarCola();
     const css = document.createElement("style");
     css.textContent = `.tv-filas{display:grid;gap:2px;margin-top:6px}.tv-fila{display:grid;grid-template-columns:1fr auto auto;gap:2px 10px;align-items:center;padding:7px 0;border-top:1px solid var(--separador)}
       .tv-fila:first-child{border-top:0}.tv-nom{font-size:13px;font-weight:600}.tv-fila b{font:650 16px var(--mono,ui-monospace);font-variant-numeric:tabular-nums}.tv-fila b small{font:500 11px var(--letra);color:var(--texto-2)}

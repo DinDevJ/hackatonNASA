@@ -34,11 +34,12 @@ test('simulador: el PC abre la computadora central desde el mismo origen, sin qu
     const r = await fetch(`${base}/simulador`);
     assert.equal(r.status, 200);
     const html = await r.text();
-    assert.match(html, /pc:\s*\{\s*url:\s*'\/app\/central\.html'/);
-    assert.match(html, /cel:\s*\{\s*url:\s*'\/app\/'/);
-    assert.match(html, /tierra:\s*\{\s*url:\s*'\/app\/base\.html'/);
+    // Las ventanas pueden llevar parámetros (p. ej. ?idioma=en): lo que importa es la interfaz y el mismo origen.
+    assert.match(html, /pc:\s*\{\s*url:\s*'\/app\/central\.html(\?[^']*)?'/);
+    assert.match(html, /cel:\s*\{\s*url:\s*'\/app\/(\?[^']*)?'/);
+    assert.match(html, /tierra:\s*\{\s*url:\s*'\/app\/base\.html(\?[^']*)?'/);
     assert.match(html, /class="equipo" data-id="pc"/);
-    assert.match(html, /reloj:\s*\{\s*url:\s*'\/reloj\/\?embebido&persona=MS-2'/);
+    assert.match(html, /reloj:\s*\{\s*url:\s*'\/reloj\/\?embebido&persona=MS-2(&[^']*)?'/);
     assert.match(html, /id="b-compartida"/);
     assert.match(html, /src="\/app\/central\.html"[^>]*title="Pantalla de la laptop/);
     assert.match(html, /src="\/app\/base\.html"[^>]*title="Pantalla de Tierra/);

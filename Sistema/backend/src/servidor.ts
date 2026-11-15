@@ -18,9 +18,12 @@ import { encolarAvisoNave, escribirEnlace, iniciarEnlace, leerEnlace, redactarAv
 import { estadoNave, estadoTierra } from './enlace-https.ts';
 import { idEmisor } from './sincro.ts';
 import { migrarSalud, sembrarSalud } from './salud.ts';
+import { crearModelos, ErrorModelos, type OpcionesModelos } from './modelos.ts';
+import { correrMotor, detalleSemaforo, ErrorSemaforo, guardarPeso, leerPesos, restaurarPesos, rutaBd, semaforo } from './semaforo.ts';
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { reiniciarEstados } from './ingesta.ts';
 import { cargarReferencias, referencias, type CargaReferencias } from './referencias.ts';
+import { referenciasMotor } from './referencias-motor.ts';
 import { estadoApp } from './app.ts';
 import { avisoAbordo, cerrarEmergencia, consultaATierra, leerEmergencias, registrarEmergencia } from './abordo.ts';
 
@@ -46,6 +49,12 @@ const PUERTO = Number(process.env.PUERTO ?? 8787);
 const RUTA_MEDIBLES = resolve(process.env.MEDIBLES ?? join(AQUI, '..', 'semillas', 'medibles.json'));
 /** Sube al cambiar algo que la pasarela o el simulador necesiten. */
 export const VERSION_BACKEND = '0.7.0';
+
+/** Respuesta con estado distinto de 200 (p. ej. 202). */
+class Respuesta {
+  estado: number; cuerpo: unknown;
+  constructor(estado: number, cuerpo: unknown) { this.estado = estado; this.cuerpo = cuerpo; }
+}
 
 class ErrorHttp extends Error {
   estado: number;
@@ -181,6 +190,8 @@ export interface OpcionesServidor {
   rol?: 'nave' | 'tierra';
   /** Rutas /enlace/* (solo Tierra). Devuelve true si atendió la petición. */
   enlace?: (req: IncomingMessage, res: ServerResponse) => Promise<boolean>;
+  /** Configuración de los modelos de prototipo-salud (tests); por defecto, variables de entorno. */
+  modelos?: OpcionesModelos;
 }
 
 /** Antigüedad en segundos de un evento (ahora − t_evento); null si la fecha no es válida. */
@@ -491,6 +502,47 @@ export function manejador(db: BD, opciones: OpcionesServidor = {}) {
   ruta('POST', '/api/emergencias', async (req) => conError(async () => registrarEmergencia(db, await cuerpoJson(req))));
   ruta('PUT', '/api/emergencias/:id', async (req, p) => conError(async () => cerrarEmergencia(db, Number(p.id), (await cuerpoJson<{ resultado: string }>(req)).resultado)));
 
+  // ── Semáforo de padecimientos (motor de 20, prototipo-salud) ──
+  const sem = <T>(f: () => T): T => {
+    try { return f(); } catch (e) { if (e instanceof ErrorSemaforo) throw new ErrorHttp(e.estado, e.message); throw e; }
+  };
+  /** Cuerpo JSON opcional: vacío = {}. */
+  const cuerpoOpcional = async (req: IncomingMessage): Promise<unknown> => {
+    const t = (await cuerpo(req)).toString('utf8').trim();
+    if (!t) return {};
+    try { return JSON.parse(t); } catch { throw new ErrorHttp(400, 'JSON inválido'); }
+  };
+  ruta('GET', '/api/padecimientos/semaforo', (_r, _p, q) => sem(() => semaforo(db, q.get('tripulante') ?? undefined)));
+  ruta('GET', '/api/padecimientos/semaforo/:tripulante/:padecimiento', (_r, p) => sem(() => detalleSemaforo(db, p.tripulante!, p.padecimiento!)));
+  ruta('GET', '/api/padecimientos/referencias', (_r, _p, q) => sem(() => referenciasMotor(db, q.get('tripulante'), q.get('variable'))));
+  ruta('GET', '/api/padecimientos/pesos', (_r, _p, q) => sem(() => leerPesos(db, q.get('padecimiento') ?? undefined)));
+  ruta('PUT', '/api/padecimientos/pesos', async (req) => { const c = await cuerpoJson<unknown>(req); return sem(() => guardarPeso(db, c)); });
+  ruta('POST', '/api/padecimientos/pesos/restaurar', async (req) => { const c = await cuerpoOpcional(req); return sem(() => restaurarPesos(db, c)); });
+  ruta('POST', '/api/padecimientos/evaluar', async (req) => {
+    const c = await cuerpoOpcional(req) as Record<string, unknown> | null;
+    if (!c || typeof c !== 'object' || Array.isArray(c)) throw new ErrorHttp(400, 'el cuerpo debe ser un objeto JSON');
+    if (c.simulado !== undefined && typeof c.simulado !== 'boolean') throw new ErrorHttp(400, 'simulado debe ser booleano');
+    if (c.origen_simulador !== undefined && typeof c.origen_simulador !== 'boolean') throw new ErrorHttp(400, 'origen_simulador debe ser booleano');
+    try {
+      const r = await correrMotor(rutaBd(db), c.simulado === true, { origenSimulador: c.origen_simulador === true });
+      anotar(`Motor de padecimientos: ${r.filas_escritas} filas (canal ${r.canal})`);
+      return { ok: true, ...r };
+    } catch (e) { if (e instanceof ErrorSemaforo) throw new ErrorHttp(e.estado, e.message); throw e; }
+  });
+
+  // ── Modelos de eco/ECG (prototipo-salud) con puente a eva.db ──
+  const modelos = crearModelos(db, opciones.modelos, anotar);
+  const mod = <T>(f: () => T): T => {
+    try { return f(); } catch (e) { if (e instanceof ErrorModelos) throw new ErrorHttp(e.estado, e.message); throw e; }
+  };
+  ruta('GET', '/api/modelos/disponibles', () => modelos.disponibles());
+  ruta('POST', '/api/modelos/analizar', async (req) => {
+    const c = await cuerpoJson<unknown>(req);
+    return new Respuesta(202, mod(() => modelos.analizar(c)));
+  });
+  ruta('GET', '/api/modelos/trabajos', () => modelos.trabajos());
+  ruta('GET', '/api/modelos/trabajos/:id', (_r, p) => mod(() => modelos.trabajo(p.id!)));
+
   // ── Sólo para la demo (modo simulación): deja la misión en blanco, conserva la configuración ──
   ruta('POST', '/api/demo/reiniciar', () => {
     if (modo !== 'simulacion') throw new ErrorHttp(403, `reiniciar la demo: ${noEnOperativo}`);
@@ -592,7 +644,8 @@ export function manejador(db: BD, opciones: OpcionesServidor = {}) {
       try {
         const p = Object.fromEntries(r.claves.map((k, i) => [k, decodeURIComponent(m[i + 1]!)]));
         const out = await r.h(req, p, url.searchParams);
-        res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' }).end(JSON.stringify(out));
+        res.writeHead(out instanceof Respuesta ? out.estado : 200, { 'content-type': 'application/json; charset=utf-8' })
+          .end(JSON.stringify(out instanceof Respuesta ? out.cuerpo : out));
       } catch (e) {
         const estado = e instanceof ErrorHttp ? e.estado : 500;
         res.writeHead(estado, { 'content-type': 'application/json; charset=utf-8' })

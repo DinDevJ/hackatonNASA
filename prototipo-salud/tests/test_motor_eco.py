@@ -110,7 +110,7 @@ def test_semaforo_fevi_sola_no_cambia_color(tmp_path):
 
 
 # ------------------------------------------------------------------ d) eva.db
-BACKEND = Path(__file__).resolve().parents[1].parent / "Planeacion" / "Julio" / "backend"
+BACKEND = Path(__file__).resolve().parents[1].parent / "Sistema" / "backend"
 necesita_node = pytest.mark.skipif(shutil.which("node") is None or not (BACKEND / "src" / "migrar.ts").exists(),
                                    reason="sin node o sin migrar.ts")
 

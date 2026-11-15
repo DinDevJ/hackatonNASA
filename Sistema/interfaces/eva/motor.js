@@ -10,6 +10,7 @@
  *    z ≥ 2: "ninguna señal sola dispararía; las tres juntas, sí" (RF-02-04, CU-02).
  *  - El evento se cierra con 2 días seguidos en z < 2 (RF-02-07).
  *  - Tu normal nunca da rojo por sí sola: el rojo lo dan umbrales [A] o [T].
+ *  - Si hay referencia del motor de padecimientos (alertas-motor.js), sustituye a tu normal: ver README.
  */
 (function (raiz) {
   "use strict";
@@ -273,6 +274,12 @@
   function configurarCiclo(fn) { faseCiclo = typeof fn === "function" ? fn : () => null; }
   const AJUSTE_LUTEA = { fc: 1.5, hrv: 1.5 };
 
+  // ------------------------------------------------------------------ referencia del motor de padecimientos
+  // La conecta alertas-motor.js (GET /api/padecimientos/referencias). fn(pid, k, valor) devuelve
+  // { fuera, texto, tipo, simulado, ... } o null. null (sin backend o sin referencia) → tu normal de siempre.
+  let refMotor = () => null;
+  function configurarReferencia(fn) { refMotor = typeof fn === "function" ? fn : () => null; }
+
   // ------------------------------------------------------------------ evaluación
   function estadoIndicador(pid, k, dia) {
     const ind = IND[k];
@@ -291,14 +298,16 @@
     }
     const historia = serie.slice(Math.max(0, i - 14), i + 1);
     const registrado = registro(pid, dia, k);
-    if (vigente == null) return { k, valor, ultimo, normal, z: null, nivel: null, motivo: null, historia, registrado, ajusteCiclo };
+    if (vigente == null) return { k, valor, ultimo, normal, z: null, nivel: null, motivo: null, historia, registrado, ajusteCiclo, refMotor: null };
     const z = normal ? zDe(vigente, normal) : null;
     const malo = z == null ? 0 : ind.dir === "alto" ? z : -z;
-    const porNormal = malo >= 3 ? 1 : 0;
+    let rm = null;
+    try { rm = refMotor(pid, k, vigente) || null; } catch (e) { rm = null; }
+    const porNormal = rm ? (rm.fuera ? 1 : 0) : malo >= 3 ? 1 : 0;
     const porAbs = ind.abs ? ind.abs.nivel(vigente) : 0;
     const nivel = Math.max(porNormal, porAbs);
-    const motivo = nivel === 0 ? null : porAbs >= porNormal ? ind.abs.tipo : "tu_normal";
-    return { k, valor, ultimo, normal, z, nivel, motivo, historia, registrado, ajusteCiclo };
+    const motivo = nivel === 0 ? null : porAbs >= porNormal ? ind.abs.tipo : rm ? "motor" : "tu_normal";
+    return { k, valor, ultimo, normal, z, nivel, motivo, historia, registrado, ajusteCiclo, refMotor: rm };
   }
 
   const SENALES_FATIGA = ["sueno", "lapsos", "fc"];
@@ -372,7 +381,7 @@
         frase: "La radiación subió de golpe. <b>Dirígete al refugio blindado ahora.</b>",
         evidencia: [`Tasa de dosis: ${ev.cabina.tasa.toLocaleString("es-ES")} µSv/h (diseño < 54) [A]`, `Tu dosis de la misión: ${fmt(dosisPersonal(pid, dia).mision, 1)} de 600 mSv · del evento: ${fmt(dosisPersonal(pid, dia).evento, 2)} de 250 mSv [A]`],
         hacer: "Sigue el protocolo de refugio y confirma a tu pareja del buddy check (" + p.pareja + ").",
-        umbral: "[A] NASA-STD-3001", simulado: true,
+        umbral: "[A] NASA-STD-3001", referencia: "[A] NASA-STD-3001", simulado: true,
       });
     }
 
@@ -389,21 +398,21 @@
           frase: "Ninguna de estas señales sola me preocuparía; <b>las tres juntas, sí</b>. Es el patrón de fatiga acumulada que conviene atender antes de la caminata espacial (en 36 h).",
           evidencia: lineas,
           hacer: "Protege tu ventana de sueño de 8,5 h esta noche, evita cafeína 6 h antes de dormir y repite el PVT-B mañana a las 07:30 antes de decidir la caminata.",
-          umbral: "Regla del equipo · tu normal (z ≥ 2 en las tres)",
+          umbral: "Regla del equipo · tu normal (z ≥ 2 en las tres)", referencia: "respecto a tu base (14 días)",
         });
       } else if (f.estado === "mejorando") {
         hallazgos.push({
           id: "FATIGA-03", nivel: 1, titulo: "Fatiga: vas mejorando",
           frase: `Desde el día ${f.desde} vigilo tu fatiga. Hoy las señales bajaron; si mañana siguen así, cierro el aviso.`,
           evidencia: lineas, hacer: "Sigue con la ventana de 8,5 h. Reevalúo mañana a las 07:30.",
-          umbral: "Se cierra con 2 días seguidos en z < 2",
+          umbral: "Se cierra con 2 días seguidos en z < 2", referencia: "respecto a tu base (14 días)",
         });
       } else {
         hallazgos.push({
           id: "FATIGA-03", nivel: 0, titulo: "Fatiga: aviso cerrado",
           frase: `Dos días seguidos en tu normal: cierro el aviso de fatiga que abrí el día ${f.desde}. ¡Bien hecho!`,
           evidencia: lineas, hacer: "Nada más que hacer. La caminata espacial puede seguir según lo planeado.",
-          umbral: "Cerrado: 2 días en z < 2",
+          umbral: "Cerrado: 2 días en z < 2", referencia: "respecto a tu base (14 días)",
         });
       }
     }
@@ -413,14 +422,21 @@
       if (!e.nivel || (f && f.estado !== "cerrado" && SENALES_FATIGA.includes(k))) continue;
       const ind = IND[k];
       const valor = k === "presion" ? `${e.ultimo.valor}/${serieCon(pid, "diastolica")[idx(e.ultimo.dia)]} mmHg` : texto(k, e.ultimo.valor);
+      const rm = e.refMotor;
+      const nom = (ind.corto || ind.nombre).toLowerCase();
+      const esMotor = e.motivo === "motor", esNormal = e.motivo === "tu_normal";
       hallazgos.push({
         id: k.toUpperCase(), nivel: e.nivel, titulo: ind.nombre,
-        frase: e.motivo === "tu_normal"
-          ? `Tu ${(ind.corto || ind.nombre).toLowerCase()} se alejó bastante de tu normal.`
-          : `Tu ${(ind.corto || ind.nombre).toLowerCase()} está en la zona de ${e.nivel === 2 ? "alerta" : "atención"} de un umbral clínico de Tierra, no validado en el espacio.`,
-        evidencia: [`Hoy: ${valor}`, ind.abs ? ind.abs.texto : `Tu normal: ${texto(k, e.normal.med)}`],
+        frase: esNormal
+          ? `Tu ${nom} se alejó bastante de tu normal.`
+          : esMotor
+            ? `Tu ${nom} está fuera de ${rm.tipo === "poblacional" ? "lo normal según la referencia poblacional" : "tu base prevuelo"} del motor de padecimientos.`
+            : `Tu ${nom} está en la zona de ${e.nivel === 2 ? "alerta" : "atención"} de un umbral clínico de Tierra, no validado en el espacio.`,
+        evidencia: esMotor ? [`Hoy: ${valor}`, rm.texto]
+          : [`Hoy: ${valor}`, ind.abs ? ind.abs.texto : `Tu normal: ${texto(k, e.normal.med)}`, ...(!esNormal && rm && rm.fuera ? [rm.texto] : [])],
         hacer: e.nivel === 2 ? "Coméntalo hoy con la CMO." : "Mídelo otra vez en reposo mañana. Si sigue así, coméntalo con la CMO.",
-        umbral: e.motivo === "tu_normal" ? "tu normal" : `[${e.motivo}]${ind.abs && ind.abs.propuesta ? " · propuesta" : ""}`,
+        umbral: esMotor ? "motor de padecimientos" : esNormal ? "tu normal" : `[${e.motivo}]${ind.abs && ind.abs.propuesta ? " · propuesta" : ""}`,
+        referencia: esMotor ? rm.texto : esNormal ? "respecto a tu base (14 días)" : `umbral [${ind.abs.tipo}]: ${ind.abs.texto}`,
       });
     }
 
@@ -441,7 +457,7 @@
     return { resumen, hallazgos, bien, cara, nivel: ev.general };
   }
 
-  const API = { ESTADO, dosisPersonal, dosisEvento, configurarCiclo, AJUSTE_LUTEA, registrar, registro, limpiarRegistros, serieCon, PRIMER_DIA, ULTIMO_DIA, DIAS, IND, REGIONES, PERSONAS, SERIES, DONKI, idx, tuNormal, zDe, mediana, cabina, estadoIndicador, fatiga, evaluar, lunaDice, horas, texto };
+  const API = { ESTADO, dosisPersonal, dosisEvento, configurarCiclo, configurarReferencia, AJUSTE_LUTEA, registrar, registro, limpiarRegistros, serieCon, PRIMER_DIA, ULTIMO_DIA, DIAS, IND, REGIONES, PERSONAS, SERIES, DONKI, idx, tuNormal, zDe, mediana, cabina, estadoIndicador, fatiga, evaluar, lunaDice, horas, texto };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else raiz.MOTOR = API;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -29,6 +29,7 @@
     subtitulo: "Computadora central · panel médico",
     pestanas: [
       { id: "hoy", texto: "Hoy", icono: "casa", href: "#hoy" },
+      { id: "semaforo", texto: "Semáforo", icono: "lista", href: "#semaforo" },
       { id: "estadisticas", texto: "Estadísticas", icono: "grafica", href: "#estadisticas" },
       { id: "tierra", texto: "Enlace con Tierra", icono: "antena", href: "#tierra" },
     ],
@@ -263,20 +264,21 @@
       <div class="cn-hud">
         <section class="tarjeta cn-hud-izq" aria-labelledby="t-vit"><h2 id="t-vit">${pastilla("corazon", "#FF6B8B", "#D93A63")} Signos vitales <span class="cn-empuja tenue">14 días contra su normal</span></h2>
           ${["fc", "hrv", "presion", "spo2", "fr", "temperatura", "glucosa"].map((k) => K.filaVital(pid, k, d)).join("")}</section>
-        <div class="cn-hud-centro" id="centro">${K.centroCuerpo(pid, d, "cmo", sel.region)}</div>
+        <div class="cn-hud-centro" id="centro">${K.centroCuerpo(pid, d, "cmo", sel.region, true)}</div>
         <div class="cn-hud-der cn-pila">
-          <section class="tarjeta" aria-labelledby="t-cab"><h2 id="t-cab">${pastilla("cerebro", "#A97BFF", "#6B3FD8")} Cabeza y desempeño</h2>
-            ${K.filaVital(pid, "sueno", d)}${K.filaVital(pid, "lapsos", d)}${K.filaAnimo(pid, d, "cmo")}</section>
+          <div class="cn-zona" aria-live="polite"><p class="cn-etq cn-zona-etq">${ic("usuario", "ic-sm")} Zona elegida en el cuerpo</p>
+            <div id="region-dest">${K.panelRegion(pid, K.regionElegida(pid, d, sel.region), d, "cmo")}</div></div>
           <section class="tarjeta" aria-labelledby="t-met"><h2 id="t-met">${pastilla("rayo", "#FF9F45", "#E8620C")} Metas y radiación</h2>
             ${K.metasYDosis(pid, d)}</section>
           <div class="cn-privado">${ic("candado")}<span><b>Lo que no ves:</b> el diario y el ciclo solo con su permiso o en una emergencia; del ánimo, la tendencia semanal. Igual que en el teléfono (ERS §6.5).</span></div>
         </div>
       </div>
-      <div data-vivo="tripulante" data-id="${esc(K.BACKEND_ID[pid] || "")}" style="margin-top:16px"></div>
-      <div class="cn-rejilla cn-2b" style="margin-top:16px">${tarjetaLunnaPersona(pid, d)}${tarjetaIndice(pid, d)}</div>
-      <div class="cn-rejilla cn-2b" style="margin-top:16px">
-        <section class="tarjeta" aria-labelledby="t-int"><h2 id="t-int">${pastilla("enviar", "#5B8DFF", "#1F4FD8")} Intervención médica</h2>${formulario(pid, d)}</section>
-        <section class="tarjeta" aria-labelledby="t-hp"><h2 id="t-hp">${pastilla("hora", "#7C8AB8", "#4A5680")} Historial de ${esc(x.nombre)}</h2><div id="historial">${listaHistorial(pid)}</div></section>
+      <div data-vivo="tripulante" data-id="${esc(K.BACKEND_ID[pid] || "")}" class="cn-bloque"></div>
+      <div class="cn-rejilla cn-2b cn-bloque">
+        <div class="cn-pila">${tarjetaLunnaPersona(pid, d)}
+          <section class="tarjeta" aria-labelledby="t-int"><h2 id="t-int">${pastilla("enviar", "#5B8DFF", "#1F4FD8")} Intervención médica</h2>${formulario(pid, d)}</section></div>
+        <div class="cn-pila">${tarjetaIndice(pid, d)}
+          <section class="tarjeta" aria-labelledby="t-hp"><h2 id="t-hp">${pastilla("hora", "#7C8AB8", "#4A5680")} Historial de ${esc(x.nombre)}</h2><div id="historial">${listaHistorial(pid)}</div></section></div>
       </div>`;
     K.conectarCuerpo(p, pid, d, "cmo", sel.region);
     $$("#ind-barras [data-ind]", p).forEach((b) => b.addEventListener("click", () => elegirIndice(p, pid, d, +b.dataset.ind)));
@@ -462,7 +464,7 @@
   }
 
   // ================================================================ arranque
-  const ir = K.enrutar({ hoy: vistaHoy, tripulante: vistaTripulante, estadisticas: vistaEstadisticas, mision: vistaMision, tierra: vistaTierra }, "hoy");
+  const ir = K.enrutar({ hoy: vistaHoy, tripulante: vistaTripulante, estadisticas: vistaEstadisticas, mision: vistaMision, tierra: vistaTierra, semaforo: (p, a) => window.SEMAFORO.vista(p, a) }, "hoy");
 
   // Llega algo de Tierra: aviso flotante y se actualiza lo que se ve, sin borrar lo que se está escribiendo.
   K.alLlegar((m) => {

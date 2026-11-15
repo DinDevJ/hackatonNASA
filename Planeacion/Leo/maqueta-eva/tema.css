@@ -1265,3 +1265,36 @@ body { padding: 12px 0; }
 .esc-lienzo:has(.cuerpo-svg.con-foco) { overflow: hidden; border-radius: 18px; }
 /* En tema claro el panel era 82 % opaco y, mientras crece sin desenfoque, se veía Inicio detrás. */
 :root[data-tema="claro"] .hud { background: var(--brillo), linear-gradient(rgba(238, 244, 255, .97), rgba(238, 244, 255, .97)); }
+
+/* ================= Zoom al órgano · detalles (15 nov) ================= */
+/* Línea de escaneo que barre la figura mientras se acerca. */
+.esc-escaneo {
+  position: absolute; left: -10%; right: -10%; top: 0; height: 70px; z-index: 2; pointer-events: none;
+  --c: 88, 200, 255;
+  background: linear-gradient(180deg, transparent, rgba(var(--c), .10) 60%, rgba(var(--c), .55) 96%, rgba(var(--c), .9) 100%);
+  border-bottom: 1px solid rgba(var(--c), .95); box-shadow: 0 6px 18px rgba(var(--c), .45);
+  transform: translateY(-80px); animation: esc-escaneo 760ms cubic-bezier(.45, 0, .2, 1) forwards;
+}
+.esc-escaneo.es-0 { --c: 61, 214, 140; } .esc-escaneo.es-1 { --c: 255, 194, 61; } .esc-escaneo.es-2 { --c: 255, 90, 110; }
+@keyframes esc-escaneo { 0% { transform: translateY(-80px); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translateY(440px); opacity: 0; } }
+
+/* Las gráficas se dibujan de izquierda a derecha y el punto de hoy aparece al final. */
+.hud.abierto .hud-dato .normal-graf { animation: graf-dibujar 820ms cubic-bezier(.22, 1, .36, 1) both; animation-delay: 380ms; }
+@keyframes graf-dibujar { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+.hud.abierto .hud-dato .normal-graf .hoy { transform-box: fill-box; transform-origin: center; animation: graf-hoy 420ms cubic-bezier(.34, 1.56, .64, 1) both; animation-delay: 1100ms; }
+@keyframes graf-hoy { from { transform: scale(0); } to { transform: scale(1); } }
+
+/* Asa para deslizar hacia abajo y cerrar. */
+.hud-cab { position: relative; }
+.hud-asa { position: absolute; top: -8px; left: 50%; width: 38px; height: 4px; margin-left: -19px; border-radius: 99px; background: var(--hud-tenue, rgba(255, 255, 255, .4)); opacity: .55; }
+.hud.arrastrando { transition: none !important; cursor: grabbing; }
+.hud.arrastrando > * { transition: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .esc-escaneo { display: none; }
+  .hud.abierto .hud-dato .normal-graf, .hud.abierto .hud-dato .normal-graf .hoy { animation: none; }
+}
+/* El panel ya es 90–97 % opaco: su desenfoque de fondo casi no se nota y obligaba a recalcularlo mientras los
+   números cuentan y las gráficas se dibujan. Fuera, para que todo vaya a 60 fps. */
+.hud, :root[data-tema] .hud, :root[data-tema] .hud.listo { backdrop-filter: none; -webkit-backdrop-filter: none; }
+:root[data-tema="oscuro"] .hud { background: var(--brillo), linear-gradient(rgba(6, 14, 46, .96), rgba(4, 9, 32, .98)); }

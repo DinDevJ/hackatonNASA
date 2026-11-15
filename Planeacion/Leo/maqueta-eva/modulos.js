@@ -274,7 +274,7 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
         ${!s.cerrado && s.min >= 6 && !s.buddy[yo.id] ? `<div class="tarjeta tarjeta-roja"><h3>${ic("equipo")} Buddy check</h3><p class="pregunta">¿${par.nombre} llegó al refugio?</p>
           <div class="fila-btn"><button class="btn btn-suave" data-buddy="no">No la/lo veo</button><button class="btn" data-buddy="si">Sí, está conmigo</button></div></div>` : ""}
         ${!s.cerrado ? `<div class="paso"><span class="paso-num">RAD-01 · paso ${Math.min(s.paso + 1, 3)} de 3</span><p class="paso-txt">${RAD[Math.min(s.paso, 2)]}</p>${s.paso < 2 ? `<button class="btn btn-ancho btn-emerg" id="paso-sol">${ic("check")} Hecho</button>` : ""}</div>`
-          : `<div class="tarjeta"><h3>${ic("fuego")} Dosis</h3><div class="dato">Dosis de la misión <b>${ev().cabina.dosisMision} de 600 mSv</b></div><div class="tenue-12">${chipSim("Dosis simulada")} DONKI no entrega dosis.</div>
+          : `<div class="tarjeta"><h3>${ic("fuego")} Dosis</h3><div class="dato">Tu dosis de la misión <b>${fmt(M.dosisPersonal(P().id, E.dia).mision)} de 600 mSv</b></div><div class="dato">Dosis del evento <b>${fmt(M.dosisPersonal(P().id, E.dia).evento)} de 250 mSv</b></div><div class="tenue-12">${chipSim("Dosis simulada")} DONKI no entrega dosis.</div>
             ${yo.id === COM || yo.id === "MS-2" ? `<p class="nota-ok">${ic("cohete", "ic-sm")} La caminata espacial de Ana sigue en pie: <b>apta</b></p>` : ""}</div>`}
         <div class="tarjeta"><h3>${ic("equipo")} En el refugio <span class="espacio"></span><b class="contador">${n} de 4</b></h3>${M.PERSONAS.map(filaP).join("")}
           ${s.min >= 7 && !s.llego[CMO] ? `<div class="aviso-fijo">${ic("alerta", "ic-sm")}<span>Mei es la CMO: el nivel 1 queda sin cubrir. Si hace falta, se escala directo a Tierra y al comandante.</span></div>` : ""}
@@ -395,7 +395,7 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
         fila({ ir: "alertas", ic: "alerta", c: "#E5A100", t: "Alertas y protocolos", s: e.alertas.length ? e.alertas.map((a) => a.id).join(" · ") : "Sin alertas abiertas", v: e.alertas.length || "" }),
         fila({ ir: "signos", ic: "grafica", c: "#5B6CFF", t: "Signos y tendencias", s: "14 días contra tu normal", v: fuera ? `${fuera} en atención` : "En tu normal" }),
         fila({ ir: "pvt", ic: "rayo", c: "#3445B8", t: "Reflejos (PVT-B)", s: lap.valor != null ? `${lap.valor} lapsos hoy · tu normal ${lap.normal ? Math.round(lap.normal.med) : "–"}` : "Sin prueba hoy" }),
-        fila({ ir: "radiacion", ic: "fuego", c: "#F08A24", t: "Radiación y dosis", s: `Misión: ${e.cabina.dosisMision} de 600 mSv`, v: e.cabina.solar ? "▲" : "" }),
+        fila({ ir: "radiacion", ic: "fuego", c: "#F08A24", t: "Radiación y dosis", s: `Tu misión: ${fmt(M.dosisPersonal(P().id, E.dia).mision)} de 600 mSv`, v: e.cabina.solar ? "▲" : "" }),
         fila({ ir: "tierra", ic: "tierra", c: "#11A3C8", t: "Comunicación con Tierra", s: "18 min por trayecto · cola priorizada" }),
         ...(E.dia === 115 ? [fila({ ir: "solar", ic: "sol", c: "#E5484D", t: "Evento solar del día 115", s: E.solar && E.solar.cerrado ? "Cerrado · 4 de 4 en el refugio" : "Activo · buddy check" })] : []),
         ...(yo.id === CMO ? [fila({ ir: "cmo", ic: "escudo", c: "#2BA36B", t: "Vista CMO", s: "Lo clínico de la tripulación" })] : []),
@@ -469,8 +469,11 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
           <div class="valor-grande"><b>${cab.tasa.toLocaleString("es-ES")}</b><span class="u">µSv/h</span>${sem(cab.tasa >= 3000 ? 2 : cab.tasa > 54 ? 1 : 0)}</div>
           <p class="tenue-12">Atención > 54 µSv/h (1,3 mSv/día de diseño [A]). Refugio ≥ 3000 µSv/h, por verificar (alarma de la ISS; el umbral de la nave no es público).</p></div>
         <div class="tarjeta"><h3>${ic("fuego")} Dosis de la misión <span class="espacio"></span><span class="ref ref-A">${ic("escudo", "ic-sm")}NASA</span></h3>
-          ${ver.map(([x, a]) => `<div class="dosis-fila"><span>${x.id === yo.id ? "Tú" : x.nombre}</span>${a === "◐" ? `<b>margen ${600 - cab.dosisMision} mSv</b>` : `<div class="barra"><i style="width:${(cab.dosisMision / 600) * 100}%"></i></div><b>${cab.dosisMision}/600</b>`}</div>`).join("")}
-          <p class="tenue-12">${chipSim("Dosis simulada")} Límite de carrera < 600 mSv igual para todos; < 250 mSv por evento solar [A]. ~95 % de los eventos solares no se acercan a los límites.</p></div>
+          ${ver.map(([x, a]) => { const d = M.dosisPersonal(x.id, E.dia); return `<div class="dosis-fila"><span>${x.id === yo.id ? "Tú" : x.nombre}</span>${a === "◐" ? `<b>margen ${fmt((600 - d.mision).toFixed(1))} mSv</b>` : `<div class="barra"><i style="width:${(d.mision / 600) * 100}%"></i></div><b>${fmt(d.mision)}/600</b>`}</div>`; }).join("")}
+          <p class="tenue-12">${chipSim("Dosis simulada")} Cada quien acumula distinto según el tiempo que pasa en módulos menos blindados. Límite de carrera < 600 mSv igual para todos [A].</p></div>
+        ${E.dia >= 115 ? `<div class="tarjeta"><h3>${ic("rayo")} Dosis del evento solar del día 115 <span class="espacio"></span><span class="ref ref-A">${ic("escudo", "ic-sm")}NASA</span></h3>
+          ${ver.map(([x, a]) => { const d = M.dosisPersonal(x.id, E.dia); return `<div class="dosis-fila"><span>${x.id === yo.id ? "Tú" : x.nombre}</span>${a === "◐" ? `<b>${d.evento < 250 ? "bajo el límite" : "sobre el límite"}</b>` : `<div class="barra"><i style="width:${Math.max(1, (d.evento / 250) * 100)}%"></i></div><b>${fmt(d.evento)}/250</b>`}</div>`; }).join("")}
+          <p class="tenue-12">${chipSim("Dosis simulada")} Depende de cuánto tardó cada quien en llegar al refugio blindado. Límite < 250 mSv por evento [A]; ~95 % de los eventos solares no se acercan.</p></div>` : ""}
         <div class="tarjeta"><h3>${ic("planeta")} Eventos reales de 2024 <span class="espacio"></span><span class="ref ref-A">NASA DONKI</span></h3>
           <p class="tenue-12">119 eventos SEP en 2024; 71 con alerta emitida. La columna es cuánto tardó la alerta.</p>
           ${DONKI.map((x) => `<div class="donki-fila">${x.modelo ? ic("estrella", "ic-sm ic-relleno") : ic("rayo", "ic-sm")}<span>${x.t}<small>${x.inst}</small></span><b>${x.lat} min</b></div>`).join("")}</div>`;
@@ -673,7 +676,7 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
     clima(c) {
       const cab = ev().cabina;
       c.innerHTML = lp("Ahora", `<div class="lp-grande ${cab.solar ? "rojo" : ""}"><b>${cab.tasa.toLocaleString("es-ES")}</b> µSv/h ${sem(cab.tasa >= 3000 ? 2 : cab.tasa > 54 ? 1 : 0)}</div>
-          <p>${cab.solar ? "Evento de partículas solares: <b>al refugio blindado</b>." : "Sin evento solar. "}Dosis de la misión: <b>${cab.dosisMision} de 600 mSv</b> [A] · simulada.</p>
+          <p>${cab.solar ? "Evento de partículas solares: <b>al refugio blindado</b>." : "Sin evento solar. "}Tu dosis de la misión: <b>${fmt(M.dosisPersonal(P().id, E.dia).mision)} de 600 mSv</b> [A] · simulada.</p>
           ${E.dia === 115 ? `<button class="lp-btn" data-ir="solar">Ver el evento solar y el buddy check</button>` : ""}`)
         + lp("Eventos reales · NASA DONKI 2024", `<p>119 eventos SEP; 71 con alerta emitida. El del día 115 se modela sobre el primero.</p>${DONKI.map((x) => `<div class="lp-fila">${x.modelo ? "★" : "·"} <span>${x.t}<small>${x.inst}</small></span><b>${x.lat} min</b></div>`).join("")}`)
         + lp("Cabina", AMBIENTE(cab).map((a) => `<div class="lp-fila">${sem(a[4], false)}<span>${a[0]}<small>Límite ${a[3]} [A]</small></span><b>${a[1]} ${a[2]}</b></div>`).join(""));

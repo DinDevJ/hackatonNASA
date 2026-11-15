@@ -105,7 +105,7 @@ def sexos(rutas) -> dict:
     return {f"I4-{s}": {"sexo": x} for s, x in d.groupby("SUBJECT_ID")["SEX"].first().items() if x in ("M", "F")}
 
 
-def evaluar_por_punto(nat: pd.DataFrame, perfiles: dict, params: dict | None = None) -> tuple[list[dict], list[dict]]:
+def evaluar_por_punto(nat: pd.DataFrame, perfiles: dict, params: dict | None = None, canal: str = "real") -> tuple[list[dict], list[dict]]:
     """Evalua de forma acumulada hasta cada punto (como lo veria la central ese dia). BD/estado temporales; nada se guarda."""
     mision = {sid: {"lanzamiento": LANZAMIENTO.isoformat(), "aterrizaje": AMERIZAJE.isoformat()}
               for sid in nat["subject_id"].unique()}
@@ -114,7 +114,7 @@ def evaluar_por_punto(nat: pd.DataFrame, perfiles: dict, params: dict | None = N
         for tp in PUNTOS:
             sub = nat[nat["timestamp"] <= fecha_de(tp).isoformat()]
             obs, rech, _ = entradas.desde_nativo(sub)
-            res = evaluacion.evaluar(obs, mision=mision, perfiles=perfiles, canal="real", params=params,
+            res = evaluacion.evaluar(obs, mision=mision, perfiles=perfiles, canal=canal, params=params,
                                      ruta_estado=Path(tmp) / f"estado_{tp}.json", guardar=False, rechazadas=rech)
             for sid, pr in res["personas"].items():
                 for it in pr.get("padecimientos", []):
@@ -125,6 +125,90 @@ def evaluar_por_punto(nat: pd.DataFrame, perfiles: dict, params: dict | None = N
                     vars_.append({"punto": tp, "subject_id": sid, "variable_id": vid, "z": v.get("z"),
                                   "estado": v.get("estado")})
     return pads, vars_
+
+
+# ---------------------------------------------------------------- experimento: relleno SIMULADO (NO es validacion)
+SOSPECHOSOS = {("I4-C003", "L-92"): ("01:V60", "01:V98", "01:V99", "04:A10")}  # plaquetas 12.9 / neutrofilos 10.1
+PUNTOS_RELLENO = ["L-75", "L-60", "L-30", "L-20", "L-10"]  # fechas PRE sin toma real, usadas en este orden
+N0_OBJETIVO = 5
+
+
+def _tp(notes: str) -> str:
+    return str(notes).split(";")[2].strip().split()[-1]
+
+
+def rellenar_simulado(nat: pd.DataFrame, semilla: int = 0) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Completa la base PRE hasta 5 puntos por tripulante/variable con puntos SIMULADOS.
+
+    Cada punto = N(media de sus tomas PRE reales, DE de esas mismas tomas); si su DE es 0 o hay < 2 tomas, se usa la DE
+    intra-sujeto combinada de la tripulacion para esa variable. Semilla fija. Excluye las filas sospechosas de C003 L-92.
+    TODAS las filas salen simulated=true (el motor no mezcla canales, G1): las reales conservan en notes su origen
+    'Inspiration4 (OSDR, abierto)'; las rellenas dicen 'RELLENO SIMULADO'. El resultado es SIMULADO, no prueba nada clinico."""
+    import numpy as np
+    rng = np.random.default_rng(semilla)
+    d = nat.copy()
+    d["_tp"] = d["notes"].map(_tp)
+    excl = d.apply(lambda r: r["variable_id"] in SOSPECHOSOS.get((r["subject_id"], r["_tp"]), ()), axis=1)
+    excluidas = d[excl].drop(columns="_tp")
+    d = d[~excl]
+    d["_v"] = d["value"].astype(float)
+    pre = d[d["_tp"].str.startswith("L-")]
+    sd_crew = {}
+    for vid, g in pre.groupby("variable_id"):
+        sds = [x.std(ddof=1) for _, x in g.groupby("subject_id")["_v"] if len(x) >= 2]
+        sd_crew[vid] = float(np.sqrt(np.mean(np.square(sds)))) if sds else 0.0
+    nuevas = []
+    for (sid, vid), g in pre.groupby(["subject_id", "variable_id"]):
+        faltan = N0_OBJETIVO - len(g)
+        if faltan <= 0:
+            continue
+        mu = float(g["_v"].mean())
+        sd = float(g["_v"].std(ddof=1)) if len(g) >= 2 else 0.0
+        fuente_sd = "DE de sus tomas PRE reales"
+        if not sd > 0:
+            sd, fuente_sd = sd_crew.get(vid, 0.0), "DE intra-sujeto combinada de la tripulacion"
+        r0 = g.iloc[0]
+        libres = [t for t in PUNTOS_RELLENO if t not in set(g["_tp"])][:faltan]
+        for tp in libres:
+            v = max(0.0, float(rng.normal(mu, sd)))
+            nuevas.append({**{c: r0[c] for c in entradas.cal.NATIVO_COLUMNAS}, "timestamp": fecha_de(tp).isoformat(),
+                           "value": f"{v:.4g}", "simulated": "true",
+                           "notes": f"RELLENO SIMULADO (semilla {semilla}); media {mu:.4g} +/- {fuente_sd} {sd:.3g}; "
+                                    f"{r0['unit']}; {vid} {tp}"})
+    reales = d[entradas.cal.NATIVO_COLUMNAS].copy()
+    reales["simulated"] = "true"
+    reales["notes"] = reales["notes"] + "; canal SIMULADO solo por mezcla con relleno"
+    out = pd.concat([reales, pd.DataFrame(nuevas, columns=entradas.cal.NATIVO_COLUMNAS)], ignore_index=True)
+    return out, excluidas
+
+
+def experimento_relleno(nat, rutas, semillas=(0, 1, 2)) -> dict:
+    pf = sexos(rutas)
+    out = {"aviso": "EXPERIMENTO con base prevuelo parcialmente SIMULADA. No es validacion ni prueba nada clinico.",
+           "corridas": {}}
+    for s in semillas:
+        rel, excl = rellenar_simulado(nat, s)
+        p, v = evaluar_por_punto(rel, pf, canal="simulado")
+        out["corridas"][str(s)] = {"padecimientos": p, "variables": v, "filas_relleno":
+                                   int(rel["notes"].str.startswith("RELLENO").sum())}
+    out["excluidas"] = excl.to_dict("records")
+    return out
+
+
+def _imprimir_relleno(r: dict) -> None:
+    print("\n" + r["aviso"])
+    print(f"Excluidas por sospecha de error de unidades: {len(r['excluidas'])} filas (C003 L-92 CBC).")
+    for s, c in r["corridas"].items():
+        p = pd.DataFrame(c["padecimientos"])
+        p = p[p["punto"].str.startswith("R") & (p["color"] != "GRIS")]
+        print(f"\n[relleno semilla {s}] {c['filas_relleno']} puntos SIMULADOS. Celdas no GRIS en POST:")
+        print(p[["punto", "subject_id", "padecimiento", "color", "T", "T_inf"]].to_string(index=False) if len(p)
+              else "ninguna")
+        v = pd.DataFrame(c["variables"])
+        v["z"] = pd.to_numeric(v["z"], errors="coerce")
+        v = v[v["punto"].str.startswith("R") & (v["z"].abs() >= 2)]
+        print(f"[relleno semilla {s}] variables POST con |z| >= 2:")
+        print(v.assign(z=v["z"].round(2)).to_string(index=False) if len(v) else "ninguna")
 
 
 def banderas_laboratorio(rutas) -> pd.DataFrame:
@@ -176,10 +260,16 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--dir", default=str(Path(tempfile.gettempdir()) / "i4_osdr"))
     ap.add_argument("--json", default=None)
+    ap.add_argument("--rellenar-simulado", action="store_true",
+                    help="EXPERIMENTO: completa la base PRE a 5 puntos con puntos SIMULADOS (3 semillas)")
     a = ap.parse_args(argv)
     rutas = descargar(Path(a.dir))
-    r = resumen(a_nativo(rutas), rutas)
+    nat = a_nativo(rutas)
+    r = resumen(nat, rutas)
     _imprimir(r)
+    if a.rellenar_simulado:
+        r["experimento_relleno_SIMULADO"] = experimento_relleno(nat, rutas)
+        _imprimir_relleno(r["experimento_relleno_SIMULADO"])
     if a.json:
         Path(a.json).write_text(json.dumps(r, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
     return 0

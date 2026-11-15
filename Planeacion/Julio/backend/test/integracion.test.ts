@@ -83,3 +83,25 @@ test('semillas incrementales: una base vieja recibe los dispositivos nuevos sin 
   const h = vieja.prepare(`SELECT COUNT(*) AS n FROM historial`).get() as { n: number };
   assert.equal(h.n, 1, 'el historial no se duplica al recargar');
 });
+
+test('enlace con Tierra: retraso de la luz, ventana cerrada y avisos de vuelta', async () => {
+  const { escribirEnlace, encolarBajada, pulso, redactarAviso } = await import('../src/enlace.ts');
+  escribirEnlace(db, { owlt_s: 20, abierto: false });
+  encolarBajada(db, 'alerta', { x: 1 }, '2027-01-01T10:00:00.000Z', 0);
+  redactarAviso(db, { para: 'ana', texto: 'Descansa hoy' });
+
+  pulso(db, '2027-01-01T10:00:05.000Z');      // ventana cerrada: nada sale
+  const b0 = db.prepare(`SELECT t_envio FROM bajada`).get() as { t_envio: string | null };
+  assert.equal(b0.t_envio, null);
+
+  escribirEnlace(db, { abierto: true });
+  pulso(db, '2027-01-01T10:01:00.000Z');      // se abre: sale, llega 20 s después
+  const b1 = db.prepare(`SELECT t_ert FROM bajada`).get() as { t_ert: string };
+  assert.equal(b1.t_ert, '2027-01-01T10:01:20.000Z');
+
+  pulso(db, '2027-01-01T10:01:10.000Z');      // aún en vuelo
+  assert.equal((db.prepare(`SELECT entregado FROM subida`).get() as { entregado: number }).entregado, 0);
+  pulso(db, '2027-01-01T10:01:21.000Z');      // llegó
+  assert.equal((db.prepare(`SELECT entregado FROM subida`).get() as { entregado: number }).entregado, 1);
+  assert.equal((db.prepare(`SELECT notificado FROM bajada`).get() as { notificado: number }).notificado, 1);
+});

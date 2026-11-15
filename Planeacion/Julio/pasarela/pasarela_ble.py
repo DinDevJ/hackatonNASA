@@ -171,9 +171,15 @@ async def principal() -> None:
     a = ap.parse_args()
 
     try:
-        http("GET", f"{a.backend}/api/salud")
+        salud = http("GET", f"{a.backend}/api/salud")
     except (urllib.error.URLError, OSError) as e:
         raise SystemExit(f"No responde el backend en {a.backend} ({e}). ¿Está corriendo `npm start`?")
+    if not salud.get("version"):
+        raise SystemExit(
+            f"El backend en {a.backend} es una versión VIEJA.\n"
+            "  Probablemente sigue abierto un `npm start` anterior en otra terminal.\n"
+            "  Ciérralo, haz `git pull` y vuelve a ejecutar `npm start` en backend/.")
+    log(f"backend v{salud['version']} en {a.backend}")
     for par in a.asignar:
         disp, trip = par.split("=")
         try:

@@ -422,6 +422,7 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
         ${f ? `<div class="tarjeta">
           <div class="alerta-cab">${sem(f.estado === "cerrado" ? 0 : 1, f.estado === "abierto" ? "Atención" : f.estado === "mejorando" ? "En seguimiento" : "Cerrada")}<h2>Fatiga acumulada</h2><code>FATIGA-03</code></div>
           <p class="frase-motor">Ninguna señal sola dispararía; <b>las tres juntas, sí</b>.</p>
+          <p class="tenue-12 ref-alerta"><b>Referencia:</b> respecto a tu base (14 días)</p>
           <div class="chips"><span class="chip chip-sm chip-fijo">${ic("escudo", "ic-sm")} Nivel 0 · autocuidado</span><span class="chip chip-sm chip-fijo">${ic("cohete", "ic-sm")} Caminata espacial: ${f.estado === "cerrado" ? "apta" : "se revisa antes"}</span></div>
           ${f.hoy.es.map((x) => `<div class="senal"><div class="senal-cab"><b>${M.IND[x.k].corto || M.IND[x.k].nombre}</b><span>${M.texto(x.k, x.valor)} · tu normal ${M.texto(x.k, x.normal.med)} · z ${x.z >= 0 ? "+" : "−"}${fmt(Math.abs(x.z).toFixed(1))}</span></div>${grafNormal(yo.id, x.k, E.dia, true)}</div>`).join("")}
           <details class="regla"><summary>${ic("libro", "ic-sm")} Ver la regla (auditable)</summary><pre>${REGLA_YAML}</pre></details></div>
@@ -430,7 +431,7 @@ escalar_si: persiste 48 h o síntoma físico -> CMO`;
         <div class="tarjeta"><h3>${ic("reloj")} Historial</h3><ol class="linea-tiempo">${hist.map((h) => `<li>${sem(h.f && h.f.estado === "cerrado" ? 0 : 1, "Día " + h.d)}<span>${h.d === f.desde ? "Se abre: las tres señales fuera de tu normal" : h.f && h.f.estado === "cerrado" ? "Se cierra: dos días en tu normal" : "Mejora, sigue en seguimiento"}</span></li>`).join("")}</ol>
           <div class="escalera">${["0 · Autocuidado", "1 · CMO", "2 · Cirujano", "3 · Junta"].map((t, i) => `<span class="${i === 0 ? "on" : ""}">${t}</span>`).join("")}</div>
           <p class="tenue-12">Si persiste 48 h o aparece un síntoma físico, pasa al nivel 1.</p></div>` : ""}
-        ${otros.map((h) => `<div class="tarjeta"><div class="alerta-cab">${sem(h.nivel)}<h2>${h.titulo}</h2></div><p>${h.frase}</p><p class="tenue-12">${h.hacer} · Umbral: ${h.umbral}</p></div>`).join("")}`;
+        ${otros.map((h) => `<div class="tarjeta"><div class="alerta-cab">${sem(h.nivel)}<h2>${h.titulo}</h2></div><p>${h.frase}</p>${h.referencia ? `<p class="tenue-12 ref-alerta"><b>Referencia:</b> ${h.referencia}</p>` : ""}<p class="tenue-12">${h.hacer} · Umbral: ${h.umbral}</p></div>`).join("")}`;
       const ac = $("#aceptar", p); if (ac) ac.addEventListener("click", () => { E.aceptado = true; encolar({ prio: 1, pid: yo.id, t: `FATIGA-03 de ${yo.nombre}: protocolo aceptado`, nivel: 1 }); aviso("Protocolo aceptado · reevaluación mañana 07:30"); ir("alertas"); });
       $$("[data-paso]", p).forEach((c) => c.addEventListener("change", () => { E.protocolo[c.dataset.paso] = c.checked; }));
     },

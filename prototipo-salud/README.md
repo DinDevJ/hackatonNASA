@@ -229,6 +229,7 @@ pesos que edite el usuario. Python no crea el esquema: lo crea Node (`npm run mi
 ```bash
 EVA_DB=../Planeacion/Julio/backend/eva-nave.db streamlit run app.py
 EVA_DB=../Planeacion/Julio/backend/eva-nave.db python -m motor.evadb --evaluar     # guarda en `evaluaciones`
+EVA_DB=... python -m motor.evadb --evaluar --origen-simulador   # eva.db viene de `npm run sim`: se evalúa igual, se guarda con canal SIMULADO
 ```
 
 - Con `EVA_DB` y las tablas de salud: la vista Padecimientos usa eva.db (canal real) por defecto y la tripulación

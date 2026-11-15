@@ -115,9 +115,9 @@ Este README contiene también el contenido completo de los documentos Markdown q
 
 ## Documentos principales
 
-- [PLANEACION.md](PLANEACION.md): plan operativo del proyecto, estructura, fases, criterios de aceptación y riesgos.
-- [MANUAL-USUARIO-LUNNA.md](MANUAL-USUARIO-LUNNA.md): manual para recorrer la maqueta LUNNA y sus interfaces.
-- [PROTOCOLO-INGESTIGACION.md](PROTOCOLO-INGESTIGACION.md): objetivos, variables, modelo, fuentes, límites y trazabilidad de la investigación.
+- [Planeación general](../documentacion/README_01_PLANEACION.md): plan operativo del proyecto, estructura, fases, criterios de aceptación y riesgos.
+- [Manual de usuario](../documentacion/README_03_MANUAL_USUARIO.md): manual para recorrer la maqueta LUNNA y sus interfaces.
+- [Protocolo de investigación](../documentacion/README_02_PROTOCOLO_INVESTIGACION.md): objetivos, variables, modelo, fuentes, límites y trazabilidad de la investigación.
 
 
 ## Documento consolidado: `Planeacion/Julio/backend/ENLACE-HTTPS.md`
@@ -546,7 +546,7 @@ el 7 de diciembre de 1972 (NASA, dominio público). Descargada de la página de 
 
 # Variables medibles por sensor: qué dice el catálogo
 
-Equipo Monarcas · 2026-11-15 · Datos: [`medibles.json`](medibles.json) (lo carga el backend al arrancar)
+Equipo Monarcas · 2026-11-15 · Datos: [`medibles.json`](../Sistema/backend/semillas/medibles.json) (lo carga el backend al arrancar)
 
 Las siete variables que el sistema recibe de sensores (playera, reloj, brazalete), con lo
 que los catálogos de investigación del repo dicen de cada una.
@@ -756,13 +756,14 @@ Fundamentos y contexto: **../modelo-predictivo-fundamentos.md** (secciones 1 a 8
 
 | Archivo | Qué es |
 |---|---|
-| [pesos.csv](pesos.csv) | **99 celdas** (11 malestares × 9 variables): peso 0–3, dirección, mecanismo, nivel de evidencia, referencia con DOI y prior bayesiano. Se abre en Excel |
-| [pesos.json](pesos.json) | Lo mismo en JSON, más la lista de referencias |
-| [generar_pesos.py](generar_pesos.py) | **Fuente de verdad**: aquí se editan los pesos y se regeneran el CSV y el JSON |
-| [actualizacion_bayesiana.py](actualizacion_bayesiana.py) | Implementación de referencia en Python puro (sin dependencias) con una demostración |
-| [Sistema/interfaces/eva/pesos.js](../../../Sistema/interfaces/eva/pesos.js) | Copia ligera (solo celdas con peso) que usan la computadora central y la base en Tierra para el índice por padecimiento. La genera `generar_pesos.py` |
+| [pesos.csv](../Planeacion/Leo/modelo-pesos/pesos.csv) | **99 celdas** (11 malestares × 9 variables): peso 0–3, dirección, mecanismo, nivel de evidencia, referencia con DOI y prior bayesiano. Se abre en Excel |
+| [pesos.json](../Planeacion/Leo/modelo-pesos/pesos.json) | Lo mismo en JSON, más la lista de referencias |
+| [generar_pesos.py](../Planeacion/Leo/modelo-pesos/generar_pesos.py) | **Fuente de verdad**: aquí se editan los pesos y se regeneran el CSV y el JSON |
+| [actualizacion_bayesiana.py](../Planeacion/Leo/modelo-pesos/actualizacion_bayesiana.py) | Implementación de referencia en Python puro (sin dependencias) con una demostración |
+| [Sistema/interfaces/eva/pesos.js](../Sistema/interfaces/eva/pesos.js) | Copia ligera (solo celdas con peso) que usan la computadora central y la base en Tierra para el índice por padecimiento. La genera `generar_pesos.py` |
 
 ```bash
+cd Planeacion/Leo/modelo-pesos
 python generar_pesos.py            # regenera pesos.csv, pesos.json y Sistema/interfaces/eva/pesos.js
 python actualizacion_bayesiana.py  # demostración con datos simulados
 ```
@@ -833,7 +834,7 @@ llega a 0). Con menos datos, el prior fisiológico domina; con más, mandan los 
 
 ## Limitaciones
 
-- La columna `riesgo_nasa` usa los **nombres oficiales del HRR**, los mismos de la tabla de Iker (`Planeacion/Iker/iker_variables.csv`). Hipoxia, inmune y radiación aguda (que Iker no cubre) se tomaron de las páginas de riesgo de NASA y del Evidence Report NTRS 20160003870. El CO₂ no tiene riesgo HRR propio: se marca como peligro *Hostile/Closed Environments*, igual que Iker.
+- La columna `riesgo_nasa` usa los **nombres oficiales del HRR**, los mismos de la tabla de Iker (`Planeacion/data/variables/VARIABLES-CARDIOBASCULAR.csv`). Hipoxia, inmune y radiación aguda (que Iker no cubre) se tomaron de las páginas de riesgo de NASA y del Evidence Report NTRS 20160003870. El CO₂ no tiene riesgo HRR propio: se marca como peligro *Hostile/Closed Environments*, igual que Iker.
 - Ningún peso está validado en astronautas, salvo CO₂ → cefalea (nivel A, Law et al. 2014).
 - La HRV no está porque el reloj del equipo no envía intervalos RR.
 
@@ -3108,7 +3109,7 @@ el 7 de diciembre de 1972 (NASA, dominio público). Descargada de la página de 
 
 # Variables medibles por sensor: qué dice el catálogo
 
-Equipo Monarcas · 2026-11-15 · Datos: [`medibles.json`](medibles.json) (lo carga el backend al arrancar)
+Equipo Monarcas · 2026-11-15 · Datos: [`medibles.json`](../Sistema/backend/semillas/medibles.json) (lo carga el backend al arrancar)
 
 Las siete variables que el sistema recibe de sensores (playera, reloj, brazalete), con lo
 que los catálogos de investigación del repo dicen de cada una.

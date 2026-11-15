@@ -212,11 +212,37 @@ Regla común a todos: **un faltante es vacío (NaN), nunca 0**. `value` vacío �
 | Archivo | Filas | Contenido |
 |---|---:|---|
 | [`Planeacion/data/variables/VARIABLES-MEDIDAS-ASTRONAUTAS.csv`](../Planeacion/data/variables/VARIABLES-MEDIDAS-ASTRONAUTAS.csv) | 388 | id, variable, sistema, medido_en_astronautas, equipo_o_metodo, experimento_o_requisito_nasa, fuente, fuente_previa, nota |
-| [`Planeacion/data/variables/VARIABLES-CARDIOBASCULAR.csv`](../Planeacion/data/variables/VARIABLES-CARDIOBASCULAR.csv) | — | Catálogo cardiovascular (su descripción es una de las [tareas finales](INDICE.md#tareas-finales)) |
+| [`Planeacion/data/variables/VARIABLES-CARDIOBASCULAR.csv`](../Planeacion/data/variables/VARIABLES-CARDIOBASCULAR.csv) | 77 | Ficha de investigación por variable de Iker (antes `Planeacion/Iker/iker_variables.csv`): método de captura, datasets y licencias, si hay dato en vuelo, modelos existentes, fuente del umbral, uso en el prototipo, limitaciones y estado. Ver §9.1 |
 | [`prototipo-salud/datos/modelo/PADECIMIENTO-VARIABLE.csv`](../prototipo-salud/datos/modelo/PADECIMIENTO-VARIABLE.csv) | **350** | **Fuente de verdad**: la usan el motor y el backend |
 | [`Planeacion/data/padecimientos/PADECIMIENTO-VARIABLE.csv`](../Planeacion/data/padecimientos/PADECIMIENTO-VARIABLE.csv) | 350 | Copia idéntica a la fuente de verdad |
 
 > La matriz de 350 ligas incluye la FEVI (`01:V18`) en P01 y P02. Si se edita, se edita en `prototipo-salud/datos/modelo/` y se vuelve a copiar.
+
+### 9.1 `VARIABLES-CARDIOBASCULAR.csv`
+
+Ficha de investigación por variable, elaborada por Iker durante la fase de investigación. Pese al nombre, no es sólo
+cardiovascular: sus 77 filas vienen de tres catálogos del equipo.
+
+| Catálogo de origen (columna `archivo`) | Filas |
+|---|---:|
+| 01 · cardiovascular, SANS y radiación | 51 |
+| 03 · conducta, sueño y cognición | 22 |
+| 04 · inmune, ambiente, equipo y umbrales | 4 |
+
+**Columnas.** `archivo`, `id` (identificador dentro del catálogo, p. ej. `V31`), `variable`, `unidad`,
+`metodo_captura`, `dataset_url`, `licencia`, `formato`, `numero_registros`, `datos_en_vuelo`, `modelo_existente_url`,
+`umbral_fuente`, `uso_prototipo`, `limitaciones`, `estado`, `riesgo_hrp`, `recurso_oficial_url`.
+
+**Estado de la investigación** (columna `estado`): 36 con fuente encontrada, 26 bloqueadas, 10 pendientes, 4 con datos
+descargados y 1 integrada.
+
+**Relación con `VARIABLES-MEDIDAS-ASTRONAUTAS.csv`.** Las 77 variables aparecen también en el catálogo maestro (388
+filas) con el id prefijado por su catálogo (`V31` del catálogo 01 es `01:V31`), y allí su columna `fuente_previa`
+dice `iker_variables.csv`. El maestro responde «¿se ha medido en astronautas y con qué?»; esta ficha añade lo que
+hace falta para usar la variable en software: datasets, licencias, modelos y limitaciones.
+
+**Uso en el sistema.** Ningún programa la lee directamente. Es fuente citada: la trazabilidad de los umbrales
+clínicos ([`medibles.md`](../Sistema/backend/semillas/medibles.md)) remite a sus filas.
 
 ## Documentación relacionada
 

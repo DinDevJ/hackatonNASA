@@ -1005,3 +1005,7 @@ body { padding: 2dvh 0; }
 .etq-reg { background: rgba(43, 163, 107, .14); color: var(--verde); font-weight: 700; }
 .mosaico .etq-reg { align-self: flex-start; font-size: 10.5px; margin-top: -2px; }
 :root[data-tema="oscuro"] .etq-reg { color: #6EE7B7; }
+
+/* ---------------- Filas de solo información (bug 8) ---------------- */
+.lista-fila.lista-fila-fija { cursor: default; }
+.lista-fila.lista-fila-fija:active { background: none; transform: none; }

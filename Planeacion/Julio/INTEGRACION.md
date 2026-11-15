@@ -145,13 +145,39 @@ todos los que encuentre a la vez y, con cada uno, hace tres cosas en este orden:
 
 ### Enlace con Tierra
 
-La central manda a Tierra **cada alerta al instante** y **un resumen cada 30 s**. Tierra
-manda **avisos** a la tripulación. En los dos sentidos:
+Qué baja de la nave a Tierra, de mayor a menor prioridad:
+
+| Paquete | Cuándo | Prioridad | Qué lleva |
+|---|---|---|---|
+| `acuse` | al recibir un aviso o alerta de Tierra | 0 | Confirma que llegó a bordo y cuándo |
+| `alerta` | al instante | 0 rojo · 1 ámbar | La alerta de LUNNA con su z y P(normal) |
+| `resumen` | cada 30 s | 2 | **Procesados:** último valor de cada variable + lo esperado y la banda de LUNNA |
+| `crudos` | cada 30 s, en lotes de 200 | 3 | **Crudos:** cada trama tal como llegó (hex o JSON) y su decodificación |
+
+Tierra sube **avisos** y **alertas manuales** (`tipo: "alerta"`, `nivel: "ambar" | "rojo"`,
+`variable` opcional) cuando el cirujano de vuelo detecta una anomalía que LUNNA no marcó.
+En los dos sentidos:
 
 - Todo llega `owlt_s` segundos después de salir (20 s por defecto para que se vea; en
   Marte serían de 240 a 1 440).
 - Con la **ventana cerrada** nada sale: se guarda en cola y sale al abrirse.
 - Tierra ve **cuándo ocurrió** cada cosa y **con qué antigüedad llegó**.
+
+### Consola de control de misión (`http://localhost:8787/tierra`)
+
+Lo que usaría el cirujano de vuelo en Tierra. **Sólo muestra lo que llegó por el enlace**,
+con su retraso: nunca lee directo la base de datos de la nave.
+
+- **Tripulación:** cada tripulante con el último estado que reportó LUNNA.
+- **Procesados:** último valor de cada variable, lo esperado, la banda 95 %, si está
+  dentro o fuera, cuándo se midió a bordo y cuándo llegó. Botón *Marcar anomalía*.
+- **Crudos:** las tramas tal como las mandó cada dispositivo, filtrables y con pausa.
+- **Alertas de LUNNA:** con *Confirmar y alertar*, que prellena el formulario.
+- **Alerta manual:** tripulante, nivel, variable y mensaje. Muestra el recorrido:
+  redactada → enviada → recibida a bordo (por el acuse, que tarda otro retraso en volver).
+
+⚠️ Las tramas crudas se juntan en memoria hasta el siguiente paquete: si el backend se
+reinicia, se pierden las de esos ≤ 30 s (los datos procesados sí quedan en la base).
 
 ---
 

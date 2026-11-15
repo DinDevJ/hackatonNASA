@@ -9,7 +9,7 @@ modelo que define "lo esperado".
 ```bash
 npm start      # servidor; http://localhost:8787 = estado · /simulador = simulador visual
 npm run sim    # simulador de hardware: 119 días de misión y luego en vivo
-npm test       # 19 pruebas
+npm test       # 21 pruebas
 ```
 
 Requiere **Node 22.6+** y nada más: SQLite y TypeScript vienen integrados en Node.
@@ -52,8 +52,10 @@ Requiere **Node 22.6+** y nada más: SQLite y TypeScript vienen integrados en No
 | Ponerse un dispositivo | `POST /api/asignaciones` `{ dispositivo, tripulante }` |
 | Fases de la misión | `GET/POST /api/fases` `{ desde, entorno }` |
 | Enlace con Tierra | `GET/PUT /api/enlace` `{ owlt_s, abierto }` |
-| Lo que ha llegado a Tierra | `GET /api/tierra/bandeja` (con la antigüedad de cada cosa) |
+| Lo que ha llegado a Tierra | `GET /api/tierra/bandeja[?tipo=resumen\|alerta\|crudos\|acuse]` (con la antigüedad de cada cosa) |
 | Tierra manda un aviso | `POST /api/tierra/avisos` `{ para, texto, prioridad }` |
+| Tierra manda una alerta manual | `POST /api/tierra/avisos` `{ tipo: "alerta", nivel: "ambar"\|"rojo", para, variable?, texto }` |
+| Consola de control de misión | `GET /tierra` |
 | Avisos ya llegados a la nave | `GET /api/avisos` |
 
 Eventos de `/api/stream`: `muestra`, `alerta`, `rechazo`, `tierra` (algo llegó a Tierra),

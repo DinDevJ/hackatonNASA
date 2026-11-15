@@ -28,3 +28,21 @@ def test_a_nativo_mapea_y_pasa_la_puerta(tmp_path):
     assert len(obs) == 3 and len(rech) == 0
     b = I.banderas_laboratorio(rutas)
     assert list(b["variable_id"]) == ["01:V39"]
+
+
+def test_rellenar_simulado_completa_a_5_y_todo_es_simulado():
+    import pandas as pd
+    filas = []
+    for sid in ("I4-C001", "I4-C003"):
+        for tp, v in (("L-92", 5.0), ("L-44", 6.0), ("L-3", 7.0), ("R+1", 6.5)):
+            filas.append(I._fila(sid[3:], tp, "04:A10", v, "10^3/uL", "WHITE BLOOD CELL COUNT", "cbc.csv"))
+    nat = pd.DataFrame(filas, columns=I.entradas.cal.NATIVO_COLUMNAS)
+    a, excl = I.rellenar_simulado(nat, semilla=0)
+    b, _ = I.rellenar_simulado(nat, semilla=0)
+    assert a.equals(b)                                  # semilla fija: reproducible
+    assert (a["simulated"] == "true").all()             # canal SIMULADO (G1)
+    assert len(excl) == 1                               # C003 L-92 de CBC excluido
+    pre = a[a["timestamp"] < I.LANZAMIENTO.isoformat()]
+    assert pre.groupby("subject_id").size().to_dict() == {"I4-C001": 5, "I4-C003": 5}
+    assert a["notes"].str.startswith("RELLENO SIMULADO").sum() == 5
+    assert a.loc[~a["notes"].str.startswith("RELLENO"), "notes"].str.contains(I.ETIQUETA, regex=False).all()

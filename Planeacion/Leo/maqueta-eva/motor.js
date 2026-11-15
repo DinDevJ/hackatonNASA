@@ -1,9 +1,9 @@
-/* Motor de la maqueta: tripulación simulada, "tu normal", semáforo, FATIGA-03 y lo que Luna dice.
+/* Motor de la maqueta: tripulación simulada, "tu normal", semáforo, FATIGA-03 y lo que Lunna dice.
  *
  * Es la lógica del módulo 1 de app/ (React) traída al formato de la maqueta: JavaScript sin
  * dependencias. Todo es SIMULADO. Funciona en el navegador (window.MOTOR) y en Node (pruebas).
  *
- * Reglas (ERS-LUNA):
+ * Reglas (ERS de Lunna):
  *  - Tu normal = 14 días anteriores, mínimo 7 con dato. z robusto = 0,6745 · (x − mediana) / MAD.
  *  - MAD nunca menor que la variación mínima creíble del indicador (si no, falsas alarmas).
  *  - Una señal sola contra tu normal pide atención con |z| ≥ 3. FATIGA-03 junta tres señales con
@@ -56,7 +56,7 @@
       nombre: "Pulso en reposo", unidad: "lpm", dec: 0, region: "corazon", proc: "calculado", dir: "alto", madMin: 1.5, seccion: "corazon", icono: "corazon", varId: "01:V3",
       abs: { tipo: "T", nivel: (v) => (v > 100 ? 1 : 0), texto: "> 100 lpm en reposo (taquicardia, clínico terrestre)" },
       porQue: "Si el pulso en reposo sube varios días seguidos, el cuerpo está cargando con algo: poco sueño, estrés, deshidratación o una infección que empieza.",
-      como: "Lo calcula Luna: la mediana de los 30 minutos con el pulso más bajo durante el sueño. 0,8 % de error frente al ECG.",
+      como: "Lo calcula Lunna: la mediana de los 30 minutos con el pulso más bajo durante el sueño. 0,8 % de error frente al ECG.",
       espacio: "En reposo no cambia de forma clara en vuelo (n = 8). Por eso se compara contigo misma o mismo.",
     },
     hrv: {
@@ -125,9 +125,9 @@
   const RUIDO = { sueno: 0.45, animo: 5, fc: 1.6, hrv: 5, sis: 4, dia: 2, spo2: 0.6, fr: 1, glucosa: 5, temperatura: 0.12 };
 
   const PERSONAS = [
-    { id: "MS-2", nombre: "Ana", sexo: "M", rol: "Especialista de misión", pareja: "Luis", masaKg: 62, color: "#B541FA" },
+    { id: "MS-2", nombre: "Ana", sexo: "M", rol: "Especialista de misión", pareja: "Luis", masaKg: 62, color: "#E0457B" },
     { id: "MS-4", nombre: "Luis", sexo: "H", rol: "Ingeniero de vuelo", pareja: "Ana", masaKg: 84, color: "#FF8A3D" },
-    { id: "MS-3", nombre: "Mei", sexo: "M", rol: "Oficial médica (CMO)", pareja: "Tomás", masaKg: 58, color: "#2BA36B" },
+    { id: "MS-3", nombre: "Mei", sexo: "M", rol: "CMO (médica de a bordo)", pareja: "Tomás", masaKg: 58, color: "#2BA36B" },
     { id: "MS-1", nombre: "Tomás", sexo: "H", rol: "Comandante", pareja: "Mei", masaKg: 78, color: "#4FD2E9" },
   ];
 
@@ -202,9 +202,11 @@
   });
 
   // ------------------------------------------------------------------ cabina
+  // ESTADO.solarCerrado: la app lo pone en true cuando la tripulación cierra el evento del día 115 (11:31).
+  const ESTADO = { solarCerrado: false };
   function cabina(dia) {
     const r = rng(1000 + dia);
-    const solar = dia === 115;
+    const solar = dia === 115 && !ESTADO.solarCerrado;
     return {
       co2: redondo(2.1 + (r() - 0.5) * 0.4, 1), // mmHg · [A] ≤ 3 promedio de 1 h
       tasa: solar ? 6000 : Math.round(20 + (r() - 0.5) * 6), // µSv/h · [A] diseño < 54
@@ -212,31 +214,91 @@
       solar,
     };
   }
+  // ------------------------------------------------------------------ dosis personal (bug 9)
+  // SIMULADA. Misma cabina para todos, pero cada quien pasa distinto tiempo en módulos menos
+  // blindados (factor) y tarda distinto en llegar al refugio el día 115 (minutos fuera).
+  const FACTOR_DOSIS = { "MS-1": 1.02, "MS-2": 1.0, "MS-3": 0.97, "MS-4": 1.06 };
+  const MIN_AL_REFUGIO = { "MS-1": 3, "MS-2": 2, "MS-3": 5, "MS-4": 2 }; // Mei llega 11:09 en el escenario
+  const DURACION_EVENTO_MIN = 27, TASA_EVENTO = 6000, BLINDAJE_REFUGIO = 0.1; // supuestos del escenario
+  /** Dosis del evento solar del día 115 para una persona, en mSv (0 antes del evento). */
+  function dosisEvento(pid, dia) {
+    if (dia < 115) return 0;
+    const fuera = MIN_AL_REFUGIO[pid] ?? 3;
+    const uSv = (TASA_EVENTO * fuera) / 60 + (TASA_EVENTO * BLINDAJE_REFUGIO * (DURACION_EVENTO_MIN - fuera)) / 60;
+    return redondo(uSv / 1000, 2);
+  }
+  /** Dosis acumulada de la misión (mSv) y del evento solar (mSv) de una persona. */
+  function dosisPersonal(pid, dia) {
+    const evento = dosisEvento(pid, dia);
+    return { mision: redondo(dia * 0.48 * (FACTOR_DOSIS[pid] ?? 1) + evento, 1), evento, minAlRefugio: MIN_AL_REFUGIO[pid] ?? 3 };
+  }
+
   /** Evento real de DONKI que sirve de modelo al evento solar del día 115 (ERS CU-03). */
   const DONKI = {
     id: "2024-05-11T02:10:00-SEP-001", instrumento: "GOES-P SEISS > 100 MeV", latenciaMin: 20,
     url: "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30714/-1",
   };
 
+  // ------------------------------------------------------------------ registros del día
+  // Lo que la persona anota (check-in, presión, PVT-B, glucómetro…) reemplaza el valor simulado de
+  // ese día. Es una capa encima de SERIES: no la modifica, y se puede limpiar.
+  const REG = {}; // "pid|dia|k" -> { valor, hora }
+  const clave = (pid, dia, k) => `${pid}|${dia}|${k}`;
+  function registrar(pid, dia, k, valor, hora) {
+    if (valor == null || Number.isNaN(+valor)) return;
+    REG[clave(pid, dia, k)] = { valor: +valor, hora: hora || null };
+  }
+  const registro = (pid, dia, k) => REG[clave(pid, dia, k)] || null;
+  function limpiarRegistros() { for (const c of Object.keys(REG)) delete REG[c]; }
+  /** La serie de una variable con los registros de esa persona encima. */
+  function serieCon(pid, k) {
+    let out = null;
+    for (const c of Object.keys(REG)) {
+      const [p, d, kk] = c.split("|");
+      if (p !== pid || kk !== k) continue;
+      const i = idx(+d);
+      if (i < 0 || i >= DIAS.length) continue;
+      if (!SERIES[pid][k]) continue; // variables sin serie (termómetro, masa) solo se guardan
+      out = out || SERIES[pid][k].slice();
+      out[i] = REG[c].valor;
+    }
+    return out || SERIES[pid][k];
+  }
+
+  // ------------------------------------------------------------------ ciclo menstrual (RF-02-11)
+  // La app dice en qué fase está cada persona (null si no aplica: hombres o supresión menstrual).
+  // En fase lútea el pulso en reposo sube y la HRV baja de forma normal; para no dar falsas alarmas,
+  // tu normal se ensancha 1,5× en esas dos variables. 🔶 Factor propuesto por el equipo, sin validar.
+  let faseCiclo = () => null;
+  function configurarCiclo(fn) { faseCiclo = typeof fn === "function" ? fn : () => null; }
+  const AJUSTE_LUTEA = { fc: 1.5, hrv: 1.5 };
+
   // ------------------------------------------------------------------ evaluación
   function estadoIndicador(pid, k, dia) {
     const ind = IND[k];
-    const serie = SERIES[pid][k];
+    const serie = serieCon(pid, k);
     const i = idx(dia);
     const valor = serie[i];
     let ultimo = null;
     for (let j = i; j >= 0; j--) if (serie[j] != null) { ultimo = { valor: serie[j], dia: PRIMER_DIA + j }; break; }
     const vigente = valor != null ? valor : ultimo && dia - ultimo.dia <= 1 ? ultimo.valor : null;
-    const normal = ind.sinNormal ? null : tuNormal(serie.slice(0, i), ind.madMin);
+    let normal = ind.sinNormal ? null : tuNormal(serie.slice(0, i), ind.madMin);
+    let ajusteCiclo = false;
+    if (normal && AJUSTE_LUTEA[k] && faseCiclo(pid, dia) === "lutea") {
+      const mad = normal.mad * AJUSTE_LUTEA[k], ancho = (2 * mad) / 0.6745;
+      normal = { ...normal, mad, banda: [normal.med - ancho, normal.med + ancho] };
+      ajusteCiclo = true;
+    }
     const historia = serie.slice(Math.max(0, i - 14), i + 1);
-    if (vigente == null) return { k, valor, ultimo, normal, z: null, nivel: null, motivo: null, historia };
+    const registrado = registro(pid, dia, k);
+    if (vigente == null) return { k, valor, ultimo, normal, z: null, nivel: null, motivo: null, historia, registrado, ajusteCiclo };
     const z = normal ? zDe(vigente, normal) : null;
     const malo = z == null ? 0 : ind.dir === "alto" ? z : -z;
     const porNormal = malo >= 3 ? 1 : 0;
     const porAbs = ind.abs ? ind.abs.nivel(vigente) : 0;
     const nivel = Math.max(porNormal, porAbs);
     const motivo = nivel === 0 ? null : porAbs >= porNormal ? ind.abs.tipo : "tu_normal";
-    return { k, valor, ultimo, normal, z, nivel, motivo, historia };
+    return { k, valor, ultimo, normal, z, nivel, motivo, historia, registrado, ajusteCiclo };
   }
 
   const SENALES_FATIGA = ["sueno", "lapsos", "fc"];
@@ -289,7 +351,7 @@
     return { pid, dia, ind, nivelDe, alertas, fatiga: f, cabina: cab, regiones, general: todos.length ? Math.max(...todos) : 0 };
   }
 
-  // ------------------------------------------------------------------ lo que Luna dice
+  // ------------------------------------------------------------------ lo que Lunna dice
   const fmt = (v, dec) => (dec ? v.toFixed(dec) : String(Math.round(v))).replace(".", ",");
   const horas = (h) => { const hh = Math.floor(h); const mm = Math.round((h - hh) * 60); return mm ? `${hh} h ${String(mm).padStart(2, "0")}` : `${hh} h`; };
   const texto = (k, v) => (k === "sueno" ? horas(v) : k === "lapsos" ? `${fmt(v, 0)} lapso${Math.round(v) === 1 ? "" : "s"}` : `${fmt(v, IND[k].dec)} ${IND[k].unidad}`);
@@ -308,7 +370,7 @@
       hallazgos.push({
         id: "RADIACION", nivel: 2, titulo: "Evento de partículas solares",
         frase: "La radiación subió de golpe. <b>Dirígete al refugio blindado ahora.</b>",
-        evidencia: [`Tasa de dosis: ${ev.cabina.tasa.toLocaleString("es-ES")} µSv/h (diseño < 54) [A]`, `Dosis de la misión: ${ev.cabina.dosisMision} de 600 mSv [A]`],
+        evidencia: [`Tasa de dosis: ${ev.cabina.tasa.toLocaleString("es-ES")} µSv/h (diseño < 54) [A]`, `Tu dosis de la misión: ${fmt(dosisPersonal(pid, dia).mision, 1)} de 600 mSv · del evento: ${fmt(dosisPersonal(pid, dia).evento, 2)} de 250 mSv [A]`],
         hacer: "Sigue el protocolo de refugio y confirma a tu pareja del buddy check (" + p.pareja + ").",
         umbral: "[A] NASA-STD-3001", simulado: true,
       });
@@ -350,7 +412,7 @@
       const e = ev.ind[k];
       if (!e.nivel || (f && f.estado !== "cerrado" && SENALES_FATIGA.includes(k))) continue;
       const ind = IND[k];
-      const valor = k === "presion" ? `${e.ultimo.valor}/${SERIES[pid].diastolica[idx(e.ultimo.dia)]} mmHg` : texto(k, e.ultimo.valor);
+      const valor = k === "presion" ? `${e.ultimo.valor}/${serieCon(pid, "diastolica")[idx(e.ultimo.dia)]} mmHg` : texto(k, e.ultimo.valor);
       hallazgos.push({
         id: k.toUpperCase(), nivel: e.nivel, titulo: ind.nombre,
         frase: e.motivo === "tu_normal"
@@ -379,7 +441,7 @@
     return { resumen, hallazgos, bien, cara, nivel: ev.general };
   }
 
-  const API = { PRIMER_DIA, ULTIMO_DIA, DIAS, IND, REGIONES, PERSONAS, SERIES, DONKI, idx, tuNormal, zDe, mediana, cabina, estadoIndicador, fatiga, evaluar, lunaDice, horas, texto };
+  const API = { ESTADO, dosisPersonal, dosisEvento, configurarCiclo, AJUSTE_LUTEA, registrar, registro, limpiarRegistros, serieCon, PRIMER_DIA, ULTIMO_DIA, DIAS, IND, REGIONES, PERSONAS, SERIES, DONKI, idx, tuNormal, zDe, mediana, cabina, estadoIndicador, fatiga, evaluar, lunaDice, horas, texto };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else raiz.MOTOR = API;
 })(typeof window !== "undefined" ? window : globalThis);

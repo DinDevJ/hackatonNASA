@@ -5,12 +5,13 @@
 Exhibition page with one section per screen (scrolling jumps from one to the next):
 
 1. **The three devices at a glance:** central computer, phone and watch, with their real interfaces running live.
-2. **30 s video** and the **Probar la simulación** button (*Try the simulation* in English).
+2. **Official 30 s video**, which plays on its own, muted and looping (with sound and pause buttons), and the **Probar la simulación** button (*Try the simulation* in English).
 3. **LUNNA, mathematically:** Bayesian updating with an interactive example that uses the real systolic blood pressure
    prior from the seeds.
 4. **Two alert criteria** (personal and clinical threshold) and why the calibration is frozen.
 5. **Prediction models:** LUNNA, shrunk pre-flight baseline, EWMA, CUSUM, 20-condition traffic light and ECG/echo models.
-6. Evidence and team.
+6. **Gallery** of the team during the hackathon (photos open enlarged).
+7. Evidence and team.
 
 The formulas are in MathML (no libraries). The drift chart uses illustrative data and is labeled as such.
 

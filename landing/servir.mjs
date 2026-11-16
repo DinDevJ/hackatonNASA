@@ -17,7 +17,7 @@ const RAIZ = fileURLToPath(new URL('..', import.meta.url));
 const PUERTO = Number(process.env.PUERTO || 8787);
 const BACK = Number(process.env.BACKEND || 8788);
 const TIPOS = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.mp4': 'video/mp4',
-  '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg' };
+  '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.ico': 'image/x-icon' };
 const ESTATICO = { '/': 'landing/index.html', '/index.html': 'landing/index.html', '/styles.css': 'landing/styles.css', '/main.js': 'landing/main.js' };
 
 const responde = (puerto) => new Promise((ok) => {

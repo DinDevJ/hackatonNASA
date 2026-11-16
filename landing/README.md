@@ -5,12 +5,13 @@
 Página de exposición con una sección por pantalla (el desplazamiento salta de una a la siguiente):
 
 1. **Los tres dispositivos de un vistazo:** computadora central, celular y reloj, con sus interfaces reales en vivo.
-2. **Video de 30 s** y botón **Probar la simulación**.
+2. **Video oficial de 30 s**, que se reproduce solo en silencio y en bucle (con botones de sonido y pausa), y botón **Probar la simulación**.
 3. **LUNNA, matemáticamente:** la actualización bayesiana con un ejemplo interactivo que usa el prior real de presión
    sistólica de las semillas.
 4. **Dos criterios de alerta** (personal y umbral clínico) y por qué la calibración se congela.
 5. **Modelos de predicción:** LUNNA, base prevuelo encogida, EWMA, CUSUM, semáforo de 20 padecimientos y modelos de ECG/eco.
-6. Respaldo y equipo.
+6. **Galería** del equipo durante el hackatón (las fotos se abren en grande).
+7. Respaldo y equipo.
 
 Las fórmulas están en MathML (sin librerías). La gráfica de deriva usa datos ilustrativos y así se rotula.
 

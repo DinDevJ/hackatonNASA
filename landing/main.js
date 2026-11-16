@@ -77,7 +77,7 @@
       if (el.dataset.es === undefined) el.dataset.es = el.innerHTML;
       el.innerHTML = l === 'en' ? el.dataset.en : el.dataset.es;
     });
-    [['aria', 'aria-label'], ['title', 'title']].forEach(([k, at]) => {
+    [['aria', 'aria-label'], ['title', 'title'], ['alt', 'alt']].forEach(([k, at]) => {
       $$(`[data-en-${k}]`).forEach((el) => {
         const clave = `es${k[0].toUpperCase()}${k.slice(1)}`;
         if (el.dataset[clave] === undefined) el.dataset[clave] = el.getAttribute(at) || '';
@@ -89,6 +89,40 @@
     dibujar();
   }
   $('#b-idioma').addEventListener('click', () => ponerIdioma(idioma === 'en' ? 'es' : 'en', true));
+
+  // ── Video oficial: fijo, se reproduce solo al estar a la vista y se pausa al salir ──
+  const video = $('#video-oficial'), bSonido = $('#b-sonido'), bPausa = $('#b-pausa');
+  let pausadoAMano = false;
+  const intentar = () => { const p = video.play(); if (p && p.catch) p.catch(() => {}); };
+  new IntersectionObserver((es) => es.forEach((e) => {
+    if (e.isIntersecting && !pausadoAMano) intentar(); else if (!e.isIntersecting) video.pause();
+  }), { threshold: 0.4 }).observe(video);
+  bSonido.addEventListener('click', () => {
+    video.muted = !video.muted;
+    if (!video.muted) { pausadoAMano = false; intentar(); }
+    bSonido.setAttribute('aria-pressed', String(!video.muted));
+    bSonido.querySelector('.ico').textContent = video.muted ? '🔇' : '🔊';
+    const t = bSonido.querySelector('[data-en]');
+    const es = video.muted ? 'Activar sonido' : 'Silenciar', en = video.muted ? 'Turn sound on' : 'Mute';
+    t.dataset.es = es; t.dataset.en = en; t.textContent = idioma === 'en' ? en : es;
+  });
+  bPausa.addEventListener('click', () => {
+    if (video.paused) { pausadoAMano = false; intentar(); } else { pausadoAMano = true; video.pause(); }
+  });
+  video.addEventListener('play', () => { bPausa.querySelector('.ico').textContent = '❚❚'; });
+  video.addEventListener('pause', () => { bPausa.querySelector('.ico').textContent = '▶'; });
+
+  // ── Galería: la foto se abre en grande; Esc, clic fuera o ✕ la cierran ──
+  const visor = $('#visor');
+  $$('.foto-abrir').forEach((b) => b.addEventListener('click', () => {
+    const img = b.querySelector('img');
+    visor.querySelector('img').src = b.dataset.grande;
+    visor.querySelector('img').alt = img.alt;
+    visor.querySelector('.visor-pie').textContent = b.parentElement.querySelector('figcaption').textContent;
+    visor.showModal();
+  }));
+  visor.querySelector('.visor-cerrar').addEventListener('click', () => visor.close());
+  visor.addEventListener('click', (e) => { if (e.target === visor) visor.close(); });
 
   // ── LUNNA interactivo: misma fórmula que Sistema/backend/src/lunna.ts ──
   // Prior real de la semilla (presión sistólica en órbita): μ₀ = −6,7 %, τ₀ = 5 %, σ_misión = 3 %, σ_día = 5 %.

@@ -24,6 +24,7 @@
       <a href="#demo" data-en="Video &amp; simulation">Video y simulación</a>
       <a href="#lunna" data-en="Math">Matemática</a>
       <a href="#modelos" data-en="Models">Modelos</a>
+      <a href="#galeria" data-en="Gallery">Galería</a>
       <a href="#equipo" data-en="Team">Equipo</a>
     </nav>
     <div class="nav-der">
@@ -41,6 +42,7 @@
     <a href="#lunna" aria-label="LUNNA, actualización bayesiana" data-en-aria="LUNNA, Bayesian updating"></a>
     <a href="#criterios" aria-label="Dos criterios de alerta" data-en-aria="Two alert criteria"></a>
     <a href="#modelos" aria-label="Modelos de predicción" data-en-aria="Prediction models"></a>
+    <a href="#galeria" aria-label="Galería" data-en-aria="Gallery"></a>
     <a href="#equipo" aria-label="Respaldo y equipo" data-en-aria="Evidence and team"></a>
   </nav>
 
@@ -98,9 +100,16 @@
     <!-- ═══ 2 · Video y botón de la simulación ═══ -->
     <section class="pagina demo" id="demo">
       <div class="demo-video entra">
-        <video controls preload="none" playsinline poster="recursos/portada-video.jpg">
+        <!-- Video oficial: se reproduce solo, en silencio y en bucle (los navegadores sólo permiten autoplay sin sonido) -->
+        <video id="video-oficial" autoplay muted loop playsinline preload="auto" poster="recursos/portada-video.jpg"
+          aria-label="Video oficial de Lunna, 30 segundos" data-en-aria="Official Lunna video, 30 seconds">
           <source src="../video/lunna-video.mp4" type="video/mp4">
         </video>
+        <div class="video-botones">
+          <button class="video-btn" id="b-sonido" type="button" aria-pressed="false">
+            <span class="ico" aria-hidden="true">🔇</span><span data-en="Turn sound on">Activar sonido</span></button>
+          <button class="video-btn" id="b-pausa" type="button" aria-label="Pausar" data-en-aria="Pause"><span class="ico" aria-hidden="true">❚❚</span></button>
+        </div>
       </div>
       <div class="demo-texto entra">
         <p class="ceja" data-en="In 30 seconds">En 30 segundos</p>
@@ -275,6 +284,43 @@
         <a href=&quot;https://github.com/DinDevJ/lunna/blob/main/documentacion/README_06_MODELOS_COMPUTACIONALES_ALGORITMOS.md&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;>models and algorithms</a> (Spanish).">Los parámetros (α, k, h, cuarentena, cortes del semáforo) son provisionales y están documentados como
         supuestos. Detalle completo en
         <a href="https://github.com/DinDevJ/lunna/blob/main/documentacion/README_06_MODELOS_COMPUTACIONALES_ALGORITMOS.md" target="_blank" rel="noopener">modelos y algoritmos</a>.</p>
+    </section>
+
+    <!-- ═══ Galería del equipo durante el hackatón ═══ -->
+    <section class="pagina galeria" id="galeria">
+      <header class="cabeza entra">
+        <p class="ceja" data-en="Gallery">Galería</p>
+        <h2 data-en="Team Monarcas during the hackathon">Equipo Monarcas durante el hackatón</h2>
+        <p data-en="NASA Space Apps Challenge 2026 · 15 November 2026. Click any photo to enlarge it.">NASA Space Apps Challenge 2026 · 15 de noviembre de 2026. Haz clic en una foto para verla en grande.</p>
+      </header>
+      <div class="fotos entra">
+        <figure class="foto"><button class="foto-abrir" type="button" data-grande="recursos/galeria/realidad-virtual.webp">
+            <img src="recursos/galeria/realidad-virtual.webp" width="1000" height="1333" decoding="async" alt="Probando un visor de realidad virtual" data-en-alt="Trying out a virtual-reality headset"></button>
+          <figcaption data-en="Trying out a virtual-reality headset">Probando un visor de realidad virtual</figcaption></figure>
+        <figure class="foto"><button class="foto-abrir" type="button" data-grande="recursos/galeria/revision-en-equipo.webp">
+            <img src="recursos/galeria/revision-en-equipo.webp" width="1000" height="1333" decoding="async" alt="Revisando el avance en equipo" data-en-alt="Reviewing progress as a team"></button>
+          <figcaption data-en="Reviewing progress as a team">Revisando el avance en equipo</figcaption></figure>
+        <figure class="foto"><button class="foto-abrir" type="button" data-grande="recursos/galeria/escritorio.webp">
+            <img src="recursos/galeria/escritorio.webp" width="437" height="815" decoding="async" alt="Las interfaces de Lunna en pantalla" data-en-alt="Lunna’s interfaces on screen"></button>
+          <figcaption data-en="Lunna’s interfaces on screen">Las interfaces de Lunna en pantalla</figcaption></figure>
+        <figure class="foto"><button class="foto-abrir" type="button" data-grande="recursos/galeria/video-en-pantalla.webp">
+            <img src="recursos/galeria/video-en-pantalla.webp" width="436" height="563" decoding="async" alt="El video de Lunna, recién terminado" data-en-alt="The Lunna video, just finished"></button>
+          <figcaption data-en="The Lunna video, just finished">El video de Lunna, recién terminado</figcaption></figure>
+        <figure class="foto"><button class="foto-abrir" type="button" data-grande="recursos/galeria/trabajando.webp">
+            <img src="recursos/galeria/trabajando.webp" width="436" height="615" decoding="async" alt="Estaciones de trabajo" data-en-alt="Workstations"></button>
+          <figcaption data-en="Workstations">Estaciones de trabajo</figcaption></figure>
+        <figure class="foto"><button class="foto-abrir" type="button" data-grande="recursos/galeria/equipo-en-pantalla.webp">
+            <img src="recursos/galeria/equipo-en-pantalla.webp" width="437" height="365" decoding="async" alt="La sección del equipo en la landing" data-en-alt="The team section on the landing page"></button>
+          <figcaption data-en="The team section on the landing page">La sección del equipo en la landing</figcaption></figure>
+        <figure class="foto"><button class="foto-abrir" type="button" data-grande="recursos/galeria/comida.webp">
+            <img src="recursos/galeria/comida.webp" width="329" height="364" decoding="async" alt="Cena para seguir programando" data-en-alt="Dinner to keep coding"></button>
+          <figcaption data-en="Dinner to keep coding">Cena para seguir programando</figcaption></figure>
+      </div>
+      <dialog class="visor" id="visor" aria-label="Foto ampliada" data-en-aria="Enlarged photo">
+        <img alt="">
+        <p class="visor-pie"></p>
+        <button class="visor-cerrar" type="button" aria-label="Cerrar" data-en-aria="Close">✕</button>
+      </dialog>
     </section>
 
     <!-- ═══ 6 · Respaldo y equipo ═══ -->

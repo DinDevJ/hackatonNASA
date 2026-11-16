@@ -4,6 +4,11 @@
 #   curl -fsSL https://raw.githubusercontent.com/DinDevJ/lunna/main/despliegue/instalar.sh \
 #     | sudo DOMINIO=lunna.ejemplo.com CORREO=tu@correo.com USUARIO=monarcas CLAVE='…' bash
 #
+# Con el repo PRIVADO (token de GitHub de solo lectura, «Contents: Read-only»):
+#   read -rs TOKEN   # pega el token; no se ve ni queda en el historial
+#   curl -fsSL -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github.raw" \
+#     https://api.github.com/repos/DinDevJ/lunna/contents/despliegue/instalar.sh | sudo TOKEN="$TOKEN" bash
+#
 # o, con el repo ya clonado:  sudo DOMINIO=… bash despliegue/instalar.sh
 #
 # Variables (todas opcionales):
@@ -12,6 +17,8 @@
 #   USUARIO, CLAVE   si se dan, todo el sitio pide usuario y contraseña (recomendado en público:
 #             el sistema no tiene autenticación y cualquiera podría reiniciar la demo).
 #   REPO, RAMA, DIR   origen y destino del código (por defecto el repo del equipo, main, /opt/lunna).
+#   TOKEN     token de GitHub para clonar un repo privado. Se guarda sólo en $DIR/.git/config (modo 600)
+#             para que actualizar.sh pueda traer cambios.
 set -euo pipefail
 
 REPO="${REPO:-https://github.com/DinDevJ/lunna.git}"
@@ -21,6 +28,7 @@ DOMINIO="${DOMINIO:-}"
 CORREO="${CORREO:-}"
 USUARIO="${USUARIO:-}"
 CLAVE="${CLAVE:-}"
+TOKEN="${TOKEN:-}"
 
 paso() { printf '\n\033[1;36m▸ %s\033[0m\n' "$*"; }
 [ "$(id -u)" -eq 0 ] || { echo "Córrelo como root (sudo)."; exit 1; }
@@ -45,12 +53,23 @@ echo "node $(node -v)"
 
 paso "Usuario de servicio y código en $DIR"
 id lunna >/dev/null 2>&1 || useradd --system --home "$DIR" --shell /usr/sbin/nologin lunna
+# El código es del usuario lunna y git corre como root: sin esto git se niega («dubious ownership»).
+git config --global --get-all safe.directory | grep -qx "$DIR" || git config --global --add safe.directory "$DIR"
+AUTH_GIT=()
+if [ -n "$TOKEN" ]; then
+  CAB="Authorization: Basic $(printf 'x-access-token:%s' "$TOKEN" | base64 | tr -d '\n')"
+  AUTH_GIT=(-c "http.https://github.com/.extraheader=$CAB")
+fi
 if [ -d "$DIR/.git" ]; then
-  git -C "$DIR" fetch -q origin "$RAMA"
+  git "${AUTH_GIT[@]}" -C "$DIR" fetch -q origin "$RAMA"
   git -C "$DIR" checkout -q "$RAMA"
   git -C "$DIR" reset -q --hard "origin/$RAMA"
 else
-  git clone -q --branch "$RAMA" "$REPO" "$DIR"
+  git "${AUTH_GIT[@]}" clone -q --branch "$RAMA" "$REPO" "$DIR"
+fi
+if [ -n "$TOKEN" ]; then
+  git -C "$DIR" config "http.https://github.com/.extraheader" "$CAB"
+  chmod 600 "$DIR/.git/config"
 fi
 chown -R lunna:lunna "$DIR"
 git -C "$DIR" log -1 --format='commit %h · %s'

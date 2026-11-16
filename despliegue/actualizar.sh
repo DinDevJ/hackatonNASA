@@ -4,6 +4,7 @@ set -euo pipefail
 DIR="${DIR:-/opt/lunna}"
 RAMA="${RAMA:-main}"
 [ "$(id -u)" -eq 0 ] || { echo "Córrelo como root (sudo)."; exit 1; }
+git config --global --get-all safe.directory | grep -qx "$DIR" || git config --global --add safe.directory "$DIR"
 git -C "$DIR" fetch -q origin "$RAMA"
 git -C "$DIR" reset -q --hard "origin/$RAMA"
 chown -R lunna:lunna "$DIR"

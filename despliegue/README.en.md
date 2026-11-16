@@ -32,11 +32,29 @@ curl -fsSL https://raw.githubusercontent.com/DinDevJ/lunna/main/despliegue/insta
 | `DOMINIO` | Site name | Responds on the IP |
 | `CORREO` | Let's Encrypt HTTPS certificate (requires `DOMINIO`) | HTTP only |
 | `USUARIO`, `CLAVE` | Password for the whole site | Open site |
+| `TOKEN` | GitHub token to clone the **private** repo (see below) | Clones without credentials (public repo only) |
 | `RAMA` | Branch to deploy | `main` |
 | `DIR` | Code folder | `/opt/lunna` |
 
 ⚠️ **Setting a password is recommended.** The system has no authentication: any visitor could press
 "Prepare mission" or "Reset" in the simulator and change the demo for everyone.
+
+### With the private repository
+
+1. On GitHub: **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**.
+   Repository access: only `DinDevJ/lunna`. Permissions: **Contents: Read-only**. Copy the token.
+2. On the VPS (paste the token when asked; it is not shown on screen and does not stay in the history):
+
+```bash
+read -rs TOKEN
+```
+
+```bash
+curl -fsSL -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github.raw" https://api.github.com/repos/DinDevJ/lunna/contents/despliegue/instalar.sh | sudo TOKEN="$TOKEN" bash
+```
+
+The token is stored only in `/opt/lunna/.git/config` (mode 600) so that `actualizar.sh` can pull changes.
+To revoke it, delete it on GitHub; to remove it from the VPS: `sudo git -C /opt/lunna config --unset http.https://github.com/.extraheader`.
 
 With the repository already cloned, `sudo DOMINIO=… bash despliegue/instalar.sh` also works. The script can be
 run again: it leaves everything as it is and updates the code.

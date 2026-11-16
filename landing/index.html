@@ -15,6 +15,7 @@
 </head>
 <body>
   <div class="cielo" aria-hidden="true"></div>
+  <canvas id="cosmos" aria-hidden="true"></canvas>
 
   <!-- Traducción: cada texto en español lleva su inglés en data-en (data-en-aria / data-en-title para atributos). -->
   <header class="nav">
@@ -22,8 +23,10 @@
     <nav aria-label="Secciones" data-en-aria="Sections">
       <a href="#inicio" data-en="Devices">Dispositivos</a>
       <a href="#demo" data-en="Video &amp; simulation">Video y simulación</a>
-      <a href="#lunna" data-en="Math">Matemática</a>
+      <a href="#aprende" data-en="How it learns">Cómo aprende</a>
+      <a href="#semaforo" data-en="Traffic light">Semáforo</a>
       <a href="#modelos" data-en="Models">Modelos</a>
+      <a href="#validacion" data-en="Validation">Validación</a>
       <a href="#galeria" data-en="Gallery">Galería</a>
       <a href="#equipo" data-en="Team">Equipo</a>
     </nav>
@@ -39,9 +42,13 @@
   <nav class="puntos" aria-label="Ir a la sección" data-en-aria="Go to section">
     <a href="#inicio" aria-label="Dispositivos" data-en-aria="Devices"></a>
     <a href="#demo" aria-label="Video y simulación" data-en-aria="Video and simulation"></a>
+    <a href="#aprende" aria-label="La misma lectura, dos personas" data-en-aria="The same reading, two people"></a>
     <a href="#lunna" aria-label="LUNNA, actualización bayesiana" data-en-aria="LUNNA, Bayesian updating"></a>
     <a href="#criterios" aria-label="Dos criterios de alerta" data-en-aria="Two alert criteria"></a>
+    <a href="#semaforo" aria-label="Semáforo de 20 padecimientos" data-en-aria="Traffic light for 20 conditions"></a>
     <a href="#modelos" aria-label="Modelos de predicción" data-en-aria="Prediction models"></a>
+    <a href="#estado" aria-label="Qué corre hoy y qué falta" data-en-aria="What runs today and what is missing"></a>
+    <a href="#validacion" aria-label="Validación" data-en-aria="Validation"></a>
     <a href="#galeria" aria-label="Galería" data-en-aria="Gallery"></a>
     <a href="#equipo" aria-label="Respaldo y equipo" data-en-aria="Evidence and team"></a>
   </nav>
@@ -99,7 +106,12 @@
 
     <!-- ═══ 2 · Video y botón de la simulación ═══ -->
     <section class="pagina demo" id="demo">
-      <div class="demo-video entra">
+      <div class="demo-izq entra">
+      <div class="video-pestanas" role="tablist" aria-label="Videos" data-en-aria="Videos">
+        <button class="vp activa" type="button" role="tab" aria-selected="true" data-src="../video/lunna-video.mp4" data-poster="recursos/portada-video.jpg" data-en="Official video">Video oficial</button>
+        <button class="vp" type="button" role="tab" aria-selected="false" data-src="recursos/video-producto.mp4" data-poster="recursos/portada-producto.webp" data-en="Product video">Video del producto</button>
+      </div>
+      <div class="demo-video">
         <!-- Video oficial: se reproduce solo, en silencio y en bucle (los navegadores sólo permiten autoplay sin sonido) -->
         <video id="video-oficial" autoplay muted loop playsinline preload="auto" poster="recursos/portada-video.jpg"
           aria-label="Video oficial de Lunna, 30 segundos" data-en-aria="Official Lunna video, 30 seconds">
@@ -110,6 +122,7 @@
             <span class="ico" aria-hidden="true">🔇</span><span data-en="Turn sound on">Activar sonido</span></button>
           <button class="video-btn" id="b-pausa" type="button" aria-label="Pausar" data-en-aria="Pause"><span class="ico" aria-hidden="true">❚❚</span></button>
         </div>
+      </div>
       </div>
       <div class="demo-texto entra">
         <p class="ceja" data-en="In 30 seconds">En 30 segundos</p>
@@ -123,6 +136,46 @@
           <li data-en="<b>▶ Live</b> starts the sensors streaming"><b>▶ Live</b> pone a transmitir los sensores</li>
           <li data-en="In the central PC type <code>scenario hypoxia</code>">En la PC central escribe <code>scenario hypoxia</code></li>
         </ol>
+      </div>
+    </section>
+
+    <!-- ═══ Aprende tu normal (contenido de la landing de Iker; cifras de prototipo-salud/validacion/ejemplo_aprende.py) ═══ -->
+    <section class="pagina aprende" id="aprende">
+      <header class="cabeza entra">
+        <p class="ceja" data-en="Why your own normal matters">Por qué importa tu propio normal</p>
+        <h2 data-en="The same reading, two people, two answers">La misma lectura, dos personas, dos respuestas</h2>
+        <p data-en="Two simulated crew members, both 30-year-old men, record 85 bpm of sleeping heart rate on flight day 5. Against the population average (NHANES) both give z 1.32: normal. Against their own baseline, they do not.">Dos tripulantes simulados, hombres de 30 años, marcan 85 lpm de frecuencia cardiaca en sueño el día 5 de vuelo. Contra el promedio poblacional (NHANES) ambos dan z 1,32: normal. Contra su propia base, no.</p>
+      </header>
+      <div class="aprende-rejilla">
+        <figure class="tarjeta-curvas entra">
+          <figcaption class="curvas-cabeza"><b data-en="Sleeping heart rate: 85 bpm, the same reading">Frecuencia cardiaca en sueño: 85 lpm, la misma lectura</b> <span class="sim" data-en="SIMULATED">SIMULADO</span></figcaption>
+          <svg viewBox="0 0 640 300" role="img" aria-labelledby="t-curvas" class="curvas">
+            <title id="t-curvas" data-en="Distribution of each person's normal sleeping heart rate and the same 85 bpm reading">Distribución del pulso normal en sueño de cada persona y la misma lectura de 85 lpm</title>
+            <text x="30" y="28" class="rot" data-en="SIM-A · normal 58.1 ± 2.9 bpm">SIM-A · normal 58,1 ± 2,9 lpm</text>
+            <path d="M30.0,118.0 L34.1,118.0 L38.3,118.0 L42.4,118.0 L46.6,118.0 L50.7,118.0 L54.9,118.0 L59.0,118.0 L63.1,118.0 L67.3,118.0 L71.4,118.0 L75.6,118.0 L79.7,118.0 L83.9,118.0 L88.0,117.9 L92.1,117.9 L96.3,117.8 L100.4,117.7 L104.6,117.4 L108.7,117.0 L112.9,116.4 L117.0,115.5 L121.1,114.1 L125.3,112.1 L129.4,109.5 L133.6,105.9 L137.7,101.4 L141.9,95.8 L146.0,89.3 L150.1,81.9 L154.3,73.9 L158.4,65.8 L162.6,58.0 L166.7,51.0 L170.9,45.4 L175.0,41.7 L179.1,40.0 L183.3,40.7 L187.4,43.7 L191.6,48.6 L195.7,55.1 L199.9,62.6 L204.0,70.7 L208.1,78.8 L212.3,86.4 L216.4,93.3 L220.6,99.3 L224.7,104.2 L228.9,108.2 L233.0,111.2 L237.1,113.4 L241.3,115.0 L245.4,116.1 L249.6,116.8 L253.7,117.3 L257.9,117.6 L262.0,117.8 L266.1,117.9 L270.3,117.9 L274.4,118.0 L278.6,118.0 L282.7,118.0 L286.9,118.0 L291.0,118.0 L295.1,118.0 L299.3,118.0 L303.4,118.0 L307.6,118.0 L311.7,118.0 L315.9,118.0 L320.0,118.0 L324.1,118.0 L328.3,118.0 L332.4,118.0 L336.6,118.0 L340.7,118.0 L344.9,118.0 L349.0,118.0 L353.1,118.0 L357.3,118.0 L361.4,118.0 L365.6,118.0 L369.7,118.0 L373.9,118.0 L378.0,118.0 L382.1,118.0 L386.3,118.0 L390.4,118.0 L394.6,118.0 L398.7,118.0 L402.9,118.0 L407.0,118.0 L411.1,118.0 L415.3,118.0 L419.4,118.0 L423.6,118.0 L427.7,118.0 L431.9,118.0 L436.0,118.0 L440.1,118.0 L444.3,118.0 L448.4,118.0 L452.6,118.0 L456.7,118.0 L460.9,118.0 L465.0,118.0 L469.1,118.0 L473.3,118.0 L477.4,118.0 L481.6,118.0 L485.7,118.0 L489.9,118.0 L494.0,118.0 L498.1,118.0 L502.3,118.0 L506.4,118.0 L510.6,118.0 L514.7,118.0 L518.9,118.0 L523.0,118.0 L527.1,118.0 L531.3,118.0 L535.4,118.0 L539.6,118.0 L543.7,118.0 L547.9,118.0 L552.0,118.0 L556.1,118.0 L560.3,118.0 L564.4,118.0 L568.6,118.0 L572.7,118.0 L576.9,118.0 L581.0,118.0 L585.1,118.0 L589.3,118.0 L593.4,118.0 L597.6,118.0 L601.7,118.0 L605.9,118.0 L610.0,118.0 L610,118 L30,118 Z" class="area"/><path d="M30.0,118.0 L34.1,118.0 L38.3,118.0 L42.4,118.0 L46.6,118.0 L50.7,118.0 L54.9,118.0 L59.0,118.0 L63.1,118.0 L67.3,118.0 L71.4,118.0 L75.6,118.0 L79.7,118.0 L83.9,118.0 L88.0,117.9 L92.1,117.9 L96.3,117.8 L100.4,117.7 L104.6,117.4 L108.7,117.0 L112.9,116.4 L117.0,115.5 L121.1,114.1 L125.3,112.1 L129.4,109.5 L133.6,105.9 L137.7,101.4 L141.9,95.8 L146.0,89.3 L150.1,81.9 L154.3,73.9 L158.4,65.8 L162.6,58.0 L166.7,51.0 L170.9,45.4 L175.0,41.7 L179.1,40.0 L183.3,40.7 L187.4,43.7 L191.6,48.6 L195.7,55.1 L199.9,62.6 L204.0,70.7 L208.1,78.8 L212.3,86.4 L216.4,93.3 L220.6,99.3 L224.7,104.2 L228.9,108.2 L233.0,111.2 L237.1,113.4 L241.3,115.0 L245.4,116.1 L249.6,116.8 L253.7,117.3 L257.9,117.6 L262.0,117.8 L266.1,117.9 L270.3,117.9 L274.4,118.0 L278.6,118.0 L282.7,118.0 L286.9,118.0 L291.0,118.0 L295.1,118.0 L299.3,118.0 L303.4,118.0 L307.6,118.0 L311.7,118.0 L315.9,118.0 L320.0,118.0 L324.1,118.0 L328.3,118.0 L332.4,118.0 L336.6,118.0 L340.7,118.0 L344.9,118.0 L349.0,118.0 L353.1,118.0 L357.3,118.0 L361.4,118.0 L365.6,118.0 L369.7,118.0 L373.9,118.0 L378.0,118.0 L382.1,118.0 L386.3,118.0 L390.4,118.0 L394.6,118.0 L398.7,118.0 L402.9,118.0 L407.0,118.0 L411.1,118.0 L415.3,118.0 L419.4,118.0 L423.6,118.0 L427.7,118.0 L431.9,118.0 L436.0,118.0 L440.1,118.0 L444.3,118.0 L448.4,118.0 L452.6,118.0 L456.7,118.0 L460.9,118.0 L465.0,118.0 L469.1,118.0 L473.3,118.0 L477.4,118.0 L481.6,118.0 L485.7,118.0 L489.9,118.0 L494.0,118.0 L498.1,118.0 L502.3,118.0 L506.4,118.0 L510.6,118.0 L514.7,118.0 L518.9,118.0 L523.0,118.0 L527.1,118.0 L531.3,118.0 L535.4,118.0 L539.6,118.0 L543.7,118.0 L547.9,118.0 L552.0,118.0 L556.1,118.0 L560.3,118.0 L564.4,118.0 L568.6,118.0 L572.7,118.0 L576.9,118.0 L581.0,118.0 L585.1,118.0 L589.3,118.0 L593.4,118.0 L597.6,118.0 L601.7,118.0 L605.9,118.0 L610.0,118.0" class="linea"/>
+            <line x1="30" x2="610" y1="118" y2="118" class="eje"/>
+            <text x="30" y="150" class="rot" data-en="SIM-B · normal 83.6 ± 3.3 bpm">SIM-B · normal 83,6 ± 3,3 lpm</text>
+            <path d="M30.0,250.0 L34.1,250.0 L38.3,250.0 L42.4,250.0 L46.6,250.0 L50.7,250.0 L54.9,250.0 L59.0,250.0 L63.1,250.0 L67.3,250.0 L71.4,250.0 L75.6,250.0 L79.7,250.0 L83.9,250.0 L88.0,250.0 L92.1,250.0 L96.3,250.0 L100.4,250.0 L104.6,250.0 L108.7,250.0 L112.9,250.0 L117.0,250.0 L121.1,250.0 L125.3,250.0 L129.4,250.0 L133.6,250.0 L137.7,250.0 L141.9,250.0 L146.0,250.0 L150.1,250.0 L154.3,250.0 L158.4,250.0 L162.6,250.0 L166.7,250.0 L170.9,250.0 L175.0,250.0 L179.1,250.0 L183.3,250.0 L187.4,250.0 L191.6,250.0 L195.7,250.0 L199.9,250.0 L204.0,250.0 L208.1,250.0 L212.3,250.0 L216.4,250.0 L220.6,250.0 L224.7,250.0 L228.9,250.0 L233.0,250.0 L237.1,250.0 L241.3,250.0 L245.4,250.0 L249.6,250.0 L253.7,250.0 L257.9,250.0 L262.0,250.0 L266.1,250.0 L270.3,250.0 L274.4,250.0 L278.6,250.0 L282.7,250.0 L286.9,249.9 L291.0,249.9 L295.1,249.8 L299.3,249.7 L303.4,249.6 L307.6,249.3 L311.7,248.9 L315.9,248.3 L320.0,247.4 L324.1,246.2 L328.3,244.5 L332.4,242.3 L336.6,239.4 L340.7,235.9 L344.9,231.5 L349.0,226.4 L353.1,220.5 L357.3,214.0 L361.4,207.0 L365.6,199.8 L369.7,192.8 L373.9,186.3 L378.0,180.6 L382.1,176.2 L386.3,173.3 L390.4,172.0 L394.6,172.6 L398.7,174.8 L402.9,178.7 L407.0,183.9 L411.1,190.1 L415.3,197.0 L419.4,204.1 L423.6,211.2 L427.7,217.9 L431.9,224.1 L436.0,229.6 L440.1,234.2 L444.3,238.1 L448.4,241.2 L452.6,243.7 L456.7,245.6 L460.9,246.9 L465.0,247.9 L469.1,248.7 L473.3,249.1 L477.4,249.5 L481.6,249.7 L485.7,249.8 L489.9,249.9 L494.0,249.9 L498.1,250.0 L502.3,250.0 L506.4,250.0 L510.6,250.0 L514.7,250.0 L518.9,250.0 L523.0,250.0 L527.1,250.0 L531.3,250.0 L535.4,250.0 L539.6,250.0 L543.7,250.0 L547.9,250.0 L552.0,250.0 L556.1,250.0 L560.3,250.0 L564.4,250.0 L568.6,250.0 L572.7,250.0 L576.9,250.0 L581.0,250.0 L585.1,250.0 L589.3,250.0 L593.4,250.0 L597.6,250.0 L601.7,250.0 L605.9,250.0 L610.0,250.0 L610,250 L30,250 Z" class="area"/><path d="M30.0,250.0 L34.1,250.0 L38.3,250.0 L42.4,250.0 L46.6,250.0 L50.7,250.0 L54.9,250.0 L59.0,250.0 L63.1,250.0 L67.3,250.0 L71.4,250.0 L75.6,250.0 L79.7,250.0 L83.9,250.0 L88.0,250.0 L92.1,250.0 L96.3,250.0 L100.4,250.0 L104.6,250.0 L108.7,250.0 L112.9,250.0 L117.0,250.0 L121.1,250.0 L125.3,250.0 L129.4,250.0 L133.6,250.0 L137.7,250.0 L141.9,250.0 L146.0,250.0 L150.1,250.0 L154.3,250.0 L158.4,250.0 L162.6,250.0 L166.7,250.0 L170.9,250.0 L175.0,250.0 L179.1,250.0 L183.3,250.0 L187.4,250.0 L191.6,250.0 L195.7,250.0 L199.9,250.0 L204.0,250.0 L208.1,250.0 L212.3,250.0 L216.4,250.0 L220.6,250.0 L224.7,250.0 L228.9,250.0 L233.0,250.0 L237.1,250.0 L241.3,250.0 L245.4,250.0 L249.6,250.0 L253.7,250.0 L257.9,250.0 L262.0,250.0 L266.1,250.0 L270.3,250.0 L274.4,250.0 L278.6,250.0 L282.7,250.0 L286.9,249.9 L291.0,249.9 L295.1,249.8 L299.3,249.7 L303.4,249.6 L307.6,249.3 L311.7,248.9 L315.9,248.3 L320.0,247.4 L324.1,246.2 L328.3,244.5 L332.4,242.3 L336.6,239.4 L340.7,235.9 L344.9,231.5 L349.0,226.4 L353.1,220.5 L357.3,214.0 L361.4,207.0 L365.6,199.8 L369.7,192.8 L373.9,186.3 L378.0,180.6 L382.1,176.2 L386.3,173.3 L390.4,172.0 L394.6,172.6 L398.7,174.8 L402.9,178.7 L407.0,183.9 L411.1,190.1 L415.3,197.0 L419.4,204.1 L423.6,211.2 L427.7,217.9 L431.9,224.1 L436.0,229.6 L440.1,234.2 L444.3,238.1 L448.4,241.2 L452.6,243.7 L456.7,245.6 L460.9,246.9 L465.0,247.9 L469.1,248.7 L473.3,249.1 L477.4,249.5 L481.6,249.7 L485.7,249.8 L489.9,249.9 L494.0,249.9 L498.1,250.0 L502.3,250.0 L506.4,250.0 L510.6,250.0 L514.7,250.0 L518.9,250.0 L523.0,250.0 L527.1,250.0 L531.3,250.0 L535.4,250.0 L539.6,250.0 L543.7,250.0 L547.9,250.0 L552.0,250.0 L556.1,250.0 L560.3,250.0 L564.4,250.0 L568.6,250.0 L572.7,250.0 L576.9,250.0 L581.0,250.0 L585.1,250.0 L589.3,250.0 L593.4,250.0 L597.6,250.0 L601.7,250.0 L605.9,250.0 L610.0,250.0" class="linea"/>
+            <line x1="30" x2="610" y1="250" y2="250" class="eje"/>
+            <line x1="402.9" x2="402.9" y1="36" y2="250" class="lectura"/>
+            <text x="408.9" y="48" class="lectura-t" data-en="85 bpm">85 lpm</text>
+            <line x1="30.0" x2="30.0" y1="250" y2="256" class="eje"/><text x="30.0" y="272" class="tick">40</text><line x1="112.9" x2="112.9" y1="250" y2="256" class="eje"/><text x="112.9" y="272" class="tick">50</text><line x1="195.7" x2="195.7" y1="250" y2="256" class="eje"/><text x="195.7" y="272" class="tick">60</text><line x1="278.6" x2="278.6" y1="250" y2="256" class="eje"/><text x="278.6" y="272" class="tick">70</text><line x1="361.4" x2="361.4" y1="250" y2="256" class="eje"/><text x="361.4" y="272" class="tick">80</text><line x1="444.3" x2="444.3" y1="250" y2="256" class="eje"/><text x="444.3" y="272" class="tick">90</text><line x1="527.1" x2="527.1" y1="250" y2="256" class="eje"/><text x="527.1" y="272" class="tick">100</text><line x1="610.0" x2="610.0" y1="250" y2="256" class="eje"/><text x="610.0" y="272" class="tick">110</text>
+            <text x="320" y="294" class="tick" data-en="Sleeping heart rate (bpm)">FC en sueño (lpm)</text>
+          </svg>
+          <div class="zetas">
+            <div><span>SIM-A</span><b>z 9,17</b><i class="zest ambar" data-en="alert">alerta</i></div>
+            <div><span>SIM-B</span><b>z 0,43</b><i class="zest verde" data-en="normal">normal</i></div>
+          </div>
+          <p class="nota" data-en="Against the population average (NHANES) both give z 1.32: normal. Source: <code>prototipo-salud/validacion/ejemplo_aprende.py</code>, 14 pre-flight nights. SIMULATED data: they are not real astronauts.">Contra el promedio poblacional (NHANES) ambos dan z 1,32: normal. Fuente: <code>prototipo-salud/validacion/ejemplo_aprende.py</code>, 14 noches prevuelo. Datos SIMULADOS: no son astronautas reales.</p>
+        </figure>
+        <ul class="aprende-lista entra">
+          <li><b data-en="What “learns” means">Qué significa «aprende»</b><span data-en="It is personal self-calibration, not a trained neural network.">Es autocalibración personal, no una red neuronal entrenada.</span></li>
+          <li><span data-en="A pre-flight baseline per person, with at least 5 measurements (Coskun 2021). With little data it shrinks toward the population.">Base prevuelo por persona, con un mínimo de 5 tomas (Coskun 2021). Con pocos datos se encoge hacia la población.</span></li>
+          <li><span data-en="It freezes at launch: nobody rewrites it. A human correction creates a new version.">Se congela al lanzar: nadie la reescribe. Una corrección humana crea una versión nueva.</span></li>
+          <li><span data-en="In flight, a protected update (EWMA) and CUSUM watch slow changes, with a 72 h quarantine.">En vuelo, una actualización protegida (EWMA) y CUSUM vigilan los cambios lentos, con cuarentena de 72 h.</span></li>
+          <li><span data-en="It never learns from SIMULATED data.">Nunca aprende de datos SIMULADOS.</span></li>
+          <li><span data-en="The clinical threshold always wins: an SpO₂ of 87% is serious even if it is “normal for you”.">El umbral clínico siempre manda: una SpO₂ de 87 % es grave aunque sea «normal para ti».</span></li>
+        </ul>
       </div>
     </section>
 
@@ -230,6 +283,50 @@
       </div>
     </section>
 
+    <!-- ═══ Semáforo de 20 padecimientos (contenido de la landing de Iker; documentacion/README_06 §4.4–4.6) ═══ -->
+    <section class="pagina semaforo" id="semaforo">
+      <header class="cabeza entra">
+        <p class="ceja" data-en="Central computer · Traffic light tab">Computadora central · pestaña Semáforo</p>
+        <h2 data-en="The traffic light: 20 conditions, each with its reasons">El semáforo: 20 padecimientos, cada uno con sus razones</h2>
+        <p data-en="The condition engine evaluates 20 conditions (P01–P20), each tied to a health risk documented by NASA (HRP or OCHMO). Every color comes with the variables that moved it: value, weight, level of evidence, normal value and the source of that range.">El motor de padecimientos evalúa 20 padecimientos (P01–P20), cada uno ligado a un riesgo de salud documentado por NASA (HRP u OCHMO). Cada color llega con las variables que lo movieron: valor, peso, nivel de evidencia, valor normal y la fuente de ese rango.</p>
+      </header>
+      <div class="semaforo-rejilla entra">
+        <figure class="captura">
+          <img src="recursos/central-semaforo.webp" width="1600" height="1376" decoding="async" alt="Pestaña Semáforo de la computadora central" data-en-alt="Traffic light tab of the central computer">
+          <figcaption data-en="Traffic light with the SIMULATED crew (SIM-T01 to SIM-T05 and the four from the scenario).">Semáforo con la tripulación SIMULADA (SIM-T01 a SIM-T05 y los cuatro del escenario).</figcaption>
+        </figure>
+        <div class="colores">
+          <div class="color"><i class="dot verde"></i><b data-en="GREEN">VERDE</b><span data-en="No active criteria, coverage of 0.5 or more and at least one current core data point.">Sin condiciones activas, con cobertura de 0,5 o más y al menos un dato vigente del núcleo.</span></div>
+          <div class="color"><i class="dot ambar"></i><b data-en="YELLOW">AMARILLO</b><span data-en="One active criterion; for example, the T score reaches 3.">Una condición activa; por ejemplo, el puntaje T llega a 3.</span></div>
+          <div class="color"><i class="dot rojo"></i><b data-en="RED">ROJO</b><span data-en="The lower bound of the score (T_inf) reaches 2 and persists 24 h or more, with at least one data point that does not come from an experimental model.">El límite inferior del puntaje (T_inf) llega a 2 y persiste 24 h o más, con al menos un dato que no venga de un modelo experimental.</span></div>
+          <div class="color"><i class="dot gris"></i><b data-en="GRAY">GRIS</b><span data-en="Insufficient evidence. If there is nothing to base an opinion on, the engine does not color.">Evidencia insuficiente. Si no hay con qué opinar, el motor no colorea.</span></div>
+          <p class="cifras-ligas" data-en="<b>350</b> links between conditions and variables · evidence <b>9 A · 31 B · 310 C</b> (C is the team's judgment) · weights <b>1 to 3</b>, editable by the flight surgeon. All cut-offs are provisional; the traffic light shows no probability."><b>350</b> ligas entre padecimientos y variables · evidencia <b>9 A · 31 B · 310 C</b> (C es juicio del equipo) · pesos <b>1 a 3</b>, editables por el cirujano de vuelo. Todos los cortes son provisionales; el semáforo no muestra ninguna probabilidad.</p>
+        </div>
+      </div>
+      <ul class="padecimientos entra">
+          <li><span class="pid">P01</span><b data-en="Arrhythmia / atrial fibrillation">Arritmia / fibrilación auricular</b><small>Risk of Cardiovascular Adaptations (HRP)</small></li>
+          <li><span class="pid">P02</span><b data-en="Deconditioning and orthostatic intolerance">Desacondicionamiento e intolerancia ortostática</b><small>Risk of Cardiovascular Adaptations / sensorimotor (HRP)</small></li>
+          <li><span class="pid">P03</span><b data-en="Hypoxia / respiratory problem">Hipoxia / problema respiratorio</b><small>Risk of Hypoxia (HRP)</small></li>
+          <li><span class="pid">P04</span><b data-en="Infection, fever or immune dysregulation">Infección, fiebre o desregulación inmune</b><small>Risk of Altered Immune Response (HRP)</small></li>
+          <li><span class="pid">P05</span><b data-en="Sleep loss and circadian misalignment">Pérdida de sueño y desalineación circadiana</b><small>Risk of Sleep Loss and Circadian Desynchronization (HRP)</small></li>
+          <li><span class="pid">P06</span><b data-en="Fatigue and cognitive decline">Fatiga y deterioro cognitivo</b><small>Risk of Adverse Cognitive or Behavioral Conditions (HRP)</small></li>
+          <li><span class="pid">P07</span><b data-en="CO₂ exposure / headache">Exposición a CO₂ / cefalea</b><small>Hostile/Closed Environments; space headache</small></li>
+          <li><span class="pid">P08</span><b data-en="Acute radiation from a solar event">Radiación aguda por evento solar</b><small>Risk of Acute Radiation (HRP)</small></li>
+          <li><span class="pid">P09</span><b data-en="Stress / behavioral health">Estrés / salud conductual</b><small>Risk of Adverse Cognitive or Behavioral Conditions (HRP)</small></li>
+          <li><span class="pid">P10</span><b data-en="Decompression sickness after EVA">Enfermedad por descompresión tras EVA</b><small>Risk of Decompression Sickness (HRP)</small></li>
+          <li><span class="pid">P11</span><b data-en="Jugular thrombosis">Trombosis yugular</b><small>Risk of SANS / venous thrombosis (HRP)</small></li>
+          <li><span class="pid">P12</span><b data-en="SANS / intracranial pressure">SANS / presión intracraneal</b><small>Risk of Spaceflight Associated Neuro-ocular Syndrome (HRP)</small></li>
+          <li><span class="pid">P13</span><b data-en="Kidney stones and dehydration">Cálculos renales y deshidratación</b><small>Urinary health (OCHMO MTB-003)</small></li>
+          <li><span class="pid">P14</span><b data-en="Bone density loss">Pérdida de densidad ósea</b><small>Bone loss (OCHMO / HRP)</small></li>
+          <li><span class="pid">P15</span><b data-en="Muscle atrophy and loss of aerobic capacity">Atrofia muscular y pérdida de capacidad aeróbica</b><small>Muscle/aerobic deconditioning (HRP)</small></li>
+          <li><span class="pid">P16</span><b data-en="Space motion sickness (SMS)">Mareo espacial (SMS)</b><small>Space adaptation sickness (OCHMO MTB-004)</small></li>
+          <li><span class="pid">P17</span><b data-en="Space anemia">Anemia espacial</b><small>Hematologic adaptation</small></li>
+          <li><span class="pid">P18</span><b data-en="Back pain and spinal elongation">Dolor de espalda y elongación de columna</b><small>Musculoskeletal</small></li>
+          <li><span class="pid">P19</span><b data-en="Inadequate nutrition and body-mass loss">Nutrición inadecuada y pérdida de masa corporal</b><small>Nutrition</small></li>
+          <li><span class="pid">P20</span><b data-en="Glucose metabolism / insulin resistance">Metabolismo de la glucosa / resistencia a la insulina</b><small>Metabolism</small></li>
+      </ul>
+    </section>
+
     <!-- ═══ 5 · Modelos de predicción ═══ -->
     <section class="pagina modelos" id="modelos">
       <header class="cabeza entra">
@@ -284,6 +381,72 @@
         <a href=&quot;https://github.com/DinDevJ/lunna/blob/main/documentacion/README_06_MODELOS_COMPUTACIONALES_ALGORITMOS.md&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;>models and algorithms</a> (Spanish).">Los parámetros (α, k, h, cuarentena, cortes del semáforo) son provisionales y están documentados como
         supuestos. Detalle completo en
         <a href="https://github.com/DinDevJ/lunna/blob/main/documentacion/README_06_MODELOS_COMPUTACIONALES_ALGORITMOS.md" target="_blank" rel="noopener">modelos y algoritmos</a>.</p>
+    </section>
+
+    <!-- ═══ Qué corre hoy y qué falta (contenido de la landing de Iker; documentacion/README_08 §4.1–4.2) ═══ -->
+    <section class="pagina estado" id="estado">
+      <header class="cabeza entra">
+        <p class="ceja" data-en="Central computer · “Analyze with models” card">Computadora central · tarjeta «Analizar con modelos»</p>
+        <h2 data-en="ECG and echo models: what runs today and what is missing">Modelos de ECG y de eco: qué corre hoy y qué falta</h2>
+        <p data-en="From the traffic light, the crew medical officer can analyze a sample and add the result to the evaluation. These are research models, not a diagnosis: a model's output enters with the lowest level of evidence and, on its own, neither triggers RED nor supports GREEN.">Desde el semáforo, la médica de a bordo puede analizar una muestra y sumar el resultado a la evaluación. Son modelos de investigación, no diagnóstico: lo que sale de un modelo entra con el nivel de evidencia más bajo y, solo, no da ROJO ni respalda un VERDE.</p>
+      </header>
+      <div class="estado-rejilla">
+        <div class="estados entra">
+          <article class="est"><header><b data-en="ECG · signal processing on CPU">ECG · procesamiento de señal en CPU</b><span class="pill ok" data-en="Runs">Corre</span></header>
+            <p data-en="Not a trained model: NeuroKit2 computes heart rate, variability (HRV), PR, QTc and an experimental irregular-rhythm flag. R peaks on public PhysioNet records (MIT-BIH 100, 201, 203): sensitivity 0.9987 / 1.0000 / 0.9191; positive predictive value 1.0000 / 0.9718 / 0.9892. PR and QTc are not validated; the flag marks rhythm irregularity, not atrial fibrillation.">No es un modelo entrenado: con NeuroKit2 calcula frecuencia cardiaca, variabilidad (HRV), PR, QTc y una bandera experimental de ritmo irregular. Picos R en registros públicos de PhysioNet (MIT-BIH 100, 201 y 203): sensibilidad 0,9987 / 1,0000 / 0,9191; valor predictivo positivo 1,0000 / 0,9718 / 0,9892. PR y QTc no están validados; la bandera marca irregularidad del ritmo, no fibrilación auricular.</p></article>
+          <article class="est"><header><b data-en="PanEcho · echocardiography on GPU">PanEcho · ecocardiografía en GPU</b><span class="pill medio" data-en="One inference reported">Una inferencia reportada</span></header>
+            <p data-en="One real inference on a team member's PC (Windows, RTX 4050): 42.8 s on CPU and 17.4 s with CUDA. The log of that run is not in the repository. It is not validation.">Una inferencia real en la PC de un integrante del equipo (Windows, RTX 4050): 42,8 s en CPU y 17,4 s con CUDA. El registro de esa corrida no está en el repositorio. No es validación.</p></article>
+          <article class="est"><header><b>EchoNet-Dynamic, MedSAM2, EchoPrime, EchoCLIP</b><span class="pill pend" data-en="Pending">Pendiente</span></header>
+            <p data-en="No real inference. They only passed a loading test (architecture without weights and a random tensor), which is not inference. The echo model weights add up to about 6.3 GB.">Sin inferencia real. Solo pasaron una prueba de carga (arquitectura sin pesos y tensor aleatorio), que no es inferencia. Los pesos de los modelos de eco suman unos 6,3 GB.</p></article>
+        </div>
+        <figure class="captura entra">
+          <img src="recursos/central-modelos.webp" width="1600" height="790" decoding="async" alt="Tarjeta Analizar con modelos" data-en-alt="Analyze with models card">
+          <figcaption data-en="The screen itself says what is missing: “environment not installed”, “loading test (no weights)”.">La propia pantalla dice lo que falta: «entorno no instalado», «prueba de carga (sin pesos)».</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ═══ Validación (contenido de la landing de Iker; documentacion/README_08 §1, §3.1, §4.4, §4.5) ═══ -->
+    <section class="pagina validacion" id="validacion">
+      <header class="cabeza entra">
+        <p class="ceja" data-en="Validation">Validación</p>
+        <h2 data-en="Tested with real data, and honest about what that proves">Probado con datos reales, y honesto sobre lo que eso demuestra</h2>
+        <p data-en="Three levels that must not be confused. Lunna meets the first, has half of the second and does not have the third.">Tres niveles que no deben confundirse. Lunna cumple el primero, tiene el segundo a medias y no tiene el tercero.</p>
+      </header>
+      <div class="niveles entra">
+        <div class="nivel"><span class="pill ok" data-en="Yes">Sí</span><b data-en="Technical validation of the software">Validación técnica del software</b><span data-en="Does the code do what it specifies? Automated suites in the backend, simulation, interfaces and health prototype.">¿El código hace lo que especifica? Suites automatizadas en backend, simulación, interfaces y prototipo de salud.</span></div>
+        <div class="nivel"><span class="pill medio" data-en="Partial">Parcial</span><b data-en="Experimental evaluation of the algorithms">Evaluación experimental de los algoritmos</b><span data-en="ECG on public PhysioNet records, the engine on Inspiration4 (n = 4) and synthetic scenarios written on purpose.">ECG sobre registros públicos de PhysioNet, motor sobre Inspiration4 (n = 4) y escenarios sintéticos escritos a propósito.</span></div>
+        <div class="nivel"><span class="pill no" data-en="No">No</span><b data-en="Clinical validation">Validación clínica</b><span data-en="There is no clinical study, prospective or in flight.">No hay ningún estudio clínico, prospectivo ni en vuelo.</span></div>
+      </div>
+      <div class="validacion-rejilla entra">
+        <article class="i4">
+          <h3 data-en="Inspiration4: when data is missing, everything stays GRAY">Inspiration4: cuando faltan datos, todo queda en GRIS</h3>
+          <p data-en="Open labs from the Inspiration4 mission (NASA OSDR, OSD-569 and OSD-575): 4 civilians, 3 days in orbit, 278 rows.">Laboratorios abiertos de la misión Inspiration4 (NASA OSDR, OSD-569 y OSD-575): 4 civiles, 3 días en órbita, 278 filas.</p>
+          <p class="grande">80 / 80</p>
+          <p data-en="cells in GRAY with real data only. There are 3 pre-flight measurements and the engine asks for 5: it refuses to color instead of inventing.">celdas en GRIS con solo datos reales. Hay 3 tomas antes del vuelo y el motor pide 5: se niega a colorear en vez de inventar.</p>
+          <p class="tenue" data-en="Sensitivity test with a minimum of 3 measurements: on return (R+1) potassium drops in two crew members (C002, z −3.5; C003, z −2.4, with 3.0 mmol/L). No RED. Limits: n = 4, no in-flight data and no vital signs. It proves nothing clinical.">Prueba de sensibilidad con un mínimo de 3 tomas: al regreso (R+1) baja el potasio en dos tripulantes (C002, z −3,5; C003, z −2,4, con 3,0 mmol/L). Ningún ROJO. Límites: n = 4, sin datos en vuelo y sin signos vitales. No prueba nada clínico.</p>
+        </article>
+        <div class="pruebas">
+          <h3 data-en="Automated tests · 15 Nov 2026">Pruebas automatizadas · 15 nov 2026</h3>
+          <table>
+            <thead><tr><th data-en="Suite">Suite</th><th data-en="Tests">Pruebas</th><th>Linux</th><th>Windows</th></tr></thead>
+            <tbody>
+              <tr><td>Backend</td><td>97</td><td data-en="97 passed">97 aprobadas</td><td data-en="85 passed · 12 skipped">85 aprobadas · 12 omitidas</td></tr>
+              <tr><td data-en="Simulation mode">Modo simulación</td><td>4</td><td>—</td><td data-en="4 passed">4 aprobadas</td></tr>
+              <tr><td data-en="Browser engine and normal value">Motor del navegador y valor normal</td><td>25</td><td data-en="25 passed">25 aprobadas</td><td data-en="25 passed">25 aprobadas</td></tr>
+              <tr><td data-en="Health prototype (pytest)">Prototipo de salud (pytest)</td><td>148</td><td>—</td><td data-en="131 passed · 11 skipped · 6 environment failures">131 aprobadas · 11 omitidas · 6 fallas de entorno</td></tr>
+            </tbody>
+          </table>
+          <p class="tenue" data-en="0 failed in the backend on both systems. On Windows, 12 are skipped because they need openssl (8) or the Python model environments (4). The prototype's 6 failures come from that machine's environment, not from the code.">0 fallidas en el backend en los dos sistemas. En Windows se omiten 12 porque necesitan openssl (8) o los entornos Python de los modelos (4). Las 6 fallas del prototipo son del entorno de esa máquina, no del código.</p>
+          <h3 data-en="What is not verified">Lo que no está verificado</h3>
+          <ul class="pendientes">
+            <li data-en="The firmware on a physical ESP32 board and end-to-end Bluetooth.">El firmware en una placa ESP32 física y el Bluetooth de extremo a extremo.</li>
+            <li data-en="Real inference for four of the five echo models.">La inferencia real de cuatro de los cinco modelos de eco.</li>
+            <li data-en="Any evaluation with flight or analog data, and the false-alarm rate.">Cualquier evaluación con datos de vuelo o de análogos, y la tasa de falsas alarmas.</li>
+            <li data-en="No threshold is clinically validated in microgravity.">Ningún umbral está validado clínicamente en microgravedad.</li>
+          </ul>
+        </div>
+      </div>
     </section>
 
     <!-- ═══ Galería del equipo durante el hackatón ═══ -->
@@ -344,11 +507,13 @@
       </div>
       <footer class="pie">
         <a class="repo" href="https://github.com/DinDevJ/lunna" target="_blank" rel="noopener"><svg class="gh" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span data-en="View the code on GitHub">Ver el código en GitHub</span></a>
+        <p data-en="A NASA Space Apps Challenge 2026 project. It does not use the NASA logo and is not endorsed by NASA. Not a diagnosis; data SIMULATED except NASA DONKI, NASA-STD-3001 and Inspiration4.">Proyecto para NASA Space Apps Challenge 2026. No usa el logotipo ni cuenta con el respaldo de NASA. No es un diagnóstico; datos SIMULADOS salvo NASA DONKI, NASA-STD-3001 e Inspiration4.</p>
         <p data-en="Lunna · NASA Space Apps Challenge 2026 · challenge <em>Create Health Monitoring Software for Astronauts on Space Missions</em> · MIT license">Lunna · NASA Space Apps Challenge 2026 · reto <em>Create Health Monitoring Software for Astronauts on Space Missions</em> · licencia MIT</p>
       </footer>
     </section>
   </main>
 
+  <script src="recursos/cosmos.js"></script>
   <script src="main.js"></script>
 </body>
 </html>

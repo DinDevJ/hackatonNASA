@@ -55,7 +55,7 @@
     if (!e.isIntersecting) return;
     e.target.classList.add('visible');
     enlaces.forEach((a) => a.classList.toggle('actual', a.getAttribute('href') === `#${e.target.id}`));
-  }), { threshold: 0.35 });
+  }), { rootMargin: '0px 0px -40% 0px', threshold: 0 });
   paginas.forEach((p) => io.observe(p));
 
   // Teclado: flechas, AvPág/RePág y espacio pasan de sección completa.
@@ -123,6 +123,15 @@
   }));
   visor.querySelector('.visor-cerrar').addEventListener('click', () => visor.close());
   visor.addEventListener('click', (e) => { if (e.target === visor) visor.close(); });
+
+  // ── Pestañas de video: oficial (por defecto) y del producto ──
+  $$('.vp').forEach((b) => b.addEventListener('click', () => {
+    if (b.classList.contains('activa')) return;
+    $$('.vp').forEach((x) => { x.classList.toggle('activa', x === b); x.setAttribute('aria-selected', String(x === b)); });
+    video.poster = b.dataset.poster;
+    video.querySelector('source').src = b.dataset.src;
+    video.load(); pausadoAMano = false; intentar();
+  }));
 
   // ── LUNNA interactivo: misma fórmula que Sistema/backend/src/lunna.ts ──
   // Prior real de la semilla (presión sistólica en órbita): μ₀ = −6,7 %, τ₀ = 5 %, σ_misión = 3 %, σ_día = 5 %.

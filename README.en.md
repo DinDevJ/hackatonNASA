@@ -2,6 +2,8 @@
 
 # Lunna
 
+[![Tests](https://github.com/DinDevJ/lunna/actions/workflows/pruebas.yml/badge.svg)](https://github.com/DinDevJ/lunna/actions/workflows/pruebas.yml)
+
 **Health monitoring for astronauts on long-duration missions** · Team Monarcas · NASA Space Apps Challenge 2026 ·
 challenge *Create Health Monitoring Software for Astronauts on Space Missions*
 
@@ -92,11 +94,12 @@ The full walkthrough for judges and developers is in **[ONBOARDING.en.md](ONBOAR
 |---|---|
 | Backend (`npm test` in `Sistema/backend`) | On Nov 15, 2026, on Linux: 97 passed, 0 failed, 0 skipped. On Windows, 85 passed and 12 skipped had been documented (openssl and Python environments). Details in [testing and validation](documentacion/README_08_PRUEBAS_VALIDACION.en.md) |
 | Simulation (`npm test` in `Simulacion`) | 4 / 4 |
+| **Automated tests** ([GitHub Actions](.github/workflows/pruebas.yml), on every change) | Backend 93/93 with **89.8% line and 82.7% branch coverage** of the source code · simulation 4/4 · interfaces 25/25 (91.4% of lines) · firmware and gateway · condition engine 109/109 |
 | Engine and interfaces (`node --test *.test.mjs` in `Sistema/interfaces/eva`) | 25 / 25 |
 | ESP32 firmware and gateway against the backend | Same bytes in all 4 vectors |
 | Spacecraft ↔ Earth synchronization with injected faults | 0 losses, 0 duplicates |
 | Clinical scenarios in the simulator | All 4 raise an alert and return to green; 0 false alarms in 3 min without anomalies |
-| Health prototype (pytest) | See [testing and validation](documentacion/README_08_PRUEBAS_VALIDACION.en.md) |
+| Health prototype (pytest) | In a clean environment (numpy and pandas only): 109 passed, 0 failed. The ECG suites need NeuroKit2, wfdb and sample videos: see [testing and validation](documentacion/README_08_PRUEBAS_VALIDACION.en.md) |
 | External validation with Inspiration4 | Honest and limited (n = 4, partially simulated baseline): see [§4.4](documentacion/README_08_PRUEBAS_VALIDACION.en.md) |
 
 **What is not verified:** the firmware has not been tested on a physical board, there are no data from real astronauts

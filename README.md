@@ -2,6 +2,8 @@
 
 # Lunna
 
+[![Pruebas](https://github.com/DinDevJ/lunna/actions/workflows/pruebas.yml/badge.svg)](https://github.com/DinDevJ/lunna/actions/workflows/pruebas.yml)
+
 **Monitoreo de salud para astronautas en misiones largas** · Equipo Monarcas · NASA Space Apps Challenge 2026 ·
 reto *Create Health Monitoring Software for Astronauts on Space Missions*
 
@@ -92,11 +94,12 @@ El recorrido completo para jueces y para quien desarrolle está en **[ONBOARDING
 |---|---|
 | Backend (`npm test` en `Sistema/backend`) | El 15 nov 2026, en Linux: 97 aprobadas, 0 fallidas, 0 omitidas. En Windows se había documentado 85 aprobadas y 12 omitidas (openssl y entornos Python). Detalle en [pruebas y validación](documentacion/README_08_PRUEBAS_VALIDACION.md) |
 | Simulación (`npm test` en `Simulacion`) | 4 / 4 |
+| **Pruebas automáticas** ([GitHub Actions](.github/workflows/pruebas.yml), en cada cambio) | Backend 93/93 con **89,8 % de líneas y 82,7 % de ramas cubiertas** del código fuente · simulación 4/4 · interfaces 25/25 (91,4 % de líneas) · firmware y pasarela · motor de padecimientos 109/109 |
 | Motor e interfaces (`node --test *.test.mjs` en `Sistema/interfaces/eva`) | 25 / 25 |
 | Firmware ESP32 y pasarela contra el backend | Mismos bytes en los 4 vectores |
 | Sincronización nave ↔ Tierra con fallas inyectadas | 0 pérdidas, 0 duplicados |
 | Escenarios clínicos en el simulador | Los 4 alertan y vuelven a verde; 0 falsas alarmas en 3 min sin anomalías |
-| Prototipo de salud (pytest) | Ver [pruebas y validación](documentacion/README_08_PRUEBAS_VALIDACION.md) |
+| Prototipo de salud (pytest) | En entorno limpio (sólo numpy y pandas): 109 aprobadas, 0 fallidas. Las suites de ECG necesitan NeuroKit2, wfdb y videos de muestra: ver [pruebas y validación](documentacion/README_08_PRUEBAS_VALIDACION.md) |
 | Validación externa con Inspiration4 | Honesta y limitada (n = 4, base parcialmente simulada): ver [§4.4](documentacion/README_08_PRUEBAS_VALIDACION.md) |
 
 **Lo que no está verificado:** el firmware no se ha probado en una placa física, no hay datos de astronautas reales

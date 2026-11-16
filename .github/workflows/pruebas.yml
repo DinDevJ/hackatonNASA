@@ -1,0 +1,77 @@
+# Pruebas automáticas de Lunna: corren en cada push y pull request.
+# Resumen con la cobertura medida en la pestaña «Actions» → cada ejecución → «Summary».
+name: Pruebas
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (computadora central, LUNNA, enlace con Tierra)
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: Sistema/backend } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: Pruebas con cobertura del código fuente
+        run: |
+          node --experimental-strip-types --disable-warning=ExperimentalWarning --experimental-test-coverage \
+            --test-coverage-include='src/**' --test test/*.test.ts | tee salida.txt
+          {
+            echo "### Backend"
+            grep -E '^# (tests|pass|fail|skipped)' salida.txt | sed 's/^# /- /'
+            echo "- cobertura (líneas · ramas · funciones): $(grep 'all files' salida.txt | awk -F'|' '{gsub(/ /,""); print $2" % · "$3" % · "$4" %"}')"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  simulacion:
+    name: Modo simulación
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: Simulacion } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - run: npm test
+
+  interfaces:
+    name: Motor de las interfaces y valor normal
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: Sistema/interfaces/eva } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - run: node --experimental-test-coverage --test-coverage-include='*.js' --test *.test.mjs
+
+  hardware:
+    name: Firmware ESP32 y pasarela (mismos bytes que el backend)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Firmware C++ contra los vectores del backend
+        working-directory: Sistema/esp32/test
+        run: g++ -std=c++17 -I../playera_eva test_trama.cpp -o test_trama && ./test_trama
+      - name: Pasarela Python contra los vectores del backend
+        working-directory: Sistema/pasarela
+        run: python test_trama.py
+
+  motor:
+    name: Motor de 20 padecimientos (Python)
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: prototipo-salud } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install -q numpy pandas pytest
+      # Fuera de CI: test_paginas (Streamlit), test_ecg y test_verificacion (necesitan NeuroKit2/wfdb y videos de
+      # muestra que no están en el repo). Se corren en la PC con el entorno completo (ver documentación 08).
+      - run: python -m pytest -q -p no:cacheprovider --ignore=tests/test_paginas.py --ignore=tests/test_ecg.py --ignore=tests/test_verificacion.py tests

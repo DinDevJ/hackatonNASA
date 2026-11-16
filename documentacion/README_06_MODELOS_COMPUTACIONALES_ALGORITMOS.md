@@ -180,6 +180,8 @@ La calidad **degrada el nivel de evidencia, no el peso**. Así se reutiliza la e
 - **CUSUM** anclado al prevuelo: `C(t) = max(0, C(t−1) + r(t) − k)`, con k = 0,5 y h = 5. Solo lo reinicia una revisión humana.
 - **Estados de variable**: normal (u < 1,5), desviada, alertada (u ≥ 2,33 en una dirección o 2,58 en dos), persistente (≥ 24 h) y deriva.
 
+«Aprende» quiere decir esta autocalibración por persona, no el entrenamiento de una red. Ejemplo reproducible (datos **SIMULADO**, ejecutado el 15 nov 2026 con `python3 -m validacion.ejemplo_aprende` en `prototipo-salud/`): dos hombres de 30 años marcan la misma FC en sueño, 85 lpm, el día 5 de vuelo. Contra la población (NHANES) ambos dan z = 1,32 (normal). Contra su propia base de 14 noches, SIM-A (58,1 ± 2,9 lpm) da z = 9,17 y queda alertada; SIM-B (83,6 ± 3,3 lpm) da z = 0,43 y queda normal. Con 2 noches la base de SIM-A es 54,0 ± 5,1 lpm (DE combinada de la tripulación, B = 0,07); desde 5 noches usa su propia DE. Cifras completas y aviso de que no es un diagnóstico: [pruebas §4.3](README_08_PRUEBAS_VALIDACION.md#43-motor-de-padecimientos-con-datos-simulados-brazo-2-de-la-especificación).
+
 ### 4.4 Score de dos canales
 
 - **Canal de pesos** (las 350 ligas): `T_p = Σ_grupos max(μ_pv · a_pv)`. Las variables correlacionadas, por ejemplo FC y FC instantánea, solo cuentan una vez. La incertidumbre se calcula como `Var(T_p) ≈ Σ[a²σ² + μ²Var(a)]` y se informa `T_inf = max(0, T − 1,645·DE)`.

@@ -103,12 +103,15 @@ La burbuja flotante se puede arrastrar, se pega al borde y recuerda su posición
 | **Panel clínico** (`#tripulante/MS-2`) | Signos contra su normal, Cuerpo LUNNA, sueño y reflejos, metas, dosis, índice por padecimiento, intervención médica |
 | **Estadísticas** | Estado por día, lo que más pidió atención, avisos por misión |
 | **Enlace con Tierra** | Cola priorizada, lo recibido y consultas a la base |
+| **Semáforo** (`#semaforo`) | Los 20 padecimientos del motor Python: color, detalle de las variables que lo movieron y pesos editables. Es distinto del índice por padecimiento del panel clínico (11 malestares, pesos de Leo) |
 
 Los bloques marcados **«En vivo · backend»** muestran datos reales del backend: tripulantes, último valor contra lo esperado, alertas de LUNNA y estado del enlace. Lo que el backend aún no ofrece aparece bajo el rótulo **«Escenario simulado · no viene del backend»**.
 
 Acciones disponibles:
 - **Enviar a …**: aviso de la CMO al teléfono de un tripulante (`POST /api/abordo/avisos`). Llega sin retraso.
 - **Consultar a Tierra**: consulta que baja por el enlace (`POST /api/central/consultas`).
+
+En la vista del Semáforo, debajo de la lista de padecimientos, está la tarjeta **Analizar con modelos** (PR [#13](https://github.com/DinDevJ/lunna/pull/13)). Sale plegada y recuerda si se dejó abierta (almacenamiento local `eva:sm-mod-abierto`). Desde ahí se lanza un análisis de eco o de ECG (`POST /api/modelos/analizar`) sobre una muestra de la carpeta de muestras, con la marca SIMULADO cuando corresponde. **No es un diagnóstico.**
 
 ## 7. Base en Tierra (`/app/base.html`)
 
@@ -117,7 +120,7 @@ Muestra solo lo que ya llegó, siempre con su SCET (hora del evento a bordo) y s
 - **Pronósticos** (`#pronosticos`): mapa tripulación × 11 padecimientos con el índice ponderado de la matriz de pesos, qué suma cada variable y una tendencia a 3 días. La tendencia es **ilustrativa**; el índice **no es una probabilidad**.
 - **Mensajes**: avisos y advertencias a la nave con su recorrido (redactado → en camino → a bordo → acuse).
 
-Es **intencional** que Tierra vea el pasado: los mensajes viajan con el retardo del enlace.
+Es **intencional** que Tierra vea el pasado: los mensajes viajan con el retardo del enlace (18 min por trayecto en el escenario de la maqueta; 20 s por defecto en el backend de la demo).
 
 ## 8. Reloj (`/reloj/`)
 

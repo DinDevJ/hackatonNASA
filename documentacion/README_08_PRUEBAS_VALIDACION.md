@@ -30,7 +30,16 @@
 | Motor del navegador y valor normal | `node --test Sistema/interfaces/eva/motor.test.mjs Sistema/interfaces/eva/alertas-motor.test.mjs` | 25 | 25 | 0 | 0 |
 | Prototipo de salud | `python -m pytest` en `prototipo-salud/` (sin `test_paginas.py`, que requiere Streamlit) | 148 | 131 | 11 | 6 |
 
-Omitidas en el backend y por qué:
+También se ejecutaron el 15 nov 2026 en Linux (Node 24.22.1), sobre el `main` actual:
+
+| Suite | Comando | Pruebas | Aprobadas | Omitidas | Fallidas |
+|---|---|---:|---:|---:|---:|
+| Backend | `cd Sistema/backend` y luego `npm test` | 97 | 97 | 0 | 0 |
+| Motor del navegador y valor normal | `node --test Sistema/interfaces/eva/motor.test.mjs Sistema/interfaces/eva/alertas-motor.test.mjs` | 25 | 25 | 0 | 0 |
+
+En este entorno sí estaban openssl y el Python del prototipo, así que no se omitió ninguna de las 12 que en Windows se saltan. No se volvió a correr la suite del backend en Windows en esta revisión.
+
+Omitidas en el backend (Windows) y por qué:
 
 - 8 de `enlace-https.test.ts`: necesitan openssl para generar el certificado de prueba;
 - 4 de integración con el motor Python y el ECG reales: buscan los entornos de prueba Linux en `/tmp/nasa-linux-envs`.
@@ -100,7 +109,9 @@ Suite de [`Simulacion/test/simulador.test.ts`](../Simulacion/test/simulador.test
 
 ### 4.1 Procesamiento de ECG
 
-**Datos:** registros completos MIT-BIH Arrhythmia 100, 201, 203 y MIT-BIH AF 04015 (PhysioNet, ODC-By 1.0, pacientes hospitalarios). **Entorno:** Linux, CPU, Python 3.11 con las versiones del lock. Informe en `validacion/ecg/VALIDACION.md` (citado en el avance del equipo).
+**Datos:** registros completos MIT-BIH Arrhythmia 100, 201, 203 y MIT-BIH AF 04015 (PhysioNet, ODC-By 1.0, pacientes hospitalarios). **Entorno:** Linux, CPU, Python 3.11 con las versiones del lock.
+
+Las cifras de la tabla ya estaban en este documento y en [`prototipo-salud/README.md`](../prototipo-salud/README.md). Se citaba un informe en `validacion/ecg/VALIDACION.md`. Se buscó ese archivo en todo el historial de git (`git log --all --full-history -- '**/VALIDACION.md' 'validacion/ecg/VALIDACION.md'` y `git rev-list --all --objects`) y **no está, ni estuvo, en el repositorio**. Pendiente: el informe no está en el repositorio. No se reproduce aquí ningún contenido que no esté ya en el repo. Tampoco están en el repo `validacion/ecg/runs/`, `validacion_por_registro.csv`, `validacion/ecg/v1_resumen.json` ni `validacion/ecg/captura_ecg.png`.
 
 | Métrica | 100 | 201 | 203 | 04015 |
 |---|---:|---:|---:|---:|
@@ -112,6 +123,17 @@ Suite de [`Simulacion/test/simulador.test.ts`](../Simulacion/test/simulador.test
 | Bandera por segmento, especificidad | 1,000 | 0,054 | 0,000 | 0,904 |
 
 **Interpretación.** La bandera detecta **irregularidad del RR, no FA**: en 201 y 203 marca extrasístoles y trigeminismo. PR y QTc **no están validados**, porque no hay etiquetas para compararlos. La versión v2 se eligió después de ver la v1 sobre estos mismos registros, así que **no es una validación independiente**.
+
+#### Prueba funcional en la PC de Iker (Windows, 15 nov 2026)
+
+Esto es una **prueba funcional** del puente y de la cola de la central, no una validación del algoritmo: no hay etiquetas ni métricas de detección en esta corrida.
+
+Se lanzó desde la central con `POST /api/modelos/analizar` y el puente `motor.puente_modelos`, con la marca SIMULADO, en Windows y CPU:
+
+| Registro | Resultado |
+|---|---|
+| `ecg_fa_afdb04015.hea` | `run_id` `20261115T151349_ecg_8257012a`, estado `ok`, `inferencia_real` verdadero, dispositivo `cpu`, frecuencia cardiaca 117,5 bpm (04:A4), guardado para la tripulante `ana` |
+| `ecg_normal_mitdb100.hea` (prueba anterior) | `run_model` terminó bien en 12,4 s en CPU; el puente falló con `No module named 'motor'` porque `PROTOTIPO_DIR` apuntaba a una copia antigua sin `motor/`. Se corrigió apuntando a `prototipo-salud` del repositorio |
 
 ### 4.2 Ecocardiografía
 
@@ -155,7 +177,28 @@ Tripulación simulada `SIM-T01…T05`, 30 días, con un escenario por persona:
 | SIM-T05 | Datos N4 |
 | Todas | Excursión de CO₂ compartida |
 
-Con los 7 runs de `validacion/ecg/runs` (canal real, solo lectura), la muestra con FA da P01 **AMARILLO «confirmar» y nunca ROJO**, porque todo es N4.
+Con los 7 runs de `validacion/ecg/runs` (canal real, solo lectura), la muestra con FA da P01 **AMARILLO «confirmar» y nunca ROJO**, porque todo es N4. Esos runs se citan en [`prototipo-salud/README.md`](../prototipo-salud/README.md); **no están en el repositorio** (mismo pendiente que el informe de §4.1).
+
+#### Ejemplo reproducible de autocalibración personal («aprende»)
+
+Ejecutado el 15 nov 2026: `cd prototipo-salud && python3 -m validacion.ejemplo_aprende`. Datos **SIMULADO** (no son astronautas reales). No es entrenamiento de una red: es estadística por persona. PROVISIONAL. No es un diagnóstico. El mismo valor, 85 lpm de FC en sueño el día 5 de vuelo, se lee distinto según la base prevuelo de cada uno (14 noches, hombres de 30 años, semilla 0):
+
+| Tripulante | Base prevuelo | z poblacional (NHANES) | z personal | Estado |
+|---|---|---:|---:|---|
+| SIM-A | 58,1 ± 2,9 lpm | 1,32 | 9,17 | alertada |
+| SIM-B | 83,6 ± 3,3 lpm | 1,32 | 0,43 | normal |
+
+Al acumular noches prevuelo (salida del mismo comando):
+
+| n | SIM-A (base, z, estado) | SIM-B (base, z, estado) | Origen de s_w |
+|---:|---|---|---|
+| 2 | 54,0 ± 5,1 · z 6,08 · alertada | 79,9 ± 5,1 · z 1,00 · normal | combinada de la tripulación [P·S5]; B = 0,07 |
+| 3 | 55,2 ± 4,6 · z 6,49 · alertada | 81,4 ± 4,6 · z 0,79 · normal | combinada de la tripulación [P·S5]; B = 0,04 |
+| 5 | 54,8 ± 4,2 · z 7,27 · alertada | 83,5 ± 3,3 · z 0,44 · normal | propia (n0 ≥ 5); B = 0,02 / 0,01 |
+| 7 | 55,9 ± 4,4 · z 6,60 · alertada | 84,0 ± 3,8 · z 0,26 · normal | propia (n0 ≥ 5); B = 0,02 / 0,01 |
+| 14 | 58,1 ± 2,9 · z 9,17 · alertada | 83,6 ± 3,3 · z 0,43 · normal | propia (n0 ≥ 5); B = 0,00 / 0,01 |
+
+La especificación de esta autocalibración está en [modelos §4.3](README_06_MODELOS_COMPUTACIONALES_ALGORITMOS.md#43-desviación-y-autocalibración).
 
 ### 4.4 Inspiration4 (NASA OSDR, datos reales abiertos)
 
@@ -192,13 +235,14 @@ Dato dudoso en la fuente: C003 L-92 (plaquetas 12,9, neutrófilos 10,1). Es prob
 
 ## 7. Pendiente de validación
 
-1. Las 8 pruebas del enlace HTTPS con openssl disponible, y las 4 de integración con los entornos Python reales.
+1. Volver a correr en Windows las 8 pruebas del enlace HTTPS (openssl) y las 4 de integración con los entornos Python reales. El 15 nov 2026, en Linux, las 12 formaron parte de las 97 aprobadas.
 2. La suite pytest completa en Windows con `envs\app` (incluida `test_paginas.py`).
 3. La inferencia real de EchoNet-Dynamic, MedSAM2, EchoPrime y EchoCLIP con pesos y CUDA, y los tiempos frente al timeout (1800 s; EchoPrime 3600 s).
 4. El firmware en placa ESP32 y BLE de extremo a extremo.
 5. La bandera de ritmo sobre registros de PhysioNet **no usados** para elegir la v2.
 6. PR y QTc frente a una base con anotación de ondas.
 7. Cualquier evaluación con datos de vuelo o de análogos.
+8. Incluir en el repositorio el informe de ECG citado como `validacion/ecg/VALIDACION.md`, si existe fuera de git.
 
 ## Documentación relacionada
 

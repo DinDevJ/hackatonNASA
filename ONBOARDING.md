@@ -24,7 +24,7 @@ npm start
 | 1 | http://localhost:8787/simulador → **Prepare mission** | Se cargan 112 días de historia de 4 tripulantes; LUNNA aprende el normal de cada uno en sus primeros 14 días |
 | 2 | **▶ Live** | Los sensores transmiten. Clic en la playera, el ESP32, el reloj o el brazalete: cada uno abre su terminal con las tramas que envía (el ESP32, su monitor serie) |
 | 3 | Terminal de la **PC central**: `scenario hypoxia` | La SpO₂ de Ana baja de forma gradual; en ~1 a 2 min LUNNA alerta e indica si fue por su normal o por el umbral clínico |
-| 4 | Clic en la **Tierra** | La base en Tierra recibe la alerta con el retraso de la luz y su antigüedad |
+| 4 | Clic en la **Tierra** | La base en Tierra recibe la alerta con el retraso de la luz y su antigüedad (18 min por trayecto en el escenario; 20 s por defecto en el backend de la demo) |
 | 5 | Desde la base, una alerta manual a Ana | Llega al celular de Ana como notificación; la nave devuelve el acuse de recibo |
 | 6 | Terminal de la PC: `scenario normal` | Los valores vuelven y la alerta regresa a verde |
 | 7 | Playera: `ble off`, espera 20 s, `ble on` | Sin Bluetooth el ESP32 guarda las lecturas; al reconectar salen todas con su hora original |
@@ -150,7 +150,7 @@ cd prototipo-salud && python -m pytest                             # motor de pa
 | **LUNNA** | *Live-telemetry Updating Network for Nominal-deviation & Anomalies*: el modelo bayesiano por persona |
 | **Normal personal** | Lo esperado para esa persona en ese entorno, con su banda del 95 % |
 | **[A] / [T]** | Umbral de NASA o validado en astronautas / clínico de Tierra, no validado en microgravedad |
-| **OWLT** | Retraso de la luz en un sentido (Marte: de minutos a más de 20 min) |
+| **OWLT** | Retraso de la luz en un sentido. En Marte, el retraso físico va de minutos a más de 20 min. El escenario de la maqueta usa 18 min por trayecto; el backend de la demo usa 20 s por defecto |
 | **SCET / ERT** | Hora en que ocurrió a bordo / hora en que llegó a Tierra |
 | **DTN** | Almacenar y reenviar: nada se pierde si el enlace se corta |
 | **Perfil EVA** | Formato binario de tramas: cabecera de 13 bytes + carga definida por un esquema |

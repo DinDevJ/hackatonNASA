@@ -221,6 +221,7 @@ html.embebido body.pagina-reloj { padding: 0; min-height: 100vh; display: grid; 
 html.embebido .rj-cab, html.embebido .rj-panel, html.embebido .rj-galeria, html.embebido .rj-pie, html.embebido .rj-ayuda, html.embebido .saltar { display: none; }
 html.embebido .rj-main { display: block; padding: 0; }
 html.embebido .rj-escena { padding: 0; }
+html.transparente, html.transparente body, html.transparente .rj-main, html.transparente .rj-escena { background: transparent !important; }
 @media (max-height: 640px) { html.embebido .rj-reloj { zoom: .82; } }
 @media (max-height: 520px) { html.embebido .rj-reloj { zoom: .66; } }
 

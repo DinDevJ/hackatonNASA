@@ -44,6 +44,8 @@
   const Q = new URLSearchParams(location.search);
   const EMBEBIDO = Q.has("embebido");
   document.documentElement.classList.toggle("embebido", EMBEBIDO);
+  // ?transparente → sin fondo propio, para ponerlo sobre otra página (la landing)
+  document.documentElement.classList.toggle("transparente", Q.has("transparente"));
   const valida = (pid) => M.PERSONAS.some((p) => p.id === pid);
   const S = {
     pid: valida(Q.get("persona")) ? Q.get("persona") : valida(mem.leer("persona", "MS-2")) ? mem.leer("persona", "MS-2") : "MS-2",

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lunna · Salud a bordo para misiones largas</title>
+  <title>Lunna · Salud a bordo</title>
   <meta name="description" content="Lunna vigila la salud de cada astronauta contra su propio normal y avisa a la médica de a bordo antes de que un problema crezca. NASA Space Apps Challenge 2026 · Equipo Monarcas.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,258 +13,278 @@
 <body>
   <div class="cielo" aria-hidden="true"></div>
 
-  <!-- ═══ Navegación ═══ -->
   <header class="nav">
-    <a class="marca" href="#inicio" aria-label="Lunna, inicio">
-      <span class="luna" aria-hidden="true"></span>
-      <span>Lunna</span>
-    </a>
+    <a class="marca" href="#inicio" aria-label="Lunna, inicio"><span class="luna" aria-hidden="true"></span><span>Lunna</span></a>
     <nav aria-label="Secciones">
-      <a href="#dispositivos">Dispositivos</a>
-      <a href="#simulacion">Simulación</a>
-      <a href="#como">Cómo funciona</a>
+      <a href="#inicio">Dispositivos</a>
+      <a href="#demo">Video y simulación</a>
+      <a href="#lunna">Matemática</a>
+      <a href="#modelos">Modelos</a>
       <a href="#equipo">Equipo</a>
     </nav>
-    <a class="btn btn-chico" data-ruta="/simulador" href="/simulador" target="_blank" rel="noopener">Abrir simulación</a>
+    <a class="btn btn-chico" data-ruta="/simulador" href="/simulador" target="_blank" rel="noopener">Probar simulación</a>
   </header>
 
+  <!-- Indicador de sección: un punto por pantalla -->
+  <nav class="puntos" aria-label="Ir a la sección">
+    <a href="#inicio" aria-label="Dispositivos"></a>
+    <a href="#demo" aria-label="Video y simulación"></a>
+    <a href="#lunna" aria-label="LUNNA, actualización bayesiana"></a>
+    <a href="#criterios" aria-label="Dos criterios de alerta"></a>
+    <a href="#modelos" aria-label="Modelos de predicción"></a>
+    <a href="#equipo" aria-label="Respaldo y equipo"></a>
+  </nav>
+
   <main>
-    <!-- ═══ Portada ═══ -->
-    <section class="portada" id="inicio">
-      <div class="portada-texto">
+    <!-- ═══ 1 · Los tres dispositivos, de un vistazo ═══ -->
+    <section class="pagina portada" id="inicio">
+      <div class="portada-texto entra">
         <p class="ceja">NASA Space Apps Challenge 2026 · Equipo Monarcas</p>
-        <h1>Conoce el normal de cada astronauta. <span>Avisa antes de que crezca un problema.</span></h1>
-        <p class="bajada">
-          En una misión a Marte, Tierra tarda minutos en responder. Lunna compara a cada tripulante con
-          <strong>su propio normal</strong>, explica qué cambió y avisa a la médica de a bordo, para que la nave
-          pueda decidir sola.
-        </p>
-        <div class="acciones">
-          <a class="btn" href="#dispositivos">Ver los dispositivos</a>
-          <a class="btn btn-sec" data-ruta="/simulador" href="/simulador" target="_blank" rel="noopener">Entrar a la simulación</a>
-        </div>
+        <h1>Salud a bordo, <span>sin esperar a la Tierra.</span></h1>
+        <p class="bajada">Lunna aprende el normal de cada astronauta y avisa antes de que un problema crezca.
+          <span class="solo-ancho">Son las interfaces reales, funcionando ahora con la tripulación simulada.</span></p>
       </div>
-      <ul class="cifras" aria-label="Lunna en cifras">
-        <li><b>4</b><span>dispositivos, un solo sistema</span></li>
-        <li><b>14 días</b><span>para aprender el normal de cada persona</span></li>
-        <li><b>7</b><span>signos vitales medidos por sensor</span></li>
-        <li><b>20</b><span>padecimientos vigilados</span></li>
-      </ul>
-    </section>
 
-    <!-- ═══ Dispositivos ═══ -->
-    <section class="bloque" id="dispositivos">
-      <header class="bloque-cabeza">
-        <p class="ceja">Así se ve en cada dispositivo</p>
-        <h2>Cuatro pantallas, una misma información</h2>
-        <p>Son las interfaces reales funcionando aquí mismo, con la tripulación simulada de la misión. Toca cualquiera para usarla.</p>
-      </header>
+      <div class="escenario entra" aria-label="Las tres pantallas de Lunna">
+        <!-- Computadora central -->
+        <figure class="equipo equipo-central">
+          <figcaption class="chip"><b>Computadora central</b> · médica de a bordo</figcaption>
+          <div class="monitor">
+            <div class="pantalla" data-ancho="1440" data-alto="900">
+              <iframe data-src="/app/central.html" title="Computadora central de Lunna" tabindex="-1"></iframe>
+              <button class="activar" type="button">Toca para usar</button>
+            </div>
+          </div>
+          <div class="monitor-pie" aria-hidden="true"></div>
+        </figure>
 
-      <!-- Celular -->
-      <article class="estacion">
-        <div class="estacion-equipo">
+        <!-- Celular -->
+        <figure class="equipo equipo-cel">
+          <figcaption class="chip"><b>Celular</b> · cada astronauta</figcaption>
           <div class="telefono">
             <div class="telefono-isla" aria-hidden="true"></div>
             <div class="pantalla" data-ancho="390" data-alto="844">
-              <iframe data-src="/app/" title="App del celular de Lunna" loading="lazy" tabindex="-1"></iframe>
+              <iframe data-src="/app/" title="App del celular de Lunna" tabindex="-1"></iframe>
               <button class="activar" type="button">Toca para usar</button>
             </div>
           </div>
-        </div>
-        <div class="estacion-texto">
-          <p class="etiqueta">Celular · cada astronauta</p>
-          <h3>«¿Estoy bien hoy y qué hago?»</h3>
-          <p>Cada tripulante ve su cuerpo, lo que cambió contra su normal y qué hacer, sin saber medicina. Registra lo que los sensores no miden: síntomas, comida, ánimo.</p>
-          <ul>
-            <li>Cuerpo interactivo: toca un órgano y ve sus indicadores</li>
-            <li>Lunna, la asistente, explica cada aviso; no diagnostica</li>
-            <li>Recibe los avisos de la médica de a bordo y de Tierra</li>
-          </ul>
-          <a class="enlace" data-ruta="/app/" href="/app/" target="_blank" rel="noopener">Abrir la app completa ↗</a>
-        </div>
-      </article>
+        </figure>
 
-      <!-- Reloj -->
-      <article class="estacion estacion-inv">
-        <div class="estacion-equipo">
+        <!-- Reloj -->
+        <figure class="equipo equipo-reloj">
+          <figcaption class="chip"><b>Reloj</b> · en la muñeca</figcaption>
           <div class="reloj">
             <div class="pantalla pantalla-libre" data-ancho="320" data-alto="320">
-              <iframe data-src="/reloj/?embebido&persona=MS-2" title="Reloj de Lunna" loading="lazy" tabindex="-1"></iframe>
-              <button class="activar" type="button">Toca para usar</button>
+              <iframe data-src="/reloj/?embebido&amp;transparente&amp;persona=MS-2" title="Reloj de Lunna" tabindex="-1"></iframe>
+              <button class="activar" type="button">Toca</button>
             </div>
           </div>
-        </div>
-        <div class="estacion-texto">
-          <p class="etiqueta">Reloj · en la muñeca</p>
-          <h3>Lo esencial, de un vistazo</h3>
-          <p>El reloj mide frecuencia cardiaca y oxigenación y muestra a Lunna con el estado del día. Si algo requiere atención, lo dice sin que el astronauta saque el teléfono.</p>
-          <ul>
-            <li>Sensor óptico para pulso y SpO₂</li>
-            <li>Modo sueño durante la noche</li>
-            <li>Manda sus lecturas a la computadora central</li>
-          </ul>
-          <a class="enlace" data-ruta="/reloj/" href="/reloj/" target="_blank" rel="noopener">Abrir el reloj ↗</a>
-        </div>
-      </article>
-
-      <!-- Computadora central -->
-      <article class="estacion estacion-ancha">
-        <div class="estacion-texto">
-          <p class="etiqueta">Computadora central · médica de a bordo</p>
-          <h3>Toda la tripulación en una pantalla</h3>
-          <p>Recibe los sensores de todos, los evalúa con el modelo LUNNA y le dice a la CMO quién necesita atención y por qué: por desviarse de su normal, por cruzar un umbral clínico, o por ambas.</p>
-          <ul>
-            <li>Semáforo por tripulante y por padecimiento</li>
-            <li>Lo esperado para cada persona, con su banda de incertidumbre</li>
-            <li>Avisos a la tripulación y consultas a Tierra</li>
-          </ul>
-          <a class="enlace" data-ruta="/app/central.html" href="/app/central.html" target="_blank" rel="noopener">Abrir la computadora central ↗</a>
-        </div>
-        <div class="estacion-equipo">
-          <div class="monitor">
-            <div class="pantalla" data-ancho="1440" data-alto="900">
-              <iframe data-src="/app/central.html" title="Computadora central de Lunna" loading="lazy" tabindex="-1"></iframe>
-              <button class="activar" type="button">Toca para usar</button>
-            </div>
-          </div>
-          <div class="monitor-pie" aria-hidden="true"></div>
-        </div>
-      </article>
-
-      <!-- Base en Tierra -->
-      <article class="estacion estacion-ancha estacion-inv">
-        <div class="estacion-texto">
-          <p class="etiqueta">Base en Tierra · cirujano de vuelo</p>
-          <h3>Lo que llega de la nave, con su retraso</h3>
-          <p>Control de misión ve lo mismo que la nave, pero minutos después. Cada dato dice cuándo ocurrió a bordo y con qué antigüedad llegó, y desde aquí se responde con avisos.</p>
-          <ul>
-            <li>Datos procesados y tramas crudas de cada sensor</li>
-            <li>Antigüedad de cada mensaje por el retraso de la luz</li>
-            <li>Avisos y alertas manuales hacia la tripulación</li>
-          </ul>
-          <a class="enlace" data-ruta="/app/base.html" href="/app/base.html" target="_blank" rel="noopener">Abrir la base en Tierra ↗</a>
-        </div>
-        <div class="estacion-equipo">
-          <div class="monitor monitor-tierra">
-            <div class="pantalla" data-ancho="1440" data-alto="900">
-              <iframe data-src="/app/base.html" title="Base en Tierra de Lunna" loading="lazy" tabindex="-1"></iframe>
-              <button class="activar" type="button">Toca para usar</button>
-            </div>
-          </div>
-          <div class="monitor-pie" aria-hidden="true"></div>
-        </div>
-      </article>
-    </section>
-
-    <!-- ═══ Simulación ═══ -->
-    <section class="bloque simulacion" id="simulacion">
-      <header class="bloque-cabeza">
-        <p class="ceja">Simulación de la nave</p>
-        <h2>Míralo funcionar de punta a punta</h2>
-        <p>Una astronauta con sus sensores, la computadora central y la Tierra. Cada equipo abre su propia pantalla y se ven las tramas que envía.</p>
-      </header>
-      <div class="sim-marco">
-        <div class="pantalla" data-ancho="1440" data-alto="900">
-          <iframe data-src="/simulador" title="Simulador de la nave" loading="lazy" tabindex="-1"></iframe>
-          <button class="activar" type="button">Toca para usar</button>
-        </div>
+        </figure>
       </div>
-      <ol class="pasos">
-        <li><b>Prepare mission</b><span>Carga 112 días de historia de los 4 tripulantes; LUNNA aprende el normal de cada uno.</span></li>
-        <li><b>▶ Live</b><span>Los sensores empiezan a transmitir; abre cualquier equipo para ver sus tramas.</span></li>
-        <li><b>Provoca un cuadro</b><span>En la terminal de la PC central: <code>scenario hypoxia</code>, <code>infection</code>, <code>fatigue</code> o <code>hypertension</code>.</span></li>
-      </ol>
-      <div class="centro">
-        <a class="btn" data-ruta="/simulador" href="/simulador" target="_blank" rel="noopener">Entrar a la simulación a pantalla completa</a>
-      </div>
+
+      <a class="bajar" href="#demo" aria-label="Siguiente sección"><span></span></a>
     </section>
 
-    <!-- ═══ Cómo funciona ═══ -->
-    <section class="bloque" id="como">
-      <header class="bloque-cabeza">
-        <p class="ceja">Cómo funciona</p>
-        <h2>Del sensor a la decisión, sin esperar a Tierra</h2>
-      </header>
-      <ol class="flujo">
-        <li>
-          <span class="flujo-num">1</span>
-          <h3>Sensores puestos</h3>
-          <p>Una playera con ECG, respiración y temperatura, un brazalete de presión y un reloj. Envían por Bluetooth a la computadora central.</p>
-        </li>
-        <li>
-          <span class="flujo-num">2</span>
-          <h3>LUNNA evalúa a bordo</h3>
-          <p>Compara cada lectura con lo esperado para <em>esa</em> persona en ese entorno y con umbrales clínicos. Si algo se sale, avisa y dice por qué.</p>
-        </li>
-        <li>
-          <span class="flujo-num">3</span>
-          <h3>La tripulación actúa</h3>
-          <p>El astronauta lo ve en su celular y reloj; la médica de a bordo, en la central. Nadie espera la respuesta de Tierra para empezar.</p>
-        </li>
-        <li>
-          <span class="flujo-num">4</span>
-          <h3>Tierra se entera y responde</h3>
-          <p>Las alertas bajan primero, los datos después. Llegan con el retraso de la luz y Tierra puede responder con avisos.</p>
-        </li>
-      </ol>
-    </section>
-
-    <!-- ═══ Respaldo ═══ -->
-    <section class="bloque" id="respaldo">
-      <header class="bloque-cabeza">
-        <p class="ceja">Con qué se respalda</p>
-        <h2>Honesto sobre lo que sabe y lo que no</h2>
-      </header>
-      <div class="tarjetas">
-        <article class="tarjeta">
-          <h3>Cada umbral dice de dónde viene</h3>
-          <p>Los límites se marcan como <b>[A]</b> si vienen de NASA o se validaron en astronautas, o <b>[T]</b> si son clínicos de Tierra. Los de ambiente de cabina salen de NASA-STD-3001.</p>
-        </article>
-        <article class="tarjeta">
-          <h3>Datos reales donde existen</h3>
-          <p>Los eventos solares son reales, de NASA DONKI. El motor se probó con los laboratorios abiertos de Inspiration4 (NASA OSDR). La tripulación de la demo es simulada y así se rotula.</p>
-        </article>
-        <article class="tarjeta">
-          <h3>Avisa, no diagnostica</h3>
-          <p>Lunna señala qué vigilar y por qué. La decisión clínica es de la médica de a bordo y del cirujano de vuelo. Es un prototipo de hackatón, no validado para uso médico.</p>
-        </article>
-      </div>
-    </section>
-
-    <!-- ═══ Video ═══ -->
-    <section class="bloque" id="video">
-      <header class="bloque-cabeza">
-        <p class="ceja">En 30 segundos</p>
-        <h2>Lunna en video</h2>
-      </header>
-      <div class="video-marco">
-        <video controls preload="metadata" playsinline src="../video/lunna-video.mp4">
-          Tu navegador no puede reproducir el video.
+    <!-- ═══ 2 · Video y botón de la simulación ═══ -->
+    <section class="pagina demo" id="demo">
+      <div class="demo-video entra">
+        <video controls preload="none" playsinline poster="recursos/portada-video.jpg">
+          <source src="../video/lunna-video.mp4" type="video/mp4">
         </video>
       </div>
+      <div class="demo-texto entra">
+        <p class="ceja">En 30 segundos</p>
+        <h2>Un día de Ana en tránsito a Marte</h2>
+        <p>Duerme y entrena mientras sus sensores transmiten. Una tormenta solar la manda al refugio y se pierde el enlace
+          con Tierra: Lunna guía la emergencia a bordo, paso a paso, y Mei la ayuda. Tierra se entera después, con el retraso de la luz.</p>
+        <a class="btn btn-grande" data-ruta="/simulador" href="/simulador" target="_blank" rel="noopener">Probar la simulación ↗</a>
+        <ol class="pasos-cortos">
+          <li><b>Prepare mission</b> carga 112 días de historia</li>
+          <li><b>▶ Live</b> pone a transmitir los sensores</li>
+          <li>En la PC central escribe <code>scenario hypoxia</code></li>
+        </ol>
+        <p class="pantallas-sueltas">Cada pantalla por separado:
+          <a data-ruta="/app/" href="/app/" target="_blank" rel="noopener">celular</a> ·
+          <a data-ruta="/reloj/" href="/reloj/" target="_blank" rel="noopener">reloj</a> ·
+          <a data-ruta="/app/central.html" href="/app/central.html" target="_blank" rel="noopener">central</a> ·
+          <a data-ruta="/app/base.html" href="/app/base.html" target="_blank" rel="noopener">base en Tierra</a></p>
+      </div>
     </section>
 
-    <!-- ═══ Equipo ═══ -->
-    <section class="bloque" id="equipo">
-      <header class="bloque-cabeza">
+    <!-- ═══ 3 · LUNNA: actualización bayesiana ═══ -->
+    <section class="pagina mate" id="lunna">
+      <header class="cabeza entra">
+        <p class="ceja">Cómo funciona, matemáticamente · 1 de 2</p>
+        <h2>LUNNA: el normal de cada persona, con su incertidumbre</h2>
+        <p>Una actualización bayesiana normal-normal en tres capas. Cada fuente de evidencia pesa según su precisión,
+          y toda predicción trae su banda del 95 %.</p>
+      </header>
+
+      <div class="mate-rejilla">
+        <div class="formulas entra">
+          <div class="formula">
+            <span class="formula-nombre">Precisión de cada capa</span>
+            <div class="fila"><math display="block"><msub><mi>λ</mi><mn>0</mn></msub><mo>=</mo><mfrac><mn>1</mn><msubsup><mi>τ</mi><mn>0</mn><mn>2</mn></msubsup></mfrac></math><math display="block"><msub><mi>λ</mi><mi>h</mi></msub><mo>=</mo><mfrac><mi>k</mi><msubsup><mi>σ</mi><mtext>misión</mtext><mn>2</mn></msubsup></mfrac></math><math display="block"><msub><mi>λ</mi><mi>v</mi></msub><mo>=</mo><mfrac><mi>n</mi><msubsup><mi>σ</mi><mtext>día</mtext><mn>2</mn></msubsup></mfrac></math></div>
+            <p>Literatura (prior poblacional) · <i>k</i> misiones previas · <i>n</i> días propios de calibración.</p>
+          </div>
+          <div class="formula">
+            <span class="formula-nombre">Cambio esperado para esa persona</span>
+            <div class="fila"><math display="block"><mi>μ</mi><mo>=</mo>
+              <mfrac>
+                <mrow><msub><mi>λ</mi><mn>0</mn></msub><mo>(</mo><msub><mi>μ</mi><mn>0</mn></msub><mo>+</mo><mi>β</mi><mo>·</mo><mi>x</mi><mo>)</mo><mo>+</mo>
+                  <mfrac><mrow><mo>∑</mo><msub><mi>Δ</mi><mi>h</mi></msub></mrow><msubsup><mi>σ</mi><mtext>misión</mtext><mn>2</mn></msubsup></mfrac><mo>+</mo>
+                  <mfrac><mrow><mo>∑</mo><msub><mi>Δ</mi><mi>d</mi></msub></mrow><msubsup><mi>σ</mi><mtext>día</mtext><mn>2</mn></msubsup></mfrac></mrow>
+                <mrow><msub><mi>λ</mi><mn>0</mn></msub><mo>+</mo><msub><mi>λ</mi><mi>h</mi></msub><mo>+</mo><msub><mi>λ</mi><mi>v</mi></msub></mrow>
+              </mfrac></math><math display="block"><msup><mi>τ</mi><mn>2</mn></msup><mo>=</mo><mfrac><mn>1</mn><mrow><msub><mi>λ</mi><mn>0</mn></msub><mo>+</mo><msub><mi>λ</mi><mi>h</mi></msub><mo>+</mo><msub><mi>λ</mi><mi>v</mi></msub></mrow></mfrac></math></div>
+          </div>
+          <div class="formula">
+            <span class="formula-nombre">Banda del 95 % y qué tan raro es lo medido</span>
+            <div class="fila"><math display="block"><mi>μ</mi><mo>±</mo><mn>1.96</mn><msqrt><msup><mi>τ</mi><mn>2</mn></msup><mo>+</mo><msubsup><mi>σ</mi><mtext>día</mtext><mn>2</mn></msubsup></msqrt></math><math display="block"><mi>z</mi><mo>=</mo><mfrac><mrow><msub><mi>Δ</mi><mtext>medido</mtext></msub><mo>−</mo><mi>μ</mi></mrow><msqrt><msup><mi>τ</mi><mn>2</mn></msup><mo>+</mo><msubsup><mi>σ</mi><mtext>día</mtext><mn>2</mn></msubsup></msqrt></mfrac></math><math display="block"><mi>P</mi><mo>(</mo><mtext>ruido</mtext><mo>)</mo><mo>=</mo><mn>1</mn><mo>−</mo><mtext>erf</mtext><mo>(</mo><mo>|</mo><mi>z</mi><mo>|</mo><mo>/</mo><msqrt><mn>2</mn></msqrt><mo>)</mo></math></div>
+            <p><span class="dot verde"></span>|z| &lt; 2 · <span class="dot ambar"></span>2 ≤ |z| &lt; 3 · <span class="dot rojo"></span>|z| ≥ 3.
+              La calibración <b>se congela el día 14</b>: si siguiera aprendiendo, una deriva lenta se volvería «su nuevo normal».</p>
+          </div>
+        </div>
+
+        <!-- Ejemplo interactivo con el prior real de presión sistólica en órbita -->
+        <div class="jugar entra" aria-label="Ejemplo interactivo de LUNNA">
+          <div class="jugar-cabeza">
+            <b>Pruébalo: presión sistólica en órbita</b>
+            <span>prior real de la semilla: μ₀ = −6,7 %, τ₀ = 5 % · basal 120 mmHg</span>
+          </div>
+          <label class="deslizador">Misiones previas <i>k</i> <output id="o-k">0</output>
+            <input id="r-k" type="range" min="0" max="3" step="1" value="0"></label>
+          <label class="deslizador">Días de calibración <i>n</i> <output id="o-n">0</output>
+            <input id="r-n" type="range" min="0" max="14" step="1" value="0"></label>
+          <div class="pesos" aria-label="Cuánto pesa cada fuente">
+            <div class="peso-barra"><span id="p-pob" class="p-pob"></span><span id="p-his" class="p-his"></span><span id="p-vue" class="p-vue"></span></div>
+            <div class="peso-leyenda"><span><i class="p-pob"></i>literatura <b id="t-pob"></b></span><span><i class="p-his"></i>misiones previas <b id="t-his"></b></span><span><i class="p-vue"></i>su vuelo <b id="t-vue"></b></span></div>
+          </div>
+          <div class="resultado">
+            <div><span>Esperado</span><b id="r-esp">—</b></div>
+            <div><span>Banda del 95 %</span><b id="r-banda">—</b></div>
+          </div>
+          <p class="nota">Ilustrativo: el cambio propio de esta persona (−3 % en sus misiones y en sus días de vuelo) es inventado
+            para que se vea cómo sus datos desplazan a la literatura. El cálculo es el mismo de
+            <a href="https://github.com/DinDevJ/lunna/blob/main/Sistema/backend/src/lunna.ts" target="_blank" rel="noopener">lunna.ts</a>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 4 · Dos criterios y deriva ═══ -->
+    <section class="pagina mate" id="criterios">
+      <header class="cabeza entra">
+        <p class="ceja">Cómo funciona, matemáticamente · 2 de 2</p>
+        <h2>Dos criterios de alerta: manda el peor</h2>
+        <p>Lo personal detecta lo lento; el umbral clínico detecta lo agudo. Ninguno de los dos basta solo.</p>
+      </header>
+
+      <div class="criterios-rejilla">
+        <figure class="grafica entra">
+          <svg id="g-deriva" viewBox="0 0 640 300" role="img" aria-labelledby="g-tit">
+            <title id="g-tit">Lecturas diarias contra la banda esperada: la calibración se congela el día 14 y una deriva lenta termina fuera de la banda</title>
+          </svg>
+          <figcaption><span><i class="ley ley-banda"></i>banda del 95 % de LUNNA</span>
+            <span><i class="ley ley-sigue"></i>un modelo que sigue aprendiendo</span>
+            <span><i class="ley ley-alerta"></i>fuera de su normal</span> <em>· datos ilustrativos</em></figcaption>
+        </figure>
+
+        <div class="criterios entra">
+          <article class="criterio">
+            <span class="etiqueta">Criterio personal · LUNNA</span>
+            <h3>La mediana de la ventana contra lo esperado <em>para ella</em></h3>
+            <p>Mediana de las últimas 24 h contra la predicción y su banda. Detecta derivas lentas que nunca cruzarían un
+              límite clínico: la fatiga acumulada del día 112.</p>
+          </article>
+          <article class="criterio">
+            <span class="etiqueta">Criterio clínico · umbral</span>
+            <h3>La mediana de 5 lecturas en 10 min contra el límite</h3>
+            <p>Una SpO₂ de 87 % es grave aunque sea «normal para ti». Cada límite dice de dónde viene: <b>[A]</b> NASA o
+              validado en astronautas, <b>[T]</b> clínico de Tierra. Un artefacto suelto no dispara.</p>
+          </article>
+          <div class="combina">
+            <math display="block"><mtext>estado</mtext><mo>=</mo><mo>max</mo><mo>(</mo><mtext>personal</mtext><mo>,</mo><mtext>umbral</mtext><mo>)</mo></math>
+            <p>y la alerta dice el motivo: <code>personal</code>, <code>umbral</code> o <code>ambos</code>.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 5 · Modelos de predicción ═══ -->
+    <section class="pagina modelos" id="modelos">
+      <header class="cabeza entra">
+        <p class="ceja">Modelos de predicción que usamos</p>
+        <h2>Cada número sale de un modelo que se puede auditar</h2>
+      </header>
+      <div class="tarjetas entra">
+        <article class="tarjeta">
+          <span class="num">01</span>
+          <h3>LUNNA bayesiano</h3>
+          <p>Valor esperado y banda del 95 % de cada signo vital para esa persona en ese entorno (Tierra, órbita, tránsito,
+            Luna, Marte).</p>
+          <math display="block"><mi>Δ</mi><mo>∼</mo><mi>𝒩</mi><mo>(</mo><mi>μ</mi><mo>,</mo><msup><mi>τ</mi><mn>2</mn></msup><mo>)</mo></math>
+        </article>
+        <article class="tarjeta">
+          <span class="num">02</span>
+          <h3>Base prevuelo encogida</h3>
+          <p>El normal de cada tripulante antes del lanzamiento, encogido hacia la referencia cuando hay pocos datos
+            (Sottas 2007). Se congela al despegar.</p>
+          <math display="block"><msub><mi>μ</mi><mi>i</mi></msub><mo>=</mo><mi>B</mi><msub><mi>m</mi><mtext>ref</mtext></msub><mo>+</mo><mo>(</mo><mn>1</mn><mo>−</mo><mi>B</mi><mo>)</mo><msub><mover><mi>x</mi><mo>‾</mo></mover><mi>i</mi></msub></math>
+        </article>
+        <article class="tarjeta">
+          <span class="num">03</span>
+          <h3>EWMA protegido</h3>
+          <p>Media adaptativa que sólo aprende de días estables, tras 72 h de cuarentena y con tope de ±1,5 DE.</p>
+          <math display="block"><msub><mi>m</mi><mi>t</mi></msub><mo>=</mo><msub><mi>m</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><mi>α</mi><mo>(</mo><msub><mi>x</mi><mi>t</mi></msub><mo>−</mo><msub><mi>m</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>)</mo><mo>,</mo><mspace width=".4em"/><mi>α</mi><mo>=</mo><mn>0.1</mn></math>
+        </article>
+        <article class="tarjeta">
+          <span class="num">04</span>
+          <h3>CUSUM anclado</h3>
+          <p>Acumula desviaciones pequeñas y persistentes respecto al prevuelo. Sólo lo reinicia una revisión humana.</p>
+          <math display="block"><msub><mi>C</mi><mi>t</mi></msub><mo>=</mo><mo>max</mo><mo>(</mo><mn>0</mn><mo>,</mo><msub><mi>C</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><msub><mi>r</mi><mi>t</mi></msub><mo>−</mo><mi>k</mi><mo>)</mo><mo>,</mo><mspace width=".4em"/><mi>k</mi><mo>=</mo><mn>0.5</mn><mo>,</mo><mspace width=".3em"/><mi>h</mi><mo>=</mo><mn>5</mn></math>
+        </article>
+        <article class="tarjeta">
+          <span class="num">05</span>
+          <h3>Semáforo de 20 padecimientos</h3>
+          <p>Dos canales que no se suman: pesos editables por el cirujano de vuelo y razones de verosimilitud publicadas.</p>
+          <math display="block"><msub><mi>T</mi><mi>p</mi></msub><mo>=</mo><munder><mo>∑</mo><mi>g</mi></munder><mo>max</mo><mo>(</mo><msub><mi>μ</mi><mrow><mi>p</mi><mi>v</mi></mrow></msub><msub><mi>a</mi><mrow><mi>p</mi><mi>v</mi></mrow></msub><mo>)</mo><mspace width=".8em"/><mi>Δ</mi><msub><mi>L</mi><mi>p</mi></msub><mo>=</mo><mo>∑</mo><msub><mi>κ</mi><mi>v</mi></msub><mi>ln</mi><msub><mtext>LR</mtext><mi>v</mi></msub></math>
+        </article>
+        <article class="tarjeta">
+          <span class="num">06</span>
+          <h3>Modelos de ECG y ecocardiografía</h3>
+          <p>NeuroKit2 para ECG; PanEcho, EchoNet-Dynamic, EchoCLIP, EchoPrime y MedSAM2 para eco. Su salida es
+            evidencia de nivel N4: <b>nunca da rojo por sí sola</b>.</p>
+        </article>
+      </div>
+      <p class="aviso entra">Los parámetros (α, k, h, cuarentena, cortes del semáforo) son provisionales y están documentados como
+        supuestos. Detalle completo en
+        <a href="https://github.com/DinDevJ/lunna/blob/main/documentacion/README_06_MODELOS_COMPUTACIONALES_ALGORITMOS.md" target="_blank" rel="noopener">modelos y algoritmos</a>.</p>
+    </section>
+
+    <!-- ═══ 6 · Respaldo y equipo ═══ -->
+    <section class="pagina final" id="equipo">
+      <div class="respaldo entra">
+        <article><h3>Cada umbral dice de dónde viene</h3><p>Límites de cabina de NASA-STD-3001; los clínicos marcados <b>[A]</b> o <b>[T]</b>.</p></article>
+        <article><h3>Datos reales donde existen</h3><p>Eventos solares de NASA DONKI; validación con los laboratorios abiertos de Inspiration4 (NASA OSDR). La tripulación de la demo es simulada.</p></article>
+        <article><h3>Avisa, no diagnostica</h3><p>La decisión es de la médica de a bordo y del cirujano de vuelo. Prototipo de hackatón, no validado para uso médico.</p></article>
+      </div>
+      <div class="equipo-bloque entra">
         <p class="ceja">Equipo Monarcas</p>
         <h2>Quiénes lo hicimos</h2>
-      </header>
-      <ul class="equipo">
-        <li><b>Julio</b><span>Computadora central, modelo LUNNA, ESP32 y simulación</span></li>
-        <li><b>Iker</b><span>Variables, motor de padecimientos y validación con Inspiration4</span></li>
-        <li><b>Leo</b><span>Pesos por padecimiento, central y base en Tierra</span></li>
-        <li><b>Diana</b><span>App del celular y asistente Lunna</span></li>
-        <li><b>Katy</b><span>Requisitos, experiencia y diseño de la app</span></li>
-        <li><b>Fani</b><span>Reloj, integración de interfaces y documentación</span></li>
-      </ul>
+        <ul class="nombres">
+          <li><b>Julio</b><span>Computadora central, LUNNA, ESP32 y simulación</span></li>
+          <li><b>Iker</b><span>Variables, motor de padecimientos e Inspiration4</span></li>
+          <li><b>Leo</b><span>Pesos por padecimiento, central y base en Tierra</span></li>
+          <li><b>Diana</b><span>App del celular y asistente Lunna</span></li>
+          <li><b>Katy</b><span>Requisitos, experiencia y diseño de la app</span></li>
+          <li><b>Fani</b><span>Reloj, integración de interfaces y documentación</span></li>
+        </ul>
+      </div>
+      <footer class="pie">
+        Lunna · NASA Space Apps Challenge 2026 · reto <em>Create Health Monitoring Software for Astronauts on Space Missions</em> ·
+        <a href="https://github.com/DinDevJ/lunna" target="_blank" rel="noopener">código</a> · MIT
+      </footer>
     </section>
   </main>
-
-  <footer class="pie">
-    <p>Lunna · Equipo Monarcas · NASA Space Apps Challenge 2026 · reto <em>Create Health Monitoring Software for Astronauts on Space Missions</em></p>
-    <p class="tenue">Prototipo con datos simulados, salvo los eventos solares de NASA DONKI y los laboratorios abiertos de Inspiration4.</p>
-  </footer>
 
   <script src="main.js"></script>
 </body>

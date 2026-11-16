@@ -105,7 +105,8 @@ if [ "${#FALTAN[@]}" -gt 0 ]; then
   apt-get update -qq
   # Que apt no arranque nginx al instalarlo: su sitio de ejemplo pide el 80, que puede ser de otro proyecto
   # (p. ej. un Caddy en Docker) y la instalación fallaría. Se arranca después, ya con el sitio de Lunna.
-  if [ "$NGINX_NUEVO" = 1 ] && [ ! -e /usr/sbin/policy-rc.d ]; then printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d; chmod +x /usr/sbin/policy-rc.d; QUITAR_POLICY=1; fi
+  if [ "$NGINX_NUEVO" = 1 ] && [ ! -e /usr/sbin/policy-rc.d ]; then printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d; chmod +x /usr/sbin/policy-rc.d; QUITAR_POLICY=1
+    trap 'rm -f /usr/sbin/policy-rc.d' EXIT; fi   # se quita aunque apt falle
   apt-get install -y -qq --no-upgrade "${FALTAN[@]}" >/dev/null
   [ "${QUITAR_POLICY:-0}" = 1 ] && rm -f /usr/sbin/policy-rc.d
   # nginx recién instalado (no era de nadie): su sitio de ejemplo sobra y ocuparía el 80

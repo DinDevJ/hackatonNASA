@@ -12,6 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import zlib from 'node:zlib';
 
 const RAIZ = fileURLToPath(new URL('..', import.meta.url));
 const PUERTO = Number(process.env.PUERTO || 8787);
@@ -53,10 +54,27 @@ const servidor = http.createServer((req, res) => {
   if (f) {
     const p = path.join(RAIZ, ...f.split('/'));
     if (!p.startsWith(RAIZ)) { res.writeHead(403); return res.end(); }
-    return fs.readFile(p, (e, d) => {
-      if (e) { res.writeHead(404); return res.end(); }
-      res.writeHead(200, { 'content-type': TIPOS[path.extname(p)] || 'application/octet-stream', 'cache-control': 'no-store' });
-      res.end(d);
+    return fs.stat(p, (e, st) => {
+      if (e || !st.isFile()) { res.writeHead(404); return res.end(); }
+      const tipo = TIPOS[path.extname(p)] || 'application/octet-stream';
+      // Rangos (video): Safari no reproduce un MP4 sin ellos y así se puede adelantar
+      const rango = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
+      if (rango) {
+        const ini = rango[1] ? Number(rango[1]) : Math.max(0, st.size - Number(rango[2]));
+        const fin = rango[1] && rango[2] ? Math.min(Number(rango[2]), st.size - 1) : st.size - 1;
+        if (ini > fin || ini >= st.size) { res.writeHead(416, { 'content-range': `bytes */${st.size}` }); return res.end(); }
+        res.writeHead(206, { 'content-type': tipo, 'accept-ranges': 'bytes', 'content-range': `bytes ${ini}-${fin}/${st.size}`, 'content-length': fin - ini + 1 });
+        return fs.createReadStream(p, { start: ini, end: fin }).pipe(res);
+      }
+      fs.readFile(p, (e2, d) => {
+        if (e2) { res.writeHead(404); return res.end(); }
+        const cab = { 'content-type': tipo, 'cache-control': 'no-store', 'accept-ranges': 'bytes' };
+        // Compresión del texto, como hace nginx en el VPS
+        if (/^text\/|javascript|svg/.test(tipo) && /\bgzip\b/.test(req.headers['accept-encoding'] || '')) {
+          d = zlib.gzipSync(d); Object.assign(cab, { 'content-encoding': 'gzip', vary: 'Accept-Encoding' });
+        }
+        res.writeHead(200, cab); res.end(d);
+      });
     });
   }
   const r = http.request({ host: '127.0.0.1', port: BACK, method: req.method, path: u.pathname + u.search, headers: req.headers },

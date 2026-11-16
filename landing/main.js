@@ -148,7 +148,7 @@
     $$('.vp').forEach((x) => { x.classList.toggle('activa', x === b); x.setAttribute('aria-selected', String(x === b)); });
     video.poster = b.dataset.poster;
     video.querySelector('source').src = b.dataset.src;
-    video.load(); pausadoAMano = false; intentar();
+    video.preload = 'auto'; video.load(); pausadoAMano = false; intentar();
   }));
 
   // ── LUNNA interactivo: misma fórmula que Sistema/backend/src/lunna.ts ──

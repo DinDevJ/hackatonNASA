@@ -162,6 +162,9 @@ echo "respaldo de /etc/nginx: $RESPALDO"
 revertir() { echo "Restaurando /etc/nginx desde el respaldo…" >&2; rm -rf /etc/nginx; tar -xzf "$RESPALDO" -C /; nginx -t >/dev/null 2>&1 && systemctl reload nginx || true; }
 
 mkdir -p /etc/nginx/snippets
+# Micro-caché de la API (sólo de Lunna), propiedad del usuario con el que corre nginx
+USUARIO_NGINX="$(sed 's/#.*//' /etc/nginx/nginx.conf | grep -Eo '^\s*user\s+[^;[:space:]]+' | awk '{print $2}' | head -1 || true)"
+mkdir -p /var/cache/nginx/lunna && chown "${USUARIO_NGINX:-www-data}" /var/cache/nginx/lunna
 cp "$DIR/despliegue/nginx-lunna-cabeceras.conf" /etc/nginx/snippets/lunna-cabeceras.conf
 cp "$DIR/despliegue/nginx-lunna-proxy.conf" /etc/nginx/snippets/lunna-proxy.conf
 sed -e "s#__DOMINIO__#${DOMINIO:-_}#g" -e "s#__DIR__#$DIR#g" -e "s#__PUERTO_WEB__#$PUERTO_WEB#g" \

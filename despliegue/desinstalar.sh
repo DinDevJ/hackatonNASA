@@ -7,5 +7,6 @@ systemctl disable --now lunna 2>/dev/null || true
 rm -f /etc/systemd/system/lunna.service && systemctl daemon-reload
 rm -f /etc/nginx/sites-enabled/lunna /etc/nginx/sites-available/lunna \
       /etc/nginx/snippets/lunna-cabeceras.conf /etc/nginx/snippets/lunna-proxy.conf
+rm -rf /var/cache/nginx/lunna
 if nginx -t; then systemctl reload nginx; else echo "⚠ nginx -t falló: revisa antes de recargar"; exit 1; fi
 echo "✓ Lunna desinstalado. Respaldos de nginx en /root/lunna-respaldos/ (worker_connections se dejó como estaba)."

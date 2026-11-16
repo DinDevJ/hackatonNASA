@@ -76,7 +76,7 @@ La demo queda **abierta a todos** (decisión del equipo). Para que aguante y no 
 
 - **El backend sólo escucha en `127.0.0.1`**: a internet se llega únicamente por nginx.
 - **Límites por IP**, generosos porque en una sede muchos comparten la IP del Wi-Fi:
-  lectura 60/s (ráfaga 400); escrituras 20/s con cola de 1 000 (no se rechazan las ráfagas de «Prepare mission»);
+  lectura 300/s (ráfaga 1 000; la micro-caché de 1 s protege al backend); escrituras 20/s con cola de 1 000 (no se rechazan las ráfagas de «Prepare mission»);
   **reiniciar la demo: 6 por minuto**; eventos en vivo: 400 por IP y 3 000 en total. Al pasarse responde 429.
 - **Cabeceras de seguridad**: `nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy`, `Permissions-Policy`,
   `Cross-Origin-Opener-Policy`; sin versión de nginx; sin CORS (ninguna otra página puede escribir en la API).
@@ -123,6 +123,9 @@ En un VPS simulado (Ubuntu 24.04, nginx 1.24) con **otro proyecto ya en el puert
 - Cabeceras de seguridad presentes, gzip activo, eventos en vivo sin búfer, reiniciar limitado (429 a la 5.ª),
   60 escrituras simultáneas aceptadas.
 - `desinstalar.sh` quita sólo lo de Lunna.
+- **Carga**: 50 visitantes saliendo por una misma IP (como una sede con un Wi-Fi), cada uno con la central, el
+  celular y 5 eventos en vivo (250 en total), durante 30 s: 3 578 peticiones, todas 200, p50 1 ms y p95 5 ms; el
+  backend siguió respondiendo en ~1 ms y usó ~165 MB. «Prepare mission» por nginx: 11,7 s.
 
 No se probó con systemd real ni con certbot: el entorno de prueba no tiene systemd ni dominio.
 

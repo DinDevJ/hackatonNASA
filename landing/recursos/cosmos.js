@@ -1,15 +1,17 @@
 // Lunna · fondo galáctico con microanimaciones (canvas, sin dependencias).
 //
-// Capas, de atrás hacia adelante: nebulosas que respiran y derivan, una galaxia espiral que gira despacio,
-// estrellas en tres profundidades que titilan (con paralaje al desplazarse), planetas, un satélite que cruza
-// de vez en cuando y alguna estrella fugaz. Lo pesado (nebulosas, galaxia, planetas) se dibuja una sola vez
-// en lienzos aparte; cada cuadro sólo los coloca. Se detiene con la pestaña oculta y, con «reducir movimiento»,
-// pinta un único cuadro estático.
-(function () {
+// Dos lienzos. Atrás (#cosmos-fondo): nebulosas y una galaxia espiral, pintadas UNA vez por tamaño de ventana; su
+// «respirar» lo hace el compositor con CSS (no se redibujan: eran el 70–90 % del costo). Adelante (#cosmos): estrellas
+// en tres profundidades que titilan (con paralaje al desplazarse), planetas, un satélite que cruza de vez en cuando y
+// alguna estrella fugaz. Se detiene con la pestaña oculta; en equipos modestos va a 20 cuadros/s con menos estrellas;
+// con «reducir movimiento» pinta un único cuadro estático.
+(window.requestIdleCallback || ((f) => setTimeout(f, 200)))(function () {
   'use strict';
-  const lienzo = document.getElementById('cosmos');
+  const lienzo = document.getElementById('cosmos'), fondo = document.getElementById('cosmos-fondo');
   if (!lienzo || !lienzo.getContext) return;
-  const ctx = lienzo.getContext('2d');
+  const ctx = lienzo.getContext('2d'), ctxF = fondo && fondo.getContext('2d');
+  const ligero = (navigator.hardwareConcurrency || 8) <= 4 || matchMedia('(max-width: 760px)').matches;
+  const CADA_MS = ligero ? 50 : 30;
   const quieto = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const DPR = Math.min(window.devicePixelRatio || 1, 1.5);
   let W = 0, H = 0, estrellas = [], fugaz = null, proximaFugaz = 4000, satelite = null, proximoSatelite = 6000;
@@ -34,9 +36,9 @@
     return c;
   }
   const NEBULOSAS = [
-    { img: nebulosa(900, ['124,92,255', '167,139,250', '56,189,248']), x: 0.82, y: 0.12, esc: 1.2, vel: 0.00004, fase: 0 },
-    { img: nebulosa(800, ['56,189,248', '45,212,191', '99,102,241']), x: 0.08, y: 0.55, esc: 1.1, vel: -0.00003, fase: 2 },
-    { img: nebulosa(700, ['236,72,153', '167,139,250', '124,92,255']), x: 0.62, y: 0.92, esc: 0.9, vel: 0.00005, fase: 4 },
+    { img: nebulosa(560, ['124,92,255', '167,139,250', '56,189,248']), x: 0.82, y: 0.12, esc: 1.2, giro: 0.4 },
+    { img: nebulosa(500, ['56,189,248', '45,212,191', '99,102,241']), x: 0.08, y: 0.55, esc: 1.1, giro: -0.7 },
+    { img: nebulosa(440, ['236,72,153', '167,139,250', '124,92,255']), x: 0.62, y: 0.92, esc: 0.9, giro: 1.1 },
   ];
 
   // ── Galaxia espiral de dos brazos ──
@@ -90,7 +92,7 @@
   ];
 
   function crearEstrellas() {
-    const n = Math.round((W * H) / 2300);
+    const n = Math.round((W * H) / (ligero ? 3800 : 2300));
     estrellas = Array.from({ length: n }, () => {
       const capa = azar() < 0.62 ? 0 : azar() < 0.75 ? 1 : 2;
       return { x: azar() * W, y: azar() * H * 1.6, r: [0.5, 0.85, 1.3][capa] * (0.7 + azar() * 0.6), capa,
@@ -103,26 +105,32 @@
     lienzo.style.width = W + 'px'; lienzo.style.height = H + 'px';
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     semilla = 20261115; crearEstrellas();
+    pintarFondo();
+  }
+
+  // Capa de atrás: se pinta una vez por tamaño (un poco más grande que la ventana: el CSS la escala y la desplaza)
+  function pintarFondo() {
+    if (!ctxF) return;
+    const D = Math.min(DPR, 1);                                // es difusa: no necesita más resolución
+    fondo.width = Math.round(W * D); fondo.height = Math.round(H * D);
+    fondo.style.width = W + 'px'; fondo.style.height = H + 'px';
+    ctxF.setTransform(D, 0, 0, D, 0, 0); ctxF.clearRect(0, 0, W, H);
+    ctxF.globalAlpha = 0.7;
+    for (const n of NEBULOSAS) {
+      const tam = Math.max(W, H) * 0.75 * n.esc;
+      ctxF.save(); ctxF.translate(n.x * W, n.y * H); ctxF.rotate(n.giro);
+      ctxF.drawImage(n.img, -tam / 2, -tam / 2, tam, tam); ctxF.restore();
+    }
+    const gt = Math.min(W, H) * 0.42;
+    ctxF.globalAlpha = 0.4;
+    ctxF.save(); ctxF.translate(W * 0.2, H * 0.84); ctxF.rotate(-0.5);
+    ctxF.drawImage(GALAXIA, -gt / 2, -gt / 2, gt, gt); ctxF.restore();
+    ctxF.globalAlpha = 1;
   }
 
   function cuadro(t) {
     const sy = scrollY;
     ctx.clearRect(0, 0, W, H);
-    // Nebulosas
-    for (const n of NEBULOSAS) {
-      const tam = Math.max(W, H) * 0.75 * n.esc;
-      ctx.save();
-      ctx.globalAlpha = 0.6 + 0.2 * Math.sin(t * 0.00025 + n.fase);
-      ctx.translate(n.x * W + Math.sin(t * 0.00006 + n.fase) * 30, n.y * H - sy * 0.03 + Math.cos(t * 0.00005 + n.fase) * 22);
-      ctx.rotate(t * n.vel);
-      ctx.drawImage(n.img, -tam / 2, -tam / 2, tam, tam);
-      ctx.restore();
-    }
-    // Galaxia
-    const gt = Math.min(W, H) * 0.42;
-    ctx.save(); ctx.globalAlpha = 0.4;
-    ctx.translate(W * 0.2, H * 0.84 - sy * 0.02); ctx.rotate(-0.5 + t * 0.000018);
-    ctx.drawImage(GALAXIA, -gt / 2, -gt / 2, gt, gt); ctx.restore();
     // Estrellas
     for (const e of estrellas) {
       const par = [0.04, 0.09, 0.16][e.capa];
@@ -178,11 +186,14 @@
 
   let ultimo = 0;
   function bucle(t) {
-    if (!document.hidden && t - ultimo > 30) { cuadro(t); ultimo = t; }   // ~30 cuadros por segundo bastan para el fondo
+    if (!document.hidden && t - ultimo > CADA_MS) { cuadro(t); ultimo = t; }   // 20–33 cuadros por segundo bastan para el fondo
     requestAnimationFrame(bucle);
   }
-  addEventListener('resize', () => { medir(); if (quieto) cuadro(0); });
-  medir();
-  if (quieto) { cuadro(0); addEventListener('scroll', () => cuadro(0), { passive: true }); }
-  else requestAnimationFrame(bucle);
-})();
+  function arrancar() {
+    addEventListener('resize', () => { medir(); if (quieto) cuadro(0); });
+    medir();
+    if (quieto) { cuadro(0); addEventListener('scroll', () => cuadro(0), { passive: true }); }
+    else requestAnimationFrame(bucle);
+  }
+  arrancar();
+}, { timeout: 1500 });

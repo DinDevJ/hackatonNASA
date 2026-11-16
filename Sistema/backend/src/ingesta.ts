@@ -225,6 +225,13 @@ export function priorDe(db: BD, variable: string, entorno: Entorno): Prior | nul
  * Predicción para una persona, una variable y el entorno vigente en `t`.
  * `null` si falta el prior o el basal: sin eso no se predice nada.
  */
+/**
+ * Medianas diarias de la ventana de calibración ya cerrada. No cambian una vez pasado el día 14, así que se guardan y
+ * sólo se recalculan si cambia el número de muestras de esa ventana (llegó un dato atrasado o se recargó la demo).
+ * Sin esto, cada muestra que llega volvía a leer y agrupar miles de filas.
+ */
+const cacheCalibracion = new Map<string, { n: number; calibracion: number[] }>();
+
 export function prediccionPara(db: BD, tripulante: string, variable: string, t: string):
   (Prediccion & { calibrando: boolean; dia: number }) | null {
   const entorno = entornoEn(db, t);
@@ -246,18 +253,31 @@ export function prediccionPara(db: BD, tripulante: string, variable: string, t: 
   if (inicio && entorno !== 'tierra') {
     const finVentana = new Date(Date.parse(inicio) + VENTANA_CALIBRACION_DIAS * DIA_MS).toISOString();
     dia = Math.floor((Date.parse(t) - Date.parse(inicio)) / DIA_MS);
-    const filas = db.prepare(
-      `SELECT valor, t_scet FROM muestras
-       WHERE tripulante = ? AND variable = ? AND t_scet >= ? AND t_scet < ? AND valor IS NOT NULL
-         AND (calidad IS NULL OR json_extract(calidad, '$.contacto') IS NOT 0)`,
-    ).all(tripulante, variable, inicio, finVentana < t ? finVentana : t) as Array<{ valor: number; t_scet: string }>;
-    // Agrupa por DÍA DE MISIÓN, no por fecha de calendario.
-    const porDia = new Map<number, number[]>();
-    for (const f of filas) {
-      const d = Math.floor((Date.parse(f.t_scet) - Date.parse(inicio)) / DIA_MS);
-      porDia.set(d, [...(porDia.get(d) ?? []), f.valor]);
+    const cerrada = finVentana <= t;
+    const clave = `${tripulante}|${variable}|${inicio}|${basal.valor}|${prior.escala}`;
+    const n = cerrada
+      ? (db.prepare(`SELECT COUNT(*) AS n FROM muestras WHERE tripulante = ? AND variable = ? AND t_scet >= ? AND t_scet < ?`)
+          .get(tripulante, variable, inicio, finVentana) as { n: number }).n
+      : -1;
+    const guardada = cerrada ? cacheCalibracion.get(clave) : undefined;
+    if (guardada && guardada.n === n) {
+      calibracion = guardada.calibracion;
+    } else {
+      const filas = db.prepare(
+        `SELECT valor, t_scet FROM muestras
+         WHERE tripulante = ? AND variable = ? AND t_scet >= ? AND t_scet < ? AND valor IS NOT NULL
+           AND (calidad IS NULL OR json_extract(calidad, '$.contacto') IS NOT 0)`,
+      ).all(tripulante, variable, inicio, finVentana < t ? finVentana : t) as Array<{ valor: number; t_scet: string }>;
+      // Agrupa por DÍA DE MISIÓN, no por fecha de calendario.
+      const porDia = new Map<number, number[]>();
+      for (const f of filas) {
+        const d = Math.floor((Date.parse(f.t_scet) - Date.parse(inicio)) / DIA_MS);
+        const dia = porDia.get(d);
+        if (dia) dia.push(f.valor); else porDia.set(d, [f.valor]);
+      }
+      calibracion = [...porDia.values()].map((vs) => aDelta(mediana(vs), basal.valor, prior.escala));
+      if (cerrada) cacheCalibracion.set(clave, { n, calibracion });
     }
-    calibracion = [...porDia.values()].map((vs) => aDelta(mediana(vs), basal.valor, prior.escala));
   }
 
   const pred = predecir({ prior, basal: basal.valor, covariables: tp ?? null, historial, calibracion });
@@ -467,4 +487,4 @@ function vigilar(db: BD, tripulante: string, variable: string, t: string): void 
 }
 
 /** Para pruebas y para reiniciar la demo: olvida los estados recordados. */
-export function reiniciarEstados(): void { recordados = new WeakMap(); }
+export function reiniciarEstados(): void { recordados = new WeakMap(); cacheCalibracion.clear(); }

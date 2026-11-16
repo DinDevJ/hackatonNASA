@@ -7,7 +7,8 @@
   <meta name="description" content="Lunna vigila la salud de cada astronauta contra su propio normal y avisa a la médica de a bordo antes de que un problema crezca. NASA Space Apps Challenge 2026 · Equipo Monarcas.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
   <link rel="icon" href="recursos/icono.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
   <!-- Idioma antes de pintar: evita ver el español un instante si se eligió inglés -->
@@ -15,6 +16,7 @@
 </head>
 <body>
   <div class="cielo" aria-hidden="true"></div>
+  <canvas id="cosmos-fondo" aria-hidden="true"></canvas>
   <canvas id="cosmos" aria-hidden="true"></canvas>
 
   <!-- Traducción: cada texto en español lleva su inglés en data-en (data-en-aria / data-en-title para atributos). -->
@@ -55,7 +57,7 @@
 
   <main>
     <!-- ═══ 1 · Los tres dispositivos, de un vistazo ═══ -->
-    <section class="pagina portada" id="inicio">
+    <section class="pagina portada visible" id="inicio">
       <div class="portada-texto entra">
         <p class="ceja" data-en="NASA Space Apps Challenge 2026 · Team Monarcas">NASA Space Apps Challenge 2026 · Equipo Monarcas</p>
         <h1 data-en="Health on board, <span>without waiting for Earth.</span>">Salud a bordo, <span>sin esperar a la Tierra.</span></h1>
@@ -108,14 +110,14 @@
     <section class="pagina demo" id="demo">
       <div class="demo-izq entra">
       <div class="video-pestanas" role="tablist" aria-label="Videos" data-en-aria="Videos">
-        <button class="vp activa" type="button" role="tab" aria-selected="true" data-src="../video/lunna-video.mp4" data-poster="recursos/portada-video.jpg" data-en="Official video">Video oficial</button>
-        <button class="vp" type="button" role="tab" aria-selected="false" data-src="recursos/video-producto.mp4" data-poster="recursos/portada-producto.webp" data-en="Product video">Video del producto</button>
+        <button class="vp activa" type="button" role="tab" aria-selected="true" data-src="recursos/video-oficial-720.mp4" data-poster="recursos/portada-video.jpg" data-en="Official video">Video oficial</button>
+        <button class="vp" type="button" role="tab" aria-selected="false" data-src="recursos/video-producto-720.mp4" data-poster="recursos/portada-producto.webp" data-en="Product video">Video del producto</button>
       </div>
       <div class="demo-video">
         <!-- Video oficial: se reproduce solo, en silencio y en bucle (los navegadores sólo permiten autoplay sin sonido) -->
-        <video id="video-oficial" autoplay muted loop playsinline preload="auto" poster="recursos/portada-video.jpg"
+        <video id="video-oficial" muted loop playsinline preload="none" poster="recursos/portada-video.jpg"
           aria-label="Video oficial de Lunna, 30 segundos" data-en-aria="Official Lunna video, 30 seconds">
-          <source src="../video/lunna-video.mp4" type="video/mp4">
+          <source src="recursos/video-oficial-720.mp4" type="video/mp4">
         </video>
         <div class="video-botones">
           <button class="video-btn" id="b-sonido" type="button" aria-pressed="false">
@@ -292,7 +294,7 @@
       </header>
       <div class="semaforo-rejilla entra">
         <figure class="captura">
-          <img src="recursos/central-semaforo.webp" width="1600" height="1376" decoding="async" alt="Pestaña Semáforo de la computadora central" data-en-alt="Traffic light tab of the central computer">
+          <img src="recursos/central-semaforo.webp" fetchpriority="low" width="1600" height="1376" decoding="async" alt="Pestaña Semáforo de la computadora central" data-en-alt="Traffic light tab of the central computer">
           <figcaption data-en="Traffic light with the SIMULATED crew (SIM-T01 to SIM-T05 and the four from the scenario).">Semáforo con la tripulación SIMULADA (SIM-T01 a SIM-T05 y los cuatro del escenario).</figcaption>
         </figure>
         <div class="colores">
@@ -400,7 +402,7 @@
             <p data-en="No real inference. They only passed a loading test (architecture without weights and a random tensor), which is not inference. The echo model weights add up to about 6.3 GB.">Sin inferencia real. Solo pasaron una prueba de carga (arquitectura sin pesos y tensor aleatorio), que no es inferencia. Los pesos de los modelos de eco suman unos 6,3 GB.</p></article>
         </div>
         <figure class="captura entra">
-          <img src="recursos/central-modelos.webp" width="1600" height="790" decoding="async" alt="Tarjeta Analizar con modelos" data-en-alt="Analyze with models card">
+          <img src="recursos/central-modelos.webp" fetchpriority="low" width="1600" height="790" decoding="async" alt="Tarjeta Analizar con modelos" data-en-alt="Analyze with models card">
           <figcaption data-en="The screen itself says what is missing: “environment not installed”, “loading test (no weights)”.">La propia pantalla dice lo que falta: «entorno no instalado», «prueba de carga (sin pesos)».</figcaption>
         </figure>
       </div>
@@ -457,26 +459,26 @@
         <p data-en="NASA Space Apps Challenge 2026 · 15 November 2026. Click any photo to enlarge it.">NASA Space Apps Challenge 2026 · 15 de noviembre de 2026. Haz clic en una foto para verla en grande.</p>
       </header>
       <div class="fotos entra">
-        <figure class="foto"><button class="foto-abrir" type="button" data-grande="recursos/galeria/realidad-virtual.webp">
-            <img src="recursos/galeria/realidad-virtual.webp" width="1000" height="1333" decoding="async" alt="Probando un visor de realidad virtual" data-en-alt="Trying out a virtual-reality headset"></button>
+        <figure class="foto"><button class="foto-abrir" type="button" data-grande="recursos/galeria/grande/realidad-virtual.webp">
+            <img src="recursos/galeria/realidad-virtual.webp" fetchpriority="low" width="560" height="746" decoding="async" alt="Probando un visor de realidad virtual" data-en-alt="Trying out a virtual-reality headset"></button>
           <figcaption data-en="Trying out a virtual-reality headset">Probando un visor de realidad virtual</figcaption></figure>
-        <figure class="foto"><button class="foto-abrir" type="button" data-grande="recursos/galeria/revision-en-equipo.webp">
-            <img src="recursos/galeria/revision-en-equipo.webp" width="1000" height="1333" decoding="async" alt="Revisando el avance en equipo" data-en-alt="Reviewing progress as a team"></button>
+        <figure class="foto"><button class="foto-abrir" type="button" data-grande="recursos/galeria/grande/revision-en-equipo.webp">
+            <img src="recursos/galeria/revision-en-equipo.webp" fetchpriority="low" width="560" height="746" decoding="async" alt="Revisando el avance en equipo" data-en-alt="Reviewing progress as a team"></button>
           <figcaption data-en="Reviewing progress as a team">Revisando el avance en equipo</figcaption></figure>
         <figure class="foto"><button class="foto-abrir" type="button" data-grande="recursos/galeria/escritorio.webp">
-            <img src="recursos/galeria/escritorio.webp" width="437" height="815" decoding="async" alt="Las interfaces de Lunna en pantalla" data-en-alt="Lunna’s interfaces on screen"></button>
+            <img src="recursos/galeria/escritorio.webp" fetchpriority="low" width="437" height="815" decoding="async" alt="Las interfaces de Lunna en pantalla" data-en-alt="Lunna’s interfaces on screen"></button>
           <figcaption data-en="Lunna’s interfaces on screen">Las interfaces de Lunna en pantalla</figcaption></figure>
         <figure class="foto"><button class="foto-abrir" type="button" data-grande="recursos/galeria/video-en-pantalla.webp">
-            <img src="recursos/galeria/video-en-pantalla.webp" width="436" height="563" decoding="async" alt="El video de Lunna, recién terminado" data-en-alt="The Lunna video, just finished"></button>
+            <img src="recursos/galeria/video-en-pantalla.webp" fetchpriority="low" width="436" height="563" decoding="async" alt="El video de Lunna, recién terminado" data-en-alt="The Lunna video, just finished"></button>
           <figcaption data-en="The Lunna video, just finished">El video de Lunna, recién terminado</figcaption></figure>
         <figure class="foto"><button class="foto-abrir" type="button" data-grande="recursos/galeria/trabajando.webp">
-            <img src="recursos/galeria/trabajando.webp" width="436" height="615" decoding="async" alt="Estaciones de trabajo" data-en-alt="Workstations"></button>
+            <img src="recursos/galeria/trabajando.webp" fetchpriority="low" width="436" height="615" decoding="async" alt="Estaciones de trabajo" data-en-alt="Workstations"></button>
           <figcaption data-en="Workstations">Estaciones de trabajo</figcaption></figure>
         <figure class="foto"><button class="foto-abrir" type="button" data-grande="recursos/galeria/equipo-en-pantalla.webp">
-            <img src="recursos/galeria/equipo-en-pantalla.webp" width="437" height="365" decoding="async" alt="La sección del equipo en la landing" data-en-alt="The team section on the landing page"></button>
+            <img src="recursos/galeria/equipo-en-pantalla.webp" fetchpriority="low" width="437" height="365" decoding="async" alt="La sección del equipo en la landing" data-en-alt="The team section on the landing page"></button>
           <figcaption data-en="The team section on the landing page">La sección del equipo en la landing</figcaption></figure>
         <figure class="foto"><button class="foto-abrir" type="button" data-grande="recursos/galeria/comida.webp">
-            <img src="recursos/galeria/comida.webp" width="329" height="364" decoding="async" alt="Cena para seguir programando" data-en-alt="Dinner to keep coding"></button>
+            <img src="recursos/galeria/comida.webp" fetchpriority="low" width="329" height="364" decoding="async" alt="Cena para seguir programando" data-en-alt="Dinner to keep coding"></button>
           <figcaption data-en="Dinner to keep coding">Cena para seguir programando</figcaption></figure>
       </div>
       <dialog class="visor" id="visor" aria-label="Foto ampliada" data-en-aria="Enlarged photo">
@@ -513,7 +515,7 @@
     </section>
   </main>
 
-  <script src="recursos/cosmos.js"></script>
+  <script src="recursos/cosmos.js" defer></script>
   <script src="main.js"></script>
 </body>
 </html>

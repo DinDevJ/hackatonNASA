@@ -14,7 +14,7 @@ import { validarEsquema, type Esquema } from './esquema.ts';
 import { bus, entornoEn, fijarVentanaPersonal, ingerirBinaria, ingerirJson, prediccionPara, ventanaPersonal, VENTANA_PERSONAL_MISION_MIN, type TramaJson } from './ingesta.ts';
 import { ENTORNOS, type Entorno, type Prior } from './lunna.ts';
 import { cargarInicial, importarSemillas, type SalidaTipo } from './semillas.ts';
-import { encolarAvisoNave, escribirEnlace, iniciarEnlace, leerEnlace, redactarAviso } from './enlace.ts';
+import { encolarAvisoNave, enSavepoint, escribirEnlace, iniciarEnlace, leerEnlace, redactarAviso } from './enlace.ts';
 import { estadoNave, estadoTierra } from './enlace-https.ts';
 import { idEmisor } from './sincro.ts';
 import { migrarSalud, sembrarSalud } from './salud.ts';
@@ -375,16 +375,19 @@ export function manejador(db: BD, opciones: OpcionesServidor = {}) {
     const { b64 } = JSON.parse(crudo.toString()) as { b64: string | string[] };
     const lista = Array.isArray(b64) ? b64 : [b64];
     const tot = { aceptadas: 0, duplicadas: 0, rechazos: [] as string[] };
-    for (const x of lista) {
-      const r = ingerirBinaria(db, new Uint8Array(Buffer.from(x, 'base64')));
-      tot.aceptadas += r.aceptadas; tot.duplicadas += r.duplicadas; tot.rechazos.push(...r.rechazos);
-    }
+    // Un lote = una transacción: cada INSERT suelto costaba un commit a disco.
+    enSavepoint(db, () => {
+      for (const x of lista) {
+        const r = ingerirBinaria(db, new Uint8Array(Buffer.from(x, 'base64')));
+        tot.aceptadas += r.aceptadas; tot.duplicadas += r.duplicadas; tot.rechazos.push(...r.rechazos);
+      }
+    });
     return tot;
   });
   ruta('POST', '/api/tramas', async (req) => {
     const t = await cuerpoJson<TramaJson | TramaJson[]>(req);
     const lista = Array.isArray(t) ? t : [t];
-    return lista.map((x) => ingerirJson(db, x));
+    return enSavepoint(db, () => lista.map((x) => ingerirJson(db, x)));
   });
   ruta('POST', '/api/semillas', async (req) => importarSemillas(db, await cuerpoJson<SalidaTipo>(req)));
 

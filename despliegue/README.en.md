@@ -77,7 +77,7 @@ The demo stays **open to everyone** (team decision). So that it holds up and can
 
 - **The backend only listens on `127.0.0.1`**: the internet reaches it only through nginx.
 - **Per-IP limits**, generous because at a venue many people share the Wi-Fi IP:
-  reads 60/s (burst 400); writes 20/s with a queue of 1,000 (the bursts from "Prepare mission" are not rejected);
+  reads 300/s (burst 1,000; the 1 s micro-cache protects the backend); writes 20/s with a queue of 1,000 (the bursts from "Prepare mission" are not rejected);
   **resetting the demo: 6 per minute**; live events: 400 per IP and 3,000 in total. Beyond that it answers 429.
 - **Security headers**: `nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy`, `Permissions-Policy`,
   `Cross-Origin-Opener-Policy`; no nginx version; no CORS (no other page can write to the API).
@@ -124,6 +124,9 @@ On a simulated VPS (Ubuntu 24.04, nginx 1.24) with **another project already on 
 - Security headers present, gzip active, live events unbuffered, reset limited (429 on the 5th), 60 simultaneous
   writes accepted.
 - `desinstalar.sh` removes only Lunna's pieces.
+- **Load**: 50 visitors behind a single IP (like a venue on one Wi-Fi), each with the central computer, the phone
+  and 5 live-event streams (250 in total), for 30 s: 3,578 requests, all 200, p50 1 ms and p95 5 ms; the backend
+  kept answering in ~1 ms and used ~165 MB. "Prepare mission" through nginx: 11.7 s.
 
 Not tested with real systemd or certbot: the test environment has neither systemd nor a domain.
 

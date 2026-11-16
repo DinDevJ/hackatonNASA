@@ -396,5 +396,9 @@ math { font-family: 'STIX Two Math', 'Cambria Math', 'Latin Modern Math', math; 
 @media (max-width: 1100px) { .nav nav { display: none; } }
 
 /* ── Fondo galáctico animado (recursos/cosmos.js) ── */
-#cosmos { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+#cosmos, #cosmos-fondo { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+/* Nebulosas y galaxia: se pintan una vez; el «respirar» lo hace el compositor (sin redibujar cada cuadro) */
+#cosmos-fondo { animation: nebulosas 26s ease-in-out infinite alternate; will-change: transform, opacity; }
+@keyframes nebulosas { from { transform: scale(1) translate(0, 0); opacity: .82; } to { transform: scale(1.06) translate(-1.2%, .8%); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { #cosmos-fondo { animation: none; } }
 .cielo::before { display: none; }   /* las estrellas fijas las reemplaza el canvas */

@@ -174,7 +174,8 @@ CREATE TABLE IF NOT EXISTS enlace_estado (clave TEXT PRIMARY KEY, valor TEXT);  
 
 export function abrir(ruta = 'eva.db'): BD {
   const db = new DatabaseSync(ruta);
-  db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;');
+  // synchronous=NORMAL con WAL: no corrompe la base; ante un corte de luz se pueden perder los últimos commits.
+  db.exec('PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;');
   db.exec(ESQUEMA_SQL);
   // Bases creadas antes de las alertas manuales: añadir las columnas que faltan.
   const cols = (db.prepare(`PRAGMA table_info(subida)`).all() as Array<{ name: string }>).map((c) => c.name);
@@ -196,6 +197,9 @@ export function abrir(ruta = 'eva.db'): BD {
     db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS ux_${tabla}_emisor_seq ON ${tabla}(emisor, seq)`);
   }
   db.exec(`CREATE INDEX IF NOT EXISTS ix_bajada_pend ON bajada(emisor, ack, prioridad, seq)`);
+  // El enlace revisa la cola cada segundo: sin estos índices recorría toda la tabla (que crece con los datos crudos).
+  db.exec(`CREATE INDEX IF NOT EXISTS ix_bajada_sin_enviar ON bajada(id) WHERE t_envio IS NULL`);
+  db.exec(`CREATE INDEX IF NOT EXISTS ix_bajada_por_notificar ON bajada(t_ert) WHERE notificado = 0`);
   return db;
 }
 

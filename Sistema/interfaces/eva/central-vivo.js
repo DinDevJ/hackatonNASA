@@ -24,7 +24,7 @@
 
   const REINTENTO_MS = 5000;    // sin conexión: cada cuánto se vuelve a intentar
   const SONDEO_MS = 10000;      // con conexión: red de seguridad (p. ej. «Reiniciar» no emite evento)
-  const FRENO_MS = 2000;        // como mucho una recarga cada 2 s aunque lleguen muestras cada segundo
+  const FRENO_MS = 5000;        // como mucho una recarga cada 5 s aunque lleguen muestras cada segundo (cada recarga son ~10 consultas)
 
   const N = { verde: 0, ambar: 1, rojo: 2 };
   const nivel = (estado) => (estado in N ? N[estado] : null);

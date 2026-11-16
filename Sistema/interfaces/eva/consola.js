@@ -691,10 +691,15 @@
     const atm = el.querySelector("#fm-atm-c"), solLuz = el.querySelector(".cn-sol-luz");
     const capas = [[el.querySelector(".lejos"), 3], [el.querySelector(".media"), 9], [el.querySelector(".cerca"), 26]];
     const reducir = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let propio = 0, suave = 0;
-    const paso = () => {
+    let propio = 0, suave = 0, previo = 0;
+    // Dentro de otra página (la landing) comparte el hilo principal con ella: ~10 cuadros/s bastan para la órbita.
+    const incrustada = window.self !== window.top, CADA_MS = incrustada ? 100 : 0;
+    const paso = (ahora = 0) => {
+      if (ahora - previo < CADA_MS) { requestAnimationFrame(paso); return; }
+      const pasos = previo ? Math.min(12, (ahora - previo) / 16.7) : 1;   // misma velocidad a menos cuadros
+      previo = ahora;
       if (document.body.classList.contains("en-hoy")) {
-        if (!reducir) propio += 0.012;
+        if (!reducir) propio += 0.012 * (incrustada ? pasos : 1);
         const meta = propio + window.scrollY * 0.07;           // ángulo de órbita en grados
         suave += (meta - suave) * (reducir ? 1 : 0.08);       // la cámara frena suave, no a saltos
         const th = suave, rad = (th * Math.PI) / 180;

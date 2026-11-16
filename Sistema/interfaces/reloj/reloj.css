@@ -222,6 +222,9 @@ html.embebido .rj-cab, html.embebido .rj-panel, html.embebido .rj-galeria, html.
 html.embebido .rj-main { display: block; padding: 0; }
 html.embebido .rj-escena { padding: 0; }
 html.transparente, html.transparente body, html.transparente .rj-main, html.transparente .rj-escena { background: transparent !important; }
+/* Si el color-scheme del iframe no coincide con el de la página que lo incrusta, el navegador le pinta un fondo opaco */
+html.transparente { color-scheme: dark !important; }
+html.transparente .eva-sim { display: none !important; }
 @media (max-height: 640px) { html.embebido .rj-reloj { zoom: .82; } }
 @media (max-height: 520px) { html.embebido .rj-reloj { zoom: .66; } }
 

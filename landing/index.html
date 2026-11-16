@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="recursos/icono.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
   <!-- Idioma antes de pintar: evita ver el español un instante si se eligió inglés -->
   <script>try{var l=new URLSearchParams(location.search).get('idioma')||localStorage.getItem('lunna-idioma');if(l==='en')document.documentElement.lang='en'}catch(e){}</script>
@@ -113,11 +114,6 @@
           <li data-en="<b>▶ Live</b> starts the sensors streaming"><b>▶ Live</b> pone a transmitir los sensores</li>
           <li data-en="In the central PC type <code>scenario hypoxia</code>">En la PC central escribe <code>scenario hypoxia</code></li>
         </ol>
-        <p class="pantallas-sueltas"><span data-en="Each screen on its own:">Cada pantalla por separado:</span>
-          <a data-ruta="/app/" href="/app/" target="_blank" rel="noopener" data-en="phone">celular</a> ·
-          <a data-ruta="/reloj/" href="/reloj/" target="_blank" rel="noopener" data-en="watch">reloj</a> ·
-          <a data-ruta="/app/central.html" href="/app/central.html" target="_blank" rel="noopener" data-en="central">central</a> ·
-          <a data-ruta="/app/base.html" href="/app/base.html" target="_blank" rel="noopener" data-en="Earth base">base en Tierra</a></p>
       </div>
     </section>
 
@@ -238,7 +234,7 @@
           <p data-en="Expected value and 95% band of each vital sign for that person in that environment (Earth, orbit, transit,
             Moon, Mars).">Valor esperado y banda del 95 % de cada signo vital para esa persona en ese entorno (Tierra, órbita, tránsito,
             Luna, Marte).</p>
-          <math display="block"><mi>Δ</mi><mo>∼</mo><mi>𝒩</mi><mo>(</mo><mi>μ</mi><mo>,</mo><msup><mi>τ</mi><mn>2</mn></msup><mo>)</mo></math>
+          <div class="fila fila-tarjeta"><math display="block"><mi>Δ</mi><mo>∼</mo><mi>𝒩</mi><mo>(</mo><mi>μ</mi><mo>,</mo><msup><mi>τ</mi><mn>2</mn></msup><mo>)</mo></math></div>
         </article>
         <article class="tarjeta">
           <span class="num">02</span>
@@ -246,25 +242,25 @@
           <p data-en="Each crew member’s normal before launch, shrunk toward the reference when data is scarce
             (Sottas 2007). It freezes at liftoff.">El normal de cada tripulante antes del lanzamiento, encogido hacia la referencia cuando hay pocos datos
             (Sottas 2007). Se congela al despegar.</p>
-          <math display="block"><msub><mi>μ</mi><mi>i</mi></msub><mo>=</mo><mi>B</mi><msub><mi>m</mi><mtext>ref</mtext></msub><mo>+</mo><mo>(</mo><mn>1</mn><mo>−</mo><mi>B</mi><mo>)</mo><msub><mover><mi>x</mi><mo>‾</mo></mover><mi>i</mi></msub></math>
+          <div class="fila fila-tarjeta"><math display="block"><msub><mi>μ</mi><mi>i</mi></msub><mo>=</mo><mi>B</mi><msub><mi>m</mi><mtext>ref</mtext></msub><mo>+</mo><mo>(</mo><mn>1</mn><mo>−</mo><mi>B</mi><mo>)</mo><msub><mover><mi>x</mi><mo>‾</mo></mover><mi>i</mi></msub></math></div>
         </article>
         <article class="tarjeta">
           <span class="num">03</span>
           <h3 data-en="Protected EWMA">EWMA protegido</h3>
           <p data-en="Adaptive mean that only learns from stable days, after a 72 h quarantine and capped at ±1.5 SD.">Media adaptativa que sólo aprende de días estables, tras 72 h de cuarentena y con tope de ±1,5 DE.</p>
-          <math display="block"><msub><mi>m</mi><mi>t</mi></msub><mo>=</mo><msub><mi>m</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><mi>α</mi><mo>(</mo><msub><mi>x</mi><mi>t</mi></msub><mo>−</mo><msub><mi>m</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>)</mo><mo>,</mo><mspace width=".4em"/><mi>α</mi><mo>=</mo><mn>0.1</mn></math>
+          <div class="fila fila-tarjeta"><math display="block"><msub><mi>m</mi><mi>t</mi></msub><mo>=</mo><msub><mi>m</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><mi>α</mi><mo>(</mo><msub><mi>x</mi><mi>t</mi></msub><mo>−</mo><msub><mi>m</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>)</mo></math><math display="block"><mi>α</mi><mo>=</mo><mn>0.1</mn></math></div>
         </article>
         <article class="tarjeta">
           <span class="num">04</span>
           <h3 data-en="Anchored CUSUM">CUSUM anclado</h3>
           <p data-en="Accumulates small, persistent deviations from the pre-flight baseline. Only a human review resets it.">Acumula desviaciones pequeñas y persistentes respecto al prevuelo. Sólo lo reinicia una revisión humana.</p>
-          <math display="block"><msub><mi>C</mi><mi>t</mi></msub><mo>=</mo><mo>max</mo><mo>(</mo><mn>0</mn><mo>,</mo><msub><mi>C</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><msub><mi>r</mi><mi>t</mi></msub><mo>−</mo><mi>k</mi><mo>)</mo><mo>,</mo><mspace width=".4em"/><mi>k</mi><mo>=</mo><mn>0.5</mn><mo>,</mo><mspace width=".3em"/><mi>h</mi><mo>=</mo><mn>5</mn></math>
+          <div class="fila fila-tarjeta"><math display="block"><msub><mi>C</mi><mi>t</mi></msub><mo>=</mo><mo>max</mo><mo>(</mo><mn>0</mn><mo>,</mo><msub><mi>C</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><msub><mi>r</mi><mi>t</mi></msub><mo>−</mo><mi>k</mi><mo>)</mo></math><math display="block"><mi>k</mi><mo>=</mo><mn>0.5</mn><mo>,</mo><mspace width=".3em"/><mi>h</mi><mo>=</mo><mn>5</mn></math></div>
         </article>
         <article class="tarjeta">
           <span class="num">05</span>
           <h3 data-en="Traffic light for 20 conditions">Semáforo de 20 padecimientos</h3>
           <p data-en="Two channels that are never added: weights editable by the flight surgeon, and published likelihood ratios.">Dos canales que no se suman: pesos editables por el cirujano de vuelo y razones de verosimilitud publicadas.</p>
-          <math display="block"><msub><mi>T</mi><mi>p</mi></msub><mo>=</mo><munder><mo>∑</mo><mi>g</mi></munder><mo>max</mo><mo>(</mo><msub><mi>μ</mi><mrow><mi>p</mi><mi>v</mi></mrow></msub><msub><mi>a</mi><mrow><mi>p</mi><mi>v</mi></mrow></msub><mo>)</mo><mspace width=".8em"/><mi>Δ</mi><msub><mi>L</mi><mi>p</mi></msub><mo>=</mo><mo>∑</mo><msub><mi>κ</mi><mi>v</mi></msub><mi>ln</mi><msub><mtext>LR</mtext><mi>v</mi></msub></math>
+          <div class="fila fila-tarjeta"><math display="block"><msub><mi>T</mi><mi>p</mi></msub><mo>=</mo><munder><mo>∑</mo><mi>g</mi></munder><mo>max</mo><mo>(</mo><msub><mi>μ</mi><mrow><mi>p</mi><mi>v</mi></mrow></msub><msub><mi>a</mi><mrow><mi>p</mi><mi>v</mi></mrow></msub><mo>)</mo></math><math display="block"><mi>Δ</mi><msub><mi>L</mi><mi>p</mi></msub><mo>=</mo><mo>∑</mo><msub><mi>κ</mi><mi>v</mi></msub><mi>ln</mi><msub><mtext>LR</mtext><mi>v</mi></msub></math></div>
         </article>
         <article class="tarjeta">
           <span class="num">06</span>
@@ -292,18 +288,17 @@
         <p class="ceja" data-en="Team Monarcas">Equipo Monarcas</p>
         <h2 data-en="Who built it">Quiénes lo hicimos</h2>
         <ul class="nombres">
-          <li><b>Julio</b><span data-en="Central computer, LUNNA, ESP32 and simulation">Computadora central, LUNNA, ESP32 y simulación</span></li>
-          <li><b>Iker</b><span data-en="Variables, conditions engine and Inspiration4">Variables, motor de padecimientos e Inspiration4</span></li>
-          <li><b>Leo</b><span data-en="Weights per condition, central and Earth base">Pesos por padecimiento, central y base en Tierra</span></li>
-          <li><b>Diana</b><span data-en="Phone app and the Lunna assistant">App del celular y asistente Lunna</span></li>
-          <li><b>Katy</b><span data-en="Requirements, experience and app design">Requisitos, experiencia y diseño de la app</span></li>
-          <li><b>Fani</b><span data-en="Watch, interface integration and documentation">Reloj, integración de interfaces y documentación</span></li>
+          <li><a class="persona" href="https://github.com/DinDevJ" target="_blank" rel="noopener" aria-label="Julio en GitHub (@DinDevJ)" data-en-aria="Julio on GitHub (@DinDevJ)"><img src="https://avatars.githubusercontent.com/u/248317132?s=160" alt="" width="64" height="64" loading="lazy"><b>Julio</b><span data-en="Central computer, LUNNA, ESP32 and simulation">Computadora central, LUNNA, ESP32 y simulación</span><small>@DinDevJ</small></a></li>
+          <li><a class="persona" href="https://github.com/ikerus" target="_blank" rel="noopener" aria-label="Iker en GitHub (@ikerus)" data-en-aria="Iker on GitHub (@ikerus)"><img src="https://avatars.githubusercontent.com/u/51250415?s=160" alt="" width="64" height="64" loading="lazy"><b>Iker</b><span data-en="Variables, conditions engine and Inspiration4">Variables, motor de padecimientos e Inspiration4</span><small>@ikerus</small></a></li>
+          <li><a class="persona" href="https://github.com/LeoFlores1000" target="_blank" rel="noopener" aria-label="Leo en GitHub (@LeoFlores1000)" data-en-aria="Leo on GitHub (@LeoFlores1000)"><img src="https://avatars.githubusercontent.com/u/190018797?s=160" alt="" width="64" height="64" loading="lazy"><b>Leo</b><span data-en="Weights per condition, central and Earth base">Pesos por padecimiento, central y base en Tierra</span><small>@LeoFlores1000</small></a></li>
+          <li><a class="persona" href="https://github.com/dianacamposrosas" target="_blank" rel="noopener" aria-label="Diana en GitHub (@dianacamposrosas)" data-en-aria="Diana on GitHub (@dianacamposrosas)"><img src="https://avatars.githubusercontent.com/u/78067733?s=160" alt="" width="64" height="64" loading="lazy"><b>Diana</b><span data-en="Phone app and the Lunna assistant">App del celular y asistente Lunna</span><small>@dianacamposrosas</small></a></li>
+          <li><a class="persona" href="https://github.com/aguilarcalderonkaty-boop" target="_blank" rel="noopener" aria-label="Katy en GitHub (@aguilarcalderonkaty-boop)" data-en-aria="Katy on GitHub (@aguilarcalderonkaty-boop)"><img src="https://avatars.githubusercontent.com/u/229018666?s=160" alt="" width="64" height="64" loading="lazy"><b>Katy</b><span data-en="Requirements, experience and app design">Requisitos, experiencia y diseño de la app</span><small title="@aguilarcalderonkaty-boop">@aguilarcalderonkaty-boop</small></a></li>
+          <li><a class="persona" href="https://github.com/121074-fani" target="_blank" rel="noopener" aria-label="Fani en GitHub (@121074-fani)" data-en-aria="Fani on GitHub (@121074-fani)"><img src="https://avatars.githubusercontent.com/u/159456549?s=160" alt="" width="64" height="64" loading="lazy"><b>Fani</b><span data-en="Watch, interface integration and documentation">Reloj, integración de interfaces y documentación</span><small>@121074-fani</small></a></li>
         </ul>
       </div>
-      <footer class="pie" data-en="Lunna · NASA Space Apps Challenge 2026 · challenge <em>Create Health Monitoring Software for Astronauts on Space Missions</em> ·
-        <a href=&quot;https://github.com/DinDevJ/lunna&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;>code</a> · MIT">
-        Lunna · NASA Space Apps Challenge 2026 · reto <em>Create Health Monitoring Software for Astronauts on Space Missions</em> ·
-        <a href="https://github.com/DinDevJ/lunna" target="_blank" rel="noopener">código</a> · MIT
+      <footer class="pie">
+        <a class="repo" href="https://github.com/DinDevJ/lunna" target="_blank" rel="noopener"><svg class="gh" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span data-en="View the code on GitHub">Ver el código en GitHub</span></a>
+        <p data-en="Lunna · NASA Space Apps Challenge 2026 · challenge <em>Create Health Monitoring Software for Astronauts on Space Missions</em> · MIT license">Lunna · NASA Space Apps Challenge 2026 · reto <em>Create Health Monitoring Software for Astronauts on Space Missions</em> · licencia MIT</p>
       </footer>
     </section>
   </main>

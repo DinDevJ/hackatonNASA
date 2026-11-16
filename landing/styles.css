@@ -1,6 +1,7 @@
 /* Lunna · landing de exposición
    Una pantalla por sección, con desplazamiento «con peso»: cada giro de rueda lleva a la siguiente. */
 :root {
+  color-scheme: dark;
   --fondo: #060914;
   --fondo-2: #0b1124;
   --panel: rgba(17, 24, 48, .72);
@@ -163,15 +164,12 @@ h2 { margin: 0; font-size: clamp(1.7rem, 3.2vw, 2.6rem); line-height: 1.12; lett
 .pasos-cortos li::before { content: counter(p); flex: none; display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
   background: rgba(124, 196, 255, .14); color: var(--acento); font: 600 .75rem var(--mono); }
 .pasos-cortos b { color: var(--texto); }
-.pantallas-sueltas { margin-top: 20px !important; font-size: .9rem; color: var(--tenue-2) !important; }
-.pantallas-sueltas a { color: var(--acento); text-decoration: none; }
-.pantallas-sueltas a:hover { text-decoration: underline; }
 @media (max-width: 900px) { .demo { flex-direction: column; gap: 28px; } .demo-video { width: 100%; } }
 
 /* ══════ 3 · LUNNA ══════ */
 .mate-rejilla { display: grid; grid-template-columns: 1.35fr 1fr; gap: 22px; align-items: stretch; }
 .formulas { display: grid; gap: 12px; }
-.formula { padding: 16px 20px; border: 1px solid var(--linea); border-radius: 16px; background: var(--panel); overflow-x: auto; }
+.formula { padding: 16px 20px; border: 1px solid var(--linea); border-radius: 16px; background: var(--panel); }
 .formula-nombre { display: block; font: 500 .72rem var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--acento-2); margin-bottom: 6px; }
 .formula math { margin: 6px 0; color: #f3f5ff; }
 .fila { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 34px; }
@@ -228,7 +226,8 @@ h2 { margin: 0; font-size: clamp(1.7rem, 3.2vw, 2.6rem); line-height: 1.12; lett
 .tarjeta h3 { margin: 4px 0 6px; font-size: 1.12rem; }
 .tarjeta p { margin: 0; color: var(--tenue); font-size: .9rem; }
 .tarjeta b { color: var(--texto); }
-.tarjeta math { margin-top: auto; padding-top: 12px; color: #f3f5ff; font-size: 1.05em; overflow-x: auto; max-width: 100%; }
+.fila-tarjeta { margin-top: auto; padding-top: 12px; gap: 2px 22px; }
+.tarjeta math { color: #f3f5ff; font-size: 1.02em; }
 .aviso { margin: 18px auto 0; max-width: 820px; text-align: center; font-size: .85rem; color: var(--tenue-2); }
 @media (max-width: 960px) { .tarjetas { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 600px) { .tarjetas { grid-template-columns: 1fr; } }
@@ -257,3 +256,28 @@ h2 { margin: 0; font-size: clamp(1.7rem, 3.2vw, 2.6rem); line-height: 1.12; lett
 html:not([lang="en"]) .idioma [data-l="es"], html[lang="en"] .idioma [data-l="en"] { background: rgba(124, 196, 255, .18); color: var(--texto); }
 .idioma:focus-visible { outline: 2px solid var(--acento); outline-offset: 3px; }
 @media (max-width: 760px) { .idioma span { padding: 4px 7px; } .nav-der { gap: 6px; } }
+
+/* Fórmulas: tipografía matemática consistente entre sistemas (Windows usa Cambria Math, más ancha) */
+math { font-family: 'STIX Two Math', 'Cambria Math', 'Latin Modern Math', math; }
+
+/* ── Equipo con su perfil de GitHub ── */
+.nombres li { padding: 0; }
+.persona { display: grid; justify-items: center; gap: 4px; padding: 18px 12px 14px; height: 100%; text-decoration: none; border-radius: 14px;
+  transition: background .2s, transform .2s; }
+.persona:hover { background: rgba(124, 196, 255, .07); transform: translateY(-3px); }
+.persona:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+.persona img { width: 64px; height: 64px; border-radius: 50%; margin-bottom: 6px; background: var(--fondo-2);
+  box-shadow: 0 0 0 2px rgba(124, 196, 255, .35), 0 8px 24px rgba(0, 0, 0, .4); }
+.persona small { font: 500 .7rem var(--mono); color: var(--tenue-2); word-break: break-all; }
+.persona:hover small { color: var(--acento); }
+
+/* ── Pie con el repositorio ── */
+.pie { display: grid; justify-items: center; gap: 12px; }
+.pie p { margin: 0; }
+.repo { display: inline-flex; align-items: center; gap: 10px; padding: 11px 20px; border-radius: 999px; text-decoration: none;
+  font-weight: 600; font-size: .95rem; color: var(--texto); border: 1px solid rgba(255, 255, 255, .18); background: rgba(255, 255, 255, .04);
+  transition: background .2s, border-color .2s; }
+.repo:hover { background: rgba(255, 255, 255, .1); border-color: rgba(255, 255, 255, .35); }
+.repo .gh { width: 22px; height: 22px; }
+.persona { align-content: start; }
+.persona small { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

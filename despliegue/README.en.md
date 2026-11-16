@@ -1,45 +1,35 @@
 > 🌐 [Español](README.md) · **English**
 
-# Deployment on a VPS
+# Deploying to a VPS
 
-Makes Lunna public on a server: the **landing page** at `/` and, behind it, the backend in **simulation mode** with all
-the interfaces (`/app/`, `/app/central.html`, `/app/base.html`, `/reloj/`, `/simulador`).
+Publishes Lunna on a server: the **landing page** at `/` and, behind it, the backend in **simulation mode** with
+all the interfaces (`/app/`, `/app/central.html`, `/app/base.html`, `/reloj/`, `/simulador`).
+
+**Designed for a VPS that already hosts another project.** The installer does not touch anything else: it does not
+delete or change other nginx sites (including `default`), does not change the system Node.js and, without a domain,
+uses its own port.
 
 ```
-browser ──► nginx :80/:443 ──┬─ /            landing/ (static)
-                             ├─ /video/      video/
-                             ├─ /estado      backend status page
-                             └─ everything else ──► backend :8787 (systemd "lunna", simulation mode)
+browser ──► nginx :8088 (or :80/:443 with a domain) ──┬─ /            landing/ (static)
+                                                      ├─ /video/ /recursos/   files
+                                                      ├─ /estado      backend status page
+                                                      └─ everything else ──► backend 127.0.0.1:8787 (systemd "lunna")
 ```
 
-## Requirements
+## 1. Check the VPS (read-only)
 
-- Ubuntu 22.04/24.04 or Debian 12, with `root` or `sudo` access.
-- Ports 80 and 443 open.
-- Optional: a domain with its A record pointing to the VPS IP (for HTTPS).
-
-The script installs whatever is missing: git, nginx and Node.js 22.
-
-## Install (one command)
+Before installing, see what is on the server: busy ports, nginx sites, Node version and who uses it, memory and
+firewall. It changes nothing.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/DinDevJ/lunna/main/despliegue/instalar.sh \
-  | sudo DOMINIO=lunna.ejemplo.com CORREO=tu@correo.com USUARIO=monarcas CLAVE='una-clave' bash
+sudo bash revisar-vps.sh
 ```
 
-| Variable | Purpose | If omitted |
-|---|---|---|
-| `DOMINIO` | Site name | Responds on the IP |
-| `CORREO` | Let's Encrypt HTTPS certificate (requires `DOMINIO`) | HTTP only |
-| `USUARIO`, `CLAVE` | Password for the whole site | Open site |
-| `TOKEN` | GitHub token to clone the **private** repo (see below) | Clones without credentials (public repo only) |
-| `RAMA` | Branch to deploy | `main` |
-| `DIR` | Code folder | `/opt/lunna` |
+(If the repo is not on the VPS yet, download it like the installer, replacing `instalar.sh` with `revisar-vps.sh`.)
 
-⚠️ **Setting a password is recommended.** The system has no authentication: any visitor could press
-"Prepare mission" or "Reset" in the simulator and change the demo for everyone.
+## 2. Install
 
-### With the private repository
+### With the private repository (token)
 
 1. On GitHub: **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**.
    Repository access: only `DinDevJ/lunna`. Permissions: **Contents: Read-only**. Copy the token.
@@ -53,16 +43,62 @@ read -rs TOKEN
 curl -fsSL -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github.raw" https://api.github.com/repos/DinDevJ/lunna/contents/despliegue/instalar.sh | sudo TOKEN="$TOKEN" bash
 ```
 
-The token is stored only in `/opt/lunna/.git/config` (mode 600) so that `actualizar.sh` can pull changes.
-To revoke it, delete it on GitHub; to remove it from the VPS: `sudo git -C /opt/lunna config --unset http.https://github.com/.extraheader`.
+When it finishes it shows the address, e.g. `http://YOUR-IP:8088`. The token is stored only in
+`/opt/lunna/.git/config` (mode 600) so that `actualizar.sh` can pull changes. To revoke it, delete it on GitHub; to
+remove it from the VPS: `sudo git -C /opt/lunna config --unset http.https://github.com/.extraheader`.
 
-With the repository already cloned, `sudo DOMINIO=… bash despliegue/instalar.sh` also works. The script can be
-run again: it leaves everything as it is and updates the code.
+| Variable | Purpose | If omitted |
+|---|---|---|
+| `TOKEN` | Clone the private repo | Clones without credentials (public repo only) |
+| `PUERTO_WEB` | Lunna's public port | `8088` without a domain · `80` with a domain |
+| `DOMINIO` | Site name (shares port 80 with other sites by name) | Answers by IP on its own port |
+| `CORREO` | Let's Encrypt HTTPS and HTTP/2 (requires `DOMINIO` and `PUERTO_WEB=80`) | http only |
+| `PUERTO_BACKEND` | Local backend port | `8787` |
+| `AJUSTAR_NGINX` | `0` to leave `worker_connections` alone | `1` |
+| `RAMA`, `DIR` | Branch and folder | `main`, `/opt/lunna` |
 
-## Update
+Example with another port: `… | sudo TOKEN="$TOKEN" PUERTO_WEB=8090 bash`.
+
+### What it does and does NOT do
+
+| Does | Does not |
+|---|---|
+| Checks first that the ports are free and **stops** if anything clashes | Delete or edit other nginx sites |
+| Installs only missing packages (`--no-upgrade`) | Upgrade existing packages |
+| Uses its own Node 22 in `/opt/lunna-node` (official download, sha256 verified) | Change the system Node |
+| Backs up `/etc/nginx` to `/root/lunna-respaldos/` and validates with `nginx -t` | Use `default_server` |
+| If the configuration fails, **restores the backup** and does not reload | Restart nginx: it uses `reload` (no downtime) |
+| Compares how the other sites respond before and after | Open the backend port to the outside |
+| Raises `worker_connections` to 4096 if lower (the only global change) | Lower any limit |
+
+## 3. Security and load (many people at once)
+
+The demo stays **open to everyone** (team decision). So that it holds up and cannot easily be abused:
+
+- **The backend only listens on `127.0.0.1`**: the internet reaches it only through nginx.
+- **Per-IP limits**, generous because at a venue many people share the Wi-Fi IP:
+  reads 60/s (burst 400); writes 20/s with a queue of 1,000 (the bursts from "Prepare mission" are not rejected);
+  **resetting the demo: 6 per minute**; live events: 400 per IP and 3,000 in total. Beyond that it answers 429.
+- **Security headers**: `nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy`, `Permissions-Policy`,
+  `Cross-Origin-Opener-Policy`; no nginx version; no CORS (no other page can write to the API).
+- **Isolated service**: user `lunna` without a shell, writes only to its folder, `MemoryMax=500M` so it does not take
+  memory from the other project.
+- **Performance**: gzip compression (the app's JS goes from 172 KB to 50 KB), browser caching for videos and images,
+  persistent connections to Node.
+
+Remaining risk of being open: anyone can reset the demo (at most 6 times per minute per IP) or send simulated data.
+There is no real or personal data.
+
+## Update and uninstall
 
 ```bash
 sudo bash /opt/lunna/despliegue/actualizar.sh
+```
+
+To remove Lunna without touching anything else (service, nginx site and snippets; keeps the code and backups):
+
+```bash
+sudo bash /opt/lunna/despliegue/desinstalar.sh
 ```
 
 ## Operation
@@ -71,27 +107,34 @@ sudo bash /opt/lunna/despliegue/actualizar.sh
 |---|---|
 | View logs | `journalctl -u lunna -f` |
 | Restart the backend | `sudo systemctl restart lunna` |
-| Status | `systemctl status lunna` · `https://tu-dominio/estado` |
+| Status | `systemctl status lunna` · `http://YOUR-IP:8088/estado` |
 | Start the demo from scratch | In `/simulador`: "Prepare mission" |
+| Undo nginx | `sudo rm /etc/nginx/sites-enabled/lunna && sudo systemctl reload nginx` |
 
-The simulation database lives in `/opt/lunna/Simulacion/eva-simulacion.db` and is not under version control.
+The simulation database lives in `/opt/lunna/Simulacion/eva-simulacion.db` and is not versioned.
 
 ## What was tested
 
-With this same `nginx-lunna.conf` on Ubuntu 24.04 and nginx 1.24:
+On a simulated VPS (Ubuntu 24.04, nginx 1.24) with **another project already on port 80**:
 
-- Without a password it responds 401.
-- With a password, the landing page, the four interfaces, the simulator and the video load (with ranges: you can seek forward).
-- Live events (`/api/stream`) pass through without buffering.
-- The phone inside the landing page shows the real LUNNA data.
+- The installer **stops** if the web port is taken by another site without a domain, if another program uses it, or
+  if the backend port is in use.
+- The full installation completes; the other project answers the same before and after; the backend stays on
+  `127.0.0.1`; the landing page, phone, central computer, watch and simulator load via `IP:8088`.
+- Security headers present, gzip active, live events unbuffered, reset limited (429 on the 5th), 60 simultaneous
+  writes accepted.
+- `desinstalar.sh` removes only Lunna's pieces.
 
-The systemd service and certbot were not tested, because the test environment has neither systemd nor a domain.
+Not tested with real systemd or certbot: the test environment has neither systemd nor a domain.
 
 ## Files
 
 | File | What it is |
 |---|---|
-| `instalar.sh` | Complete, idempotent installation |
-| `actualizar.sh` | Pulls the latest from the branch and restarts |
-| `lunna.service` | systemd service (user `lunna`, automatic restart) |
+| `revisar-vps.sh` | Pre-check of the server (read-only) |
+| `instalar.sh` | Safe installation for a shared VPS; can be re-run |
+| `actualizar.sh` | Pulls the latest of the branch and restarts only Lunna |
+| `desinstalar.sh` | Removes Lunna without touching anything else |
+| `lunna.service` | systemd service (user `lunna`, local only, memory cap) |
 | `nginx-lunna.conf` | nginx site (template; `instalar.sh` fills it in) |
+| `nginx-lunna-proxy.conf`, `nginx-lunna-cabeceras.conf` | Snippets: headers to the backend and security headers |

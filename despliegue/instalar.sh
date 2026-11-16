@@ -1,24 +1,30 @@
 #!/usr/bin/env bash
 # Instala Lunna en un VPS con Ubuntu 22.04/24.04 o Debian 12 (como root). Se puede volver a correr.
 #
-#   curl -fsSL https://raw.githubusercontent.com/DinDevJ/lunna/main/despliegue/instalar.sh \
-#     | sudo DOMINIO=lunna.ejemplo.com CORREO=tu@correo.com USUARIO=monarcas CLAVE='…' bash
+# PENSADO PARA UN VPS QUE YA ALOJA OTRO PROYECTO. No toca lo ajeno:
+#   · no borra ni cambia otros sitios de nginx (tampoco «default») y no usa default_server;
+#   · no cambia el Node.js del sistema: usa uno propio en /opt/lunna-node;
+#   · sin dominio, Lunna va en su PROPIO puerto (8088 por defecto), no en el 80;
+#   · revisa antes que los puertos estén libres y se detiene si algo choca;
+#   · respalda /etc/nginx, valida con «nginx -t» y, si falla, deja todo como estaba;
+#   · aplica con «reload» (el otro proyecto no se corta) y comprueba que sus sitios sigan respondiendo igual.
+# Lo único global que puede cambiar: sube worker_connections de nginx a 4096 si es menor (ver AJUSTAR_NGINX).
+#
+# Antes, revisa el VPS (sólo lee):  sudo bash despliegue/revisar-vps.sh
 #
 # Con el repo PRIVADO (token de GitHub de solo lectura, «Contents: Read-only»):
 #   read -rs TOKEN   # pega el token; no se ve ni queda en el historial
 #   curl -fsSL -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github.raw" \
 #     https://api.github.com/repos/DinDevJ/lunna/contents/despliegue/instalar.sh | sudo TOKEN="$TOKEN" bash
 #
-# o, con el repo ya clonado:  sudo DOMINIO=… bash despliegue/instalar.sh
-#
 # Variables (todas opcionales):
-#   DOMINIO   dominio que apunta al VPS. Sin él, responde por la IP en http.
-#   CORREO    con DOMINIO, pide el certificado HTTPS de Let's Encrypt.
-#   USUARIO, CLAVE   si se dan, todo el sitio pide usuario y contraseña (recomendado en público:
-#             el sistema no tiene autenticación y cualquiera podría reiniciar la demo).
-#   REPO, RAMA, DIR   origen y destino del código (por defecto el repo del equipo, main, /opt/lunna).
-#   TOKEN     token de GitHub para clonar un repo privado. Se guarda sólo en $DIR/.git/config (modo 600)
-#             para que actualizar.sh pueda traer cambios.
+#   PUERTO_WEB      puerto público de Lunna. Por defecto 8088 sin dominio y 80 con DOMINIO.
+#   DOMINIO         dominio que apunta al VPS (con él puede compartir el 80 con otros sitios por nombre).
+#   CORREO          con DOMINIO y PUERTO_WEB=80, pide el certificado HTTPS de Let's Encrypt (y activa HTTP/2).
+#   PUERTO_BACKEND  puerto local del backend (127.0.0.1). Por defecto 8787.
+#   TOKEN           token de GitHub para clonar un repo privado. Se guarda sólo en $DIR/.git/config (modo 600).
+#   AJUSTAR_NGINX   1 (por defecto) sube worker_connections a 4096 si es menor; 0 no toca nginx.conf.
+#   REPO, RAMA, DIR origen y destino del código (por defecto el repo del equipo, main, /opt/lunna).
 set -euo pipefail
 
 REPO="${REPO:-https://github.com/DinDevJ/lunna.git}"
@@ -26,35 +32,98 @@ RAMA="${RAMA:-main}"
 DIR="${DIR:-/opt/lunna}"
 DOMINIO="${DOMINIO:-}"
 CORREO="${CORREO:-}"
-USUARIO="${USUARIO:-}"
-CLAVE="${CLAVE:-}"
 TOKEN="${TOKEN:-}"
+PUERTO_BACKEND="${PUERTO_BACKEND:-8787}"
+if [ -n "$DOMINIO" ]; then PUERTO_WEB="${PUERTO_WEB:-80}"; else PUERTO_WEB="${PUERTO_WEB:-8088}"; fi
+AJUSTAR_NGINX="${AJUSTAR_NGINX:-1}"
+NODE_DIR=/opt/lunna-node
+SITIO=/etc/nginx/sites-available/lunna
 
 paso() { printf '\n\033[1;36m▸ %s\033[0m\n' "$*"; }
-[ "$(id -u)" -eq 0 ] || { echo "Córrelo como root (sudo)."; exit 1; }
+alto() { printf '\n\033[1;31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
+[ "$(id -u)" -eq 0 ] || alto "Córrelo como root (sudo)."
 
-paso "Paquetes del sistema"
-export DEBIAN_FRONTEND=noninteractive
-apt-get update -qq
-apt-get install -y -qq git nginx curl ca-certificates openssl >/dev/null
-
-paso "Node.js 22 (el backend usa node:sqlite y TypeScript integrados)"
-necesita_node() {
-  command -v node >/dev/null || return 0
-  local v; v="$(node -v | sed 's/^v//')"
-  local mayor="${v%%.*}" menor; menor="$(echo "$v" | cut -d. -f2)"
-  [ "$mayor" -lt 22 ] || { [ "$mayor" -eq 22 ] && [ "$menor" -lt 6 ]; }
-}
-if necesita_node; then
-  curl -fsSL https://deb.nodesource.com/setup_22.x | bash - >/dev/null
-  apt-get install -y -qq nodejs >/dev/null
+# ─────────────────────────────── 1. Revisión previa: no instalar si algo choca ───────────────────────────────
+paso "Revisión previa (no cambia nada todavía)"
+escucha() { ss -ltnpH "( sport = :$1 )" 2>/dev/null; }
+# Backend: el puerto local debe estar libre, salvo que ya sea nuestro servicio lunna.
+if [ -n "$(escucha "$PUERTO_BACKEND")" ] && ! systemctl is-active -q lunna 2>/dev/null; then
+  escucha "$PUERTO_BACKEND"; alto "El puerto $PUERTO_BACKEND ya lo usa otro programa. Elige otro: PUERTO_BACKEND=8797"
 fi
-echo "node $(node -v)"
+# Web: si el puerto está ocupado tiene que ser por nginx, y otro sitio no puede usarlo sin nombre propio.
+OCUPA_WEB="$(escucha "$PUERTO_WEB")"
+if [ -n "$OCUPA_WEB" ] && ! grep -q '"nginx"' <<<"$OCUPA_WEB"; then
+  echo "$OCUPA_WEB"; alto "El puerto $PUERTO_WEB lo usa otro programa (no nginx). Elige otro: PUERTO_WEB=8089"
+fi
+# Puertos en los que escucha un archivo de nginx (sin comentarios; «listen 80», «listen 0.0.0.0:80», «listen [::]:80»…)
+puertos_de() { sed 's/#.*//' "$1" | grep -Eo '(^|[{;[:space:]])listen[[:space:]]+[^;[:space:]]+' | grep -Eo '[0-9]+$' | sort -u; }
+OTROS_SITIOS=()
+if [ -d /etc/nginx ]; then
+  for f in /etc/nginx/sites-enabled/* /etc/nginx/conf.d/*.conf; do
+    [ -e "$f" ] || continue
+    [ "$(readlink -f "$f")" = "$SITIO" ] && continue
+    OTROS_SITIOS+=("$f")
+    if puertos_de "$f" | grep -qx "$PUERTO_WEB"; then
+      [ -n "$DOMINIO" ] || alto "El sitio $f ya escucha en el puerto $PUERTO_WEB. Sin dominio, Lunna necesita un puerto propio: PUERTO_WEB=8089"
+      sed 's/#.*//' "$f" | grep -Eq "server_name[^;]*[[:space:]]${DOMINIO//./\\.}([[:space:];]|$)" && alto "El sitio $f ya usa el nombre $DOMINIO."
+    fi
+  done
+fi
+if [ -n "$CORREO" ]; then
+  { [ -n "$DOMINIO" ] && [ "$PUERTO_WEB" = 80 ]; } || alto "HTTPS (CORREO) requiere DOMINIO y PUERTO_WEB=80."
+fi
+echo "✓ backend en 127.0.0.1:$PUERTO_BACKEND · web en el puerto $PUERTO_WEB${DOMINIO:+ · dominio $DOMINIO} · otros sitios de nginx: ${#OTROS_SITIOS[@]}"
 
+# Cómo responden HOY los otros sitios, para comprobar al final que siguen igual.
+sondear() {   # imprime «sitio estado» por cada otro sitio (primer listen y primer server_name)
+  local f p n
+  for f in "${OTROS_SITIOS[@]}"; do
+    p="$(puertos_de "$f" | head -1 || true)"; [ -n "$p" ] || continue
+    n="$(sed 's/#.*//' "$f" | grep -Eo 'server_name[[:space:]]+[^;[:space:]]+' | head -1 | awk '{print $2}' || true)"; [ "$n" = "_" ] && n=""
+    printf '%s %s\n' "$(basename "$f")" "$(curl -s -o /dev/null -m 5 -w '%{http_code}' ${n:+-H "Host: $n"} "http://127.0.0.1:$p/" || echo 000)"
+  done
+}
+ANTES="$(sondear || true)"
+[ -n "$ANTES" ] && { echo "otros sitios antes de instalar:"; sed 's/^/  /' <<<"$ANTES"; }
+
+# ─────────────────────────────── 2. Paquetes: sólo lo que falte, sin actualizar lo existente ───────────────────
+paso "Paquetes del sistema (sólo los que falten)"
+export DEBIAN_FRONTEND=noninteractive
+FALTAN=()
+for par in git:git curl:curl xz:xz-utils openssl:openssl nginx:nginx; do
+  command -v "${par%%:*}" >/dev/null || FALTAN+=("${par#*:}")
+done
+[ -e /etc/ssl/certs/ca-certificates.crt ] || FALTAN+=(ca-certificates)
+if [ "${#FALTAN[@]}" -gt 0 ]; then
+  apt-get update -qq
+  apt-get install -y -qq --no-upgrade "${FALTAN[@]}" >/dev/null
+  echo "instalado: ${FALTAN[*]}"
+else
+  echo "no falta nada"
+fi
+
+# ─────────────────────────────── 3. Node.js propio (no toca el del sistema) ───────────────────────────────────
+paso "Node.js 22 propio en $NODE_DIR (el del sistema no se toca)"
+node_ok() { [ -x "$1" ] || return 1; local v M m; v="$("$1" -v | sed 's/^v//')"; M="${v%%.*}"; m="$(cut -d. -f2 <<<"$v")"
+  [ "$M" -gt 22 ] || { [ "$M" -eq 22 ] && [ "$m" -ge 6 ]; }; }
+if ! node_ok "$NODE_DIR/bin/node"; then
+  case "$(uname -m)" in x86_64) ARQ=x64 ;; aarch64|arm64) ARQ=arm64 ;; *) alto "Arquitectura $(uname -m) no soportada." ;; esac
+  BASE=https://nodejs.org/dist/latest-v22.x
+  SUMAS="$(curl -fsSL "$BASE/SHASUMS256.txt")"
+  TAR="$(grep -o "node-v22[0-9.]*-linux-$ARQ.tar.xz" <<<"$SUMAS" | head -1)"
+  [ -n "$TAR" ] || alto "No encontré Node 22 para linux-$ARQ."
+  TMP="$(mktemp -d)"; curl -fsSLo "$TMP/$TAR" "$BASE/$TAR"
+  (cd "$TMP" && grep " $TAR\$" <<<"$SUMAS" | sha256sum -c --quiet -) || alto "La firma sha256 de Node no coincide."
+  rm -rf "$NODE_DIR"; mkdir -p "$NODE_DIR"; tar -xJf "$TMP/$TAR" -C "$NODE_DIR" --strip-components=1; rm -rf "$TMP"
+fi
+NODE_BIN="$NODE_DIR/bin/node"
+echo "node $("$NODE_BIN" -v) en $NODE_BIN"
+
+# ─────────────────────────────── 4. Código ────────────────────────────────────────────────────────────────────
 paso "Usuario de servicio y código en $DIR"
 id lunna >/dev/null 2>&1 || useradd --system --home "$DIR" --shell /usr/sbin/nologin lunna
 # El código es del usuario lunna y git corre como root: sin esto git se niega («dubious ownership»).
-git config --global --get-all safe.directory | grep -qx "$DIR" || git config --global --add safe.directory "$DIR"
+git config --global --get-all safe.directory 2>/dev/null | grep -qx "$DIR" || git config --global --add safe.directory "$DIR"
 AUTH_GIT=()
 if [ -n "$TOKEN" ]; then
   CAB="Authorization: Basic $(printf 'x-access-token:%s' "$TOKEN" | base64 | tr -d '\n')"
@@ -74,54 +143,84 @@ fi
 chown -R lunna:lunna "$DIR"
 git -C "$DIR" log -1 --format='commit %h · %s'
 
-paso "Servicio del backend (modo simulación, puerto 8787 local)"
-NODE_BIN="$(command -v node)"
-sed -e "s#__DIR__#$DIR#g" -e "s#__NODE__#$NODE_BIN#g" "$DIR/despliegue/lunna.service" > /etc/systemd/system/lunna.service
+# ─────────────────────────────── 5. Servicio del backend ──────────────────────────────────────────────────────
+paso "Servicio «lunna» (modo simulación, sólo en 127.0.0.1:$PUERTO_BACKEND)"
+sed -e "s#__DIR__#$DIR#g" -e "s#__NODE__#$NODE_BIN#g" -e "s#__PUERTO_BACKEND__#$PUERTO_BACKEND#g" \
+  "$DIR/despliegue/lunna.service" > /etc/systemd/system/lunna.service
 systemctl daemon-reload
 systemctl enable -q lunna
 systemctl restart lunna
+for i in $(seq 1 30); do curl -fs "http://127.0.0.1:$PUERTO_BACKEND/api/salud" >/dev/null && break; sleep 1; done
+curl -fs "http://127.0.0.1:$PUERTO_BACKEND/api/salud" >/dev/null || { journalctl -u lunna -n 30 --no-pager; alto "El backend no arrancó."; }
+echo "✓ backend respondiendo"
 
-paso "nginx: landing en / y el resto al backend"
-AUTH=""
-if [ -n "$USUARIO" ] && [ -n "$CLAVE" ]; then
-  printf '%s:%s\n' "$USUARIO" "$(openssl passwd -apr1 "$CLAVE")" > /etc/nginx/lunna.htpasswd
-  chmod 640 /etc/nginx/lunna.htpasswd; chown root:www-data /etc/nginx/lunna.htpasswd
-  AUTH='auth_basic "Lunna"; auth_basic_user_file /etc/nginx/lunna.htpasswd;'
-  echo "con usuario y contraseña ($USUARIO)"
+# ─────────────────────────────── 6. nginx: respaldo, sitio propio, validación y reload ────────────────────────
+paso "nginx: sitio propio de Lunna (con respaldo y vuelta atrás si falla)"
+RESPALDO="/root/lunna-respaldos/nginx-$(date +%Y%m%d-%H%M%S).tgz"
+mkdir -p /root/lunna-respaldos; tar -czf "$RESPALDO" -C / etc/nginx
+echo "respaldo de /etc/nginx: $RESPALDO"
+revertir() { echo "Restaurando /etc/nginx desde el respaldo…" >&2; rm -rf /etc/nginx; tar -xzf "$RESPALDO" -C /; nginx -t >/dev/null 2>&1 && systemctl reload nginx || true; }
+
+mkdir -p /etc/nginx/snippets
+cp "$DIR/despliegue/nginx-lunna-cabeceras.conf" /etc/nginx/snippets/lunna-cabeceras.conf
+cp "$DIR/despliegue/nginx-lunna-proxy.conf" /etc/nginx/snippets/lunna-proxy.conf
+sed -e "s#__DOMINIO__#${DOMINIO:-_}#g" -e "s#__DIR__#$DIR#g" -e "s#__PUERTO_WEB__#$PUERTO_WEB#g" \
+  -e "s#__PUERTO_BACKEND__#$PUERTO_BACKEND#g" "$DIR/despliegue/nginx-lunna.conf" > "$SITIO"
+# Sin IPv6 en la máquina, nginx no arranca con «listen [::]:…»
+[ -s /proc/net/if_inet6 ] || sed -i '/listen \[::\]/d' "$SITIO"
+ln -sf "$SITIO" /etc/nginx/sites-enabled/lunna
+
+# Cada visitante abre ~10 conexiones (5 eventos en vivo sin HTTP/2): con 768 nginx se satura con ~70 visitantes,
+# y eso afectaría también al otro proyecto. Sólo se SUBE, nunca se baja.
+if [ "$AJUSTAR_NGINX" = 1 ]; then
+  WC="$(grep -Eo 'worker_connections[[:space:]]+[0-9]+' /etc/nginx/nginx.conf | awk '{print $2}' | head -1 || true)"
+  if [ -n "$WC" ] && [ "$WC" -lt 4096 ]; then
+    sed -i -E "s/(worker_connections[[:space:]]+)$WC;/\14096;/" /etc/nginx/nginx.conf
+    echo "worker_connections: $WC → 4096"
+  fi
+  if ! grep -Eq '^\s*worker_rlimit_nofile' /etc/nginx/nginx.conf; then
+    sed -i -E '0,/^\s*worker_processes/s//worker_rlimit_nofile 16384;\n&/' /etc/nginx/nginx.conf
+    echo "worker_rlimit_nofile: 16384"
+  fi
 fi
-sed -e "s#__DOMINIO__#${DOMINIO:-_}#g" -e "s#__DIR__#$DIR#g" -e "s#__AUTH__#$AUTH#g" \
-  "$DIR/despliegue/nginx-lunna.conf" > /etc/nginx/sites-available/lunna
-# Sin IPv6 en la máquina, nginx no arranca con «listen [::]:80»
-[ -s /proc/net/if_inet6 ] || sed -i '/listen \[::\]/d' /etc/nginx/sites-available/lunna
-ln -sf /etc/nginx/sites-available/lunna /etc/nginx/sites-enabled/lunna
-rm -f /etc/nginx/sites-enabled/default
 # nginx (www-data) necesita poder leer la landing y el video
 chmod o+rx "$DIR" "$DIR/landing" "$DIR/video"
-nginx -t
-systemctl reload nginx
+
+if ! nginx -t; then revertir; alto "La configuración de nginx no es válida; se dejó todo como estaba."; fi
+if systemctl is-active -q nginx; then systemctl reload nginx; else systemctl enable -q nginx; systemctl start nginx; fi
 
 if command -v ufw >/dev/null && ufw status | grep -q "Status: active"; then
-  paso "Firewall: abre http/https; el 8787 queda cerrado al exterior"
-  ufw allow 'Nginx Full' >/dev/null
+  paso "Firewall: abre sólo el puerto $PUERTO_WEB (el backend queda sólo en local)"
+  ufw allow "$PUERTO_WEB/tcp" >/dev/null
 fi
 
 if [ -n "$DOMINIO" ] && [ -n "$CORREO" ]; then
-  paso "HTTPS con Let's Encrypt para $DOMINIO"
-  apt-get install -y -qq certbot python3-certbot-nginx >/dev/null
+  paso "HTTPS con Let's Encrypt para $DOMINIO (sólo este sitio)"
+  command -v certbot >/dev/null || apt-get install -y -qq --no-upgrade certbot python3-certbot-nginx >/dev/null
   certbot --nginx -d "$DOMINIO" --non-interactive --agree-tos -m "$CORREO" --redirect
   # HTTP/2: todas las peticiones (y los eventos en vivo de cada interfaz) viajan por una sola conexión.
-  sed -i -E 's/listen (\[::\]:)?443 ssl( ipv6only=on)?;/listen \1443 ssl http2\2;/' /etc/nginx/sites-available/lunna
-  nginx -t && systemctl reload nginx
+  sed -i -E 's/listen (\[::\]:)?443 ssl( ipv6only=on)?;/listen \1443 ssl http2\2;/' "$SITIO"
+  if nginx -t; then systemctl reload nginx; else revertir; alto "Falló la configuración HTTPS; se restauró nginx."; fi
+  if command -v ufw >/dev/null && ufw status | grep -q "Status: active"; then ufw allow 443/tcp >/dev/null; fi
 fi
 
+# ─────────────────────────────── 7. Comprobación: Lunna responde y los demás siguen igual ────────────────────
 paso "Comprobación"
-for i in $(seq 1 20); do curl -fs http://127.0.0.1:8787/api/salud >/dev/null && break; sleep 1; done
-curl -fs http://127.0.0.1:8787/api/salud && echo
-CRED=(); [ -n "$USUARIO" ] && CRED=(-u "$USUARIO:$CLAVE")
-curl -fs "${CRED[@]}" -o /dev/null -w "landing: HTTP %{http_code}\n" http://127.0.0.1/
-curl -fs "${CRED[@]}" -o /dev/null -w "app:     HTTP %{http_code}\n" http://127.0.0.1/app/
-URL="http://${DOMINIO:-$(curl -fs https://api.ipify.org || hostname -I | awk '{print $1}')}"
-[ -n "$DOMINIO" ] && [ -n "$CORREO" ] && URL="https://$DOMINIO"
+H=(); [ -n "$DOMINIO" ] && H=(-H "Host: $DOMINIO")
+curl -fs "${H[@]}" -o /dev/null -w "landing:   HTTP %{http_code}\n" "http://127.0.0.1:$PUERTO_WEB/"
+curl -fs "${H[@]}" -o /dev/null -w "app:       HTTP %{http_code}\n" "http://127.0.0.1:$PUERTO_WEB/app/"
+curl -fs "${H[@]}" -o /dev/null -w "simulador: HTTP %{http_code}\n" "http://127.0.0.1:$PUERTO_WEB/simulador"
+DESPUES="$(sondear || true)"
+if [ -n "$ANTES" ]; then
+  if [ "$ANTES" = "$DESPUES" ]; then echo "✓ los otros sitios responden igual que antes:"; sed 's/^/  /' <<<"$DESPUES"
+  else printf '\033[1;33m⚠ algún otro sitio responde distinto que antes. Antes:\n%s\nAhora:\n%s\n\033[0m' "$ANTES" "$DESPUES"
+       echo "  Para deshacer nginx: sudo rm /etc/nginx/sites-enabled/lunna && sudo tar -xzf $RESPALDO -C / && sudo systemctl reload nginx"; fi
+fi
+IP="$(curl -fs -m 5 https://api.ipify.org || hostname -I | awk '{print $1}')"
+if [ -n "$DOMINIO" ] && [ -n "$CORREO" ]; then URL="https://$DOMINIO"
+elif [ -n "$DOMINIO" ]; then URL="http://$DOMINIO$([ "$PUERTO_WEB" = 80 ] || echo ":$PUERTO_WEB")"
+else URL="http://$IP:$PUERTO_WEB"; fi
 printf '\n\033[1;32m✓ Lunna está en %s\033[0m\n' "$URL"
 echo "  simulación: $URL/simulador · app: $URL/app/ · central: $URL/app/central.html · base: $URL/app/base.html"
 echo "  registros:  journalctl -u lunna -f      · actualizar: sudo bash $DIR/despliegue/actualizar.sh"
+echo "  desinstalar sin tocar lo demás: sudo bash $DIR/despliegue/desinstalar.sh"

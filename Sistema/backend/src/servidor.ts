@@ -45,6 +45,8 @@ const TIPOS: Record<string, string> = {
   '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.ico': 'image/x-icon', '.wav': 'audio/wav', '.mp3': 'audio/mpeg',
 };
 const PUERTO = Number(process.env.PUERTO ?? 8787);
+/** Dirección donde escucha. Sin definir: todas (uso local). En el VPS: 127.0.0.1, sólo nginx llega al backend. */
+const HOST = process.env.HOST || undefined;
 /** Referencias clínicas (umbrales absolutos). Puede no existir. Se puede cambiar con MEDIBLES. */
 const RUTA_MEDIBLES = resolve(process.env.MEDIBLES ?? join(AQUI, '..', 'semillas', 'medibles.json'));
 /** Sube al cambiar algo que la pasarela o el simulador necesiten. */
@@ -688,7 +690,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     }
     throw e;
   });
-  srv.listen(PUERTO, () => {
+  srv.listen(PUERTO, HOST, () => {
     console.log(`Lunna · backend v${VERSION_BACKEND} · ${modo === 'simulacion' ? 'MODO SIMULACIÓN (datos sintéticos)' : 'modo operativo'}`);
     if (modo === 'simulacion') console.log(`  simulador visual: http://localhost:${PUERTO}/simulador`);
     console.log(`  estado:           http://localhost:${PUERTO}   (se refresca solo)`);

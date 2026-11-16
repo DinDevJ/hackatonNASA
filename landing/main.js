@@ -8,7 +8,9 @@
   'use strict';
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const q = new URLSearchParams(location.search);
-  const local = location.protocol === 'file:' || (location.port && location.port !== '80' && location.port !== '443' && location.port !== '8787');
+  // Con nginx (VPS) o servir.mjs la landing está en «/» junto al backend: mismo origen, en cualquier puerto.
+  // Sólo abierta como archivo o desde /landing/ (python -m http.server en la raíz del repo) el backend está aparte.
+  const local = location.protocol === 'file:' || location.pathname.startsWith('/landing/');
   const BASE = (q.get('backend') || (local ? 'http://localhost:8787' : '')).replace(/\/$/, '');
 
   // Mismo origen: el celular abre directo en su pantalla principal, sin el tutorial de bienvenida.

@@ -7,16 +7,25 @@ Wants=network-online.target
 User=lunna
 Group=lunna
 WorkingDirectory=__DIR__/Simulacion
-Environment=PUERTO=8787
-Environment=NODE_ENV=production
+# Sólo escucha en local: a internet se llega únicamente a través de nginx (límites y cabeceras).
+Environment=HOST=127.0.0.1
+Environment=PUERTO=__PUERTO_BACKEND__
+Environment=NODE_OPTIONS=--max-old-space-size=256
 ExecStart=__NODE__ --experimental-strip-types --disable-warning=ExperimentalWarning ../Sistema/backend/src/servidor.ts --modo simulacion --simulacion .
 Restart=always
 RestartSec=3
-# Endurecimiento básico: sólo escribe en su carpeta
+# Para no quitarle memoria al otro proyecto del VPS (medido: ~110 MB en reposo, ~200 MB en vivo)
+MemoryHigh=350M
+MemoryMax=500M
+# Endurecimiento: sólo escribe en su carpeta
 NoNewPrivileges=true
 ProtectSystem=full
 ProtectHome=true
 PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
 ReadWritePaths=__DIR__
 
 [Install]

@@ -205,10 +205,10 @@ node --experimental-strip-types src/servidor.ts [--modo operativo|simulacion] [-
 **Example: analysis with models from the central computer** (PC with GPU, PowerShell):
 
 ```powershell
-$env:PROTOTIPO_DIR = "C:\ruta\a\hackatonNASA\prototipo-salud"
+$env:PROTOTIPO_DIR = "C:\ruta\a\lunna\prototipo-salud"
 $env:PYTHON        = "$env:PROTOTIPO_DIR\envs\app\Scripts\python.exe"
 $env:ENVS_DIR      = "$env:PROTOTIPO_DIR\envs"
-Set-Location C:\ruta\a\hackatonNASA\Sistema\backend
+Set-Location C:\ruta\a\lunna\Sistema\backend
 npm run certs        # solo la primera vez
 npm run nave         # http://localhost:8787/app/central.html#semaforo → «Analizar con modelos»
 ```

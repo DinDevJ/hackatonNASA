@@ -27,7 +27,16 @@
     f.style.width = `${w}px`; f.style.height = `${h}px`; f.style.transform = `scale(${p.clientWidth / w})`;
   }
   const ro = new ResizeObserver((es) => es.forEach((e) => escalar(e.target)));
-  pantallas.forEach((p) => { escalar(p); ro.observe(p); const f = p.querySelector('iframe'); f.src = BASE + f.dataset.src; });
+  // ── Idioma (ES/EN). Las interfaces leen ?idioma= y localStorage «lunna-idioma». ──
+  const CLAVE_IDIOMA = 'lunna-idioma';
+  let idioma = (() => {
+    const pedido = q.get('idioma');
+    if (pedido === 'en' || pedido === 'es') return pedido;
+    try { return localStorage.getItem(CLAVE_IDIOMA) === 'en' ? 'en' : 'es'; } catch { return 'es'; }
+  })();
+  const conIdioma = (ruta) => `${BASE}${ruta}${ruta.includes('?') ? '&' : '?'}idioma=${idioma}`;
+  const cargar = (p) => { const f = p.querySelector('iframe'); f.src = conIdioma(f.dataset.src); };
+  pantallas.forEach((p) => { escalar(p); ro.observe(p); cargar(p); });
 
   // «Toca para usar»: hasta entonces la rueda del ratón pasa de sección, no mueve la interfaz.
   pantallas.forEach((p) => {
@@ -60,6 +69,27 @@
     if (sig) { e.preventDefault(); sig.scrollIntoView({ behavior: 'smooth' }); }
   });
 
+  function ponerIdioma(l, recargar) {
+    idioma = l;
+    document.documentElement.lang = l;
+    try { localStorage.setItem(CLAVE_IDIOMA, l); } catch { /* sin almacenamiento */ }
+    $$('[data-en]').forEach((el) => {
+      if (el.dataset.es === undefined) el.dataset.es = el.innerHTML;
+      el.innerHTML = l === 'en' ? el.dataset.en : el.dataset.es;
+    });
+    [['aria', 'aria-label'], ['title', 'title']].forEach(([k, at]) => {
+      $$(`[data-en-${k}]`).forEach((el) => {
+        const clave = `es${k[0].toUpperCase()}${k.slice(1)}`;
+        if (el.dataset[clave] === undefined) el.dataset[clave] = el.getAttribute(at) || '';
+        el.setAttribute(at, l === 'en' ? el.getAttribute(`data-en-${k}`) : el.dataset[clave]);
+      });
+    });
+    $$('[data-ruta]').forEach((a) => { a.href = BASE + a.dataset.ruta; });
+    if (recargar) pantallas.forEach(cargar);
+    dibujar();
+  }
+  $('#b-idioma').addEventListener('click', () => ponerIdioma(idioma === 'en' ? 'es' : 'en', true));
+
   // ── LUNNA interactivo: misma fórmula que Sistema/backend/src/lunna.ts ──
   // Prior real de la semilla (presión sistólica en órbita): μ₀ = −6,7 %, τ₀ = 5 %, σ_misión = 3 %, σ_día = 5 %.
   const PRIOR = { mu0: -0.067, tau0: 0.05, sm: 0.03, sd: 0.05 }, BASAL = 120, PROPIO = -0.03;
@@ -81,8 +111,13 @@
   rk.addEventListener('input', lunna); rn.addEventListener('input', lunna); lunna();
 
   // ── Gráfica de deriva (datos ilustrativos, generador con semilla fija) ──
-  (function grafica() {
-    const svg = $('#g-deriva'), NS = 'http://www.w3.org/2000/svg';
+  const TXT = {
+    es: { calibra: 'calibra', congela: 'día 14: se congela', alerta: 'deriva lenta → alerta', sigue: 'el que sigue aprendiendo no avisa', dia: 'día' },
+    en: { calibra: 'learns', congela: 'day 14: frozen', alerta: 'slow drift → alert', sigue: 'the one that keeps learning stays silent', dia: 'day' },
+  };
+  function dibujar() {
+    const svg = $('#g-deriva'), NS = 'http://www.w3.org/2000/svg', T = TXT[idioma];
+    [...svg.children].forEach((n) => { if (n.tagName !== 'title') n.remove(); });
     const el = (tag, at, txt) => { const n = document.createElementNS(NS, tag); Object.entries(at).forEach(([k, v]) => n.setAttribute(k, v)); if (txt) n.textContent = txt; svg.appendChild(n); return n; };
     const X0 = 46, X1 = 626, Y0 = 150, S = 26, DIAS = 120;
     const x = (d) => X0 + ((X1 - X0) * d) / DIAS, y = (z) => Y0 - z * S;
@@ -93,9 +128,9 @@
     const lect = Array.from({ length: DIAS + 1 }, (_, d) => ({ d, z: deriva(d) + 0.62 * normal() }));
     // Calibración
     el('rect', { x: x(0), y: 18, width: x(14) - x(0), height: 252, fill: 'rgba(167,139,250,.08)' });
-    el('text', { x: x(7), y: 34, 'text-anchor': 'middle', fill: '#a78bfa', 'font-size': 11, 'font-family': 'JetBrains Mono, monospace' }, 'calibra');
+    el('text', { x: x(7), y: 34, 'text-anchor': 'middle', fill: '#a78bfa', 'font-size': 11, 'font-family': 'JetBrains Mono, monospace' }, T.calibra);
     el('line', { x1: x(14), x2: x(14), y1: 18, y2: 270, stroke: '#a78bfa', 'stroke-dasharray': '3 4' });
-    el('text', { x: x(14) + 6, y: 34, fill: '#c4b5fd', 'font-size': 11, 'font-family': 'JetBrains Mono, monospace' }, 'día 14: se congela');
+    el('text', { x: x(14) + 6, y: 34, fill: '#c4b5fd', 'font-size': 11, 'font-family': 'JetBrains Mono, monospace' }, T.congela);
     // Banda de LUNNA
     const arriba = lect.map(({ d }) => `${x(d)},${y(ancho(d))}`), abajo = lect.map(({ d }) => `${x(d)},${y(-ancho(d))}`).reverse();
     el('polygon', { points: [...arriba, ...abajo].join(' '), fill: 'rgba(124,196,255,.18)' });
@@ -112,13 +147,14 @@
     });
     if (primera) {
       el('line', { x1: x(primera.d), x2: x(primera.d) - 40, y1: y(primera.z) - 6, y2: y(primera.z) - 40, stroke: '#fbbf24' });
-      el('text', { x: x(primera.d) - 44, y: y(primera.z) - 46, 'text-anchor': 'end', fill: '#fde68a', 'font-size': 12 }, 'deriva lenta → alerta');
+      el('text', { x: x(primera.d) - 44, y: y(primera.z) - 46, 'text-anchor': 'end', fill: '#fde68a', 'font-size': 12 }, T.alerta);
     }
-    el('text', { x: x(96), y: y(-1.3), 'text-anchor': 'middle', fill: '#a3adcf', 'font-size': 11 }, 'el que sigue aprendiendo no avisa');
+    el('text', { x: x(96), y: y(-1.3), 'text-anchor': 'middle', fill: '#a3adcf', 'font-size': 11 }, T.sigue);
     // Ejes
     el('line', { x1: X0, x2: X1, y1: 270, y2: 270, stroke: 'rgba(148,163,255,.25)' });
     [0, 14, 40, 80, 112].forEach((d) => el('text', { x: x(d), y: 288, 'text-anchor': 'middle', fill: '#6f7aa3', 'font-size': 11, 'font-family': 'JetBrains Mono, monospace' }, `${d}`));
-    el('text', { x: X1, y: 288, 'text-anchor': 'end', fill: '#6f7aa3', 'font-size': 11 }, 'día');
+    el('text', { x: X1, y: 288, 'text-anchor': 'end', fill: '#6f7aa3', 'font-size': 11 }, T.dia);
     el('text', { x: 12, y: Y0 + 4, fill: '#7cc4ff', 'font-size': 11 }, 'μ');
-  })();
+  }
+  ponerIdioma(idioma, false);
 })();

@@ -3,56 +3,65 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lunna · Salud a bordo</title>
+  <title data-en="Lunna · Health on board">Lunna · Salud a bordo</title>
   <meta name="description" content="Lunna vigila la salud de cada astronauta contra su propio normal y avisa a la médica de a bordo antes de que un problema crezca. NASA Space Apps Challenge 2026 · Equipo Monarcas.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <!-- Idioma antes de pintar: evita ver el español un instante si se eligió inglés -->
+  <script>try{var l=new URLSearchParams(location.search).get('idioma')||localStorage.getItem('lunna-idioma');if(l==='en')document.documentElement.lang='en'}catch(e){}</script>
 </head>
 <body>
   <div class="cielo" aria-hidden="true"></div>
 
+  <!-- Traducción: cada texto en español lleva su inglés en data-en (data-en-aria / data-en-title para atributos). -->
   <header class="nav">
-    <a class="marca" href="#inicio" aria-label="Lunna, inicio"><span class="luna" aria-hidden="true"></span><span>Lunna</span></a>
-    <nav aria-label="Secciones">
-      <a href="#inicio">Dispositivos</a>
-      <a href="#demo">Video y simulación</a>
-      <a href="#lunna">Matemática</a>
-      <a href="#modelos">Modelos</a>
-      <a href="#equipo">Equipo</a>
+    <a class="marca" href="#inicio" aria-label="Lunna, inicio" data-en-aria="Lunna, home"><span class="luna" aria-hidden="true"></span><span>Lunna</span></a>
+    <nav aria-label="Secciones" data-en-aria="Sections">
+      <a href="#inicio" data-en="Devices">Dispositivos</a>
+      <a href="#demo" data-en="Video &amp; simulation">Video y simulación</a>
+      <a href="#lunna" data-en="Math">Matemática</a>
+      <a href="#modelos" data-en="Models">Modelos</a>
+      <a href="#equipo" data-en="Team">Equipo</a>
     </nav>
-    <a class="btn btn-chico" data-ruta="/simulador" href="/simulador" target="_blank" rel="noopener">Probar simulación</a>
+    <div class="nav-der">
+      <button class="idioma" id="b-idioma" type="button" aria-label="Cambiar idioma" data-en-aria="Change language">
+        <span data-l="es">ES</span><span data-l="en">EN</span>
+      </button>
+      <a class="btn btn-chico" data-ruta="/simulador" href="/simulador" target="_blank" rel="noopener" data-en="Try the simulation">Probar simulación</a>
+    </div>
   </header>
 
   <!-- Indicador de sección: un punto por pantalla -->
-  <nav class="puntos" aria-label="Ir a la sección">
-    <a href="#inicio" aria-label="Dispositivos"></a>
-    <a href="#demo" aria-label="Video y simulación"></a>
-    <a href="#lunna" aria-label="LUNNA, actualización bayesiana"></a>
-    <a href="#criterios" aria-label="Dos criterios de alerta"></a>
-    <a href="#modelos" aria-label="Modelos de predicción"></a>
-    <a href="#equipo" aria-label="Respaldo y equipo"></a>
+  <nav class="puntos" aria-label="Ir a la sección" data-en-aria="Go to section">
+    <a href="#inicio" aria-label="Dispositivos" data-en-aria="Devices"></a>
+    <a href="#demo" aria-label="Video y simulación" data-en-aria="Video and simulation"></a>
+    <a href="#lunna" aria-label="LUNNA, actualización bayesiana" data-en-aria="LUNNA, Bayesian updating"></a>
+    <a href="#criterios" aria-label="Dos criterios de alerta" data-en-aria="Two alert criteria"></a>
+    <a href="#modelos" aria-label="Modelos de predicción" data-en-aria="Prediction models"></a>
+    <a href="#equipo" aria-label="Respaldo y equipo" data-en-aria="Evidence and team"></a>
   </nav>
 
   <main>
     <!-- ═══ 1 · Los tres dispositivos, de un vistazo ═══ -->
     <section class="pagina portada" id="inicio">
       <div class="portada-texto entra">
-        <p class="ceja">NASA Space Apps Challenge 2026 · Equipo Monarcas</p>
-        <h1>Salud a bordo, <span>sin esperar a la Tierra.</span></h1>
-        <p class="bajada">Lunna aprende el normal de cada astronauta y avisa antes de que un problema crezca.
+        <p class="ceja" data-en="NASA Space Apps Challenge 2026 · Team Monarcas">NASA Space Apps Challenge 2026 · Equipo Monarcas</p>
+        <h1 data-en="Health on board, <span>without waiting for Earth.</span>">Salud a bordo, <span>sin esperar a la Tierra.</span></h1>
+        <p class="bajada" data-en="Lunna learns each astronaut’s own normal and warns before a problem grows.
+          <span class=&quot;solo-ancho&quot;>These are the real interfaces, running right now with the simulated crew.</span>">Lunna aprende el normal de cada astronauta y avisa antes de que un problema crezca.
           <span class="solo-ancho">Son las interfaces reales, funcionando ahora con la tripulación simulada.</span></p>
       </div>
 
-      <div class="escenario entra" aria-label="Las tres pantallas de Lunna">
+      <div class="escenario entra" aria-label="Las tres pantallas de Lunna" data-en-aria="Lunna’s three screens">
         <!-- Computadora central -->
         <figure class="equipo equipo-central">
-          <figcaption class="chip"><b>Computadora central</b> · médica de a bordo</figcaption>
+          <figcaption class="chip" data-en="<b>Central computer</b> · crew medical officer"><b>Computadora central</b> · médica de a bordo</figcaption>
           <div class="monitor">
             <div class="pantalla" data-ancho="1440" data-alto="900">
-              <iframe data-src="/app/central.html" title="Computadora central de Lunna" tabindex="-1"></iframe>
-              <button class="activar" type="button">Toca para usar</button>
+              <iframe data-src="/app/central.html" title="Computadora central de Lunna" data-en-title="Lunna central computer" tabindex="-1"></iframe>
+              <button class="activar" type="button" data-en="Tap to use">Toca para usar</button>
             </div>
           </div>
           <div class="monitor-pie" aria-hidden="true"></div>
@@ -60,29 +69,29 @@
 
         <!-- Celular -->
         <figure class="equipo equipo-cel">
-          <figcaption class="chip"><b>Celular</b> · cada astronauta</figcaption>
+          <figcaption class="chip" data-en="<b>Phone</b> · each astronaut"><b>Celular</b> · cada astronauta</figcaption>
           <div class="telefono">
             <div class="telefono-isla" aria-hidden="true"></div>
             <div class="pantalla" data-ancho="390" data-alto="844">
-              <iframe data-src="/app/" title="App del celular de Lunna" tabindex="-1"></iframe>
-              <button class="activar" type="button">Toca para usar</button>
+              <iframe data-src="/app/" title="App del celular de Lunna" data-en-title="Lunna phone app" tabindex="-1"></iframe>
+              <button class="activar" type="button" data-en="Tap to use">Toca para usar</button>
             </div>
           </div>
         </figure>
 
         <!-- Reloj -->
         <figure class="equipo equipo-reloj">
-          <figcaption class="chip"><b>Reloj</b> · en la muñeca</figcaption>
+          <figcaption class="chip" data-en="<b>Watch</b> · on the wrist"><b>Reloj</b> · en la muñeca</figcaption>
           <div class="reloj">
             <div class="pantalla pantalla-libre" data-ancho="320" data-alto="320">
-              <iframe data-src="/reloj/?embebido&amp;transparente&amp;persona=MS-2" title="Reloj de Lunna" tabindex="-1"></iframe>
-              <button class="activar" type="button">Toca</button>
+              <iframe data-src="/reloj/?embebido&amp;transparente&amp;persona=MS-2" title="Reloj de Lunna" data-en-title="Lunna watch" tabindex="-1"></iframe>
+              <button class="activar" type="button" data-en="Tap">Toca</button>
             </div>
           </div>
         </figure>
       </div>
 
-      <a class="bajar" href="#demo" aria-label="Siguiente sección"><span></span></a>
+      <a class="bajar" href="#demo" aria-label="Siguiente sección" data-en-aria="Next section"><span></span></a>
     </section>
 
     <!-- ═══ 2 · Video y botón de la simulación ═══ -->
@@ -93,77 +102,82 @@
         </video>
       </div>
       <div class="demo-texto entra">
-        <p class="ceja">En 30 segundos</p>
-        <h2>Un día de Ana en tránsito a Marte</h2>
-        <p>Duerme y entrena mientras sus sensores transmiten. Una tormenta solar la manda al refugio y se pierde el enlace
+        <p class="ceja" data-en="In 30 seconds">En 30 segundos</p>
+        <h2 data-en="A day in Ana’s life in transit to Mars">Un día de Ana en tránsito a Marte</h2>
+        <p data-en="She sleeps and trains while her sensors stream. A solar storm sends her to the shelter and the link to
+          Earth drops: Lunna guides the emergency on board, step by step, and Mei helps her. Earth finds out later, with the light delay.">Duerme y entrena mientras sus sensores transmiten. Una tormenta solar la manda al refugio y se pierde el enlace
           con Tierra: Lunna guía la emergencia a bordo, paso a paso, y Mei la ayuda. Tierra se entera después, con el retraso de la luz.</p>
-        <a class="btn btn-grande" data-ruta="/simulador" href="/simulador" target="_blank" rel="noopener">Probar la simulación ↗</a>
+        <a class="btn btn-grande" data-ruta="/simulador" href="/simulador" target="_blank" rel="noopener" data-en="Try the simulation ↗">Probar la simulación ↗</a>
         <ol class="pasos-cortos">
-          <li><b>Prepare mission</b> carga 112 días de historia</li>
-          <li><b>▶ Live</b> pone a transmitir los sensores</li>
-          <li>En la PC central escribe <code>scenario hypoxia</code></li>
+          <li data-en="<b>Prepare mission</b> loads 112 days of history"><b>Prepare mission</b> carga 112 días de historia</li>
+          <li data-en="<b>▶ Live</b> starts the sensors streaming"><b>▶ Live</b> pone a transmitir los sensores</li>
+          <li data-en="In the central PC type <code>scenario hypoxia</code>">En la PC central escribe <code>scenario hypoxia</code></li>
         </ol>
-        <p class="pantallas-sueltas">Cada pantalla por separado:
-          <a data-ruta="/app/" href="/app/" target="_blank" rel="noopener">celular</a> ·
-          <a data-ruta="/reloj/" href="/reloj/" target="_blank" rel="noopener">reloj</a> ·
-          <a data-ruta="/app/central.html" href="/app/central.html" target="_blank" rel="noopener">central</a> ·
-          <a data-ruta="/app/base.html" href="/app/base.html" target="_blank" rel="noopener">base en Tierra</a></p>
+        <p class="pantallas-sueltas"><span data-en="Each screen on its own:">Cada pantalla por separado:</span>
+          <a data-ruta="/app/" href="/app/" target="_blank" rel="noopener" data-en="phone">celular</a> ·
+          <a data-ruta="/reloj/" href="/reloj/" target="_blank" rel="noopener" data-en="watch">reloj</a> ·
+          <a data-ruta="/app/central.html" href="/app/central.html" target="_blank" rel="noopener" data-en="central">central</a> ·
+          <a data-ruta="/app/base.html" href="/app/base.html" target="_blank" rel="noopener" data-en="Earth base">base en Tierra</a></p>
       </div>
     </section>
 
     <!-- ═══ 3 · LUNNA: actualización bayesiana ═══ -->
     <section class="pagina mate" id="lunna">
       <header class="cabeza entra">
-        <p class="ceja">Cómo funciona, matemáticamente · 1 de 2</p>
-        <h2>LUNNA: el normal de cada persona, con su incertidumbre</h2>
-        <p>Una actualización bayesiana normal-normal en tres capas. Cada fuente de evidencia pesa según su precisión,
+        <p class="ceja" data-en="How it works, mathematically · 1 of 2">Cómo funciona, matemáticamente · 1 de 2</p>
+        <h2 data-en="LUNNA: each person’s normal, with its uncertainty">LUNNA: el normal de cada persona, con su incertidumbre</h2>
+        <p data-en="A three-layer normal-normal Bayesian update. Each source of evidence is weighted by its precision,
+          and every prediction comes with its 95% band.">Una actualización bayesiana normal-normal en tres capas. Cada fuente de evidencia pesa según su precisión,
           y toda predicción trae su banda del 95 %.</p>
       </header>
 
       <div class="mate-rejilla">
         <div class="formulas entra">
           <div class="formula">
-            <span class="formula-nombre">Precisión de cada capa</span>
-            <div class="fila"><math display="block"><msub><mi>λ</mi><mn>0</mn></msub><mo>=</mo><mfrac><mn>1</mn><msubsup><mi>τ</mi><mn>0</mn><mn>2</mn></msubsup></mfrac></math><math display="block"><msub><mi>λ</mi><mi>h</mi></msub><mo>=</mo><mfrac><mi>k</mi><msubsup><mi>σ</mi><mtext>misión</mtext><mn>2</mn></msubsup></mfrac></math><math display="block"><msub><mi>λ</mi><mi>v</mi></msub><mo>=</mo><mfrac><mi>n</mi><msubsup><mi>σ</mi><mtext>día</mtext><mn>2</mn></msubsup></mfrac></math></div>
-            <p>Literatura (prior poblacional) · <i>k</i> misiones previas · <i>n</i> días propios de calibración.</p>
+            <span class="formula-nombre" data-en="Precision of each layer">Precisión de cada capa</span>
+            <div class="fila"><math display="block"><msub><mi>λ</mi><mn>0</mn></msub><mo>=</mo><mfrac><mn>1</mn><msubsup><mi>τ</mi><mn>0</mn><mn>2</mn></msubsup></mfrac></math><math display="block"><msub><mi>λ</mi><mi>h</mi></msub><mo>=</mo><mfrac><mi>k</mi><msubsup><mi>σ</mi><mtext data-en="mission">misión</mtext><mn>2</mn></msubsup></mfrac></math><math display="block"><msub><mi>λ</mi><mi>v</mi></msub><mo>=</mo><mfrac><mi>n</mi><msubsup><mi>σ</mi><mtext data-en="day">día</mtext><mn>2</mn></msubsup></mfrac></math></div>
+            <p data-en="Literature (population prior) · <i>k</i> previous missions · <i>n</i> of their own calibration days.">Literatura (prior poblacional) · <i>k</i> misiones previas · <i>n</i> días propios de calibración.</p>
           </div>
           <div class="formula">
-            <span class="formula-nombre">Cambio esperado para esa persona</span>
+            <span class="formula-nombre" data-en="Expected change for that person">Cambio esperado para esa persona</span>
             <div class="fila"><math display="block"><mi>μ</mi><mo>=</mo>
               <mfrac>
                 <mrow><msub><mi>λ</mi><mn>0</mn></msub><mo>(</mo><msub><mi>μ</mi><mn>0</mn></msub><mo>+</mo><mi>β</mi><mo>·</mo><mi>x</mi><mo>)</mo><mo>+</mo>
-                  <mfrac><mrow><mo>∑</mo><msub><mi>Δ</mi><mi>h</mi></msub></mrow><msubsup><mi>σ</mi><mtext>misión</mtext><mn>2</mn></msubsup></mfrac><mo>+</mo>
-                  <mfrac><mrow><mo>∑</mo><msub><mi>Δ</mi><mi>d</mi></msub></mrow><msubsup><mi>σ</mi><mtext>día</mtext><mn>2</mn></msubsup></mfrac></mrow>
+                  <mfrac><mrow><mo>∑</mo><msub><mi>Δ</mi><mi>h</mi></msub></mrow><msubsup><mi>σ</mi><mtext data-en="mission">misión</mtext><mn>2</mn></msubsup></mfrac><mo>+</mo>
+                  <mfrac><mrow><mo>∑</mo><msub><mi>Δ</mi><mi>d</mi></msub></mrow><msubsup><mi>σ</mi><mtext data-en="day">día</mtext><mn>2</mn></msubsup></mfrac></mrow>
                 <mrow><msub><mi>λ</mi><mn>0</mn></msub><mo>+</mo><msub><mi>λ</mi><mi>h</mi></msub><mo>+</mo><msub><mi>λ</mi><mi>v</mi></msub></mrow>
               </mfrac></math><math display="block"><msup><mi>τ</mi><mn>2</mn></msup><mo>=</mo><mfrac><mn>1</mn><mrow><msub><mi>λ</mi><mn>0</mn></msub><mo>+</mo><msub><mi>λ</mi><mi>h</mi></msub><mo>+</mo><msub><mi>λ</mi><mi>v</mi></msub></mrow></mfrac></math></div>
           </div>
           <div class="formula">
-            <span class="formula-nombre">Banda del 95 % y qué tan raro es lo medido</span>
-            <div class="fila"><math display="block"><mi>μ</mi><mo>±</mo><mn>1.96</mn><msqrt><msup><mi>τ</mi><mn>2</mn></msup><mo>+</mo><msubsup><mi>σ</mi><mtext>día</mtext><mn>2</mn></msubsup></msqrt></math><math display="block"><mi>z</mi><mo>=</mo><mfrac><mrow><msub><mi>Δ</mi><mtext>medido</mtext></msub><mo>−</mo><mi>μ</mi></mrow><msqrt><msup><mi>τ</mi><mn>2</mn></msup><mo>+</mo><msubsup><mi>σ</mi><mtext>día</mtext><mn>2</mn></msubsup></msqrt></mfrac></math><math display="block"><mi>P</mi><mo>(</mo><mtext>ruido</mtext><mo>)</mo><mo>=</mo><mn>1</mn><mo>−</mo><mtext>erf</mtext><mo>(</mo><mo>|</mo><mi>z</mi><mo>|</mo><mo>/</mo><msqrt><mn>2</mn></msqrt><mo>)</mo></math></div>
-            <p><span class="dot verde"></span>|z| &lt; 2 · <span class="dot ambar"></span>2 ≤ |z| &lt; 3 · <span class="dot rojo"></span>|z| ≥ 3.
+            <span class="formula-nombre" data-en="95% band and how unusual the reading is">Banda del 95 % y qué tan raro es lo medido</span>
+            <div class="fila"><math display="block"><mi>μ</mi><mo>±</mo><mn>1.96</mn><msqrt><msup><mi>τ</mi><mn>2</mn></msup><mo>+</mo><msubsup><mi>σ</mi><mtext data-en="day">día</mtext><mn>2</mn></msubsup></msqrt></math><math display="block"><mi>z</mi><mo>=</mo><mfrac><mrow><msub><mi>Δ</mi><mtext data-en="measured">medido</mtext></msub><mo>−</mo><mi>μ</mi></mrow><msqrt><msup><mi>τ</mi><mn>2</mn></msup><mo>+</mo><msubsup><mi>σ</mi><mtext data-en="day">día</mtext><mn>2</mn></msubsup></msqrt></mfrac></math><math display="block"><mi>P</mi><mo>(</mo><mtext data-en="noise">ruido</mtext><mo>)</mo><mo>=</mo><mn>1</mn><mo>−</mo><mtext>erf</mtext><mo>(</mo><mo>|</mo><mi>z</mi><mo>|</mo><mo>/</mo><msqrt><mn>2</mn></msqrt><mo>)</mo></math></div>
+            <p data-en="<span class=&quot;dot verde&quot;></span>|z| &lt; 2 · <span class=&quot;dot ambar&quot;></span>2 ≤ |z| &lt; 3 · <span class=&quot;dot rojo&quot;></span>|z| ≥ 3.
+              Calibration <b>freezes on day 14</b>: if it kept learning, a slow drift would become “their new normal”."><span class="dot verde"></span>|z| &lt; 2 · <span class="dot ambar"></span>2 ≤ |z| &lt; 3 · <span class="dot rojo"></span>|z| ≥ 3.
               La calibración <b>se congela el día 14</b>: si siguiera aprendiendo, una deriva lenta se volvería «su nuevo normal».</p>
           </div>
         </div>
 
         <!-- Ejemplo interactivo con el prior real de presión sistólica en órbita -->
-        <div class="jugar entra" aria-label="Ejemplo interactivo de LUNNA">
+        <div class="jugar entra" aria-label="Ejemplo interactivo de LUNNA" data-en-aria="Interactive LUNNA example">
           <div class="jugar-cabeza">
-            <b>Pruébalo: presión sistólica en órbita</b>
-            <span>prior real de la semilla: μ₀ = −6,7 %, τ₀ = 5 % · basal 120 mmHg</span>
+            <b data-en="Try it: systolic pressure in orbit">Pruébalo: presión sistólica en órbita</b>
+            <span data-en="real prior from the seed data: μ₀ = −6.7%, τ₀ = 5% · baseline 120 mmHg">prior real de la semilla: μ₀ = −6,7 %, τ₀ = 5 % · basal 120 mmHg</span>
           </div>
-          <label class="deslizador">Misiones previas <i>k</i> <output id="o-k">0</output>
+          <label class="deslizador"><span data-en="Previous missions">Misiones previas</span> <i>k</i> <output id="o-k">0</output>
             <input id="r-k" type="range" min="0" max="3" step="1" value="0"></label>
-          <label class="deslizador">Días de calibración <i>n</i> <output id="o-n">0</output>
+          <label class="deslizador"><span data-en="Calibration days">Días de calibración</span> <i>n</i> <output id="o-n">0</output>
             <input id="r-n" type="range" min="0" max="14" step="1" value="0"></label>
-          <div class="pesos" aria-label="Cuánto pesa cada fuente">
+          <div class="pesos" aria-label="Cuánto pesa cada fuente" data-en-aria="How much each source weighs">
             <div class="peso-barra"><span id="p-pob" class="p-pob"></span><span id="p-his" class="p-his"></span><span id="p-vue" class="p-vue"></span></div>
-            <div class="peso-leyenda"><span><i class="p-pob"></i>literatura <b id="t-pob"></b></span><span><i class="p-his"></i>misiones previas <b id="t-his"></b></span><span><i class="p-vue"></i>su vuelo <b id="t-vue"></b></span></div>
+            <div class="peso-leyenda"><span><i class="p-pob"></i><span data-en="literature">literatura</span> <b id="t-pob"></b></span><span><i class="p-his"></i><span data-en="previous missions">misiones previas</span> <b id="t-his"></b></span><span><i class="p-vue"></i><span data-en="this flight">su vuelo</span> <b id="t-vue"></b></span></div>
           </div>
           <div class="resultado">
-            <div><span>Esperado</span><b id="r-esp">—</b></div>
-            <div><span>Banda del 95 %</span><b id="r-banda">—</b></div>
+            <div><span data-en="Expected">Esperado</span><b id="r-esp">—</b></div>
+            <div><span data-en="95% band">Banda del 95 %</span><b id="r-banda">—</b></div>
           </div>
-          <p class="nota">Ilustrativo: el cambio propio de esta persona (−3 % en sus misiones y en sus días de vuelo) es inventado
+          <p class="nota" data-en="Illustrative: this person’s own change (−3% in their missions and flight days) is made up
+            to show how their data displaces the literature. The calculation is the same as in
+            <a href=&quot;https://github.com/DinDevJ/lunna/blob/main/Sistema/backend/src/lunna.ts&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;>lunna.ts</a>.">Ilustrativo: el cambio propio de esta persona (−3 % en sus misiones y en sus días de vuelo) es inventado
             para que se vea cómo sus datos desplazan a la literatura. El cálculo es el mismo de
             <a href="https://github.com/DinDevJ/lunna/blob/main/Sistema/backend/src/lunna.ts" target="_blank" rel="noopener">lunna.ts</a>.</p>
         </div>
@@ -173,37 +187,39 @@
     <!-- ═══ 4 · Dos criterios y deriva ═══ -->
     <section class="pagina mate" id="criterios">
       <header class="cabeza entra">
-        <p class="ceja">Cómo funciona, matemáticamente · 2 de 2</p>
-        <h2>Dos criterios de alerta: manda el peor</h2>
-        <p>Lo personal detecta lo lento; el umbral clínico detecta lo agudo. Ninguno de los dos basta solo.</p>
+        <p class="ceja" data-en="How it works, mathematically · 2 of 2">Cómo funciona, matemáticamente · 2 de 2</p>
+        <h2 data-en="Two alert criteria: the worse one wins">Dos criterios de alerta: manda el peor</h2>
+        <p data-en="The personal criterion catches what is slow; the clinical threshold catches what is acute. Neither is enough alone.">Lo personal detecta lo lento; el umbral clínico detecta lo agudo. Ninguno de los dos basta solo.</p>
       </header>
 
       <div class="criterios-rejilla">
         <figure class="grafica entra">
           <svg id="g-deriva" viewBox="0 0 640 300" role="img" aria-labelledby="g-tit">
-            <title id="g-tit">Lecturas diarias contra la banda esperada: la calibración se congela el día 14 y una deriva lenta termina fuera de la banda</title>
+            <title id="g-tit" data-en="Daily readings against the expected band: calibration freezes on day 14 and a slow drift ends up outside the band">Lecturas diarias contra la banda esperada: la calibración se congela el día 14 y una deriva lenta termina fuera de la banda</title>
           </svg>
-          <figcaption><span><i class="ley ley-banda"></i>banda del 95 % de LUNNA</span>
-            <span><i class="ley ley-sigue"></i>un modelo que sigue aprendiendo</span>
-            <span><i class="ley ley-alerta"></i>fuera de su normal</span> <em>· datos ilustrativos</em></figcaption>
+          <figcaption><span><i class="ley ley-banda"></i><span data-en="LUNNA 95% band">banda del 95 % de LUNNA</span></span>
+            <span><i class="ley ley-sigue"></i><span data-en="a model that keeps learning">un modelo que sigue aprendiendo</span></span>
+            <span><i class="ley ley-alerta"></i><span data-en="outside their normal">fuera de su normal</span></span> <em data-en="· illustrative data">· datos ilustrativos</em></figcaption>
         </figure>
 
         <div class="criterios entra">
           <article class="criterio">
-            <span class="etiqueta">Criterio personal · LUNNA</span>
-            <h3>La mediana de la ventana contra lo esperado <em>para ella</em></h3>
-            <p>Mediana de las últimas 24 h contra la predicción y su banda. Detecta derivas lentas que nunca cruzarían un
+            <span class="etiqueta" data-en="Personal criterion · LUNNA">Criterio personal · LUNNA</span>
+            <h3 data-en="The window median against what is expected <em>for her</em>">La mediana de la ventana contra lo esperado <em>para ella</em></h3>
+            <p data-en="Median of the last 24 h against the prediction and its band. It catches slow drifts that would never cross a
+              clinical limit: the accumulated fatigue of day 112.">Mediana de las últimas 24 h contra la predicción y su banda. Detecta derivas lentas que nunca cruzarían un
               límite clínico: la fatiga acumulada del día 112.</p>
           </article>
           <article class="criterio">
-            <span class="etiqueta">Criterio clínico · umbral</span>
-            <h3>La mediana de 5 lecturas en 10 min contra el límite</h3>
-            <p>Una SpO₂ de 87 % es grave aunque sea «normal para ti». Cada límite dice de dónde viene: <b>[A]</b> NASA o
+            <span class="etiqueta" data-en="Clinical criterion · threshold">Criterio clínico · umbral</span>
+            <h3 data-en="The median of 5 readings in 10 min against the limit">La mediana de 5 lecturas en 10 min contra el límite</h3>
+            <p data-en="An SpO₂ of 87% is serious even if it is “normal for you”. Every limit states its origin: <b>[A]</b> NASA or
+              validated in astronauts, <b>[T]</b> terrestrial clinical. A single artifact does not fire.">Una SpO₂ de 87 % es grave aunque sea «normal para ti». Cada límite dice de dónde viene: <b>[A]</b> NASA o
               validado en astronautas, <b>[T]</b> clínico de Tierra. Un artefacto suelto no dispara.</p>
           </article>
           <div class="combina">
-            <math display="block"><mtext>estado</mtext><mo>=</mo><mo>max</mo><mo>(</mo><mtext>personal</mtext><mo>,</mo><mtext>umbral</mtext><mo>)</mo></math>
-            <p>y la alerta dice el motivo: <code>personal</code>, <code>umbral</code> o <code>ambos</code>.</p>
+            <math display="block"><mtext data-en="status">estado</mtext><mo>=</mo><mo>max</mo><mo>(</mo><mtext>personal</mtext><mo>,</mo><mtext data-en="threshold">umbral</mtext><mo>)</mo></math>
+            <p data-en="and the alert states the reason: <code>personal</code>, <code>umbral</code> (threshold) or <code>ambos</code> (both).">y la alerta dice el motivo: <code>personal</code>, <code>umbral</code> o <code>ambos</code>.</p>
           </div>
         </div>
       </div>
@@ -212,50 +228,55 @@
     <!-- ═══ 5 · Modelos de predicción ═══ -->
     <section class="pagina modelos" id="modelos">
       <header class="cabeza entra">
-        <p class="ceja">Modelos de predicción que usamos</p>
-        <h2>Cada número sale de un modelo que se puede auditar</h2>
+        <p class="ceja" data-en="Prediction models we use">Modelos de predicción que usamos</p>
+        <h2 data-en="Every number comes from a model you can audit">Cada número sale de un modelo que se puede auditar</h2>
       </header>
       <div class="tarjetas entra">
         <article class="tarjeta">
           <span class="num">01</span>
-          <h3>LUNNA bayesiano</h3>
-          <p>Valor esperado y banda del 95 % de cada signo vital para esa persona en ese entorno (Tierra, órbita, tránsito,
+          <h3 data-en="Bayesian LUNNA">LUNNA bayesiano</h3>
+          <p data-en="Expected value and 95% band of each vital sign for that person in that environment (Earth, orbit, transit,
+            Moon, Mars).">Valor esperado y banda del 95 % de cada signo vital para esa persona en ese entorno (Tierra, órbita, tránsito,
             Luna, Marte).</p>
           <math display="block"><mi>Δ</mi><mo>∼</mo><mi>𝒩</mi><mo>(</mo><mi>μ</mi><mo>,</mo><msup><mi>τ</mi><mn>2</mn></msup><mo>)</mo></math>
         </article>
         <article class="tarjeta">
           <span class="num">02</span>
-          <h3>Base prevuelo encogida</h3>
-          <p>El normal de cada tripulante antes del lanzamiento, encogido hacia la referencia cuando hay pocos datos
+          <h3 data-en="Shrunk pre-flight baseline">Base prevuelo encogida</h3>
+          <p data-en="Each crew member’s normal before launch, shrunk toward the reference when data is scarce
+            (Sottas 2007). It freezes at liftoff.">El normal de cada tripulante antes del lanzamiento, encogido hacia la referencia cuando hay pocos datos
             (Sottas 2007). Se congela al despegar.</p>
           <math display="block"><msub><mi>μ</mi><mi>i</mi></msub><mo>=</mo><mi>B</mi><msub><mi>m</mi><mtext>ref</mtext></msub><mo>+</mo><mo>(</mo><mn>1</mn><mo>−</mo><mi>B</mi><mo>)</mo><msub><mover><mi>x</mi><mo>‾</mo></mover><mi>i</mi></msub></math>
         </article>
         <article class="tarjeta">
           <span class="num">03</span>
-          <h3>EWMA protegido</h3>
-          <p>Media adaptativa que sólo aprende de días estables, tras 72 h de cuarentena y con tope de ±1,5 DE.</p>
+          <h3 data-en="Protected EWMA">EWMA protegido</h3>
+          <p data-en="Adaptive mean that only learns from stable days, after a 72 h quarantine and capped at ±1.5 SD.">Media adaptativa que sólo aprende de días estables, tras 72 h de cuarentena y con tope de ±1,5 DE.</p>
           <math display="block"><msub><mi>m</mi><mi>t</mi></msub><mo>=</mo><msub><mi>m</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><mi>α</mi><mo>(</mo><msub><mi>x</mi><mi>t</mi></msub><mo>−</mo><msub><mi>m</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>)</mo><mo>,</mo><mspace width=".4em"/><mi>α</mi><mo>=</mo><mn>0.1</mn></math>
         </article>
         <article class="tarjeta">
           <span class="num">04</span>
-          <h3>CUSUM anclado</h3>
-          <p>Acumula desviaciones pequeñas y persistentes respecto al prevuelo. Sólo lo reinicia una revisión humana.</p>
+          <h3 data-en="Anchored CUSUM">CUSUM anclado</h3>
+          <p data-en="Accumulates small, persistent deviations from the pre-flight baseline. Only a human review resets it.">Acumula desviaciones pequeñas y persistentes respecto al prevuelo. Sólo lo reinicia una revisión humana.</p>
           <math display="block"><msub><mi>C</mi><mi>t</mi></msub><mo>=</mo><mo>max</mo><mo>(</mo><mn>0</mn><mo>,</mo><msub><mi>C</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><msub><mi>r</mi><mi>t</mi></msub><mo>−</mo><mi>k</mi><mo>)</mo><mo>,</mo><mspace width=".4em"/><mi>k</mi><mo>=</mo><mn>0.5</mn><mo>,</mo><mspace width=".3em"/><mi>h</mi><mo>=</mo><mn>5</mn></math>
         </article>
         <article class="tarjeta">
           <span class="num">05</span>
-          <h3>Semáforo de 20 padecimientos</h3>
-          <p>Dos canales que no se suman: pesos editables por el cirujano de vuelo y razones de verosimilitud publicadas.</p>
+          <h3 data-en="Traffic light for 20 conditions">Semáforo de 20 padecimientos</h3>
+          <p data-en="Two channels that are never added: weights editable by the flight surgeon, and published likelihood ratios.">Dos canales que no se suman: pesos editables por el cirujano de vuelo y razones de verosimilitud publicadas.</p>
           <math display="block"><msub><mi>T</mi><mi>p</mi></msub><mo>=</mo><munder><mo>∑</mo><mi>g</mi></munder><mo>max</mo><mo>(</mo><msub><mi>μ</mi><mrow><mi>p</mi><mi>v</mi></mrow></msub><msub><mi>a</mi><mrow><mi>p</mi><mi>v</mi></mrow></msub><mo>)</mo><mspace width=".8em"/><mi>Δ</mi><msub><mi>L</mi><mi>p</mi></msub><mo>=</mo><mo>∑</mo><msub><mi>κ</mi><mi>v</mi></msub><mi>ln</mi><msub><mtext>LR</mtext><mi>v</mi></msub></math>
         </article>
         <article class="tarjeta">
           <span class="num">06</span>
-          <h3>Modelos de ECG y ecocardiografía</h3>
-          <p>NeuroKit2 para ECG; PanEcho, EchoNet-Dynamic, EchoCLIP, EchoPrime y MedSAM2 para eco. Su salida es
+          <h3 data-en="ECG and echocardiography models">Modelos de ECG y ecocardiografía</h3>
+          <p data-en="NeuroKit2 for ECG; PanEcho, EchoNet-Dynamic, EchoCLIP, EchoPrime and MedSAM2 for echo. Their output is
+            level-N4 evidence: <b>it never triggers red on its own</b>.">NeuroKit2 para ECG; PanEcho, EchoNet-Dynamic, EchoCLIP, EchoPrime y MedSAM2 para eco. Su salida es
             evidencia de nivel N4: <b>nunca da rojo por sí sola</b>.</p>
         </article>
       </div>
-      <p class="aviso entra">Los parámetros (α, k, h, cuarentena, cortes del semáforo) son provisionales y están documentados como
+      <p class="aviso entra" data-en="The parameters (α, k, h, quarantine, traffic-light cut-offs) are provisional and documented as
+        assumptions. Full detail in
+        <a href=&quot;https://github.com/DinDevJ/lunna/blob/main/documentacion/README_06_MODELOS_COMPUTACIONALES_ALGORITMOS.md&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;>models and algorithms</a> (Spanish).">Los parámetros (α, k, h, cuarentena, cortes del semáforo) son provisionales y están documentados como
         supuestos. Detalle completo en
         <a href="https://github.com/DinDevJ/lunna/blob/main/documentacion/README_06_MODELOS_COMPUTACIONALES_ALGORITMOS.md" target="_blank" rel="noopener">modelos y algoritmos</a>.</p>
     </section>
@@ -263,23 +284,24 @@
     <!-- ═══ 6 · Respaldo y equipo ═══ -->
     <section class="pagina final" id="equipo">
       <div class="respaldo entra">
-        <article><h3>Cada umbral dice de dónde viene</h3><p>Límites de cabina de NASA-STD-3001; los clínicos marcados <b>[A]</b> o <b>[T]</b>.</p></article>
-        <article><h3>Datos reales donde existen</h3><p>Eventos solares de NASA DONKI; validación con los laboratorios abiertos de Inspiration4 (NASA OSDR). La tripulación de la demo es simulada.</p></article>
-        <article><h3>Avisa, no diagnostica</h3><p>La decisión es de la médica de a bordo y del cirujano de vuelo. Prototipo de hackatón, no validado para uso médico.</p></article>
+        <article><h3 data-en="Every threshold states its source">Cada umbral dice de dónde viene</h3><p data-en="Cabin limits from NASA-STD-3001; clinical ones marked <b>[A]</b> or <b>[T]</b>.">Límites de cabina de NASA-STD-3001; los clínicos marcados <b>[A]</b> o <b>[T]</b>.</p></article>
+        <article><h3 data-en="Real data where it exists">Datos reales donde existen</h3><p data-en="Solar events from NASA DONKI; validation with the Inspiration4 open labs (NASA OSDR). The demo crew is simulated.">Eventos solares de NASA DONKI; validación con los laboratorios abiertos de Inspiration4 (NASA OSDR). La tripulación de la demo es simulada.</p></article>
+        <article><h3 data-en="It warns, it does not diagnose">Avisa, no diagnostica</h3><p data-en="The decision belongs to the crew medical officer and the flight surgeon. Hackathon prototype, not validated for medical use.">La decisión es de la médica de a bordo y del cirujano de vuelo. Prototipo de hackatón, no validado para uso médico.</p></article>
       </div>
       <div class="equipo-bloque entra">
-        <p class="ceja">Equipo Monarcas</p>
-        <h2>Quiénes lo hicimos</h2>
+        <p class="ceja" data-en="Team Monarcas">Equipo Monarcas</p>
+        <h2 data-en="Who built it">Quiénes lo hicimos</h2>
         <ul class="nombres">
-          <li><b>Julio</b><span>Computadora central, LUNNA, ESP32 y simulación</span></li>
-          <li><b>Iker</b><span>Variables, motor de padecimientos e Inspiration4</span></li>
-          <li><b>Leo</b><span>Pesos por padecimiento, central y base en Tierra</span></li>
-          <li><b>Diana</b><span>App del celular y asistente Lunna</span></li>
-          <li><b>Katy</b><span>Requisitos, experiencia y diseño de la app</span></li>
-          <li><b>Fani</b><span>Reloj, integración de interfaces y documentación</span></li>
+          <li><b>Julio</b><span data-en="Central computer, LUNNA, ESP32 and simulation">Computadora central, LUNNA, ESP32 y simulación</span></li>
+          <li><b>Iker</b><span data-en="Variables, conditions engine and Inspiration4">Variables, motor de padecimientos e Inspiration4</span></li>
+          <li><b>Leo</b><span data-en="Weights per condition, central and Earth base">Pesos por padecimiento, central y base en Tierra</span></li>
+          <li><b>Diana</b><span data-en="Phone app and the Lunna assistant">App del celular y asistente Lunna</span></li>
+          <li><b>Katy</b><span data-en="Requirements, experience and app design">Requisitos, experiencia y diseño de la app</span></li>
+          <li><b>Fani</b><span data-en="Watch, interface integration and documentation">Reloj, integración de interfaces y documentación</span></li>
         </ul>
       </div>
-      <footer class="pie">
+      <footer class="pie" data-en="Lunna · NASA Space Apps Challenge 2026 · challenge <em>Create Health Monitoring Software for Astronauts on Space Missions</em> ·
+        <a href=&quot;https://github.com/DinDevJ/lunna&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;>code</a> · MIT">
         Lunna · NASA Space Apps Challenge 2026 · reto <em>Create Health Monitoring Software for Astronauts on Space Missions</em> ·
         <a href="https://github.com/DinDevJ/lunna" target="_blank" rel="noopener">código</a> · MIT
       </footer>

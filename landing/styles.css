@@ -248,3 +248,12 @@ h2 { margin: 0; font-size: clamp(1.7rem, 3.2vw, 2.6rem); line-height: 1.12; lett
 .pie a { color: var(--acento); }
 @media (max-width: 1000px) { .nombres { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 760px) { .respaldo { grid-template-columns: 1fr; } .nombres { grid-template-columns: 1fr 1fr; } }
+
+/* ── Botón de idioma ES / EN ── */
+.nav-der { display: flex; align-items: center; gap: 10px; }
+.idioma { display: inline-flex; padding: 3px; border-radius: 999px; border: 1px solid var(--linea); background: rgba(17, 24, 48, .6);
+  cursor: pointer; font: 600 .78rem var(--mono); }
+.idioma span { padding: 5px 9px; border-radius: 999px; color: var(--tenue-2); transition: background .2s, color .2s; }
+html:not([lang="en"]) .idioma [data-l="es"], html[lang="en"] .idioma [data-l="en"] { background: rgba(124, 196, 255, .18); color: var(--texto); }
+.idioma:focus-visible { outline: 2px solid var(--acento); outline-offset: 3px; }
+@media (max-width: 760px) { .idioma span { padding: 4px 7px; } .nav-der { gap: 6px; } }

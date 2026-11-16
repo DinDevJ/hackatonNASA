@@ -14,22 +14,22 @@ Las fórmulas están en MathML (sin librerías). La gráfica de deriva usa datos
 
 ## Verla en local
 
-Igual que en el VPS: un mismo origen sirve la landing en `/` y pasa todo lo demás al backend.
-
-```bash
-cd Simulacion && PUERTO=8788 npm start
-```
+Un solo comando, igual en Windows (PowerShell), macOS o Linux, desde la raíz del repo:
 
 ```bash
 node landing/servir.mjs
 ```
 
-Abre http://localhost:8787. Para que las interfaces muestren datos en vivo, abre http://localhost:8787/simulador,
-pulsa **Prepare mission** y deja esa pestaña abierta.
+Abre http://localhost:8787. El script sirve la landing en `/` y arranca él mismo el backend en modo simulación en el
+puerto 8788 (o reutiliza el que ya esté corriendo ahí), igual que nginx en el VPS. Si el 8787 está ocupado (por
+ejemplo, por un `npm start` de `Simulacion/` que quedó abierto), ciérralo o usa otro puerto:
+PowerShell `$env:PUERTO=8790; node landing/servir.mjs` · bash `PUERTO=8790 node landing/servir.mjs`.
 
-Alternativa sin el servidor de la landing: `npm start` en `Simulacion/` (puerto 8787), `python3 -m http.server 3000`
-desde la raíz del repo y abre http://localhost:3000/landing/. Las interfaces se cargan desde `http://localhost:8787`
-(o el que pases en `?backend=…`).
+Para que las interfaces muestren datos en vivo, abre http://localhost:8787/simulador, pulsa **Prepare mission** y deja
+esa pestaña abierta.
+
+El botón **ES / EN** cambia la landing y también el idioma de las tres interfaces incrustadas. Se recuerda en el
+navegador y se puede forzar con `?idioma=en`.
 
 ## En el VPS
 

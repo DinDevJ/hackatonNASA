@@ -4,19 +4,22 @@
 > Challenge: **Create Health Monitoring Software for Astronauts on Space Missions** · Team **Monarcas**.
 
 ## Project name
-Lunna — onboard health monitoring that learns each astronaut's own normal
+Lunna
+
+(The product is **Lunna**; **LUNNA** is its Bayesian model: **L**ive-telemetry **U**pdating **N**etwork for
+**N**ominal-deviation & **A**nomalies.)
 
 ## High-level summary
 On a mission to Mars, Earth can be up to ~20 minutes away by light, so the crew must detect and act on health
 problems on board. Lunna learns each astronaut's own normal and warns the crew medical officer before a problem grows.
 Sensors (an ESP32 smart shirt, a blood-pressure cuff and a watch) stream over Bluetooth to an onboard central computer
-that works fully offline. A Bayesian model (LUNNA) predicts the expected value of each vital sign for that person in
+that works fully offline. A Bayesian model, LUNNA (Live-telemetry Updating Network for Nominal-deviation & Anomalies), predicts the expected value of each vital sign for that person in
 that environment, with a 95% band, and a second criterion checks clinical thresholds; the worse of the two wins and the
 alert says why. A 20-condition engine links variables to NASA HRP risks with evidence levels. Earth receives the same
 data with the light-time delay through a delay-tolerant link (sequence numbers, ACKs, retries: zero losses and zero
 duplicates in fault-injection tests) and answers with notices. Four interfaces (crew phone, watch, central computer for
 the CMO, Earth base for the flight surgeon), a spacecraft simulator and a bilingual landing page are deployed live.
-Prototype: not a medical device; the demo crew is fictional and its data is synthetic and labeled as such.
+Prototype: not a medical device; the demo crew is fictional, with synthetic, labeled data.
 
 ## Link to project demo
 https://lunna.danaus.dev  (landing with the three devices running live, video, math, models, validation)

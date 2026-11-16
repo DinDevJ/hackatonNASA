@@ -402,3 +402,9 @@ math { font-family: 'STIX Two Math', 'Cambria Math', 'Latin Modern Math', math; 
 @keyframes nebulosas { from { transform: scale(1) translate(0, 0); opacity: .82; } to { transform: scale(1.06) translate(-1.2%, .8%); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { #cosmos-fondo { animation: none; } }
 .cielo::before { display: none; }   /* las estrellas fijas las reemplaza el canvas */
+
+/* Significado del acrónimo LUNNA, bajo el título de su sección */
+.acronimo { margin: .1rem 0 .6rem; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .82rem;
+  letter-spacing: .02em; color: var(--tenue, #9fb0d0); }
+.acronimo b { color: var(--acento, #7dd3fc); font-weight: 700; }
+.acronimo .nw { white-space: nowrap; }

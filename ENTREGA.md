@@ -102,10 +102,3 @@ NHANES · Sottas et al. 2007 (shrunk baseline) · Coskun et al. 2021 · Obermeye
 | EchoPrime | https://github.com/echonet/EchoPrime |
 | MedSAM2 | https://github.com/bowang-lab/MedSAM2 |
 
-## Before submitting (checklist)
-- [ ] Repository **public** (GitHub → Settings → Change visibility), or the final link replaced by the landing page.
-- [ ] Demo opens without login: https://lunna.danaus.dev (and the video plays).
-- [ ] Simulator live on its own: the `lunna-piloto` service prepares the mission and keeps the sensors streaming 24/7
-      (check: `systemctl status lunna-piloto` on the VPS).
-- [ ] Video has English subtitles if it has narration; slides (if any) in English.
-- [ ] All team members confirmed at the same local event.

@@ -105,7 +105,8 @@ sudo bash /opt/lunna/despliegue/desinstalar.sh
 
 | What | Command |
 |---|---|
-| View logs | `journalctl -u lunna -f` |
+| View logs | `journalctl -u lunna -u lunna-piloto -f` |
+| Autopilot (simulation always live) | `systemctl status lunna-piloto` · turn off with `sudo systemctl disable --now lunna-piloto` |
 | Restart the backend | `sudo systemctl restart lunna` |
 | Status | `systemctl status lunna` · `http://YOUR-IP:8088/estado` |
 | Start the demo from scratch | In `/simulador`: "Prepare mission" |
@@ -139,5 +140,6 @@ Not tested with real systemd or certbot: the test environment has neither system
 | `actualizar.sh` | Pulls the latest of the branch and restarts only Lunna |
 | `desinstalar.sh` | Removes Lunna without touching anything else |
 | `lunna.service` | systemd service (user `lunna`, local only, memory cap) |
+| `lunna-piloto.service` | Autopilot: runs the simulator code in Node without a browser ("Prepare mission" + "Live"), re-prepares every 24 h and whenever someone leaves the mission empty with "Reset" ([`Simulacion/piloto/piloto.mjs`](../Simulacion/piloto/piloto.mjs)) |
 | `nginx-lunna.conf` | nginx site (template; `instalar.sh` fills it in) |
 | `nginx-lunna-proxy.conf`, `nginx-lunna-cabeceras.conf` | Snippets: headers to the backend and security headers |

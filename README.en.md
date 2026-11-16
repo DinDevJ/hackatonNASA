@@ -149,6 +149,13 @@ video/              30 s video and its generator
 - Leonardo Flores Vitela
 - Iker Jesus Campos Vazquez
 
+## Use of artificial intelligence
+
+Development was assisted by AI coding assistants (code, tests, documentation and the Spanish→English translation).
+Every figure in this repository was checked against its tests and documents, and the team reviewed the result. Inside
+the product, health alerts come from deterministic and statistical methods (the LUNNA Bayesian model, sourced clinical
+thresholds and a rule-based condition engine); no generative model makes health decisions.
+
 ## License
 
 [MIT](LICENSE).

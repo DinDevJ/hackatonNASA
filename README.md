@@ -149,6 +149,13 @@ video/              Video de 30 s y su generador
 - Leonardo Flores Vitela
 - Iker Jesus Campos Vazquez
 
+## Uso de inteligencia artificial
+
+El desarrollo se apoyó en asistentes de programación con IA (código, pruebas, documentación y la traducción al inglés).
+Cada cifra del repositorio se comprobó contra sus pruebas y documentos, y el equipo revisó el resultado. Dentro del
+producto, las alertas de salud salen de métodos deterministas y estadísticos (el modelo bayesiano LUNNA, umbrales
+clínicos con fuente y un motor de padecimientos basado en reglas); ningún modelo generativo toma decisiones de salud.
+
 ## Licencia
 
 [MIT](LICENSE).

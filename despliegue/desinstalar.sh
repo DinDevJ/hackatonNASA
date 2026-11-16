@@ -3,6 +3,8 @@
 # Conserva el código y la base de datos en $DIR (bórralos a mano si quieres: sudo rm -rf /opt/lunna /opt/lunna-node).
 set -euo pipefail
 [ "$(id -u)" -eq 0 ] || { echo "Córrelo como root (sudo)."; exit 1; }
+systemctl disable --now lunna-piloto 2>/dev/null || true
+rm -f /etc/systemd/system/lunna-piloto.service
 systemctl disable --now lunna 2>/dev/null || true
 rm -f /etc/systemd/system/lunna.service && systemctl daemon-reload
 rm -f /etc/nginx/sites-enabled/lunna /etc/nginx/sites-available/lunna \

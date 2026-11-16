@@ -181,6 +181,13 @@ systemctl restart lunna
 for i in $(seq 1 30); do curl -fs "http://127.0.0.1:$PUERTO_BACKEND/api/salud" >/dev/null && break; sleep 1; done
 curl -fs "http://127.0.0.1:$PUERTO_BACKEND/api/salud" >/dev/null || { journalctl -u lunna -n 30 --no-pager; alto "El backend no arrancó."; }
 echo "✓ backend respondiendo"
+# Piloto automático: prepara la misión y deja los sensores transmitiendo sin que nadie tenga abierto el simulador
+sed -e "s#__DIR__#$DIR#g" -e "s#__NODE__#$NODE_BIN#g" -e "s#__PUERTO_BACKEND__#$PUERTO_BACKEND#g" \
+  "$DIR/despliegue/lunna-piloto.service" > /etc/systemd/system/lunna-piloto.service
+systemctl daemon-reload
+systemctl enable -q lunna-piloto
+systemctl restart lunna-piloto
+echo "✓ piloto automático en marcha (journalctl -u lunna-piloto -f)"
 
 # ─────────────────────────────── 6. nginx: respaldo, sitio propio, validación y reload ────────────────────────
 paso "nginx: sitio propio de Lunna (con respaldo y vuelta atrás si falla)"
@@ -255,5 +262,5 @@ else URL="http://$IP:$PUERTO_WEB"; fi
 printf '\n\033[1;32m✓ Lunna está en %s\033[0m\n' "$URL"
 echo "  simulación: $URL/simulador · app: $URL/app/ · central: $URL/app/central.html · base: $URL/app/base.html"
 [ -n "$DOMINIO_APP" ] && echo "  simulación directa: $( [ -n "$CORREO" ] && echo https || echo http )://$DOMINIO_APP"
-echo "  registros:  journalctl -u lunna -f      · actualizar: sudo bash $DIR/despliegue/actualizar.sh"
+echo "  registros:  journalctl -u lunna -u lunna-piloto -f      · actualizar: sudo bash $DIR/despliegue/actualizar.sh"
 echo "  desinstalar sin tocar lo demás: sudo bash $DIR/despliegue/desinstalar.sh"

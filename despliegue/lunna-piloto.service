@@ -1,0 +1,32 @@
+[Unit]
+Description=Lunna · piloto automático: mantiene la simulación en vivo sin navegador
+After=lunna.service
+Wants=lunna.service
+
+[Service]
+User=lunna
+Group=lunna
+WorkingDirectory=__DIR__/Simulacion
+# Habla directo con el backend local (no pasa por nginx ni por sus límites)
+Environment=BACKEND=http://127.0.0.1:__PUERTO_BACKEND__
+# Vuelve a preparar la misión desde cero cada 24 h (la base no crece sin límite)
+Environment=REPREPARAR_H=24
+Environment=NODE_OPTIONS=--max-old-space-size=96
+ExecStart=__NODE__ piloto/piloto.mjs
+Restart=always
+RestartSec=5
+# Medido: ~90 MB de memoria y ~2 % de un núcleo
+MemoryHigh=150M
+MemoryMax=200M
+# Endurecimiento: no escribe en disco
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

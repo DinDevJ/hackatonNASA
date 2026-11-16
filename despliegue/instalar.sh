@@ -20,6 +20,7 @@
 # Variables (todas opcionales):
 #   PUERTO_WEB      puerto público de Lunna. Por defecto 8088 sin dominio y 80 con DOMINIO.
 #   DOMINIO         dominio que apunta al VPS (con él puede compartir el 80 con otros sitios por nombre).
+#   DOMINIO_APP     segundo dominio (p. ej. app.lunna.ejemplo.com) que abre directo en el simulador.
 #   CORREO          con DOMINIO y PUERTO_WEB=80, pide el certificado HTTPS de Let's Encrypt (y activa HTTP/2).
 #   PUERTO_BACKEND  puerto local del backend (127.0.0.1). Por defecto 8787.
 #   TOKEN           token de GitHub para clonar un repo privado. Se guarda sólo en $DIR/.git/config (modo 600).
@@ -31,12 +32,14 @@ REPO="${REPO:-https://github.com/DinDevJ/lunna.git}"
 RAMA="${RAMA:-main}"
 DIR="${DIR:-/opt/lunna}"
 DOMINIO="${DOMINIO:-}"
+DOMINIO_APP="${DOMINIO_APP:-}"
 CORREO="${CORREO:-}"
 TOKEN="${TOKEN:-}"
 PUERTO_BACKEND="${PUERTO_BACKEND:-8787}"
 if [ -n "$DOMINIO" ]; then PUERTO_WEB="${PUERTO_WEB:-80}"; else PUERTO_WEB="${PUERTO_WEB:-8088}"; fi
 AJUSTAR_NGINX="${AJUSTAR_NGINX:-1}"
 NODE_DIR=/opt/lunna-node
+PY_DIR=/opt/lunna-py
 SITIO=/etc/nginx/sites-available/lunna
 
 paso() { printf '\n\033[1;36m▸ %s\033[0m\n' "$*"; }
@@ -65,13 +68,16 @@ if [ -d /etc/nginx ]; then
     OTROS_SITIOS+=("$f")
     if puertos_de "$f" | grep -qx "$PUERTO_WEB"; then
       [ -n "$DOMINIO" ] || alto "El sitio $f ya escucha en el puerto $PUERTO_WEB. Sin dominio, Lunna necesita un puerto propio: PUERTO_WEB=8089"
-      sed 's/#.*//' "$f" | grep -Eq "server_name[^;]*[[:space:]]${DOMINIO//./\\.}([[:space:];]|$)" && alto "El sitio $f ya usa el nombre $DOMINIO."
+      for nom in $DOMINIO $DOMINIO_APP; do
+        sed 's/#.*//' "$f" | grep -Eq "server_name[^;]*[[:space:]]${nom//./\\.}([[:space:];]|$)" && alto "El sitio $f ya usa el nombre $nom."
+      done
     fi
   done
 fi
 if [ -n "$CORREO" ]; then
   { [ -n "$DOMINIO" ] && [ "$PUERTO_WEB" = 80 ]; } || alto "HTTPS (CORREO) requiere DOMINIO y PUERTO_WEB=80."
 fi
+[ -z "$DOMINIO_APP" ] || [ -n "$DOMINIO" ] || alto "DOMINIO_APP requiere también DOMINIO."
 echo "✓ backend en 127.0.0.1:$PUERTO_BACKEND · web en el puerto $PUERTO_WEB${DOMINIO:+ · dominio $DOMINIO} · otros sitios de nginx: ${#OTROS_SITIOS[@]}"
 
 # Cómo responden HOY los otros sitios, para comprobar al final que siguen igual.
@@ -119,11 +125,25 @@ fi
 NODE_BIN="$NODE_DIR/bin/node"
 echo "node $("$NODE_BIN" -v) en $NODE_BIN"
 
+# ─────────────────────────────── 3b. Python propio para el motor de padecimientos (no toca el del sistema) ─────
+paso "Python aislado en $PY_DIR (numpy y pandas para el semáforo de 20 padecimientos)"
+command -v python3 >/dev/null || { apt-get update -qq; apt-get install -y -qq --no-upgrade python3 >/dev/null; }
+if ! "$PY_DIR/bin/python" -c 'import numpy, pandas' 2>/dev/null; then
+  python3 -m venv "$PY_DIR" 2>/dev/null || {
+    apt-get update -qq; apt-get install -y -qq --no-upgrade python3-venv >/dev/null || true
+    rm -rf "$PY_DIR"; python3 -m venv "$PY_DIR"; }
+  "$PY_DIR/bin/pip" install -q --disable-pip-version-check --no-cache-dir numpy pandas \
+    || echo "⚠ no se pudo instalar numpy/pandas: el semáforo quedará vacío; lo demás funciona"
+fi
+"$PY_DIR/bin/python" -c 'import numpy, pandas; print("numpy", numpy.__version__, "· pandas", pandas.__version__)' 2>/dev/null || true
+
 # ─────────────────────────────── 4. Código ────────────────────────────────────────────────────────────────────
 paso "Usuario de servicio y código en $DIR"
 id lunna >/dev/null 2>&1 || useradd --system --home "$DIR" --shell /usr/sbin/nologin lunna
 # El código es del usuario lunna y git corre como root: sin esto git se niega («dubious ownership»).
 git config --global --get-all safe.directory 2>/dev/null | grep -qx "$DIR" || git config --global --add safe.directory "$DIR"
+# Si el origen es un clon local (p. ej. el que hizo tu usuario con su llave), git también lo pide para leerlo como root.
+if [ -d "$REPO/.git" ]; then git config --global --get-all safe.directory 2>/dev/null | grep -qx "$REPO" || git config --global --add safe.directory "$REPO"; fi
 AUTH_GIT=()
 if [ -n "$TOKEN" ]; then
   CAB="Authorization: Basic $(printf 'x-access-token:%s' "$TOKEN" | base64 | tr -d '\n')"
@@ -145,7 +165,7 @@ git -C "$DIR" log -1 --format='commit %h · %s'
 
 # ─────────────────────────────── 5. Servicio del backend ──────────────────────────────────────────────────────
 paso "Servicio «lunna» (modo simulación, sólo en 127.0.0.1:$PUERTO_BACKEND)"
-sed -e "s#__DIR__#$DIR#g" -e "s#__NODE__#$NODE_BIN#g" -e "s#__PUERTO_BACKEND__#$PUERTO_BACKEND#g" \
+sed -e "s#__DIR__#$DIR#g" -e "s#__NODE__#$NODE_BIN#g" -e "s#__PUERTO_BACKEND__#$PUERTO_BACKEND#g" -e "s#__PYTHON__#$PY_DIR/bin/python#g" \
   "$DIR/despliegue/lunna.service" > /etc/systemd/system/lunna.service
 systemctl daemon-reload
 systemctl enable -q lunna
@@ -167,7 +187,8 @@ USUARIO_NGINX="$(sed 's/#.*//' /etc/nginx/nginx.conf | grep -Eo '^\s*user\s+[^;[
 mkdir -p /var/cache/nginx/lunna && chown "${USUARIO_NGINX:-www-data}" /var/cache/nginx/lunna
 cp "$DIR/despliegue/nginx-lunna-cabeceras.conf" /etc/nginx/snippets/lunna-cabeceras.conf
 cp "$DIR/despliegue/nginx-lunna-proxy.conf" /etc/nginx/snippets/lunna-proxy.conf
-sed -e "s#__DOMINIO__#${DOMINIO:-_}#g" -e "s#__DIR__#$DIR#g" -e "s#__PUERTO_WEB__#$PUERTO_WEB#g" \
+NOMBRES="${DOMINIO:-_}${DOMINIO_APP:+ $DOMINIO_APP}"
+sed -e "s#__DOMINIO__#$NOMBRES#g" -e "s#__DIR__#$DIR#g" -e "s#__PUERTO_WEB__#$PUERTO_WEB#g" \
   -e "s#__PUERTO_BACKEND__#$PUERTO_BACKEND#g" "$DIR/despliegue/nginx-lunna.conf" > "$SITIO"
 # Sin IPv6 en la máquina, nginx no arranca con «listen [::]:…»
 [ -s /proc/net/if_inet6 ] || sed -i '/listen \[::\]/d' "$SITIO"
@@ -198,9 +219,9 @@ if command -v ufw >/dev/null && ufw status | grep -q "Status: active"; then
 fi
 
 if [ -n "$DOMINIO" ] && [ -n "$CORREO" ]; then
-  paso "HTTPS con Let's Encrypt para $DOMINIO (sólo este sitio)"
+  paso "HTTPS con Let's Encrypt para $NOMBRES (sólo este sitio)"
   command -v certbot >/dev/null || apt-get install -y -qq --no-upgrade certbot python3-certbot-nginx >/dev/null
-  certbot --nginx -d "$DOMINIO" --non-interactive --agree-tos -m "$CORREO" --redirect
+  certbot --nginx -d "$DOMINIO" ${DOMINIO_APP:+-d "$DOMINIO_APP"} --non-interactive --agree-tos -m "$CORREO" --redirect
   # HTTP/2: todas las peticiones (y los eventos en vivo de cada interfaz) viajan por una sola conexión.
   sed -i -E 's/listen (\[::\]:)?443 ssl( ipv6only=on)?;/listen \1443 ssl http2\2;/' "$SITIO"
   if nginx -t; then systemctl reload nginx; else revertir; alto "Falló la configuración HTTPS; se restauró nginx."; fi
@@ -225,5 +246,6 @@ elif [ -n "$DOMINIO" ]; then URL="http://$DOMINIO$([ "$PUERTO_WEB" = 80 ] || ech
 else URL="http://$IP:$PUERTO_WEB"; fi
 printf '\n\033[1;32m✓ Lunna está en %s\033[0m\n' "$URL"
 echo "  simulación: $URL/simulador · app: $URL/app/ · central: $URL/app/central.html · base: $URL/app/base.html"
+[ -n "$DOMINIO_APP" ] && echo "  simulación directa: $( [ -n "$CORREO" ] && echo https || echo http )://$DOMINIO_APP"
 echo "  registros:  journalctl -u lunna -f      · actualizar: sudo bash $DIR/despliegue/actualizar.sh"
 echo "  desinstalar sin tocar lo demás: sudo bash $DIR/despliegue/desinstalar.sh"

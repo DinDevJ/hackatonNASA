@@ -11,6 +11,8 @@ WorkingDirectory=__DIR__/Simulacion
 Environment=HOST=127.0.0.1
 Environment=PUERTO=__PUERTO_BACKEND__
 Environment=NODE_OPTIONS=--max-old-space-size=256
+# Python propio con numpy y pandas para el motor de 20 padecimientos (semáforo)
+Environment=PYTHON=__PYTHON__
 ExecStart=__NODE__ --experimental-strip-types --disable-warning=ExperimentalWarning ../Sistema/backend/src/servidor.ts --modo simulacion --simulacion .
 Restart=always
 RestartSec=3

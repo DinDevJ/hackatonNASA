@@ -1133,6 +1133,21 @@ const carga = {
     this.quita = setTimeout(() => { c.hidden = true; }, ok ? 3500 : 7000);
   },
 };
+// El semáforo de 20 padecimientos lo calcula el motor en Python del backend: se corre al preparar la misión, para la
+// tripulación sintética del motor (SIM-T01…T05) y para la del escenario (datos de esta simulación). No bloquea.
+async function evaluarPadecimientos() {
+  tr('pc', '<span class="dim">condition engine (20 conditions): evaluating the crew…</span>');
+  for (const [cuerpo, quien] of [[{ simulado: true }, 'synthetic crew SIM-T01…T05'], [{ origen_simulador: true }, 'scenario crew']]) {
+    try {
+      const r = await api('/api/padecimientos/evaluar', 'POST', cuerpo);
+      tr('pc', `<span class="verde">condition engine: ${r.filas_escritas} evaluations for the ${quien} · see the central PC «Traffic light» tab</span>`);
+    } catch (e) {
+      tr('pc', `<span class="amb">condition engine unavailable (${esc(e.message)}): the traffic light stays empty; the rest works</span>`);
+      return;
+    }
+  }
+}
+
 async function preparar() {
   const b = $('#b-preparar'); b.disabled = true; $('#b-vivo').disabled = true;
   carga.abrir();
@@ -1178,6 +1193,7 @@ async function preparar() {
     tr('pc', `<span class="verde">history loaded: ${total.toLocaleString('en')} frames from ${S.trip.length} crew members · LUNNA calibrated each person on their days 0–13</span>`);
     $('#b-vivo').disabled = false;
     iniciar();
+    evaluarPadecimientos();
     carga.fin(true, 'Mission ready', `${total.toLocaleString('en')} frames from ${S.trip.length} crew members · now running live`);
   } catch (e) {
     tr('pc', `<span class="rojo">could not prepare: ${esc(e.message)}</span>`);

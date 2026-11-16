@@ -7,6 +7,9 @@
 **Health monitoring for astronauts on long-duration missions** · Team Monarcas · NASA Space Apps Challenge 2026 ·
 challenge *Create Health Monitoring Software for Astronauts on Space Missions*
 
+**LUNNA** (the Bayesian model at the core of Lunna) stands for **L**ive-telemetry **U**pdating **N**etwork for
+**N**ominal-deviation & **A**nomalies.
+
 > Lunna learns each astronaut's own normal, compares every reading against what is expected *for that
 > person in that environment* (a Bayesian model called LUNNA, plus clinical thresholds), and warns the crew medical
 > officer before a problem grows. Sensors (an ESP32 smart shirt, a cuff, a

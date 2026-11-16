@@ -1,3 +1,5 @@
+> 🌐 **Español** · [English](README_06_MODELOS_COMPUTACIONALES_ALGORITMOS.en.md)
+
 # 06 · Modelos computacionales y algoritmos
 
 > **Nada de lo que aquí se describe es un diagnóstico.** Los umbrales son provisionales, ninguno está validado en astronautas y los colores y estados no son probabilidades clínicas.

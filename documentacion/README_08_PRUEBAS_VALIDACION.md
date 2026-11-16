@@ -1,3 +1,5 @@
+> 🌐 **Español** · [English](README_08_PRUEBAS_VALIDACION.en.md)
+
 # 08 · Pruebas y validación
 
 ## 1. Tres niveles que no deben confundirse

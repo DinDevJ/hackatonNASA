@@ -1,3 +1,5 @@
+> 🌐 **Español** · [English](README_03_MANUAL_USUARIO.en.md)
+
 # 03 · Manual de usuario
 
 > Todos los datos de la tripulación que muestran las pantallas son **sintéticos**. Ninguna pantalla debe usarse para diagnosticar, tratar ni autorizar decisiones médicas. Los umbrales son provisionales.

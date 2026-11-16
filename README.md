@@ -1,3 +1,5 @@
+> 🌐 **Español** · [English](README.en.md)
+
 # Lunna
 
 **Monitoreo de salud para astronautas en misiones largas** · Equipo Monarcas · NASA Space Apps Challenge 2026 ·

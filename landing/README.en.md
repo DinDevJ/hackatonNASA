@@ -9,7 +9,7 @@ Exhibition page with one section per screen (scrolling jumps from one to the nex
 3. **LUNNA, mathematically:** Bayesian updating with an interactive example that uses the real systolic blood pressure
    prior from the seeds.
 4. **Two alert criteria** (personal and clinical threshold) and why the calibration is frozen.
-5. **Prediction models:** LUNNA, shrunken pre-flight baseline, EWMA, CUSUM, 20-condition traffic light and ECG/echo models.
+5. **Prediction models:** LUNNA, shrunk pre-flight baseline, EWMA, CUSUM, 20-condition traffic light and ECG/echo models.
 6. Evidence and team.
 
 The formulas are in MathML (no libraries). The drift chart uses illustrative data and is labeled as such.

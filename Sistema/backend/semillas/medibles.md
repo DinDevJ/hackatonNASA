@@ -1,3 +1,5 @@
+> 🌐 **Español** · [English](medibles.en.md)
+
 # Variables medibles por sensor: qué dice el catálogo
 
 Equipo Monarcas · 2026-11-15 · Datos: [`medibles.json`](medibles.json) (lo carga el backend al arrancar; lo usa la vigilancia como umbral clínico absoluto)

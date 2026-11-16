@@ -1,3 +1,5 @@
+> 🌐 **Español** · [English](ONBOARDING.en.md)
+
 # Onboarding · Lunna
 
 Guía de entrada en dos rutas: **para jueces y científicos** (qué hace, cómo verlo funcionar y dónde está la evidencia
@@ -138,7 +140,7 @@ cd prototipo-salud && python -m pytest                             # motor de pa
 - **Todo dato sintético se rotula** («SIMULADO», «Simulación · datos sintéticos»). Nada simulado entra al canal real.
 - **Cada umbral lleva su procedencia** [A]/[T] y su fuente; sin fuente no se publica.
 - **El sistema avisa y explica, no diagnostica.**
-- Código y documentación en español; las interfaces tienen traducción al inglés.
+- Código en español. La documentación está en español y en inglés: cada documento tiene su versión `.en.md` al lado. Las interfaces y la landing tienen traducción al inglés.
 
 ---
 

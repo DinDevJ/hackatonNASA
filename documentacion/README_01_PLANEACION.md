@@ -1,3 +1,5 @@
+> 🌐 **Español** · [English](README_01_PLANEACION.en.md)
+
 # 01 · Planeación general del proyecto
 
 **Proyecto:** EVA / LUNNA, monitoreo de salud para misiones espaciales

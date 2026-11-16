@@ -1,3 +1,5 @@
+> 🌐 **Español** · [English](README_04_ARQUITECTURA_SISTEMA.en.md)
+
 # 04 · Arquitectura del sistema
 
 ## 1. Visión general

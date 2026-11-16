@@ -140,7 +140,7 @@ cd prototipo-salud && python -m pytest                             # condition e
 - **All synthetic data are labeled** ("SIMULATED", "Simulation · synthetic data"). Nothing simulated enters the real channel.
 - **Each threshold carries its provenance** [A]/[T] and its source; without a source it is not published.
 - **The system warns and explains; it does not diagnose.**
-- Code and documentation in Spanish; the interfaces have an English translation.
+- Code in Spanish. The documentation is in Spanish and English: every document has its `.en.md` version next to it. The interfaces and the landing page have an English translation.
 
 ---
 

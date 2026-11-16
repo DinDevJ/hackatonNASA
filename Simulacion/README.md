@@ -1,3 +1,5 @@
+> 🌐 **Español** · [English](README.en.md)
+
 # Simulación
 
 Todo lo que produce o muestra **datos sintéticos**. Usa el código de [`../Sistema/`](../Sistema/README.md) sin

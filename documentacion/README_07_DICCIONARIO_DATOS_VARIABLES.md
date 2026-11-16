@@ -1,3 +1,5 @@
+> 🌐 **Español** · [English](README_07_DICCIONARIO_DATOS_VARIABLES.en.md)
+
 # 07 · Diccionario de datos y especificación de variables
 
 **Convenciones**

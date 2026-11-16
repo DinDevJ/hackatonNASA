@@ -1,3 +1,5 @@
+> 🌐 **Español** · [English](README.en.md)
+
 # Sistema
 
 El software de Lunna que correría en la nave y en Tierra. Arranca en **modo operativo**: sin simulador ni datos

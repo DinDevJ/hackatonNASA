@@ -1,3 +1,5 @@
+> 🌐 **Español** · [English](README_09_INSTALACION_CONFIGURACION_DESPLIEGUE.en.md)
+
 # 09 · Instalación, configuración y despliegue
 
 Todos los comandos de este documento son los que definen los `package.json`, los scripts `.ps1` y el código del repositorio. Se ejecutan desde la carpeta indicada. Los ejemplos usan PowerShell; en macOS o Linux se usa la misma sintaxis de `npm` y `node`.

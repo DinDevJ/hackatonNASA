@@ -1,3 +1,5 @@
+> 🌐 **Español** · [English](README_05_INTEGRACION_INTEROPERABILIDAD.en.md)
+
 # 05 · Integración e interoperabilidad
 
 Cada integración se clasifica así:

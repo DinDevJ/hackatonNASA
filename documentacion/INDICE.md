@@ -1,3 +1,5 @@
+> 🌐 **Español** · [English](INDICE.en.md)
+
 # Documentación técnica de EVA / LUNNA
 
 Documentación modular del proyecto **EVA / LUNNA**, el monitoreo de salud para misiones espaciales del equipo Monarcas (NASA Space Apps Challenge 2026). Cada documento trata un área y puede leerse por separado. Todos describen el mismo sistema y se enlazan entre sí.

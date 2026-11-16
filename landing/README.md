@@ -1,3 +1,5 @@
+> 🌐 **Español** · [English](README.en.md)
+
 # Landing de Lunna
 
 Página de exposición con una sección por pantalla (el desplazamiento salta de una a la siguiente):

@@ -1,3 +1,5 @@
+> 🌐 **Español** · [English](README.en.md)
+
 # Despliegue en un VPS
 
 Deja Lunna público en un servidor: la **landing** en `/` y, detrás, el backend en **modo simulación** con todas

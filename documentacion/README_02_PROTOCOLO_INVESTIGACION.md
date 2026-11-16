@@ -1,3 +1,5 @@
+> 🌐 **Español** · [English](README_02_PROTOCOLO_INVESTIGACION.en.md)
+
 # 02 · Protocolo de investigación
 
 **LUNNA · software de monitoreo de salud para misiones espaciales**

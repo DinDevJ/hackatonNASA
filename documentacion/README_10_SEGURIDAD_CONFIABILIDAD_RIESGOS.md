@@ -1,3 +1,5 @@
+> 🌐 **Español** · [English](README_10_SEGURIDAD_CONFIABILIDAD_RIESGOS.en.md)
+
 # 10 · Seguridad, confiabilidad y gestión de riesgos
 
 Este documento distingue lo **implementado** (con su archivo) de lo **recomendado** (que no existe en el código). LUNNA es un prototipo de hackatón: su modelo de amenazas asume una red local de confianza y operadores que conocen que los datos son sintéticos.

@@ -1,3 +1,5 @@
+> 🌐 **Español** · [English](README.en.md)
+
 # Prototipo de salud · modelos, ECG y padecimientos
 
 Guía única para explorar el prototipo y entender sus datos, modelos, resultados y límites. Toda la información necesaria —incluidos los detalles técnicos de los modelos, instalación, entradas, salidas, licencias, recursos, algoritmos y límites— está consolidada en este mismo README.

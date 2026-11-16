@@ -142,7 +142,12 @@ video/              Video de 30 s y su generador
 
 ## Equipo Monarcas
 
-Julio · Iker · Leo · Diana · Katy · Fani
+Julio Cesar Araujo Hernandez
+Katia Aguilar Calderon
+Diana Estefani Parrales Avalos
+Diana Laura Campos Rosas
+Leonardo Flores Vitela
+Iker Jesus Campos Vazquez
 
 ## Licencia
 

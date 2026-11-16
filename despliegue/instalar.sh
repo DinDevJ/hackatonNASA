@@ -90,6 +90,9 @@ if [ -n "$DOMINIO" ] && [ -n "$CORREO" ]; then
   paso "HTTPS con Let's Encrypt para $DOMINIO"
   apt-get install -y -qq certbot python3-certbot-nginx >/dev/null
   certbot --nginx -d "$DOMINIO" --non-interactive --agree-tos -m "$CORREO" --redirect
+  # HTTP/2: todas las peticiones (y los eventos en vivo de cada interfaz) viajan por una sola conexión.
+  sed -i -E 's/listen (\[::\]:)?443 ssl( ipv6only=on)?;/listen \1443 ssl http2\2;/' /etc/nginx/sites-available/lunna
+  nginx -t && systemctl reload nginx
 fi
 
 paso "Comprobación"

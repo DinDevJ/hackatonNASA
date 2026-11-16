@@ -36,7 +36,23 @@
   })();
   const conIdioma = (ruta) => `${BASE}${ruta}${ruta.includes('?') ? '&' : '?'}idioma=${idioma}`;
   const cargar = (p) => { const f = p.querySelector('iframe'); f.src = conIdioma(f.dataset.src); };
-  pantallas.forEach((p) => { escalar(p); ro.observe(p); cargar(p); });
+  pantallas.forEach((p) => { escalar(p); ro.observe(p); });
+
+  // Cada interfaz mantiene abiertas sus conexiones de eventos en vivo (/api/stream) y el navegador sólo permite
+  // 6 por servidor en HTTP/1.1: con la landing abierta, otra pestaña (el simulador) se quedaba «Cargando…».
+  // Por eso se cargan sólo con la portada a la vista y la pestaña visible, y se descargan al salir.
+  let enVista = true, descarga = null;
+  const cargadas = () => pantallas.some((p) => p.querySelector('iframe').getAttribute('src'));
+  function sincronizar() {
+    const activa = enVista && !document.hidden;
+    clearTimeout(descarga);
+    if (activa) { if (!cargadas()) pantallas.forEach(cargar); return; }
+    // Al ocultar la pestaña se libera de inmediato; al bajar por la página, tras un respiro (por si se regresa)
+    descarga = setTimeout(() => pantallas.forEach((p) => { p.classList.remove('vivo'); p.querySelector('iframe').removeAttribute('src'); }),
+      document.hidden ? 0 : 1500);
+  }
+  new IntersectionObserver((es) => { enVista = es[0].isIntersecting; sincronizar(); }).observe($('#inicio .escenario'));
+  document.addEventListener('visibilitychange', sincronizar);
 
   // «Toca para usar»: hasta entonces la rueda del ratón pasa de sección, no mueve la interfaz.
   pantallas.forEach((p) => {
@@ -85,7 +101,7 @@
       });
     });
     $$('[data-ruta]').forEach((a) => { a.href = BASE + a.dataset.ruta; });
-    if (recargar) pantallas.forEach(cargar);
+    if (recargar && cargadas()) pantallas.forEach(cargar);
     dibujar();
   }
   $('#b-idioma').addEventListener('click', () => ponerIdioma(idioma === 'en' ? 'es' : 'en', true));

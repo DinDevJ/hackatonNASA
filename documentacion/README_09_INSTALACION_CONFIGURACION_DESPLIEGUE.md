@@ -176,7 +176,7 @@ python Simulacion/donki/fetch_donki.py                  # eventos DONKI (requier
 | `TIERRA_CA`, `TLS_CERT`, `TLS_KEY` | `certs/tierra.crt` y `certs/tierra.key` | Certificados |
 | `PING_S` | 60 (se recomienda 15) | Latido del enlace |
 | `TIMEOUT_S` | 5 | Tiempo máximo por petición |
-| `SIMULAR_OWLT` | — | `1` suma el retardo modelado antes y después de cada petición |
+| `SIMULAR_OWLT` | — | `1` suma el retardo modelado (`owlt_s`) antes y después de cada petición HTTPS. El backend de la demo usa 20 s por defecto; el escenario de la maqueta es de 18 min por trayecto |
 | `PROTOTIPO_DIR` (o `PROTOTIPO_SALUD`) | `prototipo-salud/` del repositorio | Carpeta del prototipo para el motor y los modelos |
 | `PYTHON` | `python` en Windows, `python3` en el resto | Python de la app y del motor (p. ej. `prototipo-salud\envs\app\Scripts\python.exe`) |
 | `ENVS_DIR` (o `PROTOTIPO_ENVS_DIR`) | `<PROTOTIPO_DIR>/envs` | Entornos de los modelos |

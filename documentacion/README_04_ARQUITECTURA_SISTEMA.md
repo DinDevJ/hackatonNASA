@@ -128,7 +128,7 @@ Son sitios estáticos sin framework, con una serie común:
 | `pesos.js` | Matriz de pesos, generada por `generar_pesos.py` |
 | `idioma.js`, `idioma-en.js` | Textos en español e inglés |
 
-Sin backend, la central y la base se comunican por `localStorage` (clave `lunna:enlace`) con el retardo de la luz.
+Sin backend, la central y la base se comunican por `localStorage` (clave `lunna:enlace`) con el retardo de la luz: 18 min por trayecto en el escenario de la maqueta (`OWLT_ESCENARIO_MIN`). El backend de la demo usa 20 s por defecto (`owlt_s` en [`enlace.ts`](../Sistema/backend/src/enlace.ts); `SIMULAR_OWLT=1` aplica ese retardo también en el enlace HTTPS).
 
 ## 4. Hardware y software
 

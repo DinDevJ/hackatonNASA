@@ -209,7 +209,7 @@ es.addEventListener('alerta', (e) => mostrar(JSON.parse(e.data)));
 | Qué baja | Alertas (prioridad 0 rojo, 1 ámbar, 2 resto), **resúmenes cada 30 s**, **tramas crudas en lotes de hasta 200**, acuses, consultas y emergencias (prioridad 0) |
 | Qué sube | Avisos y alertas manuales; al llegar a bordo se crea un acuse que vuelve a Tierra |
 | Comportamiento | Con la ventana cerrada, los paquetes esperan |
-| Retardo | `owlt_s` = retardo de un trayecto; 20 s por defecto en la demo; Marte se ilustra con 240–1440 s |
+| Retardo | `owlt_s` = retardo de un trayecto. El escenario de la maqueta usa 18 min por trayecto. El backend de la demo usa 20 s por defecto. El intervalo 240–1440 s ilustra el rango físico de Marte |
 | Tiempos | SCET (cuándo ocurrió) y ERT (cuándo llegó) |
 
 ### 5.2 Enlace HTTPS real ([`sincro.ts`](../Sistema/backend/src/sincro.ts), [`enlace-https.ts`](../Sistema/backend/src/enlace-https.ts))

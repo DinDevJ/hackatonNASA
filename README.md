@@ -5,14 +5,15 @@ reto *Create Health Monitoring Software for Astronauts on Space Missions*
 
 > **EN.** Lunna learns each astronaut's own normal, compares every reading against what is expected *for that
 > person in that environment* (a Bayesian model called LUNNA, plus clinical thresholds), and warns the crew medical
-> officer before a problem grows, while Earth is minutes away by light. Sensors (an ESP32 smart shirt, a cuff, a
+> officer before a problem grows, while Earth is 18 minutes away by light in the mission scenario (the demo backend defaults to a 20 s delay). Sensors (an ESP32 smart shirt, a cuff, a
 > watch) stream over Bluetooth to an on-board computer that works fully offline and syncs with Earth over a
 > delay-tolerant link with no data loss. The interfaces are in Spanish with an English switch.
 > **Start here:** [ONBOARDING.md](ONBOARDING.md).
 
-En una misión a Marte, Tierra tarda varios minutos en responder. Lunna corre **a bordo y sin conexión**: aprende el
-normal de cada tripulante, explica qué cambió y avisa a la médica de a bordo (CMO), para que la nave pueda decidir
-sola. Tierra recibe lo mismo, con el retraso de la luz, y responde con avisos.
+En el escenario de la maqueta, el retraso de la luz es de 18 min por trayecto (en Marte el retraso físico va de
+minutos a más de 20 min). El backend de la demo usa 20 s por defecto. Lunna corre **a bordo y sin conexión**:
+aprende el normal de cada tripulante, explica qué cambió y avisa a la médica de a bordo (CMO), para que la nave
+pueda decidir sola. Tierra recibe lo mismo, con ese retraso, y responde con avisos.
 
 > ⚠️ Prototipo de hackatón. **No es un dispositivo médico ni diagnostica.** La tripulación de la demo es ficticia y
 > sus datos son sintéticos y así se rotulan. Son reales los eventos solares de **NASA DONKI**, los límites de
@@ -87,7 +88,7 @@ El recorrido completo para jueces y para quien desarrolle está en **[ONBOARDING
 
 | Comprobación | Resultado |
 |---|---|
-| Backend (`npm test` en `Sistema/backend`) | 93 aprobadas, 0 fallidas; 4 se saltan si no está instalado el entorno Python de los modelos de ECG y eco |
+| Backend (`npm test` en `Sistema/backend`) | El 15 nov 2026, en Linux: 97 aprobadas, 0 fallidas, 0 omitidas. En Windows se había documentado 85 aprobadas y 12 omitidas (openssl y entornos Python). Detalle en [pruebas y validación](documentacion/README_08_PRUEBAS_VALIDACION.md) |
 | Simulación (`npm test` en `Simulacion`) | 4 / 4 |
 | Motor e interfaces (`node --test *.test.mjs` en `Sistema/interfaces/eva`) | 25 / 25 |
 | Firmware ESP32 y pasarela contra el backend | Mismos bytes en los 4 vectores |

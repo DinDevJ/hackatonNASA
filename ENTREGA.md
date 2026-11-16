@@ -80,8 +80,8 @@ NHANES · Sottas et al. 2007 (shrunk baseline) · Coskun et al. 2021 · Obermeye
 ## NASA data (form: Link Text · URL)
 | Link text | URL |
 |---|---|
-| NASA OSDR OSD-569 — Inspiration4 clinical labs | https://osdr.nasa.gov/bio/repo/data/studies/OSD-569 |
-| NASA OSDR OSD-575 — Inspiration4 metabolic panel | https://osdr.nasa.gov/bio/repo/data/studies/OSD-575 |
+| NASA OSDR OSD-569 — Inspiration4 complete blood count | https://osdr.nasa.gov/bio/repo/data/studies/OSD-569 |
+| NASA OSDR OSD-575 — Inspiration4 metabolic panel and serum markers | https://osdr.nasa.gov/bio/repo/data/studies/OSD-575 |
 | NASA OSDR Biological Data API | https://visualization.osdr.nasa.gov/biodata/api/ |
 | NASA DONKI space weather API | https://api.nasa.gov |
 | NASA-STD-3001 Vol. 1 Rev. C | https://standards.nasa.gov/sites/default/files/standards/NASA/C//nasa-std-3001-vol-1-rev-c-signature.pdf |

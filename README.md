@@ -142,12 +142,12 @@ video/              Video de 30 s y su generador
 
 ## Equipo Monarcas
 
-Julio Cesar Araujo Hernandez
-Katia Aguilar Calderon
-Diana Estefani Parrales Avalos
-Diana Laura Campos Rosas
-Leonardo Flores Vitela
-Iker Jesus Campos Vazquez
+- Julio Cesar Araujo Hernandez
+- Katia Aguilar Calderon
+- Diana Estefani Parrales Avalos
+- Diana Laura Campos Rosas
+- Leonardo Flores Vitela
+- Iker Jesus Campos Vazquez
 
 ## Licencia
 

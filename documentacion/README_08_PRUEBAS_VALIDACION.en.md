@@ -200,7 +200,7 @@ As pre-flight nights accumulate (output of the same command):
 | 7 | 55.9 ± 4.4 · z 6.60 · alerted | 84.0 ± 3.8 · z 0.26 · normal | own (n0 ≥ 5); B = 0.02 / 0.01 |
 | 14 | 58.1 ± 2.9 · z 9.17 · alerted | 83.6 ± 3.3 · z 0.43 · normal | own (n0 ≥ 5); B = 0.00 / 0.01 |
 
-The specification of this self-calibration is in [models §4.3](README_06_MODELOS_COMPUTACIONALES_ALGORITMOS.en.md).
+The specification of this self-calibration is in [models §4.3](README_06_MODELOS_COMPUTACIONALES_ALGORITMOS.en.md#43-deviation-and-self-calibration).
 
 ### 4.4 Inspiration4 (NASA OSDR, open real data)
 

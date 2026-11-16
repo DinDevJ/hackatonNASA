@@ -77,9 +77,35 @@ model, clinical thresholds, rule-based condition engine); no generative model ma
 NASA OSDR (OSD-569, OSD-575) · NASA DONKI · NASA-STD-3001 · NASA Human Research Program risks · PhysioNet MIT-BIH ·
 NHANES · Sottas et al. 2007 (shrunk baseline) · Coskun et al. 2021 · Obermeyer et al. 2017.
 
+## NASA data (form: Link Text · URL)
+| Link text | URL |
+|---|---|
+| NASA OSDR OSD-569 — Inspiration4 clinical labs | https://osdr.nasa.gov/bio/repo/data/studies/OSD-569 |
+| NASA OSDR OSD-575 — Inspiration4 metabolic panel | https://osdr.nasa.gov/bio/repo/data/studies/OSD-575 |
+| NASA OSDR Biological Data API | https://visualization.osdr.nasa.gov/biodata/api/ |
+| NASA DONKI space weather API | https://api.nasa.gov |
+| NASA-STD-3001 Vol. 1 Rev. C | https://standards.nasa.gov/sites/default/files/standards/NASA/C//nasa-std-3001-vol-1-rev-c-signature.pdf |
+| NASA HRP Cardiovascular Risk Evidence Report | https://humanresearchroadmap.nasa.gov/evidence/reports/Cardio%20Risk%20EB%202022%20FINAL_4-3-2023.pdf |
+| NASA Risk of SANS | https://www.nasa.gov/reference/risk-of-spaceflight-associated-neuro-ocular-syndrome-sans/ |
+| NASA Risk of Decompression Sickness | https://www.nasa.gov/reference/risk-of-decompression-sickness/ |
+| NASA OCHMO Technical Brief — Bone loss | https://www.nasa.gov/wp-content/uploads/2023/12/ochmo-tb-030-bone-loss.pdf |
+| NASA OCHMO Medical Technical Brief — SANS | https://www.nasa.gov/wp-content/uploads/2024/02/ochmo-mtb-001-sans.pdf |
+
+## Other data and tools (form: Space Agency Partner & Other Data)
+| Link text | URL |
+|---|---|
+| PhysioNet MIT-BIH Arrhythmia Database | https://physionet.org/content/mitdb/1.0.0/ |
+| PhysioNet MIT-BIH Atrial Fibrillation Database | https://physionet.org/content/afdb/1.0.0/ |
+| NeuroKit2 (ECG processing) | https://github.com/neuropsychology/NeuroKit |
+| PanEcho (echocardiography model) | https://github.com/CarDS-Yale/PanEcho |
+| EchoNet-Dynamic | https://github.com/echonet/dynamic |
+| EchoPrime | https://github.com/echonet/EchoPrime |
+| MedSAM2 | https://github.com/bowang-lab/MedSAM2 |
+
 ## Before submitting (checklist)
 - [ ] Repository **public** (GitHub → Settings → Change visibility), or the final link replaced by the landing page.
 - [ ] Demo opens without login: https://lunna.danaus.dev (and the video plays).
-- [ ] Simulator left live: open https://app.lunna.danaus.dev → **Prepare mission** (fills the traffic light too).
+- [ ] Simulator live on its own: the `lunna-piloto` service prepares the mission and keeps the sensors streaming 24/7
+      (check: `systemctl status lunna-piloto` on the VPS).
 - [ ] Video has English subtitles if it has narration; slides (if any) in English.
 - [ ] All team members confirmed at the same local event.

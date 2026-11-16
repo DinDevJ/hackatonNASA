@@ -38,7 +38,7 @@ node --version
 
 ```powershell
 git clone https://github.com/DinDevJ/lunna.git
-Set-Location hackatonNASA
+Set-Location lunna
 ```
 
 El backend y la simulación **no requieren instalar dependencias**.
